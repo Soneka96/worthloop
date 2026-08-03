@@ -104,21 +104,20 @@ void main() {
         expect(find.byType(AppearanceSettingsScreen), findsOneWidget);
       },
     );
+
+    testWidgets('AppSettingsScreen contains only mobile settings categories', (
+      tester,
+    ) async {
+      await tester.pumpWidget(buildWidget());
+
+      expect(find.byType(ListTile), findsNWidgets(2));
+      expect(find.text('Profile'), findsNothing);
+      expect(find.text('Editor'), findsNothing);
+      expect(find.text('Logs'), findsNothing);
+    });
   });
 
   group("AppSettingsScreen's elements behavior", () {
-    testWidgets(
-      'AppSettingsScreen does not change the displayed content when a disabled category is tapped',
-      (tester) async {
-        await tester.pumpWidget(buildWidget());
-
-        await tester.tap(find.byKey(const Key('settings-category-editor')));
-        await tester.pump();
-
-        expect(find.byType(AppearanceSettingsScreen), findsOneWidget);
-      },
-    );
-
     testWidgets(
       'AppSettingsScreen shows GeneralSettingsScreen when the General category is tapped',
       (tester) async {

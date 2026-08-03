@@ -43,9 +43,7 @@ void main() {
   group('Method fetchProfile() returns the correct value', () {
     test('returns the parsed GithubProfileModel on success', () async {
       when(
-        () => dio.get<dynamic>(
-          any(that: contains('/users/octocat')),
-        ),
+        () => dio.get<dynamic>(any(that: contains('/users/octocat'))),
       ).thenAnswer(
         (_) async => Response(
           requestOptions: RequestOptions(path: '/users/octocat'),

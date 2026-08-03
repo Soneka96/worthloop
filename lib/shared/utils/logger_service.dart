@@ -58,12 +58,12 @@ class LoggerService {
   }
 
   /// Shows [message] via [PopupService], unless the same message already
-  /// alerted within [LogsConstants.alertDedupeWindow].
+  /// alerted within [AlertConstants.alertDedupeWindow].
   void _alert(String message) {
     final DateTime now = _now();
     final DateTime? lastAlertedAt = _lastAlertedAt[message];
     if (lastAlertedAt != null &&
-        now.difference(lastAlertedAt) < LogsConstants.alertDedupeWindow) {
+        now.difference(lastAlertedAt) < AlertConstants.alertDedupeWindow) {
       return;
     }
     _lastAlertedAt[message] = now;

@@ -13,10 +13,9 @@
 - Never write manual stub classes (`class FooStub implements IFoo { ... }`) — use
   `class MockFoo extends Mock implements IFoo {}` for mocks and `class FakeFoo extends Fake implements IFoo {}`
   for `registerFallbackValue` only.
-  - Exception: Flutter plugin `PlatformInterface` test doubles (e.g. `file_selector`'s `FileSelectorPlatform`)
-    follow the plugin's own recommended `extends FileSelectorPlatform with MockPlatformInterfaceMixin` shape.
-    That isn't a hand-rolled interface stub — it's the documented way to fake a plugin platform channel — so it
-    stays as-is, not as a `Mock`/`Fake`.
+  - Exception: Flutter plugin `PlatformInterface` test doubles follow the plugin's documented
+    platform-test shape. They are not hand-rolled interface stubs and stay as-is rather than being
+    replaced by a `Mock`/`Fake`.
 - For any test using `test()` (Datasources, Repositories, Usecases, Selectors, Utils, Middlewares, Reducers —
   no widget tree involved), mock every dependency the class under test calls, including a `ChangeNotifier` one
   (e.g. `SnugToastManager`, `AppTheme`) — never register a real instance. A dependency's own behaviour is
@@ -273,11 +272,6 @@ never in a separate global file, and never duplicated inside a widget's or Secti
   router (the app's actual router-config function, not a hand-rolled one), wrap it in
   `MaterialApp.router(routerConfig: router)`, navigate with `router.go(AppRoutes.x)` where the
   route isn't the initial one, and assert `find.byType(ScreenClass)` finds exactly one.
-- A second group covers `WindowRouteWatcher`'s behaviour: attach it to the real router with a
-  mocked `WindowController`, drive `router.go`/`router.push`/`router.pop`, and verify
-  `lockHome()`/`unlockAndRestore()` are called on the expected transitions (home ⇄ another route).
-  Use `push`+`pop`, not `go`, to mirror the real back-button path — `go` and `pop` don't exercise
-  the same router-internal code path.
 
 ---
 
@@ -375,8 +369,8 @@ interface — that's the actual seam domain code depends on, and mocking the imp
 bypasses it: name the mock after the interface (`MockIProjectsRepository implements
 IProjectsRepository`), never after the concrete class (`MockProjectsRepository` is wrong when
 `IProjectsRepository` exists). When a class has no separate interface (use cases, viewmodels, the
-Redux `Store`, shared services like `PopupService`/`NavigatorService`/`AppPreferencesStore`/
-`WindowController`), mock the concrete class directly and name the mock after it
+Redux `Store`, shared services like `PopupService`/`NavigatorService`/`AppPreferencesStore`),
+mock the concrete class directly and name the mock after it
 (`MockPopupService implements PopupService`) — there's nothing else to mock, so that's still
 mocking the real seam, not a shortcut.
 

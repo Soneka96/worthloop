@@ -2,8 +2,7 @@
 ///
 /// Use these constants everywhere — never write route strings inline.
 abstract final class AppRoutes {
-  /// The app's initial screen — a compact launcher, locked to a small window
-  /// size via [WindowRouteWatcher].
+  /// The app's initial screen.
   static const String home = '/';
 
   /// The GitHub Explorer reference feature.

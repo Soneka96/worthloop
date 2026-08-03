@@ -1,4 +1,4 @@
-appTitle: Clean Architecture Starter
+appTitle: WorthLoop
 
 home:
   subtitle: Uma demonstração do GitHub Explorer, pronta a pesquisar.
@@ -36,45 +36,19 @@ settings:
     zoomLevelSemantics: Tamanho do texto
   general:
     title: Geral
-    defaultSaveLocation:
-      title: Localização de guardar predefinida
-      noFolderSelected: Nenhuma pasta selecionada
-      pendingMove: A aplicação vai mover os seus dados para $path no próximo reinício.
-      browse: Procurar
-      restartNow: Reiniciar agora
-      notEmptyFolder: Esta pasta não está vazia. Escolha uma pasta vazia — a aplicação vai mover os dados para aqui.
-      stayMessage: Os seus dados vão continuar na pasta atual.
-      restartNotification:
-        title: Reinício pendente
-        body: Reinicie a aplicação para concluir a transferência dos seus dados para a nova pasta.
-      moveFailedNotification:
-        title: Não foi possível mover os seus dados
-        body: Certifique-se de que todas as janelas da aplicação estão fechadas e depois reabra a aplicação para tentar novamente.
     language:
       title: Idioma
     updates:
       title: Atualizações
       version: Versão $version
       checkForUpdates: Verificar atualizações
-      description: A aplicação verifica atualizações ao iniciar. As transferências abrem no seu navegador — nada é instalado automaticamente.
+      description: A verificação de atualizações será adicionada mais tarde.
       notImplemented: Verificar atualizações ainda não está implementado.
     about:
       title: Acerca
       copyright: © 2026 Soneka96
       privacyPolicy: Privacidade e utilização de dados
       notImplemented: Privacidade e utilização de dados ainda não está implementado.
-  logs:
-    title: Registos
-    location:
-      title: Localização
-      openFolder: Abrir pasta de registos
-    search:
-      hint: Pesquisar mensagens de registo
-    filterAll: Todos
-    export: Exportar registos
-    exportSucceeded: Registos exportados para $path
-    clear: Limpar registos
-    empty: Nenhuma entrada de registo corresponde aos filtros.
 
 enums:
   cornerStyle:
@@ -85,12 +59,4 @@ enums:
     compact: Compacto
   settingsCategory:
     general: Geral
-    profile: Perfil
     appearance: Aparência
-    editor: Editor
-    logs: Registos
-  logLevel:
-    info: Informação
-    warning: Aviso
-    error: Erro
-    success: Sucesso

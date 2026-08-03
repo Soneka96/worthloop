@@ -12,10 +12,7 @@ import 'package:worth_loop/shared/constants/layout_constants.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/theme/app_spacing_theme_extension.dart';
 
-/// The app's initial screen — a compact launcher, locked to a small window
-/// size (see `WindowRouteWatcher`). Its only job is picking a destination:
-/// a settings shortcut in the corner, and one primary action into GitHub
-/// Explorer, the reference feature.
+/// Temporary launcher shown while the WorthLoop home screen is built.
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 

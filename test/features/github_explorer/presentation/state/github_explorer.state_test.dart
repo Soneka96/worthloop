@@ -54,34 +54,30 @@ void main() {
       expect(next.isSearching, isTrue);
     });
 
-    test(
-      'GithubExplorerState copyWith replaces error when passed Some',
-      () {
-        final GithubExplorerState state = GithubExplorerState.initial();
+    test('GithubExplorerState copyWith replaces error when passed Some', () {
+      final GithubExplorerState state = GithubExplorerState.initial();
 
-        final GithubExplorerState next = state.copyWith(
-          error: const Some('boom'),
-        );
+      final GithubExplorerState next = state.copyWith(
+        error: const Some('boom'),
+      );
 
-        expect(next.error, 'boom');
-      },
-    );
+      expect(next.error, 'boom');
+    });
 
-    test(
-      'GithubExplorerState copyWith clears error when passed None',
-      () {
-        final GithubExplorerState state = GithubExplorerState.initial()
-            .copyWith(error: const Some('boom'));
+    test('GithubExplorerState copyWith clears error when passed None', () {
+      final GithubExplorerState state = GithubExplorerState.initial().copyWith(
+        error: const Some('boom'),
+      );
 
-        final GithubExplorerState next = state.copyWith(error: const None());
+      final GithubExplorerState next = state.copyWith(error: const None());
 
-        expect(next.error, isNull);
-      },
-    );
+      expect(next.error, isNull);
+    });
 
     test('GithubExplorerState copyWith preserves profile when omitted', () {
-      final GithubExplorerState state = GithubExplorerState.initial()
-          .copyWith(profile: buildGithubProfile());
+      final GithubExplorerState state = GithubExplorerState.initial().copyWith(
+        profile: buildGithubProfile(),
+      );
 
       final GithubExplorerState next = state.copyWith();
 
@@ -89,8 +85,9 @@ void main() {
     });
 
     test('GithubExplorerState copyWith preserves error when omitted', () {
-      final GithubExplorerState state = GithubExplorerState.initial()
-          .copyWith(error: const Some('boom'));
+      final GithubExplorerState state = GithubExplorerState.initial().copyWith(
+        error: const Some('boom'),
+      );
 
       final GithubExplorerState next = state.copyWith();
 

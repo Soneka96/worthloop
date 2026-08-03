@@ -1,7 +1,7 @@
 // Dart imports:
 import 'dart:convert';
 import 'dart:io';
-import 'dart:ui';
+import 'dart:ui' show Brightness;
 
 // Package imports:
 import 'package:path_provider/path_provider.dart';
@@ -9,11 +9,8 @@ import 'package:path_provider/path_provider.dart';
 // Project imports:
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
-import 'package:worth_loop/shared/preferences/general_settings_snapshot.dart';
 
-/// Persists small app-wide display/UI preferences (zoom, window geometry,
-/// theme, corner style, spacing density, font) and every General settings
-/// field as one JSON file in the app's support directory.
+/// Persists app-wide display preferences as one JSON file.
 class AppPreferencesStore {
   final Directory? _directoryOverride;
 
@@ -24,10 +21,6 @@ class AppPreferencesStore {
 
   static const String _fileName = 'app-preferences.json';
   static const String _zoomLevelKey = 'zoomLevel';
-  static const String _windowWidthKey = 'windowWidth';
-  static const String _windowHeightKey = 'windowHeight';
-  static const String _windowXKey = 'windowX';
-  static const String _windowYKey = 'windowY';
   static const String _darkThemeIdKey = 'darkThemeId';
   static const String _lightThemeIdKey = 'lightThemeId';
   static const String _brightnessKey = 'brightness';
@@ -35,8 +28,6 @@ class AppPreferencesStore {
   static const String _spacingDensityKey = 'spacingDensity';
   static const String _fontIdKey = 'fontId';
   static const String _localeKey = 'locale';
-  static const String _defaultSaveLocationKey = 'defaultSaveLocation';
-  static const String _pendingDataRootKey = 'pendingDataRoot';
 
   /// Reads the persisted zoom level, or `null` if none has been saved yet.
   Future<double?> readZoomLevel() async {
@@ -49,46 +40,6 @@ class AppPreferencesStore {
   Future<void> writeZoomLevel(double level) async {
     final Map<String, dynamic> data = await _readAll();
     data[_zoomLevelKey] = level;
-    await _writeAll(data);
-  }
-
-  /// Reads the persisted window size, or `null` if none has been saved yet.
-  Future<Size?> readWindowSize() async {
-    final Map<String, dynamic> data = await _readAll();
-    final Object? width = data[_windowWidthKey];
-    final Object? height = data[_windowHeightKey];
-    if (width is num && height is num) {
-      return Size(width.toDouble(), height.toDouble());
-    }
-    return null;
-  }
-
-  /// Persists [size] as the window size, leaving other keys untouched.
-  Future<void> writeWindowSize(Size size) async {
-    final Map<String, dynamic> data = await _readAll();
-    data[_windowWidthKey] = size.width;
-    data[_windowHeightKey] = size.height;
-    await _writeAll(data);
-  }
-
-  /// Reads the persisted window position, or `null` if none has been saved
-  /// yet.
-  Future<Offset?> readWindowPosition() async {
-    final Map<String, dynamic> data = await _readAll();
-    final Object? dx = data[_windowXKey];
-    final Object? dy = data[_windowYKey];
-    if (dx is num && dy is num) {
-      return Offset(dx.toDouble(), dy.toDouble());
-    }
-    return null;
-  }
-
-  /// Persists [position] as the window position, leaving other keys
-  /// untouched.
-  Future<void> writeWindowPosition(Offset position) async {
-    final Map<String, dynamic> data = await _readAll();
-    data[_windowXKey] = position.dx;
-    data[_windowYKey] = position.dy;
     await _writeAll(data);
   }
 
@@ -215,51 +166,6 @@ class AppPreferencesStore {
   Future<void> writeLocale(AppLocale locale) async {
     final Map<String, dynamic> data = await _readAll();
     data[_localeKey] = locale.name;
-    await _writeAll(data);
-  }
-
-  /// Reads every persisted General settings field in one file read. Each
-  /// field is `null` if it hasn't been saved yet.
-  Future<GeneralSettingsSnapshot> readGeneralSettings() async {
-    final Map<String, dynamic> data = await _readAll();
-    final Object? defaultSaveLocation = data[_defaultSaveLocationKey];
-    final Object? pendingDataRoot = data[_pendingDataRootKey];
-    return GeneralSettingsSnapshot(
-      defaultSaveLocation: defaultSaveLocation is String
-          ? defaultSaveLocation
-          : null,
-      pendingDataRoot: pendingDataRoot is String ? pendingDataRoot : null,
-    );
-  }
-
-  /// Persists [path] as the default save location, leaving other keys
-  /// untouched.
-  Future<void> writeDefaultSaveLocation(String path) async {
-    final Map<String, dynamic> data = await _readAll();
-    data[_defaultSaveLocationKey] = path;
-    await _writeAll(data);
-  }
-
-  /// Reads the folder queued to become the new data root on next launch, or
-  /// `null` if no move is pending.
-  Future<String?> readPendingDataRoot() async {
-    final Map<String, dynamic> data = await _readAll();
-    final Object? value = data[_pendingDataRootKey];
-    return value is String ? value : null;
-  }
-
-  /// Persists [path] as the folder to move the data root to on next launch,
-  /// leaving other keys untouched.
-  Future<void> writePendingDataRoot(String path) async {
-    final Map<String, dynamic> data = await _readAll();
-    data[_pendingDataRootKey] = path;
-    await _writeAll(data);
-  }
-
-  /// Clears the pending data-root move, leaving other keys untouched.
-  Future<void> clearPendingDataRoot() async {
-    final Map<String, dynamic> data = await _readAll();
-    data.remove(_pendingDataRootKey);
     await _writeAll(data);
   }
 

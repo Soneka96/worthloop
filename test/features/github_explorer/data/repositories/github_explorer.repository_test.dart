@@ -122,36 +122,34 @@ void main() {
         expect(
           result,
           const Left(failure),
-          reason: 'the original network failure surfaces, not the cache failure',
+          reason:
+              'the original network failure surfaces, not the cache failure',
         );
       },
     );
   });
 
-  group(
-    'GithubExplorerRepository implements loadRecentSearches() correctly',
-    () {
-      test(
-        'Method loadRecentSearches() returns whatever the local datasource returns',
-        () async {
-          final GithubProfileModel profile = buildGithubProfileModel();
-          when(
-            () => mockLocal.loadRecentSearches(),
-          ).thenAnswer((_) async => Right([profile]));
+  group('GithubExplorerRepository implements loadRecentSearches() correctly', () {
+    test(
+      'Method loadRecentSearches() returns whatever the local datasource returns',
+      () async {
+        final GithubProfileModel profile = buildGithubProfileModel();
+        when(
+          () => mockLocal.loadRecentSearches(),
+        ).thenAnswer((_) async => Right([profile]));
 
-          final Either<Failure, List<GithubProfile>> result = await repository
-              .loadRecentSearches();
+        final Either<Failure, List<GithubProfile>> result = await repository
+            .loadRecentSearches();
 
-          expect(result.isRight(), isTrue);
-          result.match(
-            (f) => fail('expected Right, got Left($f)'),
-            (profiles) => expect(profiles, [profile]),
-          );
-          verify(() => mockLocal.loadRecentSearches()).called(1);
-        },
-      );
-    },
-  );
+        expect(result.isRight(), isTrue);
+        result.match(
+          (f) => fail('expected Right, got Left($f)'),
+          (profiles) => expect(profiles, [profile]),
+        );
+        verify(() => mockLocal.loadRecentSearches()).called(1);
+      },
+    );
+  });
 
   group('GithubExplorerRepository implements toggleFavorite() correctly', () {
     test(

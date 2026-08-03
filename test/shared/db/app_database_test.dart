@@ -9,104 +9,78 @@ import 'package:path_provider_platform_interface/path_provider_platform_interfac
 
 // Project imports:
 import 'package:worth_loop/shared/db/app_database.dart';
-import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
 
 class FakePathProviderPlatform extends PathProviderPlatform {
-  FakePathProviderPlatform({
-    required this.supportPath,
-    required this.documentsPath,
-  });
-
   final String supportPath;
-  final String documentsPath;
+
+  FakePathProviderPlatform(this.supportPath);
 
   @override
   Future<String?> getApplicationSupportPath() async => supportPath;
-
-  @override
-  Future<String?> getApplicationDocumentsPath() async => documentsPath;
 }
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('AppDatabase — construction', () {
-    test('AppDatabase.forTesting opens with schema version 1', () async {
-      final AppDatabase db = AppDatabase.forTesting(NativeDatabase.memory());
+    late AppDatabase db;
+
+    setUp(() {
+      db = AppDatabase.forTesting(NativeDatabase.memory());
+    });
+
+    tearDown(() async {
+      await db.close();
+    });
+
+    test('AppDatabase.forTesting opens with schema version 1', () {
+      expect(db.schemaVersion, isA<int>());
       expect(db.schemaVersion, 1);
-      await db.close();
     });
 
-    test('AppDatabase.forTesting exposes a queryable, empty LogEntryTable', () async {
-      final AppDatabase db = AppDatabase.forTesting(NativeDatabase.memory());
-      final List<LogEntryRow> rows = await db.select(db.logEntryTable).get();
+    test(
+      'AppDatabase.forTesting exposes a queryable, empty GithubProfileTable',
+      () async {
+        final List<GithubProfileRow> rows = await db
+            .select(db.githubProfileTable)
+            .get();
 
-      expect(rows, isEmpty);
-      await db.close();
-    });
+        expect(rows, isA<List<GithubProfileRow>>());
+        expect(rows, isEmpty);
+      },
+    );
   });
 
   group('AppDatabase — connection location', () {
+    late AppDatabase db;
     late Directory supportDirectory;
-    late Directory documentsDirectory;
 
     setUp(() {
       supportDirectory = Directory.systemTemp.createTempSync(
-        'app_database_support_test',
-      );
-      documentsDirectory = Directory.systemTemp.createTempSync(
-        'app_database_documents_test',
+        'worth_loop_database_test',
       );
       PathProviderPlatform.instance = FakePathProviderPlatform(
-        supportPath: supportDirectory.path,
-        documentsPath: documentsDirectory.path,
+        supportDirectory.path,
       );
+      db = AppDatabase();
     });
 
-    tearDown(() {
+    tearDown(() async {
+      await db.close();
       supportDirectory.deleteSync(recursive: true);
-      documentsDirectory.deleteSync(recursive: true);
     });
 
     test(
-      'AppDatabase() creates its sqlite file in this app\'s dedicated subfolder under the platform documents directory when no defaultSaveLocation was persisted',
+      'AppDatabase creates app.sqlite in the application support directory',
       () async {
-        final AppDatabase db = AppDatabase();
         await db.customSelect('SELECT 1').get();
 
         final File expectedFile = File(
-          p.join(
-            documentsDirectory.path,
-            'Clean Architecture Starter',
-            AppDatabase.fileName,
-          ),
+          p.join(supportDirectory.path, AppDatabase.fileName),
         );
-        expect(await expectedFile.exists(), isTrue);
-
-        await db.close();
-      },
-    );
-
-    test(
-      'AppDatabase() creates its sqlite file at the persisted defaultSaveLocation when one was set',
-      () async {
-        final Directory customRoot = Directory.systemTemp.createTempSync(
-          'app_database_custom_root_test',
-        );
-        await AppPreferencesStore(
-          directory: supportDirectory,
-        ).writeDefaultSaveLocation(customRoot.path);
-
-        final AppDatabase db = AppDatabase();
-        await db.customSelect('SELECT 1').get();
-
-        final File expectedFile = File(
-          p.join(customRoot.path, AppDatabase.fileName),
-        );
-        expect(await expectedFile.exists(), isTrue);
-
-        await db.close();
-        customRoot.deleteSync(recursive: true);
+        final bool fileExists = await expectedFile.exists();
+        expect(fileExists, isA<bool>());
+        expect(fileExists, isTrue);
       },
     );
   });

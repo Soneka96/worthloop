@@ -7,7 +7,6 @@ import 'package:flutter/foundation.dart';
 // Project imports:
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
-import 'package:worth_loop/shared/theme/app_font_presets.dart';
 import 'package:worth_loop/shared/theme/app_theme.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 
@@ -27,13 +26,8 @@ class AppZoom extends ChangeNotifier {
   /// The five zoom steps the UI can snap to.
   static const List<double> levels = [75, 88, 100, 125, 150];
 
-  /// Multiplier applied on top of [levels] (as a fraction, alongside
-  /// [fontSizeFactorPresets]'s per-font correction) so 100% itself renders
-  /// at a comfortable size — Flutter's stock Material 3 type scale that
-  /// "100%" maps to by default reads too small on a desktop window. Tune
-  /// this one number to shift the whole 75%-150% range up or down together;
-  /// the five step values above stay untouched.
-  static const double baselineBump = 1.25;
+  /// Multiplier applied on top of [levels] and the selected font correction.
+  static const double baselineBump = 1;
 
   /// Restores a previously persisted level from [preferencesStore], or
   /// falls back to the constructor default (100) when nothing has been

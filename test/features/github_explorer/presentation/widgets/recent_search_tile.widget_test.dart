@@ -120,10 +120,7 @@ void main() {
       (tester) async {
         await tester.pumpWidget(
           buildWidget(
-            profile: buildGithubProfile(
-              username: 'octocat',
-              isFavorite: false,
-            ),
+            profile: buildGithubProfile(username: 'octocat', isFavorite: false),
           ),
         );
 

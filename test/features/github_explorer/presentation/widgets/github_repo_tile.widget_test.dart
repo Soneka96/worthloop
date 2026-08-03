@@ -11,14 +11,18 @@ import '../../fixtures/github_repo.fixture.dart';
 
 void main() {
   Widget buildWidget(GithubRepo repo) {
-    return MaterialApp(home: Scaffold(body: GithubRepoTile(repo: repo)));
+    return MaterialApp(
+      home: Scaffold(body: GithubRepoTile(repo: repo)),
+    );
   }
 
   group('GithubRepoTile contains widgets', () {
     testWidgets(
       'GithubRepoTile contains a Text with the correct parameters for the name',
       (tester) async {
-        await tester.pumpWidget(buildWidget(buildGithubRepo(name: 'Hello-World')));
+        await tester.pumpWidget(
+          buildWidget(buildGithubRepo(name: 'Hello-World')),
+        );
 
         expect(find.text('Hello-World'), findsOneWidget);
       },
@@ -66,7 +70,9 @@ void main() {
     testWidgets(
       'GithubRepoTile does not contain a description Text when description == null',
       (tester) async {
-        await tester.pumpWidget(buildWidget(buildGithubRepo(description: null)));
+        await tester.pumpWidget(
+          buildWidget(buildGithubRepo(description: null)),
+        );
 
         expect(find.text('My first repository'), findsNothing);
       },

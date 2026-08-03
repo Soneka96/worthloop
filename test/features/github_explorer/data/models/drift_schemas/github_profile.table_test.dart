@@ -35,10 +35,9 @@ void main() {
               ),
             );
 
-        final GithubProfileRow row =
-            await (db.select(db.githubProfileTable)
-                  ..where((t) => t.username.equals('octocat')))
-                .getSingle();
+        final GithubProfileRow row = await (db.select(
+          db.githubProfileTable,
+        )..where((t) => t.username.equals('octocat'))).getSingle();
 
         expect(row.username, 'octocat');
         expect(row.avatarUrl, 'https://example.com/octocat.png');
@@ -68,10 +67,9 @@ void main() {
               ),
             );
 
-        final GithubProfileRow row =
-            await (db.select(db.githubProfileTable)
-                  ..where((t) => t.username.equals('octocat')))
-                .getSingle();
+        final GithubProfileRow row = await (db.select(
+          db.githubProfileTable,
+        )..where((t) => t.username.equals('octocat'))).getSingle();
 
         expect(row.name, isNull);
         expect(row.bio, isNull);

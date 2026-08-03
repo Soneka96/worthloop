@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mocktail/mocktail.dart';
 import 'package:redux/redux.dart';
 
 // Project imports:
@@ -17,16 +16,12 @@ import 'package:worth_loop/features/settings/presentation/screens/app_settings.s
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/navigation/app_router.dart';
 import 'package:worth_loop/shared/navigation/app_routes.dart';
-import 'package:worth_loop/shared/navigation/window_route_watcher.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/theme/app_font.dart';
 import 'package:worth_loop/shared/theme/app_shape.dart';
 import 'package:worth_loop/shared/theme/app_spacing.dart';
 import 'package:worth_loop/shared/theme/app_theme.dart';
 import 'package:worth_loop/shared/theme/app_zoom.dart';
-import 'package:worth_loop/shared/window/window_controller.dart';
-
-class MockWindowController extends Mock implements WindowController {}
 
 void main() {
   late Store<AppState> store;
@@ -99,90 +94,5 @@ void main() {
 
       expect(find.byType(AppSettingsScreen), findsOneWidget);
     });
-  });
-
-  group("GoRouter's window-lock watcher behaves correctly", () {
-    testWidgets(
-      'WindowRouteWatcher calls lockHome() when GoRouter starts at AppRoutes.home',
-      (tester) async {
-        final MockWindowController mockWindowController =
-            MockWindowController();
-        when(() => mockWindowController.lockHome()).thenAnswer((_) async {});
-        when(
-          () => mockWindowController.unlockAndRestore(),
-        ).thenAnswer((_) async {});
-
-        final GoRouter router = createRouter();
-        WindowRouteWatcher(mockWindowController).attachTo(router);
-
-        await tester.pumpWidget(
-          StoreProvider<AppState>(
-            store: store,
-            child: MaterialApp.router(routerConfig: router),
-          ),
-        );
-
-        verify(() => mockWindowController.lockHome()).called(greaterThan(0));
-        verifyNever(() => mockWindowController.unlockAndRestore());
-      },
-    );
-
-    testWidgets(
-      'WindowRouteWatcher calls unlockAndRestore() when GoRouter navigates to AppRoutes.appSettings',
-      (tester) async {
-        final MockWindowController mockWindowController =
-            MockWindowController();
-        when(() => mockWindowController.lockHome()).thenAnswer((_) async {});
-        when(
-          () => mockWindowController.unlockAndRestore(),
-        ).thenAnswer((_) async {});
-
-        final GoRouter router = createRouter();
-        WindowRouteWatcher(mockWindowController).attachTo(router);
-
-        await tester.pumpWidget(
-          StoreProvider<AppState>(
-            store: store,
-            child: MaterialApp.router(routerConfig: router),
-          ),
-        );
-        router.push(AppRoutes.appSettings);
-        await tester.pumpAndSettle();
-
-        verify(
-          () => mockWindowController.unlockAndRestore(),
-        ).called(greaterThan(0));
-      },
-    );
-
-    testWidgets(
-      'WindowRouteWatcher calls lockHome() when GoRouter pops back to AppRoutes.home from AppRoutes.appSettings',
-      (tester) async {
-        final MockWindowController mockWindowController =
-            MockWindowController();
-        when(() => mockWindowController.lockHome()).thenAnswer((_) async {});
-        when(
-          () => mockWindowController.unlockAndRestore(),
-        ).thenAnswer((_) async {});
-
-        final GoRouter router = createRouter();
-        WindowRouteWatcher(mockWindowController).attachTo(router);
-
-        await tester.pumpWidget(
-          StoreProvider<AppState>(
-            store: store,
-            child: MaterialApp.router(routerConfig: router),
-          ),
-        );
-        router.push(AppRoutes.appSettings);
-        await tester.pumpAndSettle();
-        clearInteractions(mockWindowController);
-
-        router.pop();
-        await tester.pumpAndSettle();
-
-        verify(() => mockWindowController.lockHome()).called(greaterThan(0));
-      },
-    );
   });
 }

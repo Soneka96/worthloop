@@ -106,8 +106,8 @@ void main() {
     test(
       'loadRecentSearches() returns a Right(empty list) when nothing is cached',
       () async {
-        final Either<Failure, List<GithubProfileModel>> result = await datasource
-            .loadRecentSearches();
+        final Either<Failure, List<GithubProfileModel>> result =
+            await datasource.loadRecentSearches();
 
         expect(result.isRight(), isTrue);
         expect(result.getOrElse((_) => []), isEmpty);
@@ -128,9 +128,8 @@ void main() {
         ),
       );
 
-      final List<GithubProfileModel> profiles = (await datasource
-              .loadRecentSearches())
-          .getOrElse((_) => []);
+      final List<GithubProfileModel> profiles =
+          (await datasource.loadRecentSearches()).getOrElse((_) => []);
 
       expect(profiles.first.username, 'newer');
       expect(profiles.last.username, 'older');
@@ -141,8 +140,8 @@ void main() {
       () async {
         await db.customStatement('DROP TABLE github_profile_table');
 
-        final Either<Failure, List<GithubProfileModel>> result = await datasource
-            .loadRecentSearches();
+        final Either<Failure, List<GithubProfileModel>> result =
+            await datasource.loadRecentSearches();
 
         expect(result.isLeft(), isTrue);
       },
@@ -150,37 +149,31 @@ void main() {
   });
 
   group('Method toggleFavorite() returns the correct value', () {
-    test(
-      'toggleFavorite() flips isFavorite from false to true',
-      () async {
-        await datasource.cacheProfile(
-          buildGithubProfileModel(username: 'octocat', isFavorite: false),
-        );
+    test('toggleFavorite() flips isFavorite from false to true', () async {
+      await datasource.cacheProfile(
+        buildGithubProfileModel(username: 'octocat', isFavorite: false),
+      );
 
-        await datasource.toggleFavorite('octocat');
+      await datasource.toggleFavorite('octocat');
 
-        final GithubProfileModel? cached = (await datasource.getCachedProfile(
-          'octocat',
-        )).getOrElse((_) => null);
-        expect(cached?.isFavorite, isTrue);
-      },
-    );
+      final GithubProfileModel? cached = (await datasource.getCachedProfile(
+        'octocat',
+      )).getOrElse((_) => null);
+      expect(cached?.isFavorite, isTrue);
+    });
 
-    test(
-      'toggleFavorite() flips isFavorite from true to false',
-      () async {
-        await datasource.cacheProfile(
-          buildGithubProfileModel(username: 'octocat', isFavorite: true),
-        );
+    test('toggleFavorite() flips isFavorite from true to false', () async {
+      await datasource.cacheProfile(
+        buildGithubProfileModel(username: 'octocat', isFavorite: true),
+      );
 
-        await datasource.toggleFavorite('octocat');
+      await datasource.toggleFavorite('octocat');
 
-        final GithubProfileModel? cached = (await datasource.getCachedProfile(
-          'octocat',
-        )).getOrElse((_) => null);
-        expect(cached?.isFavorite, isFalse);
-      },
-    );
+      final GithubProfileModel? cached = (await datasource.getCachedProfile(
+        'octocat',
+      )).getOrElse((_) => null);
+      expect(cached?.isFavorite, isFalse);
+    });
 
     test(
       'toggleFavorite() returns Right(unit) without writing when username is not cached',

@@ -94,9 +94,8 @@ void main() {
         expect((actionLog[1] as ProfileFoundAction).profile, profile);
         expect(actionLog[2], isA<LoadRecentSearchesAction>());
         verify(
-          () => mockSearchUseCase(
-            const SearchProfileParams(username: 'octocat'),
-          ),
+          () =>
+              mockSearchUseCase(const SearchProfileParams(username: 'octocat')),
         ).called(1);
       },
     );
@@ -136,10 +135,9 @@ void main() {
 
         expect(actionLog.length, 2);
         expect(actionLog[1], isA<RecentSearchesLoadedAction>());
-        expect(
-          (actionLog[1] as RecentSearchesLoadedAction).profiles,
-          [profile],
-        );
+        expect((actionLog[1] as RecentSearchesLoadedAction).profiles, [
+          profile,
+        ]);
       },
     );
 

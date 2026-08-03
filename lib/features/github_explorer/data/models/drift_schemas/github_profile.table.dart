@@ -28,8 +28,7 @@ class GithubProfileTable extends Table {
   TextColumn get reposJson => text()();
 
   /// Whether this profile is pinned in the recent-searches list.
-  BoolColumn get isFavorite =>
-      boolean().withDefault(const Constant(false))();
+  BoolColumn get isFavorite => boolean().withDefault(const Constant(false))();
 
   /// When this profile was last fetched.
   DateTimeColumn get fetchedAt => dateTime()();

@@ -26,12 +26,6 @@ class AboutSection extends StatelessWidget {
         TextButton(
           key: const Key('general-settings-privacy-policy-button'),
           onPressed: onOpenPrivacyPolicy,
-          style: TextButton.styleFrom(
-            padding: EdgeInsets.zero,
-            alignment: Alignment.centerLeft,
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
           child: Text(t.settings.general.about.privacyPolicy),
         ),
       ],

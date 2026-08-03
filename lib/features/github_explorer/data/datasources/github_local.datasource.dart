@@ -36,10 +36,9 @@ class GithubLocalDatasource {
     String username,
   ) async {
     try {
-      final GithubProfileRow? row =
-          await (_db.select(_db.githubProfileTable)
-                ..where((t) => t.username.equals(username)))
-              .getSingleOrNull();
+      final GithubProfileRow? row = await (_db.select(
+        _db.githubProfileTable,
+      )..where((t) => t.username.equals(username))).getSingleOrNull();
       return Right(row == null ? null : GithubProfileModel.fromRow(row));
     } on SqliteException catch (e) {
       return Left(DatabaseFailure(e.toString()));
@@ -71,10 +70,9 @@ class GithubLocalDatasource {
   /// isn't cached. Returns [DatabaseFailure] on the left if the write fails.
   Future<Either<Failure, Unit>> toggleFavorite(String username) async {
     try {
-      final GithubProfileRow? row =
-          await (_db.select(_db.githubProfileTable)
-                ..where((t) => t.username.equals(username)))
-              .getSingleOrNull();
+      final GithubProfileRow? row = await (_db.select(
+        _db.githubProfileTable,
+      )..where((t) => t.username.equals(username))).getSingleOrNull();
       if (row == null) {
         return const Right(unit);
       }

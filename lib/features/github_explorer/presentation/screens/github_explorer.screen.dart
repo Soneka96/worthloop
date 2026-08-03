@@ -125,7 +125,10 @@ class _GithubExplorerScreenState extends State<GithubExplorerScreen> {
                       viewmodel.onToggleFavorite(viewmodel.profile!.username),
                 ),
               SizedBox(height: context.spacing.lg),
-              Text(t.githubExplorer.recentSearches, style: textTheme.labelSmall),
+              Text(
+                t.githubExplorer.recentSearches,
+                style: textTheme.labelSmall,
+              ),
               SizedBox(height: context.spacing.xs),
               if (viewmodel.recentSearches.isEmpty)
                 Text(

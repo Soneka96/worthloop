@@ -25,8 +25,7 @@ abstract final class IconSizes {
 /// similar transient overlay.
 abstract final class PopupSizes {
   /// Max width for [PopupService.show]'s toast content — a cap, not a fixed
-  /// width, so a short message stays compact instead of stretching
-  /// edge-to-edge on a wide desktop window.
+  /// width, so a short message stays compact instead of stretching.
   static const double snackBarMaxWidth = 420;
 
   /// Max lines for [PopupService.show]'s toast content before it truncates

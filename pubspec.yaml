@@ -1,5 +1,5 @@
 name: worth_loop
-description: "A production-grade Flutter desktop starter — Redux, layered clean architecture, drift + dio, a 20-theme system, and full test coverage."
+description: "WorthLoop is an Android app for tracking and comparing product prices."
 publish_to: 'none'
 
 version: 0.1.0+1
@@ -30,14 +30,6 @@ dependencies:
   # File system
   path_provider: ^2.1.5
   path: ^1.9.1
-  file_selector: ^1.0.3
-  file: ^7.0.1
-
-  # Clipboard (Windows-reliable)
-  super_clipboard: ^0.9.1
-
-  # OS notifications
-  local_notifier: ^0.1.5
 
   # i18n
   slang: ^3.31.0
@@ -45,9 +37,6 @@ dependencies:
 
   # App version (About section)
   package_info_plus: ^8.3.0
-
-  # Window control
-  window_manager: ^0.5.1
 
   # Scroll fade edges
   fading_edge_scrollview: ^4.1.1
@@ -76,7 +65,6 @@ dev_dependencies:
   drift_dev: ^2.22.0
   build_runner: ^2.4.13
   slang_build_runner: ^3.31.0
-  file_selector_platform_interface: ^2.7.0
   path_provider_platform_interface: ^2.1.2
   package_info_plus_platform_interface: ^3.2.1
 
@@ -85,7 +73,7 @@ dev_dependencies:
   plugin_platform_interface: ^2.1.8
   import_sorter: ^4.6.0
 
-  # App icon generation (Windows/macOS) — run `dart run flutter_launcher_icons`
+  # App icon generation — run `dart run flutter_launcher_icons`
   flutter_launcher_icons: ^0.14.4
 
   # Test/command runner with completion notifications — run `dart run taskflare`
@@ -93,13 +81,7 @@ dev_dependencies:
 
 flutter_launcher_icons:
   image_path: "assets/icon,png.png"
-  windows:
-    generate: true
-    image_path: "assets/icon,png.png"
-    icon_size: 256
-  macos:
-    generate: true
-    image_path: "assets/icon,png.png"
+  android: true
 
 flutter:
   uses-material-design: true

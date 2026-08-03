@@ -262,17 +262,8 @@ enum SettingsCategory {
   /// General app preferences.
   general,
 
-  /// User profile.
-  profile,
-
   /// Theme and zoom controls.
   appearance,
-
-  /// Editor preferences.
-  editor,
-
-  /// Application logs.
-  logs,
 }
 
 /// Display/behaviour helpers for [SettingsCategory] — kept off the enum
@@ -282,20 +273,14 @@ extension SettingsCategoryX on SettingsCategory {
   String get label => switch (this) {
     SettingsCategory.none => '',
     SettingsCategory.general => t.enums.settingsCategory.general,
-    SettingsCategory.profile => t.enums.settingsCategory.profile,
     SettingsCategory.appearance => t.enums.settingsCategory.appearance,
-    SettingsCategory.editor => t.enums.settingsCategory.editor,
-    SettingsCategory.logs => t.enums.settingsCategory.logs,
   };
 
   /// The category's icon in the settings category list.
   IconData get icon => switch (this) {
     SettingsCategory.none => Icons.circle_outlined,
     SettingsCategory.general => Icons.settings_outlined,
-    SettingsCategory.profile => Icons.person_outline,
     SettingsCategory.appearance => Icons.palette_outlined,
-    SettingsCategory.editor => Icons.code,
-    SettingsCategory.logs => Icons.description_outlined,
   };
 
   /// Whether this category currently has content built for it.
@@ -306,57 +291,6 @@ extension SettingsCategoryX on SettingsCategory {
   static const Set<SettingsCategory> _enabledCategories = {
     SettingsCategory.general,
     SettingsCategory.appearance,
-    SettingsCategory.logs,
-  };
-}
-
-/// Severity of one [LogEntry] line.
-enum LogLevel {
-  /// Sentinel value — no level determined.
-  none,
-
-  /// Informational — normal progress.
-  info,
-
-  /// Recoverable issue — a retry, a slow response.
-  warning,
-
-  /// Unrecoverable issue for that entry — a failed request, a crash.
-  error,
-
-  /// Successful completion.
-  success,
-}
-
-/// Display helpers for [LogLevel] — kept off the enum itself so the enum
-/// stays a plain set of values.
-extension LogLevelX on LogLevel {
-  /// The level's human-readable label, used as its filter-chip text.
-  String get label => switch (this) {
-    LogLevel.none => '',
-    LogLevel.info => t.enums.logLevel.info,
-    LogLevel.warning => t.enums.logLevel.warning,
-    LogLevel.error => t.enums.logLevel.error,
-    LogLevel.success => t.enums.logLevel.success,
-  };
-
-  /// The level's colour, drawn from [colorScheme] rather than a literal hex
-  /// value so it follows whichever [ThemeId] preset is active.
-  Color color(ColorScheme colorScheme) => switch (this) {
-    LogLevel.none => colorScheme.outline,
-    LogLevel.info => colorScheme.primary,
-    LogLevel.warning => colorScheme.secondary,
-    LogLevel.error => colorScheme.error,
-    LogLevel.success => colorScheme.tertiary,
-  };
-
-  /// The level's icon shape in the log entry list.
-  IconData get icon => switch (this) {
-    LogLevel.none => Icons.circle_outlined,
-    LogLevel.info => Icons.info_outline,
-    LogLevel.warning => Icons.warning_amber_outlined,
-    LogLevel.error => Icons.error_outline,
-    LogLevel.success => Icons.check_circle_outline,
   };
 }
 

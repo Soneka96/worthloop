@@ -1,4 +1,4 @@
-appTitle: Clean Architecture Starter
+appTitle: WorthLoop
 
 home:
   subtitle: A GitHub Explorer demo, ready to search.
@@ -36,45 +36,19 @@ settings:
     zoomLevelSemantics: Text size
   general:
     title: General
-    defaultSaveLocation:
-      title: Default save location
-      noFolderSelected: No folder selected
-      pendingMove: The app will move your data to $path on next restart.
-      browse: Browse
-      restartNow: Restart now
-      notEmptyFolder: This folder isn't empty. Choose an empty folder — the app will move its data here.
-      stayMessage: Your data will stay in its current folder.
-      restartNotification:
-        title: Restart pending
-        body: Restart the app to finish moving your data to the new folder.
-      moveFailedNotification:
-        title: Couldn't move your data
-        body: Make sure every app window is closed, then reopen the app to try again.
     language:
       title: Language
     updates:
       title: Updates
       version: Version $version
       checkForUpdates: Check for updates
-      description: The app checks for updates on launch. Downloads open in your browser — nothing installs automatically.
+      description: Update checking will be added later.
       notImplemented: Checking for updates is not implemented yet.
     about:
       title: About
       copyright: © 2026 Soneka96
       privacyPolicy: Privacy & data use
       notImplemented: Privacy & data use is not implemented yet.
-  logs:
-    title: Logs
-    location:
-      title: Location
-      openFolder: Open logs folder
-    search:
-      hint: Search log messages
-    filterAll: All
-    export: Export logs
-    exportSucceeded: Logs exported to $path
-    clear: Clear logs
-    empty: No log entries match your filters.
 
 enums:
   cornerStyle:
@@ -85,12 +59,4 @@ enums:
     compact: Compact
   settingsCategory:
     general: General
-    profile: Profile
     appearance: Appearance
-    editor: Editor
-    logs: Logs
-  logLevel:
-    info: Info
-    warning: Warning
-    error: Error
-    success: Success

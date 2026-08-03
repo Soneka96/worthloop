@@ -90,9 +90,7 @@ class GithubProfileCard extends StatelessWidget {
               ),
               IconButton(
                 key: const Key('github-explorer-favorite-button'),
-                icon: Icon(
-                  profile.isFavorite ? Icons.star : Icons.star_border,
-                ),
+                icon: Icon(profile.isFavorite ? Icons.star : Icons.star_border),
                 color: profile.isFavorite
                     ? colorScheme.tertiary
                     : colorScheme.onSurfaceVariant,

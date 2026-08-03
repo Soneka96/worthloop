@@ -37,15 +37,18 @@ void main() {
         },
       );
 
-      test('Method onOpenSettings dispatches GoToSettingsAction when called', () {
-        final HomeScreenViewModel viewmodel = HomeScreenViewModel.fromStore(
-          buildStore(),
-        );
+      test(
+        'Method onOpenSettings dispatches GoToSettingsAction when called',
+        () {
+          final HomeScreenViewModel viewmodel = HomeScreenViewModel.fromStore(
+            buildStore(),
+          );
 
-        viewmodel.onOpenSettings();
+          viewmodel.onOpenSettings();
 
-        expect(dispatchedActions, [const GoToSettingsAction()]);
-      });
+          expect(dispatchedActions, [const GoToSettingsAction()]);
+        },
+      );
     },
   );
 }

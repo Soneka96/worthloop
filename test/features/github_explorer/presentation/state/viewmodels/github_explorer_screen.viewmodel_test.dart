@@ -79,16 +79,19 @@ void main() {
         },
       );
 
-      test('Method onOpenSettings dispatches GoToSettingsAction when called', () {
-        final GithubExplorerScreenViewModel viewmodel =
-            GithubExplorerScreenViewModel.fromStore(
-              buildStore(GithubExplorerState.initial()),
-            );
+      test(
+        'Method onOpenSettings dispatches GoToSettingsAction when called',
+        () {
+          final GithubExplorerScreenViewModel viewmodel =
+              GithubExplorerScreenViewModel.fromStore(
+                buildStore(GithubExplorerState.initial()),
+              );
 
-        viewmodel.onOpenSettings();
+          viewmodel.onOpenSettings();
 
-        expect(dispatchedActions, [const GoToSettingsAction()]);
-      });
+          expect(dispatchedActions, [const GoToSettingsAction()]);
+        },
+      );
 
       test('Method onGoHome dispatches GoToHomeAction when called', () {
         final GithubExplorerScreenViewModel viewmodel =

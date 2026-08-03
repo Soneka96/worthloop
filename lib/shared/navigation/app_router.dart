@@ -10,14 +10,9 @@ import 'package:worth_loop/features/home/presentation/screens/home.screen.dart';
 import 'package:worth_loop/features/settings/presentation/screens/app_settings.screen.dart';
 import 'package:worth_loop/shared/navigation/app_routes.dart';
 import 'package:worth_loop/shared/navigation/navigator_service.dart';
-import 'package:worth_loop/shared/navigation/window_route_watcher.dart';
 
 /// Creates and returns the app [GoRouter] instance.
-///
 /// Pass the returned router to [NavigatorService] and to [MaterialApp.router].
-/// Window lock/unlock as the active route changes is wired separately via
-/// [WindowRouteWatcher.attachTo] — see its own doc comment for why that
-/// can't be a [NavigatorObserver] passed in here.
 GoRouter createRouter() {
   return GoRouter(
     initialLocation: AppRoutes.home,

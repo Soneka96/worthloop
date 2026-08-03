@@ -10,9 +10,7 @@ import 'package:worth_loop/shared/constants/layout_constants.dart';
 import 'package:worth_loop/shared/features/fading_scroll_view.widget.dart';
 import 'package:worth_loop/shared/theme/app_spacing_theme_extension.dart';
 
-/// App-wide settings — sectioned category list with a content pane. Only
-/// "General", "Appearance", and "Logs" have content so far; the rest are
-/// disabled until they're built.
+/// App-wide settings with General and Appearance categories.
 class AppSettingsScreen extends StatefulWidget {
   const AppSettingsScreen({super.key});
 
@@ -23,10 +21,7 @@ class AppSettingsScreen extends StatefulWidget {
 class _AppSettingsScreenState extends State<AppSettingsScreen> {
   static const List<SettingsCategory> _categories = [
     SettingsCategory.general,
-    SettingsCategory.profile,
     SettingsCategory.appearance,
-    SettingsCategory.editor,
-    SettingsCategory.logs,
   ];
 
   SettingsCategory _selectedCategory = SettingsCategory.appearance;

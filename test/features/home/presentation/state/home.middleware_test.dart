@@ -39,15 +39,18 @@ void main() {
   tearDown(() => sl.reset());
 
   group('HomeMiddleware processes GoToGithubExplorerAction', () {
-    test('GoToGithubExplorerAction calls NavigatorService.push when called', () {
-      middleware.call(store, const GoToGithubExplorerAction(), next);
+    test(
+      'GoToGithubExplorerAction calls NavigatorService.push when called',
+      () {
+        middleware.call(store, const GoToGithubExplorerAction(), next);
 
-      expect(actionLog.length, 1);
-      expect(actionLog[0], isA<GoToGithubExplorerAction>());
-      verify(
-        () => mockNavigatorService.push(AppRoutes.githubExplorer),
-      ).called(1);
-    });
+        expect(actionLog.length, 1);
+        expect(actionLog[0], isA<GoToGithubExplorerAction>());
+        verify(
+          () => mockNavigatorService.push(AppRoutes.githubExplorer),
+        ).called(1);
+      },
+    );
   });
 
   group('HomeMiddleware processes GoToSettingsAction', () {

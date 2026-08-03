@@ -10,16 +10,19 @@ import '../../fixtures/github_profile.fixture.dart';
 
 void main() {
   group('githubExplorerReducer processes SearchProfileAction correctly', () {
-    test('githubExplorerReducer updates isSearching from SearchProfileAction', () {
-      final GithubExplorerState state = GithubExplorerState.initial();
-      final GithubExplorerState reducedState = githubExplorerReducer(
-        state,
-        const SearchProfileAction('octocat'),
-      );
+    test(
+      'githubExplorerReducer updates isSearching from SearchProfileAction',
+      () {
+        final GithubExplorerState state = GithubExplorerState.initial();
+        final GithubExplorerState reducedState = githubExplorerReducer(
+          state,
+          const SearchProfileAction('octocat'),
+        );
 
-      expect(state.isSearching, isFalse, reason: 'previous value');
-      expect(reducedState.isSearching, isTrue, reason: 'new value');
-    });
+        expect(state.isSearching, isFalse, reason: 'previous value');
+        expect(reducedState.isSearching, isTrue, reason: 'new value');
+      },
+    );
   });
 
   group('githubExplorerReducer processes ProfileFoundAction correctly', () {
@@ -76,11 +79,7 @@ void main() {
           );
 
           expect(state.recentSearches, isEmpty, reason: 'previous value');
-          expect(
-            reducedState.recentSearches,
-            [profile],
-            reason: 'new value',
-          );
+          expect(reducedState.recentSearches, [profile], reason: 'new value');
         },
       );
     },

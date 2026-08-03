@@ -12,32 +12,32 @@ import 'package:worth_loop/features/github_explorer/presentation/state/github_ex
 /// [LoadRecentSearchesAction] and [ToggleFavoriteAction] are middleware-only
 /// triggers with no state of their own — neither has a [TypedReducer] here,
 /// so `combineReducers` leaves the state unchanged for them.
-Reducer<GithubExplorerState> githubExplorerReducer =
-    combineReducers<GithubExplorerState>([
-      /// Handles a search starting. Updates [GithubExplorerState.isSearching].
-      TypedReducer<GithubExplorerState, SearchProfileAction>(
-        searchProfileReducer,
-      ).call,
+Reducer<GithubExplorerState>
+githubExplorerReducer = combineReducers<GithubExplorerState>([
+  /// Handles a search starting. Updates [GithubExplorerState.isSearching].
+  TypedReducer<GithubExplorerState, SearchProfileAction>(
+    searchProfileReducer,
+  ).call,
 
-      /// Handles a search succeeding.
-      /// Updates [GithubExplorerState.profile], [GithubExplorerState.isSearching],
-      /// [GithubExplorerState.error].
-      TypedReducer<GithubExplorerState, ProfileFoundAction>(
-        profileFoundReducer,
-      ).call,
+  /// Handles a search succeeding.
+  /// Updates [GithubExplorerState.profile], [GithubExplorerState.isSearching],
+  /// [GithubExplorerState.error].
+  TypedReducer<GithubExplorerState, ProfileFoundAction>(
+    profileFoundReducer,
+  ).call,
 
-      /// Handles a search failing.
-      /// Updates [GithubExplorerState.error], [GithubExplorerState.isSearching].
-      TypedReducer<GithubExplorerState, SearchFailedAction>(
-        searchFailedReducer,
-      ).call,
+  /// Handles a search failing.
+  /// Updates [GithubExplorerState.error], [GithubExplorerState.isSearching].
+  TypedReducer<GithubExplorerState, SearchFailedAction>(
+    searchFailedReducer,
+  ).call,
 
-      /// Handles cached profiles being loaded.
-      /// Updates [GithubExplorerState.recentSearches].
-      TypedReducer<GithubExplorerState, RecentSearchesLoadedAction>(
-        recentSearchesLoadedReducer,
-      ).call,
-    ]);
+  /// Handles cached profiles being loaded.
+  /// Updates [GithubExplorerState.recentSearches].
+  TypedReducer<GithubExplorerState, RecentSearchesLoadedAction>(
+    recentSearchesLoadedReducer,
+  ).call,
+]);
 
 /// Handles a search starting. Updates [GithubExplorerState.isSearching].
 GithubExplorerState searchProfileReducer(

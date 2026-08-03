@@ -59,9 +59,7 @@ class RecentSearchTile extends StatelessWidget {
               key: Key(
                 'github-explorer-recent-search-favorite-${profile.username}',
               ),
-              icon: Icon(
-                profile.isFavorite ? Icons.star : Icons.star_border,
-              ),
+              icon: Icon(profile.isFavorite ? Icons.star : Icons.star_border),
               color: profile.isFavorite
                   ? colorScheme.tertiary
                   : colorScheme.onSurfaceVariant,

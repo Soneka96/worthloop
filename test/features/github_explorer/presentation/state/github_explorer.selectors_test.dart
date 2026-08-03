@@ -10,34 +10,37 @@ import 'package:worth_loop/shared/state/app.state.dart';
 import '../../fixtures/github_profile.fixture.dart';
 
 void main() {
-  group(
-    'Method profileSelector() returns a GithubProfile instance',
-    () {
-      test('profileSelector() returns the githubExplorer profile', () {
-        final GithubProfile profile = buildGithubProfile();
-        final AppState state = AppState.initial().copyWith(
-          githubExplorer: GithubExplorerState.initial().copyWith(
-            profile: profile,
-          ),
-        );
+  group('Method profileSelector() returns a GithubProfile instance', () {
+    test('profileSelector() returns the githubExplorer profile', () {
+      final GithubProfile profile = buildGithubProfile();
+      final AppState state = AppState.initial().copyWith(
+        githubExplorer: GithubExplorerState.initial().copyWith(
+          profile: profile,
+        ),
+      );
 
-        expect(GithubExplorerSelectors.profileSelector(state), profile);
-      });
-    },
-  );
+      expect(GithubExplorerSelectors.profileSelector(state), profile);
+    });
+  });
 
   group(
     'Method recentSearchesSelector() returns a List<GithubProfile> instance',
     () {
-      test('recentSearchesSelector() returns the githubExplorer recentSearches', () {
-        final AppState state = AppState.initial().copyWith(
-          githubExplorer: GithubExplorerState.initial().copyWith(
-            recentSearches: [buildGithubProfile()],
-          ),
-        );
+      test(
+        'recentSearchesSelector() returns the githubExplorer recentSearches',
+        () {
+          final AppState state = AppState.initial().copyWith(
+            githubExplorer: GithubExplorerState.initial().copyWith(
+              recentSearches: [buildGithubProfile()],
+            ),
+          );
 
-        expect(GithubExplorerSelectors.recentSearchesSelector(state), hasLength(1));
-      });
+          expect(
+            GithubExplorerSelectors.recentSearchesSelector(state),
+            hasLength(1),
+          );
+        },
+      );
     },
   );
 

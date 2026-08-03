@@ -78,7 +78,10 @@ void main() {
         await tester.pumpWidget(
           buildWidget(
             profile: buildGithubProfile(
-              repos: [buildGithubRepo(), buildGithubRepo(name: 'second')],
+              repos: [
+                buildGithubRepo(),
+                buildGithubRepo(name: 'second'),
+              ],
             ),
           ),
         );
@@ -105,7 +108,9 @@ void main() {
       'GithubProfileCard uses username as the display name when name == null',
       (tester) async {
         await tester.pumpWidget(
-          buildWidget(profile: buildGithubProfile(username: 'octocat', name: null)),
+          buildWidget(
+            profile: buildGithubProfile(username: 'octocat', name: null),
+          ),
         );
 
         expect(find.text('octocat'), findsWidgets);

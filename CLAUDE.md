@@ -1,8 +1,8 @@
 # WorthLoop — Claude Instructions
 
-A production-grade Flutter **desktop** starter template — Redux state management, layered clean
+A production-grade Flutter **Android** application — Redux state management, layered clean
 architecture, drift local persistence, dio-backed remote datasources, a 20-theme system, and full
-test coverage. Target platforms: Windows, macOS, Linux. Includes one worked example feature,
+test coverage. Includes one worked example feature,
 GitHub Explorer (`lib/features/github_explorer/`), demonstrating the full
 remote+local-datasource → repository → usecase → Redux → screen chain — copy its shape when
 adding your own feature.
@@ -64,23 +64,14 @@ Gruvbox). Use `.claude/skills/add-theme-preset/SKILL.md` to add another one.
 | Local DB | `drift` + `sqlite3_flutter_libs` |
 | HTTP | `dio` |
 | Navigation | `go_router` (via `NavigatorService`) |
-| File system | `path_provider`, `path`, `file_selector` |
-| Clipboard | `super_clipboard` |
-| OS notifications | `local_notifier` |
+| File system | `path_provider`, `path` |
 | i18n | `slang` + `slang_flutter` for app text; SDK `flutter_localizations` for Material/Cupertino's own built-in strings once a non-English locale is supported |
 | App version | `package_info_plus` |
 | DI | manual `injection_container.dart` |
 | Testing | `flutter_test` + `mocktail` |
-| Test/command runner | `taskflare` — `dart run taskflare` runs tests/commands and fires a completion notification |
+| Test/command runner | `taskflare` |
 
-**Not used:** `auto_updater`, WinSparkle, Sparkle, ARB files, `url_launcher`, FCM, SignalR, mobile flavors.
-
-## Windows distribution notes
-
-- **No code signing certificate** by default. Windows users will see a SmartScreen "unverified publisher" warning on install unless you buy one. Call this out explicitly in release notes. Corporate Group Policy environments may block unsigned executables entirely.
-- **Visual Studio 2022** with "Desktop development with C++" workload is required to build the Windows target. CMake must be on PATH. `sqlite3_flutter_libs` vendors `sqlite3.dll` via CMake — the build fails with an opaque CMake error if VS is absent.
-- **`package_info_plus` on Linux** reads version from `pubspec.yaml` at build time. Returns the dev version in `flutter run`; correct in release builds.
-- **Releases ship as an Inno Setup installer**, not a bare `.exe` — see `windows/installer/setup.iss` and `.github/workflows/release.yml`. Pushing a `v*` tag builds and publishes it automatically.
+**Not used:** background workers, native home-screen widgets, ARB files, FCM, or mobile flavors.
 
 ## File naming conventions
 
@@ -111,12 +102,8 @@ dart run taskflare test                  # same, with a completion notification
 flutter pub get                          # resolve dependencies
 dart format .                            # format
 dart run build_runner build -d           # code generation (drift schema + slang)
-flutter run -d windows                   # run on Windows
-flutter run -d macos                     # run on macOS
-flutter run -d linux                     # run on Linux
-flutter build windows                    # Windows release build
-flutter build macos                      # macOS release build
-flutter build linux                      # Linux release build
+flutter run -d android                   # run on Android
+flutter build apk                        # build an Android APK
 ```
 
 ## Full conventions

@@ -43,21 +43,6 @@ void main() {
         expect((tile.leading as Icon).icon, SettingsCategory.appearance.icon);
       },
     );
-
-    testWidgets(
-      'SettingsCategoryTile contains a "settings-category-editor" ListTile with the correct parameters',
-      (tester) async {
-        await tester.pumpWidget(buildWidget(category: SettingsCategory.editor));
-
-        final ListTile tile = tester.widget(
-          find.byKey(const Key('settings-category-editor')),
-        );
-
-        expect(find.text('Editor'), findsOneWidget);
-        expect(tile.selected, false);
-        expect(tile.enabled, false);
-      },
-    );
   });
 
   group("SettingsCategoryTile's elements behavior", () {

@@ -51,10 +51,7 @@ void main() {
       (tester) async {
         await tester.pumpWidget(buildWidget());
 
-        expect(
-          find.byKey(const Key('home-settings-button')),
-          findsOneWidget,
-        );
+        expect(find.byKey(const Key('home-settings-button')), findsOneWidget);
       },
     );
 
@@ -75,7 +72,7 @@ void main() {
       (tester) async {
         await tester.pumpWidget(buildWidget());
 
-        expect(find.text('Clean Architecture Starter'), findsOneWidget);
+        expect(find.text('WorthLoop'), findsOneWidget);
       },
     );
   });

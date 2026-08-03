@@ -126,7 +126,7 @@ void main() {
         );
 
         loggerService.f('fatal message');
-        fakeNow = fakeNow.add(LogsConstants.alertDedupeWindow);
+        fakeNow = fakeNow.add(AlertConstants.alertDedupeWindow);
         loggerService.f('fatal message');
 
         verify(() => mockPopupService.show('fatal message')).called(2);
