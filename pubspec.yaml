@@ -1,0 +1,214 @@
+name: worth_loop
+description: "A production-grade Flutter desktop starter — Redux, layered clean architecture, drift + dio, a 20-theme system, and full test coverage."
+publish_to: 'none'
+
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State
+  flutter_redux: ^0.10.0
+  redux: ^5.0.0
+
+  # Local database
+  drift: ^2.22.0
+  sqlite3_flutter_libs: ^0.5.24
+
+  # HTTP
+  dio: ^5.7.0
+
+  # Navigation
+  go_router: ^14.6.3
+
+  # File system
+  path_provider: ^2.1.5
+  path: ^1.9.1
+  file_selector: ^1.0.3
+  file: ^7.0.1
+
+  # Clipboard (Windows-reliable)
+  super_clipboard: ^0.9.1
+
+  # OS notifications
+  local_notifier: ^0.1.5
+
+  # i18n
+  slang: ^3.31.0
+  slang_flutter: ^3.31.0
+
+  # App version (About section)
+  package_info_plus: ^8.3.0
+
+  # Window control
+  window_manager: ^0.5.1
+
+  # Scroll fade edges
+  fading_edge_scrollview: ^4.1.1
+
+  # AI-agent runtime inspection (debug builds only, see main.dart)
+  marionette_flutter: ^0.6.0
+
+  # Utilities
+  equatable: ^2.0.5
+  logger: ^2.5.0
+  get_it: ^9.2.1
+  meta: ^1.18.0
+  fpdart: ^1.2.0
+  sqlite3: ^2.9.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+  # Mocking
+  mocktail: ^1.0.4
+
+  # Code generation (drift schema + slang)
+  drift_dev: ^2.22.0
+  build_runner: ^2.4.13
+  slang_build_runner: ^3.31.0
+  file_selector_platform_interface: ^2.7.0
+  path_provider_platform_interface: ^2.1.2
+  package_info_plus_platform_interface: ^3.2.1
+
+  # i18n key-parity test
+  yaml: ^3.1.0
+  plugin_platform_interface: ^2.1.8
+  import_sorter: ^4.6.0
+
+  # App icon generation (Windows/macOS) — run `dart run flutter_launcher_icons`
+  flutter_launcher_icons: ^0.14.4
+
+  # Test/command runner with completion notifications — run `dart run taskflare`
+  taskflare: ^0.2.1
+
+flutter_launcher_icons:
+  image_path: "assets/icon,png.png"
+  windows:
+    generate: true
+    image_path: "assets/icon,png.png"
+    icon_size: 256
+  macos:
+    generate: true
+    image_path: "assets/icon,png.png"
+
+flutter:
+  uses-material-design: true
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter[opsz,wght].ttf
+          weight: 400
+        - asset: assets/fonts/Inter[opsz,wght].ttf
+          weight: 500
+        - asset: assets/fonts/Inter[opsz,wght].ttf
+          weight: 600
+        - asset: assets/fonts/Inter[opsz,wght].ttf
+          weight: 700
+    - family: JetBrains Mono
+      fonts:
+        - asset: assets/fonts/JetBrainsMono[wght].ttf
+          weight: 400
+        - asset: assets/fonts/JetBrainsMono[wght].ttf
+          weight: 500
+        - asset: assets/fonts/JetBrainsMono[wght].ttf
+          weight: 600
+        - asset: assets/fonts/JetBrainsMono[wght].ttf
+          weight: 700
+    - family: Bungee
+      fonts:
+        - asset: assets/fonts/Bungee-Regular.ttf
+          weight: 400
+    - family: Pacifico
+      fonts:
+        - asset: assets/fonts/Pacifico-Regular.ttf
+          weight: 400
+    - family: Permanent Marker
+      fonts:
+        - asset: assets/fonts/PermanentMarker-Regular.ttf
+          weight: 400
+    - family: Press Start 2P
+      fonts:
+        - asset: assets/fonts/PressStart2P-Regular.ttf
+          weight: 400
+    - family: Monoton
+      fonts:
+        - asset: assets/fonts/Monoton-Regular.ttf
+          weight: 400
+    - family: Playfair Display
+      fonts:
+        - asset: assets/fonts/PlayfairDisplay[wght].ttf
+          weight: 400
+        - asset: assets/fonts/PlayfairDisplay[wght].ttf
+          weight: 500
+        - asset: assets/fonts/PlayfairDisplay[wght].ttf
+          weight: 600
+        - asset: assets/fonts/PlayfairDisplay[wght].ttf
+          weight: 700
+    - family: Oswald
+      fonts:
+        - asset: assets/fonts/Oswald[wght].ttf
+          weight: 400
+        - asset: assets/fonts/Oswald[wght].ttf
+          weight: 500
+        - asset: assets/fonts/Oswald[wght].ttf
+          weight: 600
+        - asset: assets/fonts/Oswald[wght].ttf
+          weight: 700
+    - family: Caveat
+      fonts:
+        - asset: assets/fonts/Caveat[wght].ttf
+          weight: 400
+        - asset: assets/fonts/Caveat[wght].ttf
+          weight: 500
+        - asset: assets/fonts/Caveat[wght].ttf
+          weight: 600
+        - asset: assets/fonts/Caveat[wght].ttf
+          weight: 700
+    - family: Space Mono
+      fonts:
+        - asset: assets/fonts/SpaceMono-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/SpaceMono-Bold.ttf
+          weight: 700
+    - family: Fira Code
+      fonts:
+        - asset: assets/fonts/FiraCode[wght].ttf
+          weight: 400
+        - asset: assets/fonts/FiraCode[wght].ttf
+          weight: 500
+        - asset: assets/fonts/FiraCode[wght].ttf
+          weight: 600
+        - asset: assets/fonts/FiraCode[wght].ttf
+          weight: 700
+    - family: Bangers
+      fonts:
+        - asset: assets/fonts/Bangers-Regular.ttf
+          weight: 400
+    - family: Creepster
+      fonts:
+        - asset: assets/fonts/Creepster-Regular.ttf
+          weight: 400
+    - family: Bebas Neue
+      fonts:
+        - asset: assets/fonts/BebasNeue-Regular.ttf
+          weight: 400
+    - family: Amatic SC
+      fonts:
+        - asset: assets/fonts/AmaticSC-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/AmaticSC-Bold.ttf
+          weight: 700
+    - family: Abril Fatface
+      fonts:
+        - asset: assets/fonts/AbrilFatface-Regular.ttf
+          weight: 400

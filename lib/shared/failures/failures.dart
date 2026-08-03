@@ -1,0 +1,37 @@
+// Package imports:
+import 'package:dio/dio.dart';
+import 'package:equatable/equatable.dart';
+import 'package:meta/meta.dart';
+import 'package:sqlite3/sqlite3.dart';
+
+/// Base type for typed, recoverable errors translated from infrastructure exceptions.
+/// Datasources catch source-specific exceptions and wrap them in a concrete [Failure]
+/// before they reach a repository or use case.
+///
+/// All [Failure] subclasses live in this one file — they're tightly related, small
+/// value types, and grouping them keeps the whole hierarchy visible at a glance.
+@immutable
+abstract class Failure extends Equatable {
+  /// Human-readable description of what went wrong.
+  final String message;
+
+  const Failure(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+/// Wraps a database-layer exception (e.g. a drift [SqliteException]).
+class DatabaseFailure extends Failure {
+  const DatabaseFailure(super.message);
+}
+
+/// Wraps a filesystem/platform exception (e.g. the file picker failing).
+class FileSystemFailure extends Failure {
+  const FileSystemFailure(super.message);
+}
+
+/// Wraps a network-layer exception (e.g. a dio [DioException]).
+class NetworkFailure extends Failure {
+  const NetworkFailure(super.message);
+}

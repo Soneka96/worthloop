@@ -1,0 +1,6 @@
+targets:
+  $default:
+    builders:
+      slang_build_runner:
+        options:
+          input_file_pattern: .i18n.yaml

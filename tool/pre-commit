@@ -1,0 +1,11 @@
+#!/bin/sh
+# Formats and sorts imports for staged Dart files before commit.
+# Install: dart run tool/install_hooks.dart
+
+staged=$(git diff --cached --name-only --diff-filter=ACM -- '*.dart')
+[ -z "$staged" ] && exit 0
+
+dart format $staged || exit 1
+dart run import_sorter:main || exit 1
+
+git add $staged
