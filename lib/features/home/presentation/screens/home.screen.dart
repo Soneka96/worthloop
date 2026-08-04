@@ -6,6 +6,7 @@ import 'package:flutter_redux/flutter_redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/home/presentation/state/viewmodels/home_screen.viewmodel.dart';
+import 'package:worth_loop/features/home/presentation/widgets/home_header.widget.dart';
 import 'package:worth_loop/features/home/presentation/widgets/tracked_products_empty.widget.dart';
 import 'package:worth_loop/features/home/presentation/widgets/tracked_products_list.widget.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
@@ -22,7 +23,6 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
 
     return StoreConnector<AppState, HomeScreenViewModel>(
@@ -36,25 +36,7 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(t.appTitle, style: textTheme.headlineSmall),
-                    ),
-                    IconButton(
-                      key: const Key('home-settings-button'),
-                      onPressed: viewmodel.onOpenSettings,
-                      tooltip: t.settings.title,
-                      icon: Icon(
-                        Icons.settings_outlined,
-                        size: IconSizes.md,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-                Text(t.home.subtitle, style: textTheme.bodyMedium),
-                SizedBox(height: context.spacing.sm),
+                HomeHeader(onOpenSettings: viewmodel.onOpenSettings),
                 const IllustrativePriceNotice(),
                 SizedBox(height: context.spacing.lg),
                 Wrap(
