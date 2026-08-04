@@ -103,19 +103,3 @@ abstract final class ZoomControlSizes {
   /// Height of the background rail behind the ticks.
   static const double trackLineHeight = 2;
 }
-
-/// Sizes for the GitHub Explorer feature's profile card and list rows.
-abstract final class GithubExplorerSizes {
-  /// Minimum height of the search field — `isDense` shrinks it below the
-  /// 48dp minimum tap-target size otherwise.
-  static const double searchFieldMinHeight = 48;
-
-  /// Diameter of a searched profile's avatar on its result card.
-  static const double profileAvatarDiameter = 64;
-
-  /// Diameter of a recent-search row's avatar thumbnail.
-  static const double recentSearchAvatarDiameter = 32;
-
-  /// Minimum height of a repository row.
-  static const double repoRowMinHeight = 40;
-}

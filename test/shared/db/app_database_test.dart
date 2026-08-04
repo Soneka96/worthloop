@@ -39,18 +39,6 @@ void main() {
       expect(db.schemaVersion, 2);
     });
 
-    test(
-      'AppDatabase.forTesting exposes a queryable, empty GithubProfileTable',
-      () async {
-        final List<GithubProfileRow> rows = await db
-            .select(db.githubProfileTable)
-            .get();
-
-        expect(rows, isA<List<GithubProfileRow>>());
-        expect(rows, isEmpty);
-      },
-    );
-
     test('AppDatabase.forTesting exposes the WorthLoop tables', () async {
       final List<ProductRow> products = await db.select(db.productTable).get();
       final List<StorePriceRow> prices = await db
@@ -113,24 +101,6 @@ void main() {
       );
       final File file = File(p.join(tempDirectory.path, 'legacy.sqlite'));
       final sqlite.Database legacy = sqlite.sqlite3.open(file.path);
-      legacy.execute('''
-        CREATE TABLE github_profile_table (
-          username TEXT NOT NULL PRIMARY KEY,
-          avatar_url TEXT NOT NULL,
-          name TEXT NULL,
-          bio TEXT NULL,
-          public_repos INTEGER NOT NULL,
-          followers INTEGER NOT NULL,
-          repos_json TEXT NOT NULL,
-          is_favorite INTEGER NOT NULL DEFAULT 0,
-          fetched_at INTEGER NOT NULL
-        )
-      ''');
-      legacy.execute('''
-        INSERT INTO github_profile_table (
-          username, avatar_url, public_repos, followers, repos_json, fetched_at
-        ) VALUES ('octocat', 'https://example.com/avatar.png', 1, 2, '[]', 1)
-      ''');
       legacy.execute('PRAGMA user_version = 1');
       legacy.dispose();
       db = AppDatabase.forTesting(NativeDatabase(file));
@@ -149,15 +119,9 @@ void main() {
       final List<RefreshSettingsRow> settings = await db
           .select(db.refreshSettingsTable)
           .get();
-      final GithubProfileRow profile = await db
-          .select(db.githubProfileTable)
-          .getSingle();
-
       expect(products, isEmpty);
       expect(prices, isEmpty);
       expect(settings, isEmpty);
-      expect(profile.username, isA<String>());
-      expect(profile.username, 'octocat');
     });
   });
 }

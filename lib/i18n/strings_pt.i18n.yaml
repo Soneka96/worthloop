@@ -31,22 +31,6 @@ productDetails:
   productNotFound: Produto não encontrado
   productNotFoundDescription: Volte aos produtos acompanhados e escolha novamente um artigo.
 
-githubExplorer:
-  title: Explorador do GitHub
-  searchHint: Pesquisar um nome de utilizador do GitHub
-  searchButton: Pesquisar
-  noResultYet: Pesquise um nome de utilizador para ver o perfil e os principais repositórios.
-  publicRepos: $count repositórios públicos
-  followers: $count seguidores
-  topRepos: Principais repositórios
-  noRepos: Este utilizador não tem repositórios públicos.
-  recentSearches: Pesquisas recentes
-  noRecentSearches: Ainda não pesquisou nada.
-  favoriteSemantics: Alternar favorito
-  settingsTooltip: Definições
-  goHomeTooltip: Início
-  errorPrefix: "Não foi possível carregar $username:"
-
 settings:
   title: Definições
   appearance:

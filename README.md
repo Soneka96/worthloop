@@ -25,8 +25,7 @@ Datasource -> Repository -> Use case -> Redux middleware -> State -> ViewModel -
 
 The products feature currently uses Drift for local persistence. A remote datasource contract
 defines the future price-collection boundary but is intentionally not wired until a real collector
-exists. The retained GitHub Explorer feature is the starter's complete remote-and-local reference
-implementation.
+exists.
 
 ## Getting started
 
@@ -59,7 +58,6 @@ lib/
     products/              product data, persistence, comparison, refresh, and details
     home/                  tracked-product watchlist
     settings/              appearance, language, and refresh-interval settings
-    github_explorer/       retained reference implementation of the full remote/local chain
   shared/
     db/                    Drift database aggregation
     failures/              typed infrastructure failures

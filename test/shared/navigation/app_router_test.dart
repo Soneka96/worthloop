@@ -78,21 +78,6 @@ void main() {
       expect(find.byType(HomeScreen), findsOneWidget);
     });
 
-    testWidgets('GoRouter navigates to the GithubExplorerScreen', (
-      tester,
-    ) async {
-      final GoRouter router = createRouter();
-
-      await tester.pumpWidget(
-        StoreProvider<AppState>(
-          store: store,
-          child: MaterialApp.router(routerConfig: router),
-        ),
-      );
-      router.go(AppRoutes.githubExplorer);
-      await tester.pumpAndSettle();
-    });
-
     testWidgets('GoRouter navigates to the AppSettingsScreen', (tester) async {
       final GoRouter router = createRouter();
 

@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 154 (77 per locale)
+/// Strings: 126 (63 per locale)
 ///
-/// Built on 2026-08-04 at 10:51 UTC
+/// Built on 2026-08-04 at 11:15 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -151,7 +151,6 @@ class Translations implements BaseTranslations<AppLocale, Translations> {
 	String get appTitle => 'WorthLoop';
 	late final _StringsHomeEn home = _StringsHomeEn._(_root);
 	late final _StringsProductDetailsEn productDetails = _StringsProductDetailsEn._(_root);
-	late final _StringsGithubExplorerEn githubExplorer = _StringsGithubExplorerEn._(_root);
 	late final _StringsSettingsEn settings = _StringsSettingsEn._(_root);
 	late final _StringsEnumsEn enums = _StringsEnumsEn._(_root);
 }
@@ -199,29 +198,6 @@ class _StringsProductDetailsEn {
 	String checkedAt({required Object time}) => 'Checked at ${time}';
 	String get productNotFound => 'Product not found';
 	String get productNotFoundDescription => 'Return to your tracked products and choose an item again.';
-}
-
-// Path: githubExplorer
-class _StringsGithubExplorerEn {
-	_StringsGithubExplorerEn._(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-	String get title => 'GitHub Explorer';
-	String get searchHint => 'Search a GitHub username';
-	String get searchButton => 'Search';
-	String get noResultYet => 'Search a username to see their profile and top repositories.';
-	String publicRepos({required Object count}) => '${count} public repos';
-	String followers({required Object count}) => '${count} followers';
-	String get topRepos => 'Top repositories';
-	String get noRepos => 'This user has no public repositories.';
-	String get recentSearches => 'Recent searches';
-	String get noRecentSearches => 'Nothing searched yet.';
-	String get favoriteSemantics => 'Toggle favorite';
-	String get settingsTooltip => 'Settings';
-	String get goHomeTooltip => 'Home';
-	String errorPrefix({required Object username}) => 'Couldn\'t load ${username}:';
 }
 
 // Path: settings
@@ -394,7 +370,6 @@ class _StringsPt implements Translations {
 	@override String get appTitle => 'WorthLoop';
 	@override late final _StringsHomePt home = _StringsHomePt._(_root);
 	@override late final _StringsProductDetailsPt productDetails = _StringsProductDetailsPt._(_root);
-	@override late final _StringsGithubExplorerPt githubExplorer = _StringsGithubExplorerPt._(_root);
 	@override late final _StringsSettingsPt settings = _StringsSettingsPt._(_root);
 	@override late final _StringsEnumsPt enums = _StringsEnumsPt._(_root);
 }
@@ -442,29 +417,6 @@ class _StringsProductDetailsPt implements _StringsProductDetailsEn {
 	@override String checkedAt({required Object time}) => 'Verificado às ${time}';
 	@override String get productNotFound => 'Produto não encontrado';
 	@override String get productNotFoundDescription => 'Volte aos produtos acompanhados e escolha novamente um artigo.';
-}
-
-// Path: githubExplorer
-class _StringsGithubExplorerPt implements _StringsGithubExplorerEn {
-	_StringsGithubExplorerPt._(this._root);
-
-	@override final _StringsPt _root; // ignore: unused_field
-
-	// Translations
-	@override String get title => 'Explorador do GitHub';
-	@override String get searchHint => 'Pesquisar um nome de utilizador do GitHub';
-	@override String get searchButton => 'Pesquisar';
-	@override String get noResultYet => 'Pesquise um nome de utilizador para ver o perfil e os principais repositórios.';
-	@override String publicRepos({required Object count}) => '${count} repositórios públicos';
-	@override String followers({required Object count}) => '${count} seguidores';
-	@override String get topRepos => 'Principais repositórios';
-	@override String get noRepos => 'Este utilizador não tem repositórios públicos.';
-	@override String get recentSearches => 'Pesquisas recentes';
-	@override String get noRecentSearches => 'Ainda não pesquisou nada.';
-	@override String get favoriteSemantics => 'Alternar favorito';
-	@override String get settingsTooltip => 'Definições';
-	@override String get goHomeTooltip => 'Início';
-	@override String errorPrefix({required Object username}) => 'Não foi possível carregar ${username}:';
 }
 
 // Path: settings
@@ -644,20 +596,6 @@ extension on Translations {
 			case 'productDetails.checkedAt': return ({required Object time}) => 'Checked at ${time}';
 			case 'productDetails.productNotFound': return 'Product not found';
 			case 'productDetails.productNotFoundDescription': return 'Return to your tracked products and choose an item again.';
-			case 'githubExplorer.title': return 'GitHub Explorer';
-			case 'githubExplorer.searchHint': return 'Search a GitHub username';
-			case 'githubExplorer.searchButton': return 'Search';
-			case 'githubExplorer.noResultYet': return 'Search a username to see their profile and top repositories.';
-			case 'githubExplorer.publicRepos': return ({required Object count}) => '${count} public repos';
-			case 'githubExplorer.followers': return ({required Object count}) => '${count} followers';
-			case 'githubExplorer.topRepos': return 'Top repositories';
-			case 'githubExplorer.noRepos': return 'This user has no public repositories.';
-			case 'githubExplorer.recentSearches': return 'Recent searches';
-			case 'githubExplorer.noRecentSearches': return 'Nothing searched yet.';
-			case 'githubExplorer.favoriteSemantics': return 'Toggle favorite';
-			case 'githubExplorer.settingsTooltip': return 'Settings';
-			case 'githubExplorer.goHomeTooltip': return 'Home';
-			case 'githubExplorer.errorPrefix': return ({required Object username}) => 'Couldn\'t load ${username}:';
 			case 'settings.title': return 'Settings';
 			case 'settings.appearance.title': return 'Appearance';
 			case 'settings.appearance.theme': return 'Theme';
@@ -729,20 +667,6 @@ extension on _StringsPt {
 			case 'productDetails.checkedAt': return ({required Object time}) => 'Verificado às ${time}';
 			case 'productDetails.productNotFound': return 'Produto não encontrado';
 			case 'productDetails.productNotFoundDescription': return 'Volte aos produtos acompanhados e escolha novamente um artigo.';
-			case 'githubExplorer.title': return 'Explorador do GitHub';
-			case 'githubExplorer.searchHint': return 'Pesquisar um nome de utilizador do GitHub';
-			case 'githubExplorer.searchButton': return 'Pesquisar';
-			case 'githubExplorer.noResultYet': return 'Pesquise um nome de utilizador para ver o perfil e os principais repositórios.';
-			case 'githubExplorer.publicRepos': return ({required Object count}) => '${count} repositórios públicos';
-			case 'githubExplorer.followers': return ({required Object count}) => '${count} seguidores';
-			case 'githubExplorer.topRepos': return 'Principais repositórios';
-			case 'githubExplorer.noRepos': return 'Este utilizador não tem repositórios públicos.';
-			case 'githubExplorer.recentSearches': return 'Pesquisas recentes';
-			case 'githubExplorer.noRecentSearches': return 'Ainda não pesquisou nada.';
-			case 'githubExplorer.favoriteSemantics': return 'Alternar favorito';
-			case 'githubExplorer.settingsTooltip': return 'Definições';
-			case 'githubExplorer.goHomeTooltip': return 'Início';
-			case 'githubExplorer.errorPrefix': return ({required Object username}) => 'Não foi possível carregar ${username}:';
 			case 'settings.title': return 'Definições';
 			case 'settings.appearance.title': return 'Aparência';
 			case 'settings.appearance.theme': return 'Tema';

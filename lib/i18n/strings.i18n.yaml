@@ -31,22 +31,6 @@ productDetails:
   productNotFound: Product not found
   productNotFoundDescription: Return to your tracked products and choose an item again.
 
-githubExplorer:
-  title: GitHub Explorer
-  searchHint: Search a GitHub username
-  searchButton: Search
-  noResultYet: Search a username to see their profile and top repositories.
-  publicRepos: $count public repos
-  followers: $count followers
-  topRepos: Top repositories
-  noRepos: This user has no public repositories.
-  recentSearches: Recent searches
-  noRecentSearches: Nothing searched yet.
-  favoriteSemantics: Toggle favorite
-  settingsTooltip: Settings
-  goHomeTooltip: Home
-  errorPrefix: "Couldn't load $username:"
-
 settings:
   title: Settings
   appearance:
