@@ -46,7 +46,7 @@ void main() {
     sl.registerLazySingleton<PackageInfo>(
       () => PackageInfo(
         appName: 'WorthLoop Test',
-        packageName: 'io.github.soneka96.worthloop.test',
+        packageName: 'io.github.soneka96.worthloop',
         version: '0.0.0-test',
         buildNumber: '0',
       ),

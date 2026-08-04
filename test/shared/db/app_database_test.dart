@@ -69,8 +69,10 @@ void main() {
   group('AppDatabase — connection location', () {
     late AppDatabase db;
     late Directory supportDirectory;
+    late PathProviderPlatform previousPathProviderPlatform;
 
     setUp(() {
+      previousPathProviderPlatform = PathProviderPlatform.instance;
       supportDirectory = Directory.systemTemp.createTempSync(
         'worth_loop_database_test',
       );
@@ -82,6 +84,7 @@ void main() {
 
     tearDown(() async {
       await db.close();
+      PathProviderPlatform.instance = previousPathProviderPlatform;
       supportDirectory.deleteSync(recursive: true);
     });
 
