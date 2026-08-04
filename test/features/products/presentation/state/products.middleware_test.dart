@@ -14,6 +14,8 @@ import 'package:worth_loop/features/products/presentation/state/products.actions
 import 'package:worth_loop/features/products/presentation/state/products.middleware.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
+import 'package:worth_loop/shared/navigation/app_routes.dart';
+import 'package:worth_loop/shared/navigation/navigator_service.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/usecase/no_params.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
@@ -30,6 +32,8 @@ class MockRefreshAllProductsUseCase extends Mock
 
 class MockLoggerService extends Mock implements LoggerService {}
 
+class MockNavigatorService extends Mock implements NavigatorService {}
+
 class FakeRefreshProductParams extends Fake implements RefreshProductParams {}
 
 void main() {
@@ -39,6 +43,7 @@ void main() {
   late MockRefreshProductUseCase mockRefreshProductUseCase;
   late MockRefreshAllProductsUseCase mockRefreshAllProductsUseCase;
   late MockLoggerService mockLoggerService;
+  late MockNavigatorService mockNavigatorService;
   late List<dynamic> actionLog;
 
   void next(dynamic action) => actionLog.add(action);
@@ -55,6 +60,7 @@ void main() {
     mockRefreshProductUseCase = MockRefreshProductUseCase();
     mockRefreshAllProductsUseCase = MockRefreshAllProductsUseCase();
     mockLoggerService = MockLoggerService();
+    mockNavigatorService = MockNavigatorService();
     actionLog = [];
 
     when(() => store.dispatch(any())).thenAnswer(
@@ -67,11 +73,13 @@ void main() {
       mockRefreshAllProductsUseCase,
     );
     sl.registerSingleton<LoggerService>(mockLoggerService);
+    sl.registerSingleton<NavigatorService>(mockNavigatorService);
   });
 
   tearDown(() async {
     await sl.reset();
     reset(mockLoggerService);
+    reset(mockNavigatorService);
   });
 
   group('ProductsMiddleware processes LoadProductsAction', () {
@@ -233,5 +241,33 @@ void main() {
         verifyNoMoreInteractions(mockLoggerService);
       },
     );
+  });
+
+  group('ProductsMiddleware processes GoToProductDetailsAction', () {
+    test('GoToProductDetailsAction calls push with the product path', () async {
+      middleware.call(store, const GoToProductDetailsAction('product-1'), next);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(actionLog, [const GoToProductDetailsAction('product-1')]);
+      verify(
+        () => mockNavigatorService.push(
+          AppRoutes.productDetailsPath('product-1'),
+        ),
+      ).called(1);
+      verifyNoMoreInteractions(mockNavigatorService);
+      verifyZeroInteractions(mockLoggerService);
+    });
+  });
+
+  group('ProductsMiddleware processes GoBackFromProductDetailsAction', () {
+    test('GoBackFromProductDetailsAction calls pop', () async {
+      middleware.call(store, const GoBackFromProductDetailsAction(), next);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(actionLog, [const GoBackFromProductDetailsAction()]);
+      verify(mockNavigatorService.pop).called(1);
+      verifyNoMoreInteractions(mockNavigatorService);
+      verifyZeroInteractions(mockLoggerService);
+    });
   });
 }

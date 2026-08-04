@@ -14,11 +14,14 @@ import '../../../products/fixtures/product.fixture.dart';
 import '../../../products/fixtures/store_price.fixture.dart';
 
 void main() {
-  Widget buildWidget(Product product) => TranslationProvider(
-    child: MaterialApp(
-      home: Scaffold(body: TrackedProductWidget(product: product)),
-    ),
-  );
+  Widget buildWidget(Product product, {void Function()? onTap}) =>
+      TranslationProvider(
+        child: MaterialApp(
+          home: Scaffold(
+            body: TrackedProductWidget(product: product, onTap: onTap ?? () {}),
+          ),
+        ),
+      );
 
   group('TrackedProductWidget contains widgets', () {
     testWidgets(
@@ -76,6 +79,24 @@ void main() {
 
         expect(find.text('No available price'), findsOneWidget);
         expect(find.text('No store in stock'), findsOneWidget);
+      },
+    );
+  });
+
+  group("TrackedProductWidget's elements behavior", () {
+    testWidgets(
+      'TrackedProductWidget contains an InkWell with the correct behavior',
+      (WidgetTester tester) async {
+        final Product product = buildProduct();
+
+        await tester.pumpWidget(
+          buildWidget(product, onTap: () => print('onTap called')),
+        );
+
+        await expectLater(
+          () => tester.tap(find.byKey(Key('tracked-product-${product.id}'))),
+          prints('onTap called\n'),
+        );
       },
     );
   });

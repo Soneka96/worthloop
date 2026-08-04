@@ -10,4 +10,10 @@ abstract final class AppRoutes {
 
   /// App-wide settings — appearance, etc.
   static const String appSettings = '/settings';
+
+  /// A tracked product's current merchant offers.
+  static const String productDetails = '/products/:productId';
+
+  /// Builds the route path for the product identified by [productId].
+  static String productDetailsPath(String productId) => '/products/$productId';
 }

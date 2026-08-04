@@ -37,6 +37,7 @@ void main() {
     when(() => mockViewModel.isRefreshingAll).thenReturn(false);
     when(() => mockViewModel.onRefreshAll).thenReturn(() {});
     when(() => mockViewModel.onOpenSettings).thenReturn(() {});
+    when(() => mockViewModel.onOpenProduct).thenReturn((_) {});
 
     sl.registerFactoryParam<HomeScreenViewModel, Store<AppState>, void>(
       (store, _) => mockViewModel,
@@ -204,6 +205,22 @@ void main() {
         expect(button.onPressed, isNull);
       },
     );
+
+    testWidgets(
+      'HomeScreen contains a TrackedProductWidget with the correct behavior',
+      (WidgetTester tester) async {
+        when(
+          () => mockViewModel.onOpenProduct,
+        ).thenReturn((String productId) => print('opened $productId'));
+
+        await tester.pumpWidget(buildWidget());
+
+        await expectLater(
+          () => tester.tap(find.byKey(const Key('tracked-product-product-1'))),
+          prints('opened product-1\n'),
+        );
+      },
+    );
   });
 
   group(
@@ -310,6 +327,7 @@ void main() {
 
       const Key settingsKey = Key('home-settings-button');
       const Key refreshKey = Key('home-refresh-all-button');
+      const Key productKey = Key('tracked-product-product-1');
 
       await tester.sendKeyEvent(LogicalKeyboardKey.tab);
       await tester.pump();
@@ -325,10 +343,19 @@ void main() {
         find.byKey(refreshKey),
       );
 
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      final bool productFocused = hasPrimaryFocusWithin(
+        tester,
+        find.byKey(productKey),
+      );
+
       expect(settingsFocused, isA<bool>());
       expect(settingsFocused, isTrue);
       expect(refreshFocused, isA<bool>());
       expect(refreshFocused, isTrue);
+      expect(productFocused, isA<bool>());
+      expect(productFocused, isTrue);
     });
   });
 }

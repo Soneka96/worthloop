@@ -101,7 +101,11 @@ class HomeScreen extends StatelessWidget {
                               padding: EdgeInsets.only(
                                 bottom: context.spacing.sm,
                               ),
-                              child: TrackedProductWidget(product: product),
+                              child: TrackedProductWidget(
+                                product: product,
+                                onTap: () =>
+                                    viewmodel.onOpenProduct(product.id),
+                              ),
                             );
                           },
                         ),

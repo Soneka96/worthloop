@@ -1,3 +1,6 @@
+// Package imports:
+import 'package:redux/redux.dart';
+
 // Project imports:
 import 'package:worth_loop/features/products/data/datasources/products_local.datasource.dart';
 import 'package:worth_loop/features/products/data/repositories/products.repository.dart';
@@ -6,8 +9,10 @@ import 'package:worth_loop/features/products/domain/usecases/compare_prices.usec
 import 'package:worth_loop/features/products/domain/usecases/load_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_all_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_product.usecase.dart';
+import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
+import 'package:worth_loop/shared/state/app.state.dart';
 
 /// Registers tracked-product dependencies.
 void initProductsDependencies() {
@@ -27,4 +32,7 @@ void initProductsDependencies() {
     () => RefreshAllProductsUseCase(sl<IProductsRepository>()),
   );
   sl.registerLazySingleton<ComparePricesUseCase>(ComparePricesUseCase.new);
+  sl.registerFactoryParam<ProductDetailsViewModel, Store<AppState>, String>(
+    (store, productId) => ProductDetailsViewModel.fromStore(store, productId),
+  );
 }

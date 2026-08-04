@@ -27,12 +27,16 @@ class HomeScreenViewModel extends Equatable {
   /// Dispatches [GoToSettingsAction].
   final void Function() onOpenSettings;
 
+  /// Dispatches [GoToProductDetailsAction].
+  final void Function(String productId) onOpenProduct;
+
   const HomeScreenViewModel({
     required this.products,
     required this.isLoading,
     required this.isRefreshingAll,
     required this.onRefreshAll,
     required this.onOpenSettings,
+    required this.onOpenProduct,
   });
 
   factory HomeScreenViewModel.fromStore(Store<AppState> store) {
@@ -42,6 +46,8 @@ class HomeScreenViewModel extends Equatable {
       isRefreshingAll: ProductsSelectors.isRefreshingAllSelector(store.state),
       onRefreshAll: () => store.dispatch(const RefreshAllProductsAction()),
       onOpenSettings: () => store.dispatch(const GoToSettingsAction()),
+      onOpenProduct: (String productId) =>
+          store.dispatch(GoToProductDetailsAction(productId)),
     );
   }
 

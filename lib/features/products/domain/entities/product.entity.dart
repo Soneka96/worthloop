@@ -49,6 +49,14 @@ class Product extends Equatable {
     return prices.isEmpty ? null : prices.first;
   }
 
+  /// Offers ordered by availability and then by ascending price.
+  List<StorePrice> get pricesForDisplay {
+    final List<StorePrice> unavailable = storePrices
+        .where((StorePrice price) => !price.isAvailable)
+        .toList(growable: false);
+    return [...availablePricesSorted, ...unavailable];
+  }
+
   @override
   List<Object?> get props => [id, name, imageUrl, storePrices, lastUpdatedAt];
 }

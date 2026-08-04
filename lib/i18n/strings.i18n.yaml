@@ -13,6 +13,19 @@ home:
   emptyTitle: No tracked products
   emptyDescription: Products you track will appear here with their best available offer.
 
+productDetails:
+  title: Product details
+  backTooltip: Back
+  refresh: Refresh
+  refreshing: Refreshing
+  bestPrice: Best price
+  offers: "Store offers: $count"
+  available: In stock
+  unavailable: Out of stock
+  checkedAt: Checked at $time
+  productNotFound: Product not found
+  productNotFoundDescription: Return to your tracked products and choose an item again.
+
 githubExplorer:
   title: GitHub Explorer
   searchHint: Search a GitHub username

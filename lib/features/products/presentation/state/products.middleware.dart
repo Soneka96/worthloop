@@ -9,6 +9,8 @@ import 'package:worth_loop/features/products/domain/usecases/refresh_all_product
 import 'package:worth_loop/features/products/domain/usecases/refresh_product.usecase.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/injection_container.dart';
+import 'package:worth_loop/shared/navigation/app_routes.dart';
+import 'package:worth_loop/shared/navigation/navigator_service.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/usecase/no_params.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
@@ -26,6 +28,10 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
         _refreshProduct(store, action);
       case RefreshAllProductsAction _:
         _refreshAllProducts(store, action);
+      case GoToProductDetailsAction _:
+        _goToProductDetails(store, action);
+      case GoBackFromProductDetailsAction _:
+        _goBackFromProductDetails(store, action);
     }
   }
 
@@ -82,5 +88,23 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
         store.dispatch(ProductsLoadedAction(products));
       },
     );
+  }
+
+  /// Handles [GoToProductDetailsAction].
+  Future<void> _goToProductDetails(
+    Store<AppState> store,
+    GoToProductDetailsAction action,
+  ) {
+    sl<NavigatorService>().push(AppRoutes.productDetailsPath(action.productId));
+    return Future<void>.value();
+  }
+
+  /// Handles [GoBackFromProductDetailsAction].
+  Future<void> _goBackFromProductDetails(
+    Store<AppState> store,
+    GoBackFromProductDetailsAction action,
+  ) {
+    sl<NavigatorService>().pop();
+    return Future<void>.value();
   }
 }

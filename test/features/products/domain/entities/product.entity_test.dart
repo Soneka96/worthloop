@@ -91,4 +91,28 @@ void main() {
       expect(product.bestAvailablePrice, isNull);
     });
   });
+
+  group('Getter pricesForDisplay returns the correct value', () {
+    test('returns available offers first and sorted by ascending price', () {
+      final StorePrice expensive = buildStorePrice(
+        storeName: 'Expensive',
+        currentPrice: buildMoney(minorUnits: 60000),
+      );
+      final StorePrice unavailable = buildStorePrice(
+        storeName: 'Unavailable',
+        currentPrice: buildMoney(minorUnits: 10000),
+        isAvailable: false,
+      );
+      final StorePrice cheapest = buildStorePrice(
+        storeName: 'Cheapest',
+        currentPrice: buildMoney(minorUnits: 40000),
+      );
+      final Product product = buildProduct(
+        storePrices: [expensive, unavailable, cheapest],
+      );
+
+      expect(product.pricesForDisplay, [cheapest, expensive, unavailable]);
+      expect(product.storePrices, [expensive, unavailable, cheapest]);
+    });
+  });
 }

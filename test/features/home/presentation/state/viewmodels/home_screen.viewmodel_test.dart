@@ -49,6 +49,7 @@ void main() {
         expect(viewmodel.isRefreshingAll, isTrue);
         expect(viewmodel.onRefreshAll, isA<Function()>());
         expect(viewmodel.onOpenSettings, isA<Function()>());
+        expect(viewmodel.onOpenProduct, isA<void Function(String)>());
       });
 
       test(
@@ -74,6 +75,21 @@ void main() {
           viewmodel.onOpenSettings();
 
           expect(dispatchedActions, [const GoToSettingsAction()]);
+        },
+      );
+
+      test(
+        'Method onOpenProduct dispatches GoToProductDetailsAction when called',
+        () {
+          final HomeScreenViewModel viewmodel = HomeScreenViewModel.fromStore(
+            buildStore(AppState.initial()),
+          );
+
+          viewmodel.onOpenProduct('product-1');
+
+          expect(dispatchedActions, [
+            const GoToProductDetailsAction('product-1'),
+          ]);
         },
       );
     },

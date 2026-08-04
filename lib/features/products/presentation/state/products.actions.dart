@@ -100,3 +100,24 @@ class RefreshAllProductsFailedAction extends Equatable {
   @override
   List<Object?> get props => [message];
 }
+
+/// Requests navigation to one product's details.
+@immutable
+class GoToProductDetailsAction extends Equatable {
+  /// Identifier of the product to display.
+  final String productId;
+
+  const GoToProductDetailsAction(this.productId);
+
+  @override
+  List<Object?> get props => [productId];
+}
+
+/// Requests returning from product details.
+@immutable
+class GoBackFromProductDetailsAction extends Equatable {
+  const GoBackFromProductDetailsAction();
+
+  @override
+  List<Object?> get props => [];
+}

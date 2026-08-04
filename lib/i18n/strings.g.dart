@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 110 (55 per locale)
+/// Strings: 132 (66 per locale)
 ///
-/// Built on 2026-08-04 at 02:24 UTC
+/// Built on 2026-08-04 at 02:40 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -198,6 +198,8 @@ class Translations implements BaseTranslations<AppLocale, Translations> {
   // Translations
   String get appTitle => 'WorthLoop';
   late final _StringsHomeEn home = _StringsHomeEn._(_root);
+  late final _StringsProductDetailsEn productDetails =
+      _StringsProductDetailsEn._(_root);
   late final _StringsGithubExplorerEn githubExplorer =
       _StringsGithubExplorerEn._(_root);
   late final _StringsSettingsEn settings = _StringsSettingsEn._(_root);
@@ -223,6 +225,27 @@ class _StringsHomeEn {
   String get emptyTitle => 'No tracked products';
   String get emptyDescription =>
       'Products you track will appear here with their best available offer.';
+}
+
+// Path: productDetails
+class _StringsProductDetailsEn {
+  _StringsProductDetailsEn._(this._root);
+
+  final Translations _root; // ignore: unused_field
+
+  // Translations
+  String get title => 'Product details';
+  String get backTooltip => 'Back';
+  String get refresh => 'Refresh';
+  String get refreshing => 'Refreshing';
+  String get bestPrice => 'Best price';
+  String offers({required Object count}) => 'Store offers: ${count}';
+  String get available => 'In stock';
+  String get unavailable => 'Out of stock';
+  String checkedAt({required Object time}) => 'Checked at ${time}';
+  String get productNotFound => 'Product not found';
+  String get productNotFoundDescription =>
+      'Return to your tracked products and choose an item again.';
 }
 
 // Path: githubExplorer
@@ -425,6 +448,9 @@ class _StringsPt implements Translations {
   @override
   late final _StringsHomePt home = _StringsHomePt._(_root);
   @override
+  late final _StringsProductDetailsPt productDetails =
+      _StringsProductDetailsPt._(_root);
+  @override
   late final _StringsGithubExplorerPt githubExplorer =
       _StringsGithubExplorerPt._(_root);
   @override
@@ -465,6 +491,39 @@ class _StringsHomePt implements _StringsHomeEn {
   @override
   String get emptyDescription =>
       'Os produtos acompanhados aparecem aqui com a melhor oferta disponível.';
+}
+
+// Path: productDetails
+class _StringsProductDetailsPt implements _StringsProductDetailsEn {
+  _StringsProductDetailsPt._(this._root);
+
+  @override
+  final _StringsPt _root; // ignore: unused_field
+
+  // Translations
+  @override
+  String get title => 'Detalhes do produto';
+  @override
+  String get backTooltip => 'Voltar';
+  @override
+  String get refresh => 'Atualizar';
+  @override
+  String get refreshing => 'A atualizar';
+  @override
+  String get bestPrice => 'Melhor preço';
+  @override
+  String offers({required Object count}) => 'Ofertas em lojas: ${count}';
+  @override
+  String get available => 'Em stock';
+  @override
+  String get unavailable => 'Sem stock';
+  @override
+  String checkedAt({required Object time}) => 'Verificado às ${time}';
+  @override
+  String get productNotFound => 'Produto não encontrado';
+  @override
+  String get productNotFoundDescription =>
+      'Volte aos produtos acompanhados e escolha novamente um artigo.';
 }
 
 // Path: githubExplorer
@@ -728,6 +787,28 @@ extension on Translations {
         return 'No tracked products';
       case 'home.emptyDescription':
         return 'Products you track will appear here with their best available offer.';
+      case 'productDetails.title':
+        return 'Product details';
+      case 'productDetails.backTooltip':
+        return 'Back';
+      case 'productDetails.refresh':
+        return 'Refresh';
+      case 'productDetails.refreshing':
+        return 'Refreshing';
+      case 'productDetails.bestPrice':
+        return 'Best price';
+      case 'productDetails.offers':
+        return ({required Object count}) => 'Store offers: ${count}';
+      case 'productDetails.available':
+        return 'In stock';
+      case 'productDetails.unavailable':
+        return 'Out of stock';
+      case 'productDetails.checkedAt':
+        return ({required Object time}) => 'Checked at ${time}';
+      case 'productDetails.productNotFound':
+        return 'Product not found';
+      case 'productDetails.productNotFoundDescription':
+        return 'Return to your tracked products and choose an item again.';
       case 'githubExplorer.title':
         return 'GitHub Explorer';
       case 'githubExplorer.searchHint':
@@ -847,6 +928,28 @@ extension on _StringsPt {
         return 'Nenhum produto acompanhado';
       case 'home.emptyDescription':
         return 'Os produtos acompanhados aparecem aqui com a melhor oferta disponível.';
+      case 'productDetails.title':
+        return 'Detalhes do produto';
+      case 'productDetails.backTooltip':
+        return 'Voltar';
+      case 'productDetails.refresh':
+        return 'Atualizar';
+      case 'productDetails.refreshing':
+        return 'A atualizar';
+      case 'productDetails.bestPrice':
+        return 'Melhor preço';
+      case 'productDetails.offers':
+        return ({required Object count}) => 'Ofertas em lojas: ${count}';
+      case 'productDetails.available':
+        return 'Em stock';
+      case 'productDetails.unavailable':
+        return 'Sem stock';
+      case 'productDetails.checkedAt':
+        return ({required Object time}) => 'Verificado às ${time}';
+      case 'productDetails.productNotFound':
+        return 'Produto não encontrado';
+      case 'productDetails.productNotFoundDescription':
+        return 'Volte aos produtos acompanhados e escolha novamente um artigo.';
       case 'githubExplorer.title':
         return 'Explorador do GitHub';
       case 'githubExplorer.searchHint':
