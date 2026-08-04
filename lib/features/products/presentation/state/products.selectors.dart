@@ -31,4 +31,16 @@ abstract final class ProductsSelectors {
 
   /// Returns the latest product-operation failure, or `null`.
   static String? errorSelector(AppState state) => state.products.error;
+
+  /// Returns whether a product is being created.
+  static bool isCreatingProductSelector(AppState state) =>
+      state.products.isCreatingProduct;
+
+  /// Returns the latest product-creation failure, or `null`.
+  static String? productCreationErrorSelector(AppState state) =>
+      state.products.creationError;
+
+  /// Returns the identifier of the latest created product, or `null`.
+  static String? createdProductIdSelector(AppState state) =>
+      state.products.createdProductId;
 }

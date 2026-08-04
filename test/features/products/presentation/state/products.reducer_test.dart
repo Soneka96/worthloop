@@ -86,6 +86,90 @@ void main() {
     });
   });
 
+  group('productsReducer processes CreateProductAction correctly', () {
+    test('CreateProductAction starts creation and clears its result', () {
+      final ProductsState state = ProductsState.initial().copyWith(
+        creationError: const Some('old failure'),
+        createdProductId: const Some('old-product'),
+      );
+
+      final ProductsState reducedState = productsReducer(
+        state,
+        const CreateProductAction(
+          name: 'Example Product',
+          url: 'https://example.com/products/1',
+        ),
+      );
+
+      expect(state.isCreatingProduct, isFalse, reason: 'creation starts idle');
+      expect(reducedState.isCreatingProduct, isTrue, reason: 'creation starts');
+      expect(
+        reducedState.creationError,
+        isNull,
+        reason: 'old creation error is cleared',
+      );
+      expect(
+        reducedState.createdProductId,
+        isNull,
+        reason: 'old created product is cleared',
+      );
+    });
+  });
+
+  group('productsReducer processes ProductCreatedAction correctly', () {
+    test('ProductCreatedAction appends the product and completes creation', () {
+      final Product product = buildProduct();
+      final ProductsState state = ProductsState.initial().copyWith(
+        isCreatingProduct: true,
+        creationError: const Some('old failure'),
+      );
+
+      final ProductsState reducedState = productsReducer(
+        state,
+        ProductCreatedAction(product),
+      );
+
+      expect(state.products, isEmpty, reason: 'no product was created yet');
+      expect(reducedState.products, [product], reason: 'product is appended');
+      expect(
+        reducedState.isCreatingProduct,
+        isFalse,
+        reason: 'creation completes',
+      );
+      expect(
+        reducedState.creationError,
+        isNull,
+        reason: 'old creation error is cleared',
+      );
+      expect(
+        reducedState.createdProductId,
+        product.id,
+        reason: 'created product is exposed',
+      );
+    });
+  });
+
+  group('productsReducer processes ProductCreationFailedAction correctly', () {
+    test('ProductCreationFailedAction completes creation with an error', () {
+      final ProductsState state = ProductsState.initial().copyWith(
+        isCreatingProduct: true,
+      );
+
+      final ProductsState reducedState = productsReducer(
+        state,
+        const ProductCreationFailedAction('failed'),
+      );
+
+      expect(state.isCreatingProduct, isTrue, reason: 'creation was active');
+      expect(
+        reducedState.isCreatingProduct,
+        isFalse,
+        reason: 'creation completes',
+      );
+      expect(reducedState.creationError, 'failed', reason: 'failure is stored');
+    });
+  });
+
   group('productsReducer processes RefreshProductAction correctly', () {
     test('RefreshProductAction modifies refreshingProductIds', () {
       final ProductsState state = ProductsState.initial().copyWith(

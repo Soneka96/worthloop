@@ -38,6 +38,45 @@ class ProductsLoadFailedAction extends Equatable {
   List<Object?> get props => [message];
 }
 
+/// Requests creating a tracked product from a website link.
+@immutable
+class CreateProductAction extends Equatable {
+  /// Product display name entered by the user.
+  final String name;
+
+  /// Product website link entered by the user.
+  final String url;
+
+  const CreateProductAction({required this.name, required this.url});
+
+  @override
+  List<Object?> get props => [name, url];
+}
+
+/// Carries a newly created product.
+@immutable
+class ProductCreatedAction extends Equatable {
+  /// The newly created product.
+  final Product product;
+
+  const ProductCreatedAction(this.product);
+
+  @override
+  List<Object?> get props => [product];
+}
+
+/// Carries a product-creation failure.
+@immutable
+class ProductCreationFailedAction extends Equatable {
+  /// The failure message.
+  final String message;
+
+  const ProductCreationFailedAction(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
 /// Requests refreshing one tracked product.
 @immutable
 class RefreshProductAction extends Equatable {

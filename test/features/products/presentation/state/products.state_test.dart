@@ -19,6 +19,9 @@ void main() {
       expect(state.isRefreshingAll, isFalse);
       expect(state.refreshingProductIds, isEmpty);
       expect(state.error, isNull);
+      expect(state.isCreatingProduct, isFalse);
+      expect(state.creationError, isNull);
+      expect(state.createdProductId, isNull);
     });
   });
 
@@ -32,6 +35,9 @@ void main() {
         isRefreshingAll: true,
         refreshingProductIds: {'product-1'},
         error: const Some('failed'),
+        isCreatingProduct: true,
+        creationError: const Some('creation failed'),
+        createdProductId: const Some('product-1'),
       );
 
       expect(state.products, [product]);
@@ -42,6 +48,9 @@ void main() {
       expect(state.refreshingProductIds, {'product-1'});
       expect(state.error, isA<String>());
       expect(state.error, 'failed');
+      expect(state.isCreatingProduct, isTrue);
+      expect(state.creationError, 'creation failed');
+      expect(state.createdProductId, 'product-1');
     });
 
     test('ProductsState copyWith clears error when passed None', () {

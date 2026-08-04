@@ -24,12 +24,24 @@ class ProductsState extends Equatable {
   /// The most recent operation failure, or `null`.
   final String? error;
 
+  /// Whether a product is being created.
+  final bool isCreatingProduct;
+
+  /// The most recent product-creation failure, or `null`.
+  final String? creationError;
+
+  /// Identifier of the most recently created product, or `null`.
+  final String? createdProductId;
+
   const ProductsState({
     required this.products,
     required this.isLoading,
     required this.isRefreshingAll,
     required this.refreshingProductIds,
     required this.error,
+    required this.isCreatingProduct,
+    required this.creationError,
+    required this.createdProductId,
   });
 
   /// Returns the state used before products are loaded.
@@ -39,6 +51,9 @@ class ProductsState extends Equatable {
     isRefreshingAll: false,
     refreshingProductIds: {},
     error: null,
+    isCreatingProduct: false,
+    creationError: null,
+    createdProductId: null,
   );
 
   /// Returns a copy with the supplied fields replaced.
@@ -48,12 +63,22 @@ class ProductsState extends Equatable {
     bool? isRefreshingAll,
     Set<String>? refreshingProductIds,
     Option<String>? error,
+    bool? isCreatingProduct,
+    Option<String>? creationError,
+    Option<String>? createdProductId,
   }) => ProductsState(
     products: products ?? this.products,
     isLoading: isLoading ?? this.isLoading,
     isRefreshingAll: isRefreshingAll ?? this.isRefreshingAll,
     refreshingProductIds: refreshingProductIds ?? this.refreshingProductIds,
     error: error == null ? this.error : error.toNullable(),
+    isCreatingProduct: isCreatingProduct ?? this.isCreatingProduct,
+    creationError: creationError == null
+        ? this.creationError
+        : creationError.toNullable(),
+    createdProductId: createdProductId == null
+        ? this.createdProductId
+        : createdProductId.toNullable(),
   );
 
   @override
@@ -63,5 +88,8 @@ class ProductsState extends Equatable {
     isRefreshingAll,
     refreshingProductIds,
     error,
+    isCreatingProduct,
+    creationError,
+    createdProductId,
   ];
 }

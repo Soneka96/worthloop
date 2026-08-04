@@ -7,6 +7,8 @@ import 'package:redux/redux.dart';
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/usecases/load_products.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/create_product.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/params/create_product.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/refresh_product.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_all_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_product.usecase.dart';
@@ -25,6 +27,8 @@ class MockStore extends Mock implements Store<AppState> {}
 
 class MockLoadProductsUseCase extends Mock implements LoadProductsUseCase {}
 
+class MockCreateProductUseCase extends Mock implements CreateProductUseCase {}
+
 class MockRefreshProductUseCase extends Mock implements RefreshProductUseCase {}
 
 class MockRefreshAllProductsUseCase extends Mock
@@ -36,10 +40,13 @@ class MockNavigatorService extends Mock implements NavigatorService {}
 
 class FakeRefreshProductParams extends Fake implements RefreshProductParams {}
 
+class FakeCreateProductParams extends Fake implements CreateProductParams {}
+
 void main() {
   late ProductsMiddleware middleware;
   late MockStore store;
   late MockLoadProductsUseCase mockLoadProductsUseCase;
+  late MockCreateProductUseCase mockCreateProductUseCase;
   late MockRefreshProductUseCase mockRefreshProductUseCase;
   late MockRefreshAllProductsUseCase mockRefreshAllProductsUseCase;
   late MockLoggerService mockLoggerService;
@@ -51,12 +58,14 @@ void main() {
   setUpAll(() {
     registerFallbackValue(NoParams());
     registerFallbackValue(FakeRefreshProductParams());
+    registerFallbackValue(FakeCreateProductParams());
   });
 
   setUp(() {
     middleware = ProductsMiddleware();
     store = MockStore();
     mockLoadProductsUseCase = MockLoadProductsUseCase();
+    mockCreateProductUseCase = MockCreateProductUseCase();
     mockRefreshProductUseCase = MockRefreshProductUseCase();
     mockRefreshAllProductsUseCase = MockRefreshAllProductsUseCase();
     mockLoggerService = MockLoggerService();
@@ -68,6 +77,7 @@ void main() {
           actionLog.add(invocation.positionalArguments[0]),
     );
     sl.registerSingleton<LoadProductsUseCase>(mockLoadProductsUseCase);
+    sl.registerSingleton<CreateProductUseCase>(mockCreateProductUseCase);
     sl.registerSingleton<RefreshProductUseCase>(mockRefreshProductUseCase);
     sl.registerSingleton<RefreshAllProductsUseCase>(
       mockRefreshAllProductsUseCase,
@@ -129,6 +139,68 @@ void main() {
         expect(captured.single, isA<NoParams>());
         verifyNoMoreInteractions(mockLoadProductsUseCase);
         verify(() => mockLoggerService.e('failed', showPopup: true)).called(1);
+        verifyNoMoreInteractions(mockLoggerService);
+      },
+    );
+  });
+
+  group('ProductsMiddleware processes CreateProductAction', () {
+    test(
+      'CreateProductAction dispatches ProductCreatedAction when successful',
+      () async {
+        final Product product = buildProduct();
+        when(
+          () => mockCreateProductUseCase(any()),
+        ).thenAnswer((_) async => Right(product));
+
+        middleware.call(
+          store,
+          const CreateProductAction(
+            name: 'Example Product',
+            url: 'https://example.com/products/1',
+          ),
+          next,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(actionLog[0], isA<CreateProductAction>());
+        expect(actionLog[1], isA<ProductCreatedAction>());
+        expect((actionLog[1] as ProductCreatedAction).product, product);
+        verify(
+          () => mockCreateProductUseCase(
+            const CreateProductParams(
+              name: 'Example Product',
+              url: 'https://example.com/products/1',
+            ),
+          ),
+        ).called(1);
+        verifyNoMoreInteractions(mockCreateProductUseCase);
+        verifyZeroInteractions(mockLoggerService);
+      },
+    );
+
+    test(
+      'CreateProductAction dispatches failure when creation fails',
+      () async {
+        const ValidationFailure failure = ValidationFailure('invalid');
+        when(
+          () => mockCreateProductUseCase(any()),
+        ).thenAnswer((_) async => const Left(failure));
+
+        middleware.call(
+          store,
+          const CreateProductAction(
+            name: 'Example Product',
+            url: 'http://example.com/products/1',
+          ),
+          next,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(actionLog[1], const ProductCreationFailedAction('invalid'));
+        verify(() => mockCreateProductUseCase(any())).called(1);
+        verify(() => mockLoggerService.e('invalid', showPopup: true)).called(1);
+        verifyNoMoreInteractions(mockCreateProductUseCase);
         verifyNoMoreInteractions(mockLoggerService);
       },
     );

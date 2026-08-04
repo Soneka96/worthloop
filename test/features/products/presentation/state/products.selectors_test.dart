@@ -105,8 +105,46 @@ void main() {
       expect(ProductsSelectors.errorSelector(AppState.initial()), isNull);
     });
   });
+
+  group('Product creation selectors return the correct values', () {
+    test('isCreatingProductSelector() returns creation state', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(isCreatingProduct: true),
+      );
+
+      expect(ProductsSelectors.isCreatingProductSelector(state), isTrue);
+    });
+
+    test('productCreationErrorSelector() returns the creation error', () {
+      final AppState state = _productsStateWithCreationError();
+
+      expect(
+        ProductsSelectors.productCreationErrorSelector(state),
+        'creation failed',
+      );
+    });
+
+    test(
+      'createdProductIdSelector() returns the created product identifier',
+      () {
+        final AppState state = AppState.initial().copyWith(
+          products: ProductsState.initial().copyWith(
+            createdProductId: const Some('product-1'),
+          ),
+        );
+
+        expect(ProductsSelectors.createdProductIdSelector(state), 'product-1');
+      },
+    );
+  });
 }
 
 AppState _productsStateWithError() => AppState.initial().copyWith(
   products: ProductsState.initial().copyWith(error: const Some('failed')),
+);
+
+AppState _productsStateWithCreationError() => AppState.initial().copyWith(
+  products: ProductsState.initial().copyWith(
+    creationError: const Some('creation failed'),
+  ),
 );

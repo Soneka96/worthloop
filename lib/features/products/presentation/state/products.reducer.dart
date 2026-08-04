@@ -23,6 +23,20 @@ Reducer<ProductsState> productsReducer = combineReducers<ProductsState>([
     productsLoadFailedReducer,
   ).call,
 
+  /// Handles [CreateProductAction].
+  /// Updates [ProductsState.isCreatingProduct], [ProductsState.creationError].
+  TypedReducer<ProductsState, CreateProductAction>(createProductReducer).call,
+
+  /// Handles [ProductCreatedAction].
+  /// Updates [ProductsState.products], [ProductsState.isCreatingProduct], [ProductsState.createdProductId].
+  TypedReducer<ProductsState, ProductCreatedAction>(productCreatedReducer).call,
+
+  /// Handles [ProductCreationFailedAction].
+  /// Updates [ProductsState.isCreatingProduct], [ProductsState.creationError].
+  TypedReducer<ProductsState, ProductCreationFailedAction>(
+    productCreationFailedReducer,
+  ).call,
+
   /// Handles [RefreshProductAction].
   /// Updates [ProductsState.refreshingProductIds], [ProductsState.error].
   TypedReducer<ProductsState, RefreshProductAction>(refreshProductReducer).call,
@@ -78,6 +92,39 @@ ProductsState productsLoadFailedReducer(
   ProductsState state,
   ProductsLoadFailedAction action,
 ) => state.copyWith(isLoading: false, error: Some(action.message));
+
+/// Handles [CreateProductAction].
+/// Updates [ProductsState.isCreatingProduct], [ProductsState.creationError].
+ProductsState createProductReducer(
+  ProductsState state,
+  CreateProductAction action,
+) => state.copyWith(
+  isCreatingProduct: true,
+  creationError: const None(),
+  createdProductId: const None(),
+);
+
+/// Handles [ProductCreatedAction].
+/// Updates [ProductsState.products], [ProductsState.isCreatingProduct], [ProductsState.createdProductId].
+ProductsState productCreatedReducer(
+  ProductsState state,
+  ProductCreatedAction action,
+) => state.copyWith(
+  products: [...state.products, action.product],
+  isCreatingProduct: false,
+  creationError: const None(),
+  createdProductId: Some(action.product.id),
+);
+
+/// Handles [ProductCreationFailedAction].
+/// Updates [ProductsState.isCreatingProduct], [ProductsState.creationError].
+ProductsState productCreationFailedReducer(
+  ProductsState state,
+  ProductCreationFailedAction action,
+) => state.copyWith(
+  isCreatingProduct: false,
+  creationError: Some(action.message),
+);
 
 /// Handles [RefreshProductAction].
 /// Updates [ProductsState.refreshingProductIds], [ProductsState.error].

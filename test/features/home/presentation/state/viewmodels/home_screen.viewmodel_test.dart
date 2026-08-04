@@ -1,5 +1,6 @@
 // Package imports:
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:redux/redux.dart';
 
 // Project imports:
@@ -35,6 +36,9 @@ void main() {
             products: [product],
             isLoading: true,
             isRefreshingAll: true,
+            isCreatingProduct: true,
+            creationError: const Some('creation failed'),
+            createdProductId: const Some('product-1'),
           ),
         );
 
@@ -47,9 +51,13 @@ void main() {
         expect(viewmodel.isLoading, isTrue);
         expect(viewmodel.isRefreshingAll, isA<bool>());
         expect(viewmodel.isRefreshingAll, isTrue);
+        expect(viewmodel.isCreatingProduct, isTrue);
+        expect(viewmodel.productCreationError, 'creation failed');
+        expect(viewmodel.createdProductId, 'product-1');
         expect(viewmodel.onRefreshAll, isA<Function()>());
         expect(viewmodel.onOpenSettings, isA<Function()>());
         expect(viewmodel.onOpenProduct, isA<void Function(String)>());
+        expect(viewmodel.onCreateProduct, isA<void Function(String, String)>());
       });
 
       test(
@@ -89,6 +97,27 @@ void main() {
 
           expect(dispatchedActions, [
             const GoToProductDetailsAction('product-1'),
+          ]);
+        },
+      );
+
+      test(
+        'Method onCreateProduct dispatches CreateProductAction when called',
+        () {
+          final HomeScreenViewModel viewmodel = HomeScreenViewModel.fromStore(
+            buildStore(AppState.initial()),
+          );
+
+          viewmodel.onCreateProduct(
+            'Example Product',
+            'https://example.com/products/1',
+          );
+
+          expect(dispatchedActions, [
+            const CreateProductAction(
+              name: 'Example Product',
+              url: 'https://example.com/products/1',
+            ),
           ]);
         },
       );
