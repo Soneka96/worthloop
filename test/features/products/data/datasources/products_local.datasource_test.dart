@@ -10,6 +10,7 @@ import 'package:worth_loop/features/products/data/datasources/products_local.dat
 import 'package:worth_loop/features/products/data/models/product.model.dart';
 import 'package:worth_loop/features/products/data/models/product_source.model.dart';
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/store_price.entity.dart';
 import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
@@ -436,6 +437,130 @@ void main() {
       expect(failure, isA<DatabaseFailure>());
       verify(() => mockLoggerService.e(failure.message)).called(1);
     });
+  });
+
+  group('Method createProduct() returns the correct value', () {
+    test('creates the product and source atomically', () async {
+      final Product product = Product(
+        id: 'product-1',
+        name: 'Example Product',
+        storePrices: [],
+        lastUpdatedAt: DateTime(2026),
+      );
+      final ProductSource source = ProductSource.fromUrl(
+        id: 'source-1',
+        productId: 'product-1',
+        url: 'https://example.com/products/1',
+        createdAt: DateTime(2026),
+      );
+
+      final Either<Failure, ProductModel> result = await datasource
+          .createProduct(product, source);
+      final List<ProductRow> products = await db.select(db.productTable).get();
+      final List<ProductSourceRow> sources = await db
+          .select(db.productSourceTable)
+          .get();
+
+      expect(result.getRight().toNullable(), isA<ProductModel>());
+      expect(products.length, 1);
+      expect(sources.length, 1);
+      verifyZeroInteractions(mockLoggerService);
+    });
+
+    test('rejects mismatched product and source identifiers', () async {
+      final Product product = Product(
+        id: 'product-1',
+        name: 'Example Product',
+        storePrices: [],
+        lastUpdatedAt: DateTime(2026),
+      );
+      final ProductSource source = ProductSource.fromUrl(
+        id: 'source-1',
+        productId: 'product-2',
+        url: 'https://example.com/products/1',
+        createdAt: DateTime(2026),
+      );
+
+      final Either<Failure, ProductModel> result = await datasource
+          .createProduct(product, source);
+
+      expect(
+        result,
+        const Left(
+          ValidationFailure('Product and source identifiers do not match'),
+        ),
+      );
+      expect(await db.select(db.productTable).get(), isEmpty);
+      verifyZeroInteractions(mockLoggerService);
+    });
+
+    test('rolls back the product when the source insert fails', () async {
+      await db
+          .into(db.productTable)
+          .insert(
+            ProductTableCompanion.insert(
+              id: 'existing-product',
+              name: 'Existing Product',
+              lastUpdatedAt: DateTime(2026),
+            ),
+          );
+      await db
+          .into(db.productSourceTable)
+          .insert(
+            ProductSourceTableCompanion.insert(
+              id: 'source-1',
+              productId: 'existing-product',
+              url: 'https://example.com/products/existing',
+              merchantDomain: 'example.com',
+              createdAt: DateTime(2026),
+            ),
+          );
+      final Product product = Product(
+        id: 'product-1',
+        name: 'Example Product',
+        storePrices: [],
+        lastUpdatedAt: DateTime(2026),
+      );
+      final ProductSource source = ProductSource.fromUrl(
+        id: 'source-1',
+        productId: 'product-1',
+        url: 'https://example.com/products/1',
+        createdAt: DateTime(2026),
+      );
+      final Either<Failure, ProductModel> result = await datasource
+          .createProduct(product, source);
+
+      expect(result.getLeft().toNullable(), isA<DatabaseFailure>());
+      expect(await db.select(db.productTable).get(), hasLength(1));
+      expect(await db.select(db.productSourceTable).get(), hasLength(1));
+      verify(() => mockLoggerService.e(any())).called(1);
+    });
+
+    test(
+      'returns ValidationFailure for a directly constructed invalid source',
+      () async {
+        final Product product = Product(
+          id: 'product-1',
+          name: 'Example Product',
+          storePrices: const [],
+          lastUpdatedAt: DateTime(2026),
+        );
+        final ProductSource source = ProductSource(
+          id: 'source-1',
+          productId: 'product-1',
+          url: 'http://example.com/products/1',
+          merchantDomain: 'example.com',
+          createdAt: DateTime(2026),
+        );
+
+        final Either<Failure, ProductModel> result = await datasource
+            .createProduct(product, source);
+
+        expect(result.getLeft().toNullable(), isA<ValidationFailure>());
+        expect(await db.select(db.productTable).get(), isEmpty);
+        verifyZeroInteractions(mockLoggerService);
+      },
+    );
   });
 
   group('Method loadProductSources() returns the correct value', () {

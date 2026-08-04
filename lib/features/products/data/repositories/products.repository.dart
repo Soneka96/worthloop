@@ -4,6 +4,7 @@ import 'package:fpdart/fpdart.dart';
 // Project imports:
 import 'package:worth_loop/features/products/data/datasources/products_local.datasource.dart';
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 
@@ -13,6 +14,14 @@ class ProductsRepository implements IProductsRepository {
 
   /// Creates a repository backed by [_localDatasource].
   ProductsRepository(this._localDatasource);
+
+  @override
+  Future<Either<Failure, Product>> createProduct(
+    Product product,
+    ProductSource source,
+  ) {
+    return _localDatasource.createProduct(product, source);
+  }
 
   @override
   Future<Either<Failure, List<Product>>> loadProducts() {

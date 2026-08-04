@@ -45,3 +45,8 @@ class NotFoundFailure extends Failure {
 class CurrencyFailure extends Failure {
   const CurrencyFailure(super.message);
 }
+
+/// Represents user input that cannot create a valid record.
+class ValidationFailure extends Failure {
+  const ValidationFailure(super.message);
+}

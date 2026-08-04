@@ -7,8 +7,9 @@ import 'package:sqlite3/sqlite3.dart';
 import 'package:worth_loop/features/products/data/datasources/fake_products.dart';
 import 'package:worth_loop/features/products/data/models/product.model.dart';
 import 'package:worth_loop/features/products/data/models/product_source.model.dart';
-import 'package:worth_loop/features/products/domain/entities/store_price.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/store_price.entity.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/utils/currency_helper_service.dart';
@@ -26,6 +27,48 @@ class ProductsLocalDatasource {
     this._currencyHelperService,
     this._loggerService,
   );
+
+  /// Creates a product and source in one transaction.
+  Future<Either<Failure, ProductModel>> createProduct(
+    Product product,
+    ProductSource source,
+  ) async {
+    try {
+      final ProductSource validatedSource = ProductSource.fromUrl(
+        id: source.id,
+        productId: source.productId,
+        url: source.url,
+        createdAt: source.createdAt,
+      );
+      if (product.id != validatedSource.productId) {
+        return const Left(
+          ValidationFailure('Product and source identifiers do not match'),
+        );
+      }
+      final ProductModel model = ProductModel(
+        id: product.id,
+        name: product.name,
+        imageUrl: product.imageUrl,
+        storePrices: product.storePrices,
+        lastUpdatedAt: product.lastUpdatedAt,
+      );
+      final ProductSourceModel sourceModel = ProductSourceModel.fromEntity(
+        validatedSource,
+      );
+      await _db.transaction(() async {
+        await _db.into(_db.productTable).insert(model.toCompanion());
+        await _db
+            .into(_db.productSourceTable)
+            .insert(sourceModel.toCompanion());
+      });
+      return Right(model);
+    } on ArgumentError catch (error) {
+      return Left(ValidationFailure(error.message.toString()));
+    } on SqliteException catch (error) {
+      _loggerService.e(error.toString());
+      return Left(DatabaseFailure(error.toString()));
+    }
+  }
 
   /// Loads every product, inserting illustrative data on the first run.
   Future<Either<Failure, List<ProductModel>>> loadProducts() async {
@@ -92,9 +135,19 @@ class ProductsLocalDatasource {
     ProductSource source,
   ) async {
     try {
-      final ProductSourceModel model = ProductSourceModel.fromEntity(source);
+      final ProductSource validatedSource = ProductSource.fromUrl(
+        id: source.id,
+        productId: source.productId,
+        url: source.url,
+        createdAt: source.createdAt,
+      );
+      final ProductSourceModel model = ProductSourceModel.fromEntity(
+        validatedSource,
+      );
       await _db.into(_db.productSourceTable).insert(model.toCompanion());
       return Right(model);
+    } on ArgumentError catch (error) {
+      return Left(ValidationFailure(error.message.toString()));
     } on SqliteException catch (error) {
       _loggerService.e(error.toString());
       return Left(DatabaseFailure(error.toString()));

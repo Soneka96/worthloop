@@ -13,4 +13,13 @@ void main() {
       expect(failure, isNot(const NotFoundFailure('different')));
     });
   });
+
+  group('ValidationFailure equality', () {
+    test('includes the failure message', () {
+      const ValidationFailure failure = ValidationFailure('invalid');
+
+      expect(failure, const ValidationFailure('invalid'));
+      expect(failure, isNot(const ValidationFailure('different')));
+    });
+  });
 }
