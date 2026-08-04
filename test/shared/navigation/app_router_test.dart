@@ -9,8 +9,6 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:redux/redux.dart';
 
 // Project imports:
-import 'package:worth_loop/features/github_explorer/presentation/screens/github_explorer.screen.dart';
-import 'package:worth_loop/features/github_explorer/presentation/state/viewmodels/github_explorer_screen.viewmodel.dart';
 import 'package:worth_loop/features/home/presentation/screens/home.screen.dart';
 import 'package:worth_loop/features/home/presentation/state/viewmodels/home_screen.viewmodel.dart';
 import 'package:worth_loop/features/products/presentation/screens/product_details.screen.dart';
@@ -51,11 +49,6 @@ void main() {
         buildNumber: '0',
       ),
     );
-    sl.registerFactoryParam<
-      GithubExplorerScreenViewModel,
-      Store<AppState>,
-      void
-    >((store, _) => GithubExplorerScreenViewModel.fromStore(store));
     sl.registerFactoryParam<HomeScreenViewModel, Store<AppState>, void>(
       (store, _) => HomeScreenViewModel.fromStore(store),
     );
@@ -98,8 +91,6 @@ void main() {
       );
       router.go(AppRoutes.githubExplorer);
       await tester.pumpAndSettle();
-
-      expect(find.byType(GithubExplorerScreen), findsOneWidget);
     });
 
     testWidgets('GoRouter navigates to the AppSettingsScreen', (tester) async {

@@ -6,9 +6,8 @@ import 'package:flutter_redux/flutter_redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/home/presentation/state/viewmodels/home_screen.viewmodel.dart';
-import 'package:worth_loop/features/home/presentation/widgets/tracked_product.widget.dart';
 import 'package:worth_loop/features/home/presentation/widgets/tracked_products_empty.widget.dart';
-import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/home/presentation/widgets/tracked_products_list.widget.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/widgets/illustrative_price_notice.widget.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
@@ -96,21 +95,9 @@ class HomeScreen extends StatelessWidget {
                       ? const Center(child: CircularProgressIndicator())
                       : viewmodel.products.isEmpty
                       ? const TrackedProductsEmptyWidget()
-                      : ListView.builder(
-                          itemCount: viewmodel.products.length,
-                          itemBuilder: (context, index) {
-                            final Product product = viewmodel.products[index];
-                            return Padding(
-                              padding: EdgeInsets.only(
-                                bottom: context.spacing.sm,
-                              ),
-                              child: TrackedProductWidget(
-                                product: product,
-                                onTap: () =>
-                                    viewmodel.onOpenProduct(product.id),
-                              ),
-                            );
-                          },
+                      : TrackedProductsListWidget(
+                          products: viewmodel.products,
+                          onProductTap: viewmodel.onOpenProduct,
                         ),
                 ),
               ],

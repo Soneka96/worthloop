@@ -6,7 +6,6 @@ import 'package:logger/logger.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 // Project imports:
-import 'package:worth_loop/features/github_explorer/github_explorer.injection_container.dart';
 import 'package:worth_loop/features/home/home.injection_container.dart';
 import 'package:worth_loop/features/products/products.injection_container.dart';
 import 'package:worth_loop/features/settings/settings.injection_container.dart';
@@ -69,7 +68,6 @@ Future<void> initDependencies() async {
 
   // Features
   initSettingsDependencies();
-  initGithubExplorerDependencies();
   initHomeDependencies();
   initProductsDependencies();
 

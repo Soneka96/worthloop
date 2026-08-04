@@ -8,7 +8,6 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 // Project imports:
-import 'package:worth_loop/features/github_explorer/data/models/drift_schemas/github_profile.table.dart';
 import 'package:worth_loop/features/products/data/models/drift_schemas/product.table.dart';
 import 'package:worth_loop/features/products/data/models/drift_schemas/store_price.table.dart';
 import 'package:worth_loop/features/settings/data/models/drift_schemas/refresh_settings.table.dart';
@@ -20,7 +19,6 @@ part 'app_database.g.dart';
 /// one database instance.
 @DriftDatabase(
   tables: [
-    GithubProfileTable,
     ProductTable,
     StorePriceTable,
     RefreshSettingsTable,

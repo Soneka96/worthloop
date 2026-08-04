@@ -10,7 +10,7 @@ import 'package:worth_loop/features/products/domain/entities/store_price.entity.
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
 import 'package:worth_loop/features/products/presentation/utils/price_formatter.dart';
 import 'package:worth_loop/features/products/presentation/widgets/illustrative_price_notice.widget.dart';
-import 'package:worth_loop/features/products/presentation/widgets/store_price.widget.dart';
+import 'package:worth_loop/features/products/presentation/widgets/product_offers.widget.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/constants/layout_constants.dart';
@@ -40,13 +40,6 @@ class ProductDetailsScreen extends StatelessWidget {
         final List<StorePrice> unavailablePrices = displayPrices
             .skip(availablePrices.length)
             .toList(growable: false);
-        final int offerListItemCount =
-            availablePrices.isEmpty && unavailablePrices.isEmpty
-            ? 1
-            : (availablePrices.isEmpty ? 0 : availablePrices.length + 1) +
-                  (unavailablePrices.isEmpty
-                      ? 0
-                      : unavailablePrices.length + 2);
         final ColorScheme colorScheme = Theme.of(context).colorScheme;
         final TextTheme textTheme = Theme.of(context).textTheme;
 
@@ -153,86 +146,9 @@ class ProductDetailsScreen extends StatelessWidget {
                       ),
                       SizedBox(height: context.spacing.sm),
                       Expanded(
-                        child: ListView.builder(
-                          itemCount: offerListItemCount,
-                          itemBuilder: (context, index) {
-                            if (availablePrices.isEmpty &&
-                                unavailablePrices.isEmpty) {
-                              return Padding(
-                                padding: EdgeInsets.only(
-                                  bottom: context.spacing.sm,
-                                ),
-                                child: Text(
-                                  t.productDetails.noOffers,
-                                  style: textTheme.bodyMedium,
-                                ),
-                              );
-                            }
-                            if (availablePrices.isNotEmpty) {
-                              if (index == 0) {
-                                return Padding(
-                                  key: const Key(
-                                    'product-details-available-section',
-                                  ),
-                                  padding: EdgeInsets.only(
-                                    bottom: context.spacing.sm,
-                                  ),
-                                  child: Text(
-                                    t.productDetails.availableOffers,
-                                    style: textTheme.labelSmall,
-                                  ),
-                                );
-                              }
-                              if (index <= availablePrices.length) {
-                                return Padding(
-                                  padding: EdgeInsets.only(
-                                    bottom: context.spacing.sm,
-                                  ),
-                                  child: StorePriceWidget(
-                                    storePrice: availablePrices[index - 1],
-                                  ),
-                                );
-                              }
-                            }
-
-                            final int unavailableIndex = availablePrices.isEmpty
-                                ? index
-                                : index - availablePrices.length - 1;
-                            if (unavailableIndex == 0) {
-                              return Padding(
-                                key: const Key(
-                                  'product-details-unavailable-section',
-                                ),
-                                padding: EdgeInsets.only(
-                                  bottom: context.spacing.xs,
-                                ),
-                                child: Text(
-                                  t.productDetails.unavailableOffers,
-                                  style: textTheme.labelSmall,
-                                ),
-                              );
-                            }
-                            if (unavailableIndex == 1) {
-                              return Padding(
-                                padding: EdgeInsets.only(
-                                  bottom: context.spacing.sm,
-                                ),
-                                child: Text(
-                                  t.productDetails.unavailableDescription,
-                                  style: textTheme.bodySmall,
-                                ),
-                              );
-                            }
-                            return Padding(
-                              padding: EdgeInsets.only(
-                                bottom: context.spacing.sm,
-                              ),
-                              child: StorePriceWidget(
-                                storePrice:
-                                    unavailablePrices[unavailableIndex - 2],
-                              ),
-                            );
-                          },
+                        child: ProductOffersWidget(
+                          availablePrices: availablePrices,
+                          unavailablePrices: unavailablePrices,
                         ),
                       ),
                     ],

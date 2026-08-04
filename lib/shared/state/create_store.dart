@@ -2,7 +2,6 @@
 import 'package:redux/redux.dart';
 
 // Project imports:
-import 'package:worth_loop/features/github_explorer/presentation/state/github_explorer.middleware.dart';
 import 'package:worth_loop/features/home/presentation/state/home.middleware.dart';
 import 'package:worth_loop/features/products/presentation/state/products.middleware.dart';
 import 'package:worth_loop/features/settings/presentation/state/general_settings.middleware.dart';
@@ -24,7 +23,6 @@ class CreateStore {
       distinct: true,
       middleware: [
         GeneralSettingsMiddleware().call,
-        GithubExplorerMiddleware().call,
         HomeMiddleware().call,
         ProductsMiddleware().call,
       ],

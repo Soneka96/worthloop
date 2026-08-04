@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 // Project imports:
-import 'package:worth_loop/features/github_explorer/presentation/screens/github_explorer.screen.dart';
 import 'package:worth_loop/features/home/presentation/screens/home.screen.dart';
 import 'package:worth_loop/features/products/presentation/screens/product_details.screen.dart';
 import 'package:worth_loop/features/settings/presentation/screens/app_settings.screen.dart';
@@ -32,12 +31,6 @@ GoRouter createRouter() {
             ],
           ),
         ],
-      ),
-      GoRoute(
-        path: AppRoutes.githubExplorer,
-        name: AppRoutes.githubExplorer,
-        builder: (context, state) =>
-            const Scaffold(body: GithubExplorerScreen()),
       ),
       GoRoute(
         path: AppRoutes.appSettings,
