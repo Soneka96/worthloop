@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 92 (46 per locale)
+/// Strings: 110 (55 per locale)
 ///
-/// Built on 2026-08-03 at 23:50 UTC
+/// Built on 2026-08-04 at 02:24 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -211,8 +211,18 @@ class _StringsHomeEn {
   final Translations _root; // ignore: unused_field
 
   // Translations
-  String get subtitle => 'A GitHub Explorer demo, ready to search.';
-  String get startSearching => 'Start searching';
+  String get subtitle => 'Your watchlist, with the best current offer first.';
+  String trackedProducts({required Object count}) => '${count} tracked';
+  String get refreshAll => 'Refresh all';
+  String get refreshing => 'Refreshing';
+  String get bestPrice => 'Best price';
+  String get noAvailablePrice => 'No available price';
+  String get noStore => 'No store in stock';
+  String storeOffers({required Object count}) => 'Offers: ${count}';
+  String updatedAt({required Object time}) => 'Updated ${time}';
+  String get emptyTitle => 'No tracked products';
+  String get emptyDescription =>
+      'Products you track will appear here with their best available offer.';
 }
 
 // Path: githubExplorer
@@ -433,9 +443,28 @@ class _StringsHomePt implements _StringsHomeEn {
   // Translations
   @override
   String get subtitle =>
-      'Uma demonstração do GitHub Explorer, pronta a pesquisar.';
+      'A sua lista, com a melhor oferta atual em primeiro lugar.';
   @override
-  String get startSearching => 'Começar a pesquisar';
+  String trackedProducts({required Object count}) => '${count} acompanhados';
+  @override
+  String get refreshAll => 'Atualizar todos';
+  @override
+  String get refreshing => 'A atualizar';
+  @override
+  String get bestPrice => 'Melhor preço';
+  @override
+  String get noAvailablePrice => 'Sem preço disponível';
+  @override
+  String get noStore => 'Nenhuma loja com stock';
+  @override
+  String storeOffers({required Object count}) => 'Ofertas: ${count}';
+  @override
+  String updatedAt({required Object time}) => 'Atualizado às ${time}';
+  @override
+  String get emptyTitle => 'Nenhum produto acompanhado';
+  @override
+  String get emptyDescription =>
+      'Os produtos acompanhados aparecem aqui com a melhor oferta disponível.';
 }
 
 // Path: githubExplorer
@@ -678,9 +707,27 @@ extension on Translations {
       case 'appTitle':
         return 'WorthLoop';
       case 'home.subtitle':
-        return 'A GitHub Explorer demo, ready to search.';
-      case 'home.startSearching':
-        return 'Start searching';
+        return 'Your watchlist, with the best current offer first.';
+      case 'home.trackedProducts':
+        return ({required Object count}) => '${count} tracked';
+      case 'home.refreshAll':
+        return 'Refresh all';
+      case 'home.refreshing':
+        return 'Refreshing';
+      case 'home.bestPrice':
+        return 'Best price';
+      case 'home.noAvailablePrice':
+        return 'No available price';
+      case 'home.noStore':
+        return 'No store in stock';
+      case 'home.storeOffers':
+        return ({required Object count}) => 'Offers: ${count}';
+      case 'home.updatedAt':
+        return ({required Object time}) => 'Updated ${time}';
+      case 'home.emptyTitle':
+        return 'No tracked products';
+      case 'home.emptyDescription':
+        return 'Products you track will appear here with their best available offer.';
       case 'githubExplorer.title':
         return 'GitHub Explorer';
       case 'githubExplorer.searchHint':
@@ -779,9 +826,27 @@ extension on _StringsPt {
       case 'appTitle':
         return 'WorthLoop';
       case 'home.subtitle':
-        return 'Uma demonstração do GitHub Explorer, pronta a pesquisar.';
-      case 'home.startSearching':
-        return 'Começar a pesquisar';
+        return 'A sua lista, com a melhor oferta atual em primeiro lugar.';
+      case 'home.trackedProducts':
+        return ({required Object count}) => '${count} acompanhados';
+      case 'home.refreshAll':
+        return 'Atualizar todos';
+      case 'home.refreshing':
+        return 'A atualizar';
+      case 'home.bestPrice':
+        return 'Melhor preço';
+      case 'home.noAvailablePrice':
+        return 'Sem preço disponível';
+      case 'home.noStore':
+        return 'Nenhuma loja com stock';
+      case 'home.storeOffers':
+        return ({required Object count}) => 'Ofertas: ${count}';
+      case 'home.updatedAt':
+        return ({required Object time}) => 'Atualizado às ${time}';
+      case 'home.emptyTitle':
+        return 'Nenhum produto acompanhado';
+      case 'home.emptyDescription':
+        return 'Os produtos acompanhados aparecem aqui com a melhor oferta disponível.';
       case 'githubExplorer.title':
         return 'Explorador do GitHub';
       case 'githubExplorer.searchHint':

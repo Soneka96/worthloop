@@ -7,17 +7,6 @@ import 'package:worth_loop/shared/usecase/usecase.dart';
 class ComparePricesUseCase
     extends UseCase<List<StorePrice>, ComparePricesParams> {
   @override
-  Future<List<StorePrice>> call(ComparePricesParams params) {
-    final List<StorePrice> availablePrices =
-        params.product.storePrices
-            .where((StorePrice price) => price.isAvailable)
-            .toList()
-          ..sort(
-            (StorePrice first, StorePrice second) => first
-                .currentPrice
-                .minorUnits
-                .compareTo(second.currentPrice.minorUnits),
-          );
-    return Future<List<StorePrice>>.value(availablePrices);
-  }
+  Future<List<StorePrice>> call(ComparePricesParams params) =>
+      Future<List<StorePrice>>.value(params.product.availablePricesSorted);
 }

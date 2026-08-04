@@ -6,13 +6,17 @@ import 'package:flutter_redux/flutter_redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/home/presentation/state/viewmodels/home_screen.viewmodel.dart';
+import 'package:worth_loop/features/home/presentation/widgets/tracked_product.widget.dart';
+import 'package:worth_loop/features/home/presentation/widgets/tracked_products_empty.widget.dart';
+import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/constants/layout_constants.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/theme/app_spacing_theme_extension.dart';
 
-/// Temporary launcher shown while the WorthLoop home screen is built.
+/// Displays tracked products and their best current offers.
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -23,57 +27,87 @@ class HomeScreen extends StatelessWidget {
 
     return StoreConnector<AppState, HomeScreenViewModel>(
       distinct: true,
+      onInit: (store) => store.dispatch(const LoadProductsAction()),
       converter: (store) => sl<HomeScreenViewModel>(param1: store),
       builder: (context, viewmodel) {
-        return Padding(
-          padding: EdgeInsets.all(context.spacing.md),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                    key: const Key('home-settings-button'),
-                    onPressed: viewmodel.onOpenSettings,
-                    tooltip: t.settings.title,
-                    icon: Icon(
-                      Icons.settings_outlined,
-                      size: IconSizes.md,
-                      color: colorScheme.onSurfaceVariant,
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.all(context.spacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(t.appTitle, style: textTheme.headlineSmall),
                     ),
-                  ),
-                ],
-              ),
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        t.appTitle,
-                        textAlign: TextAlign.center,
-                        style: textTheme.headlineSmall,
+                    IconButton(
+                      key: const Key('home-settings-button'),
+                      onPressed: viewmodel.onOpenSettings,
+                      tooltip: t.settings.title,
+                      icon: Icon(
+                        Icons.settings_outlined,
+                        size: IconSizes.md,
+                        color: colorScheme.onSurfaceVariant,
                       ),
-                      SizedBox(height: context.spacing.xs),
-                      Text(
-                        t.home.subtitle,
-                        textAlign: TextAlign.center,
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      SizedBox(height: context.spacing.lg),
-                      FilledButton.icon(
-                        key: const Key('home-start-searching-button'),
-                        onPressed: viewmodel.onOpenGithubExplorer,
-                        icon: const Icon(Icons.search),
-                        label: Text(t.home.startSearching),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+                Text(t.home.subtitle, style: textTheme.bodyMedium),
+                SizedBox(height: context.spacing.lg),
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: context.spacing.md,
+                  runSpacing: context.spacing.sm,
+                  children: [
+                    Text(
+                      t.home.trackedProducts(count: viewmodel.products.length),
+                      style: textTheme.labelSmall,
+                    ),
+                    FilledButton.icon(
+                      key: const Key('home-refresh-all-button'),
+                      onPressed:
+                          viewmodel.isRefreshingAll ||
+                              viewmodel.isLoading ||
+                              viewmodel.products.isEmpty
+                          ? null
+                          : viewmodel.onRefreshAll,
+                      icon: viewmodel.isRefreshingAll
+                          ? const SizedBox.square(
+                              dimension: IconSizes.md,
+                              child: CircularProgressIndicator(),
+                            )
+                          : const Icon(Icons.refresh),
+                      label: Text(
+                        viewmodel.isRefreshingAll
+                            ? t.home.refreshing
+                            : t.home.refreshAll,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: context.spacing.md),
+                Expanded(
+                  child: viewmodel.isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : viewmodel.products.isEmpty
+                      ? const TrackedProductsEmptyWidget()
+                      : ListView.builder(
+                          itemCount: viewmodel.products.length,
+                          itemBuilder: (context, index) {
+                            final Product product = viewmodel.products[index];
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                bottom: context.spacing.sm,
+                              ),
+                              child: TrackedProductWidget(product: product),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
           ),
         );
       },

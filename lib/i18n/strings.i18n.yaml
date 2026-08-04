@@ -1,8 +1,17 @@
 appTitle: WorthLoop
 
 home:
-  subtitle: A GitHub Explorer demo, ready to search.
-  startSearching: Start searching
+  subtitle: Your watchlist, with the best current offer first.
+  trackedProducts: $count tracked
+  refreshAll: Refresh all
+  refreshing: Refreshing
+  bestPrice: Best price
+  noAvailablePrice: No available price
+  noStore: No store in stock
+  storeOffers: "Offers: $count"
+  updatedAt: Updated $time
+  emptyTitle: No tracked products
+  emptyDescription: Products you track will appear here with their best available offer.
 
 githubExplorer:
   title: GitHub Explorer

@@ -31,6 +31,24 @@ class Product extends Equatable {
     this.imageUrl,
   });
 
+  /// Available offers ordered from lowest to highest price.
+  List<StorePrice> get availablePricesSorted {
+    final List<StorePrice> available = storePrices
+        .where((StorePrice price) => price.isAvailable)
+        .toList(growable: false);
+    available.sort(
+      (StorePrice first, StorePrice second) => first.currentPrice.minorUnits
+          .compareTo(second.currentPrice.minorUnits),
+    );
+    return available;
+  }
+
+  /// Lowest available offer, or `null` when no store has stock.
+  StorePrice? get bestAvailablePrice {
+    final List<StorePrice> prices = availablePricesSorted;
+    return prices.isEmpty ? null : prices.first;
+  }
+
   @override
   List<Object?> get props => [id, name, imageUrl, storePrices, lastUpdatedAt];
 }
