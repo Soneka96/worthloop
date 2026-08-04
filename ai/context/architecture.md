@@ -222,7 +222,7 @@ one as soon as presentation needs a typed shape, even with no repository/usecase
     "when" is a business/orchestration decision, called by whichever layer already owns it
     (usually middleware).
   - Services may call other services directly. A service must never dispatch a
-    Redux action itself — only middleware calls down into services, never the reverse.
+    Redux action itself — only middleware dispatches Redux actions on their behalf.
 - Test: feature-specific logic → datasource (see Feature call chain). App-wide plumbing with no
   owning feature → `shared/utils/`.
 - `lib/shared/constants/` holds cross-cutting constants, split by kind — create each file only when
