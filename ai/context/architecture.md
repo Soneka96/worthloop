@@ -167,7 +167,7 @@ level, where instances are already being resolved for other reasons.
 
 - For feature business logic: `Middleware → UseCase → Repository → Datasource` — no skipping a
   layer. This governs feature-owned operations only; cross-cutting plumbing with no business rule
-  behind it (`PopupService`, `NavigatorService`, `WindowController`, etc.) isn't part of this
+  behind it (`PopupService`, `NavigatorService`, etc.) isn't part of this
   chain — see "Services — where do they live?" below for how each is actually called.
 - One-off I/O (file picker, parser, API client wrapper) belongs to that feature's own datasource —
   never a generic "service" file.
@@ -195,8 +195,8 @@ nested inside another feature's folder. A nested screen gaining its own data lay
 evidence it may deserve `features/<name>/`, even if the original screen placement was reasonable
 when it was UI-only.
 
-`lib/shared/` is for plumbing with no feature identity of its own (`NavigatorService`, `AppTheme`,
-`WindowController`) — not a parking spot for "a screen that happens to be thin right now." Don't
+`lib/shared/` is for plumbing with no feature identity of its own (`NavigatorService`, `AppTheme`) —
+not a parking spot for "a screen that happens to be thin right now." Don't
 pre-build the empty `data/`/`domain/` folders before a category needs them, though — that's the
 same speculative-scaffolding mistake as pre-building a `Failure` hierarchy (see
 `error-handling.md`); add `domain/usecases/` etc. when a feature's business logic is actually
@@ -221,18 +221,8 @@ one as soon as presentation needs a typed shape, even with no repository/usecase
   - **Triggered by a dispatched Redux action** (e.g. `PopupService`, `NavigatorService`) — the
     "when" is a business/orchestration decision, called by whichever layer already owns it
     (usually middleware).
-  - **Triggered by an ongoing framework-level listener that isn't a `ChangeNotifier`** (e.g.
-    `WindowController`, driven by `WindowRouteWatcher` listening directly to GoRouter's
-    `routerDelegate` — not a `NavigatorObserver`, since Home's route lives inside a
-    `StatefulShellRoute`, which gives its branch its own nested `Navigator` with its own
-    `observers` list separate from the root one, so a root-level `NavigatorObserver` never sees
-    Home's route get pushed there) — wired wherever that listener naturally attaches.
-  - **Exception, orthogonal to the three above**: a call made before `runApp()` (e.g.
-    `main.dart`'s `await sl<WindowController>().lockHome()`) is exempt — the whole rule assumes a
-    running app with middleware attached, which doesn't exist yet at that point.
-  - Services may call other services directly (e.g. `WindowController` calls `IWindowGateway`,
-    `HomeWindowSizeService`, and `AppPreferencesStore` directly). A service must never dispatch a
-    Redux action itself — only middleware calls down into services, never the reverse.
+  - Services may call other services directly. A service must never dispatch a
+    Redux action itself — only middleware dispatches Redux actions on their behalf.
 - Test: feature-specific logic → datasource (see Feature call chain). App-wide plumbing with no
   owning feature → `shared/utils/`.
 - `lib/shared/constants/` holds cross-cutting constants, split by kind — create each file only when

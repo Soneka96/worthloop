@@ -8,8 +8,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
 
 void main() {
-  final ColorScheme colorScheme = ThemeData.dark().colorScheme;
-
   group('ThemeIdX behaves correctly', () {
     test('label returns "" when themeId = ThemeId.none', () {
       expect(ThemeId.none.label, '');
@@ -179,26 +177,11 @@ void main() {
     );
 
     test(
-      'label returns "Profile" when category = SettingsCategory.profile',
-      () {
-        expect(SettingsCategory.profile.label, 'Profile');
-      },
-    );
-
-    test(
       'label returns "Appearance" when category = SettingsCategory.appearance',
       () {
         expect(SettingsCategory.appearance.label, 'Appearance');
       },
     );
-
-    test('label returns "Editor" when category = SettingsCategory.editor', () {
-      expect(SettingsCategory.editor.label, 'Editor');
-    });
-
-    test('label returns "Logs" when category = SettingsCategory.logs', () {
-      expect(SettingsCategory.logs.label, 'Logs');
-    });
 
     test(
       'isEnabled returns true when category = SettingsCategory.appearance',
@@ -209,10 +192,6 @@ void main() {
 
     test('isEnabled returns true when category = SettingsCategory.general', () {
       expect(SettingsCategory.general.isEnabled, true);
-    });
-
-    test('isEnabled returns true when category = SettingsCategory.logs', () {
-      expect(SettingsCategory.logs.isEnabled, true);
     });
 
     test(
@@ -230,101 +209,9 @@ void main() {
     );
 
     test(
-      'icon returns Icons.person_outline when category = SettingsCategory.profile',
-      () {
-        expect(SettingsCategory.profile.icon, Icons.person_outline);
-      },
-    );
-
-    test(
       'icon returns Icons.palette_outlined when category = SettingsCategory.appearance',
       () {
         expect(SettingsCategory.appearance.icon, Icons.palette_outlined);
-      },
-    );
-
-    test('icon returns Icons.code when category = SettingsCategory.editor', () {
-      expect(SettingsCategory.editor.icon, Icons.code);
-    });
-
-    test(
-      'icon returns Icons.description_outlined when category = SettingsCategory.logs',
-      () {
-        expect(SettingsCategory.logs.icon, Icons.description_outlined);
-      },
-    );
-  });
-
-  group('LogLevelX behaves correctly', () {
-    test('label returns "" when level = LogLevel.none', () {
-      expect(LogLevel.none.label, '');
-    });
-
-    test('label returns "Info" when level = LogLevel.info', () {
-      expect(LogLevel.info.label, 'Info');
-    });
-
-    test('label returns "Warning" when level = LogLevel.warning', () {
-      expect(LogLevel.warning.label, 'Warning');
-    });
-
-    test('label returns "Error" when level = LogLevel.error', () {
-      expect(LogLevel.error.label, 'Error');
-    });
-
-    test('label returns "Success" when level = LogLevel.success', () {
-      expect(LogLevel.success.label, 'Success');
-    });
-
-    test('color returns colorScheme.outline when level = LogLevel.none', () {
-      expect(LogLevel.none.color(colorScheme), colorScheme.outline);
-    });
-
-    test('color returns colorScheme.primary when level = LogLevel.info', () {
-      expect(LogLevel.info.color(colorScheme), colorScheme.primary);
-    });
-
-    test(
-      'color returns colorScheme.secondary when level = LogLevel.warning',
-      () {
-        expect(LogLevel.warning.color(colorScheme), colorScheme.secondary);
-      },
-    );
-
-    test('color returns colorScheme.error when level = LogLevel.error', () {
-      expect(LogLevel.error.color(colorScheme), colorScheme.error);
-    });
-
-    test(
-      'color returns colorScheme.tertiary when level = LogLevel.success',
-      () {
-        expect(LogLevel.success.color(colorScheme), colorScheme.tertiary);
-      },
-    );
-
-    test('icon returns Icons.circle_outlined when level = LogLevel.none', () {
-      expect(LogLevel.none.icon, Icons.circle_outlined);
-    });
-
-    test('icon returns Icons.info_outline when level = LogLevel.info', () {
-      expect(LogLevel.info.icon, Icons.info_outline);
-    });
-
-    test(
-      'icon returns Icons.warning_amber_outlined when level = LogLevel.warning',
-      () {
-        expect(LogLevel.warning.icon, Icons.warning_amber_outlined);
-      },
-    );
-
-    test('icon returns Icons.error_outline when level = LogLevel.error', () {
-      expect(LogLevel.error.icon, Icons.error_outline);
-    });
-
-    test(
-      'icon returns Icons.check_circle_outline when level = LogLevel.success',
-      () {
-        expect(LogLevel.success.icon, Icons.check_circle_outline);
       },
     );
   });

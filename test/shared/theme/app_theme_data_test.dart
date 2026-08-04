@@ -87,10 +87,10 @@ void main() {
     );
 
     test(
-      'buildAppThemeData returns materialTapTargetSize = MaterialTapTargetSize.shrinkWrap',
+      'buildAppThemeData returns materialTapTargetSize = MaterialTapTargetSize.padded',
       () {
         expect(result.materialTapTargetSize, isA<MaterialTapTargetSize>());
-        expect(result.materialTapTargetSize, MaterialTapTargetSize.shrinkWrap);
+        expect(result.materialTapTargetSize, MaterialTapTargetSize.padded);
       },
     );
 

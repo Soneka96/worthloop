@@ -16,17 +16,9 @@ class HomeMiddleware extends MiddlewareClass<AppState> {
     next(action);
 
     switch (action) {
-      case GoToGithubExplorerAction _:
-        _goToGithubExplorer();
       case GoToSettingsAction _:
         _goToSettings();
     }
-  }
-
-  /// Handles [GoToGithubExplorerAction]. Navigates to the GitHub Explorer
-  /// screen.
-  void _goToGithubExplorer() {
-    sl<NavigatorService>().push(AppRoutes.githubExplorer);
   }
 
   /// Handles [GoToSettingsAction]. Navigates to the app settings screen.

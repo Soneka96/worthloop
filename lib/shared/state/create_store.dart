@@ -2,9 +2,8 @@
 import 'package:redux/redux.dart';
 
 // Project imports:
-import 'package:worth_loop/features/github_explorer/presentation/state/github_explorer.middleware.dart';
 import 'package:worth_loop/features/home/presentation/state/home.middleware.dart';
-import 'package:worth_loop/features/logs/presentation/state/logs.middleware.dart';
+import 'package:worth_loop/features/products/presentation/state/products.middleware.dart';
 import 'package:worth_loop/features/settings/presentation/state/general_settings.middleware.dart';
 import 'package:worth_loop/main.dart';
 import 'package:worth_loop/shared/state/app.reducer.dart';
@@ -24,9 +23,8 @@ class CreateStore {
       distinct: true,
       middleware: [
         GeneralSettingsMiddleware().call,
-        LogsMiddleware().call,
-        GithubExplorerMiddleware().call,
         HomeMiddleware().call,
+        ProductsMiddleware().call,
       ],
     );
   }

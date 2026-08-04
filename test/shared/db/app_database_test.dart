@@ -6,108 +6,122 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+import 'package:sqlite3/sqlite3.dart' as sqlite;
 
 // Project imports:
 import 'package:worth_loop/shared/db/app_database.dart';
-import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
 
 class FakePathProviderPlatform extends PathProviderPlatform {
-  FakePathProviderPlatform({
-    required this.supportPath,
-    required this.documentsPath,
-  });
-
   final String supportPath;
-  final String documentsPath;
+
+  FakePathProviderPlatform(this.supportPath);
 
   @override
   Future<String?> getApplicationSupportPath() async => supportPath;
-
-  @override
-  Future<String?> getApplicationDocumentsPath() async => documentsPath;
 }
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('AppDatabase — construction', () {
-    test('AppDatabase.forTesting opens with schema version 1', () async {
-      final AppDatabase db = AppDatabase.forTesting(NativeDatabase.memory());
-      expect(db.schemaVersion, 1);
+    late AppDatabase db;
+
+    setUp(() {
+      db = AppDatabase.forTesting(NativeDatabase.memory());
+    });
+
+    tearDown(() async {
       await db.close();
     });
 
-    test('AppDatabase.forTesting exposes a queryable, empty LogEntryTable', () async {
-      final AppDatabase db = AppDatabase.forTesting(NativeDatabase.memory());
-      final List<LogEntryRow> rows = await db.select(db.logEntryTable).get();
+    test('AppDatabase.forTesting opens with schema version 2', () {
+      expect(db.schemaVersion, isA<int>());
+      expect(db.schemaVersion, 2);
+    });
 
-      expect(rows, isEmpty);
-      await db.close();
+    test('AppDatabase.forTesting exposes the WorthLoop tables', () async {
+      final List<ProductRow> products = await db.select(db.productTable).get();
+      final List<StorePriceRow> prices = await db
+          .select(db.storePriceTable)
+          .get();
+      final List<RefreshSettingsRow> settings = await db
+          .select(db.refreshSettingsTable)
+          .get();
+
+      expect(products, isEmpty);
+      expect(prices, isEmpty);
+      expect(settings, isEmpty);
     });
   });
 
   group('AppDatabase — connection location', () {
+    late AppDatabase db;
     late Directory supportDirectory;
-    late Directory documentsDirectory;
+    late PathProviderPlatform previousPathProviderPlatform;
 
     setUp(() {
+      previousPathProviderPlatform = PathProviderPlatform.instance;
       supportDirectory = Directory.systemTemp.createTempSync(
-        'app_database_support_test',
-      );
-      documentsDirectory = Directory.systemTemp.createTempSync(
-        'app_database_documents_test',
+        'worth_loop_database_test',
       );
       PathProviderPlatform.instance = FakePathProviderPlatform(
-        supportPath: supportDirectory.path,
-        documentsPath: documentsDirectory.path,
+        supportDirectory.path,
       );
+      db = AppDatabase();
     });
 
-    tearDown(() {
+    tearDown(() async {
+      await db.close();
+      PathProviderPlatform.instance = previousPathProviderPlatform;
       supportDirectory.deleteSync(recursive: true);
-      documentsDirectory.deleteSync(recursive: true);
     });
 
     test(
-      'AppDatabase() creates its sqlite file in this app\'s dedicated subfolder under the platform documents directory when no defaultSaveLocation was persisted',
+      'AppDatabase creates app.sqlite in the application support directory',
       () async {
-        final AppDatabase db = AppDatabase();
         await db.customSelect('SELECT 1').get();
 
         final File expectedFile = File(
-          p.join(
-            documentsDirectory.path,
-            'Clean Architecture Starter',
-            AppDatabase.fileName,
-          ),
+          p.join(supportDirectory.path, AppDatabase.fileName),
         );
-        expect(await expectedFile.exists(), isTrue);
-
-        await db.close();
+        final bool fileExists = await expectedFile.exists();
+        expect(fileExists, isA<bool>());
+        expect(fileExists, isTrue);
       },
     );
+  });
 
-    test(
-      'AppDatabase() creates its sqlite file at the persisted defaultSaveLocation when one was set',
-      () async {
-        final Directory customRoot = Directory.systemTemp.createTempSync(
-          'app_database_custom_root_test',
-        );
-        await AppPreferencesStore(
-          directory: supportDirectory,
-        ).writeDefaultSaveLocation(customRoot.path);
+  group('AppDatabase — migration', () {
+    late AppDatabase db;
+    late Directory tempDirectory;
 
-        final AppDatabase db = AppDatabase();
-        await db.customSelect('SELECT 1').get();
+    setUp(() {
+      tempDirectory = Directory.systemTemp.createTempSync(
+        'worth_loop_migration_test',
+      );
+      final File file = File(p.join(tempDirectory.path, 'legacy.sqlite'));
+      final sqlite.Database legacy = sqlite.sqlite3.open(file.path);
+      legacy.execute('PRAGMA user_version = 1');
+      legacy.dispose();
+      db = AppDatabase.forTesting(NativeDatabase(file));
+    });
 
-        final File expectedFile = File(
-          p.join(customRoot.path, AppDatabase.fileName),
-        );
-        expect(await expectedFile.exists(), isTrue);
+    tearDown(() async {
+      await db.close();
+      tempDirectory.deleteSync(recursive: true);
+    });
 
-        await db.close();
-        customRoot.deleteSync(recursive: true);
-      },
-    );
+    test('migrates schema version 1 and preserves existing rows', () async {
+      final List<ProductRow> products = await db.select(db.productTable).get();
+      final List<StorePriceRow> prices = await db
+          .select(db.storePriceTable)
+          .get();
+      final List<RefreshSettingsRow> settings = await db
+          .select(db.refreshSettingsTable)
+          .get();
+      expect(products, isEmpty);
+      expect(prices, isEmpty);
+      expect(settings, isEmpty);
+    });
   });
 }

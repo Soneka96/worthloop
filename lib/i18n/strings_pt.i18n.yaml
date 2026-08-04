@@ -1,24 +1,35 @@
-appTitle: Clean Architecture Starter
+appTitle: WorthLoop
 
 home:
-  subtitle: Uma demonstração do GitHub Explorer, pronta a pesquisar.
-  startSearching: Começar a pesquisar
+  subtitle: A sua lista, com a melhor oferta atual em primeiro lugar.
+  sampleDataNotice: Preços de demonstração — dados de exemplo locais, não são ofertas em tempo real.
+  trackedProducts: $count acompanhados
+  refreshAll: Atualizar todos
+  refreshing: A atualizar
+  bestPrice: Melhor preço
+  noAvailablePrice: Sem preço disponível
+  noStore: Nenhuma loja com stock
+  storeOffers: "Ofertas: $count"
+  updatedAt: Atualizado às $time
+  emptyTitle: Nenhum produto acompanhado
+  emptyDescription: Os produtos acompanhados aparecem aqui com a melhor oferta disponível.
 
-githubExplorer:
-  title: Explorador do GitHub
-  searchHint: Pesquisar um nome de utilizador do GitHub
-  searchButton: Pesquisar
-  noResultYet: Pesquise um nome de utilizador para ver o perfil e os principais repositórios.
-  publicRepos: $count repositórios públicos
-  followers: $count seguidores
-  topRepos: Principais repositórios
-  noRepos: Este utilizador não tem repositórios públicos.
-  recentSearches: Pesquisas recentes
-  noRecentSearches: Ainda não pesquisou nada.
-  favoriteSemantics: Alternar favorito
-  settingsTooltip: Definições
-  goHomeTooltip: Início
-  errorPrefix: "Não foi possível carregar $username:"
+productDetails:
+  title: Detalhes do produto
+  backTooltip: Voltar
+  refresh: Atualizar
+  refreshing: A atualizar
+  bestPrice: Melhor preço
+  offers: "Ofertas em lojas: $count"
+  availableOffers: Ofertas disponíveis
+  unavailableOffers: Ofertas sem stock
+  unavailableDescription: Estas lojas indicam que não têm stock neste momento.
+  noOffers: Ainda não existem ofertas.
+  available: Em stock
+  unavailable: Sem stock
+  checkedAt: Verificado às $time
+  productNotFound: Produto não encontrado
+  productNotFoundDescription: Volte aos produtos acompanhados e escolha novamente um artigo.
 
 settings:
   title: Definições
@@ -36,45 +47,26 @@ settings:
     zoomLevelSemantics: Tamanho do texto
   general:
     title: Geral
-    defaultSaveLocation:
-      title: Localização de guardar predefinida
-      noFolderSelected: Nenhuma pasta selecionada
-      pendingMove: A aplicação vai mover os seus dados para $path no próximo reinício.
-      browse: Procurar
-      restartNow: Reiniciar agora
-      notEmptyFolder: Esta pasta não está vazia. Escolha uma pasta vazia — a aplicação vai mover os dados para aqui.
-      stayMessage: Os seus dados vão continuar na pasta atual.
-      restartNotification:
-        title: Reinício pendente
-        body: Reinicie a aplicação para concluir a transferência dos seus dados para a nova pasta.
-      moveFailedNotification:
-        title: Não foi possível mover os seus dados
-        body: Certifique-se de que todas as janelas da aplicação estão fechadas e depois reabra a aplicação para tentar novamente.
     language:
       title: Idioma
+    refreshInterval:
+      title: Intervalo de atualização
+      description: Guardado agora para suportar a atualização automática mais tarde. A atualização em segundo plano ainda não está ativa.
+      hourly: A cada hora
+      everyThreeHours: A cada 3 horas
+      everySixHours: A cada 6 horas
+      everyTwelveHours: A cada 12 horas
     updates:
       title: Atualizações
       version: Versão $version
       checkForUpdates: Verificar atualizações
-      description: A aplicação verifica atualizações ao iniciar. As transferências abrem no seu navegador — nada é instalado automaticamente.
+      description: A verificação de atualizações será adicionada mais tarde.
       notImplemented: Verificar atualizações ainda não está implementado.
     about:
       title: Acerca
       copyright: © 2026 Soneka96
       privacyPolicy: Privacidade e utilização de dados
       notImplemented: Privacidade e utilização de dados ainda não está implementado.
-  logs:
-    title: Registos
-    location:
-      title: Localização
-      openFolder: Abrir pasta de registos
-    search:
-      hint: Pesquisar mensagens de registo
-    filterAll: Todos
-    export: Exportar registos
-    exportSucceeded: Registos exportados para $path
-    clear: Limpar registos
-    empty: Nenhuma entrada de registo corresponde aos filtros.
 
 enums:
   cornerStyle:
@@ -85,12 +77,4 @@ enums:
     compact: Compacto
   settingsCategory:
     general: Geral
-    profile: Perfil
     appearance: Aparência
-    editor: Editor
-    logs: Registos
-  logLevel:
-    info: Informação
-    warning: Aviso
-    error: Erro
-    success: Sucesso

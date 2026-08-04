@@ -31,11 +31,11 @@ Users primarily scan a compact Android home screen, open an item to compare merc
 - Compare available offers and sort them from lowest to highest.
 - Manual refresh for one item and for all items.
 - Persist tracked items, offer prices, and refresh settings.
-- Expose the latest best-price summary through an Android-widget-facing service abstraction; native widget integration is deferred.
+- Native Android home-screen widget integration is deferred until it has a real persistent data bridge.
 - Refresh interval settings are stored and shown, but do not schedule work yet.
 - Initial illustrative data includes Moza R12 V2 and Next Level Racing Wheel Stand 2.0.
 - Currency is attached to monetary values; the initial data uses EUR.
-- The final Android application ID owner prefix is undecided.
+- Android application ID: `io.github.soneka96.worthloop`.
 
 ## Brand Commitments
 

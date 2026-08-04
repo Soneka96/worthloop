@@ -59,10 +59,7 @@ void main() {
         await tester.pumpWidget(buildWidget());
 
         expect(
-          find.text(
-            'The app checks for updates on launch. Downloads open in your '
-            'browser — nothing installs automatically.',
-          ),
+          find.text('Update checking will be added later.'),
           findsOneWidget,
         );
       },

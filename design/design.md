@@ -8,10 +8,8 @@ in code, not here.
 
 ## What this app is
 
-A Flutter desktop clean-architecture starter and reference example — a real, working app (not a
-placeholder shell), built for a developer exploring or extending it. IDE-adjacent in feel: dense
-information, keyboard-friendly, no consumer-app chrome. The person using it is a developer copying
-this template's patterns into their own feature, not an end user in the product sense.
+An Android price tracker for people comparing offers across merchants. It is a practical utility,
+not a storefront: compact information, clear availability, and the best current offer first.
 
 ## Dense and practical, but not static
 
@@ -59,7 +57,7 @@ against.
 
 ## Reference screenshots
 
-`design/settings/appearance.png`, `general.png`, and `logs.png` show this in practice: dense
+`design/settings/appearance.png` and `general.png` show this in practice: dense
 information, consistent status-color language, IDE-adjacent structure. Use them as compositional
 reference — how elements relate to each other — not as a source of exact values (see above).
 

@@ -8,7 +8,6 @@ import 'package:worth_loop/shared/theme/app_font_presets.dart';
 import 'package:worth_loop/shared/theme/app_shape_theme_extension.dart';
 import 'package:worth_loop/shared/theme/app_spacing_theme_extension.dart';
 import 'package:worth_loop/shared/theme/app_text_theme.dart';
-import 'package:worth_loop/shared/window/home_window_size_service.dart';
 
 /// Builds the app's [ThemeData] for [colorScheme], [cornerRadius],
 /// [visualDensity], [spacingValues], and [fontId] — the single source of
@@ -18,13 +17,6 @@ import 'package:worth_loop/shared/window/home_window_size_service.dart';
 /// All component themes are defined explicitly so no slot falls back to
 /// Flutter's stock Material defaults silently. Add new component themes here
 /// rather than inline in widgets.
-///
-/// Buttons are pinned to [VisualDensity.standard] regardless of the app's own
-/// density setting — [FilledButton]/[OutlinedButton]/[TextButton] clamp their
-/// density-adjusted padding and minimum-size constraint to a hard floor
-/// internally, making their rendered size unpredictable for
-/// [HomeWindowSizeService]'s calculation to replicate exactly. Only the
-/// app's own spacing (via [spacingValues]) responds to density.
 ThemeData buildAppThemeData(
   ColorScheme colorScheme,
   double cornerRadius, {
@@ -41,7 +33,7 @@ ThemeData buildAppThemeData(
     textTheme: applyFontFamily(buildAppTextTheme(colorScheme), fontId),
     visualDensity: visualDensity,
     splashFactory: NoSplash.splashFactory,
-    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    materialTapTargetSize: MaterialTapTargetSize.padded,
     iconTheme: IconThemeData(size: IconSizes.md, color: colorScheme.onSurface),
     dividerTheme: DividerThemeData(
       color: colorScheme.outlineVariant,
@@ -98,7 +90,7 @@ ThemeData buildAppThemeData(
           horizontal: spacingValues.sm,
           vertical: spacingValues.xs,
         ),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        tapTargetSize: MaterialTapTargetSize.padded,
         visualDensity: VisualDensity.standard,
       ),
     ),

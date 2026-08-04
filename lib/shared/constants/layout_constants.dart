@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 
 // Project imports:
-import 'package:worth_loop/features/settings/presentation/screens/app_settings.screen.dart';
 import 'package:worth_loop/features/settings/presentation/widgets/density_preview_rows.widget.dart';
 import 'package:worth_loop/features/settings/presentation/widgets/settings_option_preview_card.widget.dart';
 import 'package:worth_loop/features/settings/presentation/widgets/theme_card.widget.dart';
@@ -25,8 +24,7 @@ abstract final class IconSizes {
 /// similar transient overlay.
 abstract final class PopupSizes {
   /// Max width for [PopupService.show]'s toast content — a cap, not a fixed
-  /// width, so a short message stays compact instead of stretching
-  /// edge-to-edge on a wide desktop window.
+  /// width, so a short message stays compact instead of stretching.
   static const double snackBarMaxWidth = 420;
 
   /// Max lines for [PopupService.show]'s toast content before it truncates
@@ -90,13 +88,6 @@ abstract final class SelectableCardBorders {
   static const double selected = 2;
 }
 
-/// Sizes for [AppSettingsScreen]'s layout shell.
-abstract final class SettingsSizes {
-  /// Minimum width of the category list pane — it grows to fit its widest
-  /// label at the current text scale instead of clipping/wrapping past this.
-  static const double sidebarWidth = 220;
-}
-
 /// Sizes for [ZoomControl]'s track — the draggable thumb, the dot ticks, and
 /// the background rail.
 abstract final class ZoomControlSizes {
@@ -111,20 +102,4 @@ abstract final class ZoomControlSizes {
 
   /// Height of the background rail behind the ticks.
   static const double trackLineHeight = 2;
-}
-
-/// Sizes for the GitHub Explorer feature's profile card and list rows.
-abstract final class GithubExplorerSizes {
-  /// Minimum height of the search field — `isDense` shrinks it below the
-  /// 48dp minimum tap-target size otherwise.
-  static const double searchFieldMinHeight = 48;
-
-  /// Diameter of a searched profile's avatar on its result card.
-  static const double profileAvatarDiameter = 64;
-
-  /// Diameter of a recent-search row's avatar thumbnail.
-  static const double recentSearchAvatarDiameter = 32;
-
-  /// Minimum height of a repository row.
-  static const double repoRowMinHeight = 40;
 }

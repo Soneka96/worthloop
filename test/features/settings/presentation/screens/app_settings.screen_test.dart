@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 // Package imports:
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:redux/redux.dart';
 
@@ -14,6 +15,7 @@ import 'package:worth_loop/features/settings/presentation/screens/appearance_set
 import 'package:worth_loop/features/settings/presentation/screens/general_settings.screen.dart';
 import 'package:worth_loop/features/settings/presentation/state/viewmodels/general_settings_screen.viewmodel.dart';
 import 'package:worth_loop/injection_container.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/state/app.reducer.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/theme/app_font.dart';
@@ -23,10 +25,21 @@ import 'package:worth_loop/shared/theme/app_spacing.dart';
 import 'package:worth_loop/shared/theme/app_theme.dart';
 import 'package:worth_loop/shared/theme/app_zoom.dart';
 
+class MockGeneralSettingsScreenViewModel extends Mock
+    implements GeneralSettingsScreenViewModel {}
+
 void main() {
+  late MockGeneralSettingsScreenViewModel mockViewModel;
   late Store<AppState> store;
 
   setUp(() {
+    mockViewModel = MockGeneralSettingsScreenViewModel();
+    when(() => mockViewModel.refreshIntervalMinutes).thenReturn(60);
+    when(() => mockViewModel.isRefreshIntervalBusy).thenReturn(false);
+    when(() => mockViewModel.onCheckForUpdates).thenReturn(() {});
+    when(() => mockViewModel.onOpenPrivacyPolicy).thenReturn(() {});
+    when(() => mockViewModel.onRefreshIntervalSelected).thenReturn((_) {});
+
     sl.registerLazySingleton<AppTheme>(AppTheme.new);
     sl.registerLazySingleton<AppShape>(AppShape.new);
     sl.registerLazySingleton<AppSpacing>(AppSpacing.new);
@@ -35,27 +48,62 @@ void main() {
     sl.registerLazySingleton<AppLanguage>(AppLanguage.new);
     sl.registerLazySingleton<PackageInfo>(
       () => PackageInfo(
-        appName: 'Clean Architecture Starter',
-        packageName: 'com.soneka96.starter',
-        version: '0.1.0',
-        buildNumber: '1',
+        appName: 'WorthLoop Test',
+        packageName: 'io.github.soneka96.worthloop.test',
+        version: '0.0.0-test',
+        buildNumber: '0',
       ),
     );
     sl.registerFactoryParam<
       GeneralSettingsScreenViewModel,
       Store<AppState>,
       void
-    >((store, _) => GeneralSettingsScreenViewModel.fromStore(store));
+    >((store, _) => mockViewModel);
 
     store = Store<AppState>(appReducer, initialState: AppState.initial());
   });
-  tearDown(() => sl.reset());
+  tearDown(() async {
+    await sl.reset();
+    reset(mockViewModel);
+  });
 
-  Widget buildWidget() {
+  Widget buildWidget({
+    ThemeMode themeMode = ThemeMode.light,
+    TextScaler textScaler = TextScaler.noScaling,
+  }) {
     return StoreProvider<AppState>(
       store: store,
-      child: const MaterialApp(home: AppSettingsScreen()),
+      child: MaterialApp(
+        theme: ThemeData.light(),
+        darkTheme: ThemeData.dark(),
+        themeMode: themeMode,
+        builder: (BuildContext context, Widget? child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+          child: child ?? const SizedBox.shrink(),
+        ),
+        home: const AppSettingsScreen(),
+      ),
     );
+  }
+
+  bool hasPrimaryFocusWithin(WidgetTester tester, Finder finder) {
+    final BuildContext? focusContext =
+        FocusManager.instance.primaryFocus?.context;
+    if (focusContext == null) {
+      return false;
+    }
+
+    final Element target = tester.element(finder);
+    if (focusContext == target) {
+      return true;
+    }
+
+    bool found = false;
+    (focusContext as Element).visitAncestorElements((Element ancestor) {
+      found = ancestor == target;
+      return !found;
+    });
+    return found;
   }
 
   group('AppSettingsScreen contains widgets', () {
@@ -69,65 +117,49 @@ void main() {
     );
 
     testWidgets(
-      'AppSettingsScreen contains a "settings-category-general" ListTile with the correct parameters',
+      'AppSettingsScreen contains a "settings-category-selector" SegmentedButton with the correct parameters',
       (tester) async {
         await tester.pumpWidget(buildWidget());
 
-        final ListTile tile = tester.widget(
-          find.byKey(const Key('settings-category-general')),
+        final SegmentedButton<SettingsCategory> selector = tester.widget(
+          find.byKey(const Key('settings-category-selector')),
         );
 
-        expect(tile.enabled, true);
-        expect(tile.selected, false);
+        expect(selector.segments.length, isA<int>());
+        expect(selector.segments.length, 2);
       },
     );
 
     testWidgets(
-      'AppSettingsScreen contains a "settings-category-appearance" ListTile with the correct parameters',
+      'AppSettingsScreen contains GeneralSettingsScreen with the correct parameters',
       (tester) async {
         await tester.pumpWidget(buildWidget());
 
-        final ListTile tile = tester.widget(
-          find.byKey(const Key('settings-category-appearance')),
-        );
-
-        expect(tile.enabled, true);
-        expect(tile.selected, true);
+        expect(find.byType(GeneralSettingsScreen), findsOneWidget);
       },
     );
 
-    testWidgets(
-      'AppSettingsScreen contains AppearanceSettingsScreen with the correct parameters',
-      (tester) async {
-        await tester.pumpWidget(buildWidget());
+    testWidgets('AppSettingsScreen contains only mobile settings categories', (
+      tester,
+    ) async {
+      await tester.pumpWidget(buildWidget());
 
-        expect(find.byType(AppearanceSettingsScreen), findsOneWidget);
-      },
-    );
+      expect(find.text('Profile'), findsNothing);
+      expect(find.text('Editor'), findsNothing);
+      expect(find.text('Logs'), findsNothing);
+    });
   });
 
   group("AppSettingsScreen's elements behavior", () {
     testWidgets(
-      'AppSettingsScreen does not change the displayed content when a disabled category is tapped',
+      'AppSettingsScreen shows AppearanceSettingsScreen when the Appearance category is tapped',
       (tester) async {
         await tester.pumpWidget(buildWidget());
 
-        await tester.tap(find.byKey(const Key('settings-category-editor')));
+        await tester.tap(find.text('Appearance'));
         await tester.pump();
 
         expect(find.byType(AppearanceSettingsScreen), findsOneWidget);
-      },
-    );
-
-    testWidgets(
-      'AppSettingsScreen shows GeneralSettingsScreen when the General category is tapped',
-      (tester) async {
-        await tester.pumpWidget(buildWidget());
-
-        await tester.tap(find.byKey(const Key('settings-category-general')));
-        await tester.pump();
-
-        expect(find.byType(GeneralSettingsScreen), findsOneWidget);
       },
     );
   });
@@ -137,10 +169,16 @@ void main() {
       tester,
     ) async {
       final SemanticsHandle handle = tester.ensureSemantics();
-      await tester.pumpWidget(buildWidget());
+      try {
+        await tester.pumpWidget(buildWidget());
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
 
-      await expectLater(tester, meetsGuideline(textContrastGuideline));
-      handle.dispose();
+        await tester.pumpWidget(buildWidget(themeMode: ThemeMode.dark));
+        await tester.pumpAndSettle();
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
+      } finally {
+        handle.dispose();
+      }
     });
 
     testWidgets('AppSettingsScreen all tap targets meet minimum 48dp size', (
@@ -168,12 +206,14 @@ void main() {
       'AppSettingsScreen renders without overflow at 150% text scale',
       (tester) async {
         await tester.pumpWidget(
-          MediaQuery(
-            data: const MediaQueryData(textScaler: TextScaler.linear(1.5)),
-            child: buildWidget(),
-          ),
+          buildWidget(textScaler: const TextScaler.linear(1.5)),
         );
 
+        final double scaledValue = MediaQuery.textScalerOf(
+          tester.element(find.byType(AppSettingsScreen)),
+        ).scale(10);
+        expect(scaledValue, isA<double>());
+        expect(scaledValue, 15);
         expect(tester.takeException(), isNull);
       },
     );
@@ -182,12 +222,14 @@ void main() {
       'AppSettingsScreen renders without overflow at 200% text scale',
       (tester) async {
         await tester.pumpWidget(
-          MediaQuery(
-            data: const MediaQueryData(textScaler: TextScaler.linear(2.0)),
-            child: buildWidget(),
-          ),
+          buildWidget(textScaler: const TextScaler.linear(2.0)),
         );
 
+        final double scaledValue = MediaQuery.textScalerOf(
+          tester.element(find.byType(AppSettingsScreen)),
+        ).scale(10);
+        expect(scaledValue, isA<double>());
+        expect(scaledValue, 20);
         expect(tester.takeException(), isNull);
       },
     );
@@ -197,15 +239,22 @@ void main() {
     ) async {
       await tester.pumpWidget(buildWidget());
 
-      final int focusableCount = tester
-          .widgetList(find.byWidgetPredicate((widget) => widget is Focus))
-          .length;
-      for (int i = 0; i < focusableCount; i++) {
+      const List<Key> focusOrder = [
+        Key('settings-category-selector'),
+        Key('settings-category-selector'),
+        Key('language-picker-dropdown'),
+        Key('refresh-interval-dropdown'),
+        Key('general-settings-check-for-updates-button'),
+        Key('general-settings-privacy-policy-button'),
+      ];
+
+      for (final Key key in focusOrder) {
         await tester.sendKeyEvent(LogicalKeyboardKey.tab);
         await tester.pump();
+        final bool isFocused = hasPrimaryFocusWithin(tester, find.byKey(key));
+        expect(isFocused, isA<bool>());
+        expect(isFocused, isTrue, reason: '$key should receive focus');
       }
-
-      expect(FocusManager.instance.primaryFocus, isNotNull);
     });
   });
 }
