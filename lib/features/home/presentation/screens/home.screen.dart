@@ -7,13 +7,12 @@ import 'package:flutter_redux/flutter_redux.dart';
 // Project imports:
 import 'package:worth_loop/features/home/presentation/state/viewmodels/home_screen.viewmodel.dart';
 import 'package:worth_loop/features/home/presentation/widgets/home_header.widget.dart';
+import 'package:worth_loop/features/home/presentation/widgets/home_products_header.widget.dart';
 import 'package:worth_loop/features/home/presentation/widgets/tracked_products_empty.widget.dart';
 import 'package:worth_loop/features/home/presentation/widgets/tracked_products_list.widget.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/widgets/illustrative_price_notice.widget.dart';
-import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
-import 'package:worth_loop/shared/constants/layout_constants.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/theme/app_spacing_theme_extension.dart';
 
@@ -23,8 +22,6 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final TextTheme textTheme = Theme.of(context).textTheme;
-
     return StoreConnector<AppState, HomeScreenViewModel>(
       distinct: true,
       onInit: (store) => store.dispatch(const LoadProductsAction()),
@@ -39,37 +36,11 @@ class HomeScreen extends StatelessWidget {
                 HomeHeader(onOpenSettings: viewmodel.onOpenSettings),
                 const IllustrativePriceNotice(),
                 SizedBox(height: context.spacing.lg),
-                Wrap(
-                  alignment: WrapAlignment.spaceBetween,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: context.spacing.md,
-                  runSpacing: context.spacing.sm,
-                  children: [
-                    Text(
-                      t.home.trackedProducts(count: viewmodel.products.length),
-                      style: textTheme.labelSmall,
-                    ),
-                    FilledButton.icon(
-                      key: const Key('home-refresh-all-button'),
-                      onPressed:
-                          viewmodel.isRefreshingAll ||
-                              viewmodel.isLoading ||
-                              viewmodel.products.isEmpty
-                          ? null
-                          : viewmodel.onRefreshAll,
-                      icon: viewmodel.isRefreshingAll
-                          ? const SizedBox.square(
-                              dimension: IconSizes.md,
-                              child: CircularProgressIndicator(),
-                            )
-                          : const Icon(Icons.refresh),
-                      label: Text(
-                        viewmodel.isRefreshingAll
-                            ? t.home.refreshing
-                            : t.home.refreshAll,
-                      ),
-                    ),
-                  ],
+                HomeProductsHeader(
+                  productCount: viewmodel.products.length,
+                  isRefreshingAll: viewmodel.isRefreshingAll,
+                  isLoading: viewmodel.isLoading,
+                  onRefreshAll: viewmodel.onRefreshAll,
                 ),
                 SizedBox(height: context.spacing.md),
                 Expanded(
