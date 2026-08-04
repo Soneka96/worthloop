@@ -2,6 +2,7 @@ appTitle: WorthLoop
 
 home:
   subtitle: Your watchlist, with the best current offer first.
+  sampleDataNotice: Demo prices — local sample data, not live offers.
   trackedProducts: $count tracked
   refreshAll: Refresh all
   refreshing: Refreshing

@@ -9,6 +9,7 @@ import 'package:worth_loop/features/products/domain/entities/product.entity.dart
 import 'package:worth_loop/features/products/domain/entities/store_price.entity.dart';
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
 import 'package:worth_loop/features/products/presentation/utils/price_formatter.dart';
+import 'package:worth_loop/features/products/presentation/widgets/illustrative_price_notice.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/store_price.widget.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
@@ -106,6 +107,8 @@ class ProductDetailsScreen extends StatelessWidget {
                           ),
                         ),
                       ),
+                      SizedBox(height: context.spacing.sm),
+                      const IllustrativePriceNotice(),
                       SizedBox(height: context.spacing.md),
                       Row(
                         children: [

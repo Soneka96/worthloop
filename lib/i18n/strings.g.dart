@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 144 (72 per locale)
+/// Strings: 146 (73 per locale)
 ///
-/// Built on 2026-08-04 at 03:03 UTC
+/// Built on 2026-08-04 at 07:40 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -218,6 +218,8 @@ class _StringsHomeEn {
 
   // Translations
   String get subtitle => 'Your watchlist, with the best current offer first.';
+  String get sampleDataNotice =>
+      'Demo prices — local sample data, not live offers.';
   String trackedProducts({required Object count}) => '${count} tracked';
   String get refreshAll => 'Refresh all';
   String get refreshing => 'Refreshing';
@@ -492,6 +494,9 @@ class _StringsHomePt implements _StringsHomeEn {
   @override
   String get subtitle =>
       'A sua lista, com a melhor oferta atual em primeiro lugar.';
+  @override
+  String get sampleDataNotice =>
+      'Preços de demonstração — dados de exemplo locais, não são ofertas em tempo real.';
   @override
   String trackedProducts({required Object count}) => '${count} acompanhados';
   @override
@@ -816,6 +821,8 @@ extension on Translations {
         return 'WorthLoop';
       case 'home.subtitle':
         return 'Your watchlist, with the best current offer first.';
+      case 'home.sampleDataNotice':
+        return 'Demo prices — local sample data, not live offers.';
       case 'home.trackedProducts':
         return ({required Object count}) => '${count} tracked';
       case 'home.refreshAll':
@@ -969,6 +976,8 @@ extension on _StringsPt {
         return 'WorthLoop';
       case 'home.subtitle':
         return 'A sua lista, com a melhor oferta atual em primeiro lugar.';
+      case 'home.sampleDataNotice':
+        return 'Preços de demonstração — dados de exemplo locais, não são ofertas em tempo real.';
       case 'home.trackedProducts':
         return ({required Object count}) => '${count} acompanhados';
       case 'home.refreshAll':

@@ -11,6 +11,7 @@ import 'package:redux/redux.dart';
 // Project imports:
 import 'package:worth_loop/features/products/presentation/screens/product_details.screen.dart';
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
+import 'package:worth_loop/features/products/presentation/widgets/illustrative_price_notice.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/store_price.widget.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
@@ -110,6 +111,8 @@ void main() {
 
         expect(find.text('Example Product'), findsOneWidget);
         expect(find.text('399.99 €'), findsWidgets);
+        expect(find.byType(IllustrativePriceNotice), findsOneWidget);
+        expect(find.text(t.home.sampleDataNotice), findsOneWidget);
         expect(find.byType(StorePriceWidget), findsNWidgets(3));
       },
     );
@@ -149,6 +152,7 @@ void main() {
         await tester.pumpWidget(buildWidget());
 
         expect(find.text('Product not found'), findsOneWidget);
+        expect(find.byType(IllustrativePriceNotice), findsNothing);
         expect(find.byType(StorePriceWidget), findsNothing);
       },
     );
@@ -235,6 +239,7 @@ void main() {
         await tester.pumpWidget(buildWidget());
 
         expect(find.text(t.productDetails.bestPrice), findsOneWidget);
+        expect(find.text(t.home.sampleDataNotice), findsOneWidget);
         expect(find.text(t.productDetails.refresh), findsOneWidget);
         expect(find.text(t.productDetails.available), findsNWidgets(2));
       } finally {

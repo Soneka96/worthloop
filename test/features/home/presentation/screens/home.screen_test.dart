@@ -14,6 +14,7 @@ import 'package:worth_loop/features/home/presentation/state/viewmodels/home_scre
 import 'package:worth_loop/features/home/presentation/widgets/tracked_product.widget.dart';
 import 'package:worth_loop/features/home/presentation/widgets/tracked_products_empty.widget.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
+import 'package:worth_loop/features/products/presentation/widgets/illustrative_price_notice.widget.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
@@ -122,6 +123,16 @@ void main() {
 
         expect(find.byType(TrackedProductWidget), findsOneWidget);
         expect(find.text('WorthLoop'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'HomeScreen contains an IllustrativePriceNotice with the correct parameters',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildWidget());
+
+        expect(find.byType(IllustrativePriceNotice), findsOneWidget);
+        expect(find.text(t.home.sampleDataNotice), findsOneWidget);
       },
     );
 
@@ -246,6 +257,7 @@ void main() {
         await tester.pumpWidget(buildWidget());
 
         expect(find.text(t.home.subtitle), findsOneWidget);
+        expect(find.text(t.home.sampleDataNotice), findsOneWidget);
         expect(find.text(t.home.refreshAll), findsOneWidget);
         expect(find.text(t.home.trackedProducts(count: 1)), findsOneWidget);
       } finally {

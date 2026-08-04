@@ -10,6 +10,7 @@ import 'package:worth_loop/features/home/presentation/widgets/tracked_product.wi
 import 'package:worth_loop/features/home/presentation/widgets/tracked_products_empty.widget.dart';
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
+import 'package:worth_loop/features/products/presentation/widgets/illustrative_price_notice.widget.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/constants/layout_constants.dart';
@@ -54,6 +55,8 @@ class HomeScreen extends StatelessWidget {
                   ],
                 ),
                 Text(t.home.subtitle, style: textTheme.bodyMedium),
+                SizedBox(height: context.spacing.sm),
+                const IllustrativePriceNotice(),
                 SizedBox(height: context.spacing.lg),
                 Wrap(
                   alignment: WrapAlignment.spaceBetween,
