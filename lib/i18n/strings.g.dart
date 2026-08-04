@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 126 (63 per locale)
+/// Strings: 144 (72 per locale)
 ///
-/// Built on 2026-08-04 at 11:15 UTC
+/// Built on 2026-08-04 at 17:20 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -174,6 +174,15 @@ class _StringsHomeEn {
 	String updatedAt({required Object time}) => 'Updated ${time}';
 	String get emptyTitle => 'No tracked products';
 	String get emptyDescription => 'Products you track will appear here with their best available offer.';
+	String get addProductTitle => 'Add a product';
+	String get addProductDescription => 'Paste a product link to start tracking it.';
+	String get productNameLabel => 'Product name';
+	String get productUrlLabel => 'Product website link';
+	String get productUrlHint => 'https://example.com/product';
+	String get productNameRequired => 'Enter a product name.';
+	String get productUrlInvalid => 'Enter a valid HTTPS website link.';
+	String get addProductButton => 'Add product';
+	String get addProductSaving => 'Saving';
 }
 
 // Path: productDetails
@@ -393,6 +402,15 @@ class _StringsHomePt implements _StringsHomeEn {
 	@override String updatedAt({required Object time}) => 'Atualizado às ${time}';
 	@override String get emptyTitle => 'Nenhum produto acompanhado';
 	@override String get emptyDescription => 'Os produtos acompanhados aparecem aqui com a melhor oferta disponível.';
+	@override String get addProductTitle => 'Adicionar produto';
+	@override String get addProductDescription => 'Cole um link de produto para comeÃ§ar a acompanhÃ¡-lo.';
+	@override String get productNameLabel => 'Nome do produto';
+	@override String get productUrlLabel => 'Link do produto';
+	@override String get productUrlHint => 'https://exemplo.com/produto';
+	@override String get productNameRequired => 'Introduza o nome do produto.';
+	@override String get productUrlInvalid => 'Introduza um link HTTPS vÃ¡lido.';
+	@override String get addProductButton => 'Adicionar produto';
+	@override String get addProductSaving => 'A guardar';
 }
 
 // Path: productDetails
@@ -581,6 +599,15 @@ extension on Translations {
 			case 'home.updatedAt': return ({required Object time}) => 'Updated ${time}';
 			case 'home.emptyTitle': return 'No tracked products';
 			case 'home.emptyDescription': return 'Products you track will appear here with their best available offer.';
+			case 'home.addProductTitle': return 'Add a product';
+			case 'home.addProductDescription': return 'Paste a product link to start tracking it.';
+			case 'home.productNameLabel': return 'Product name';
+			case 'home.productUrlLabel': return 'Product website link';
+			case 'home.productUrlHint': return 'https://example.com/product';
+			case 'home.productNameRequired': return 'Enter a product name.';
+			case 'home.productUrlInvalid': return 'Enter a valid HTTPS website link.';
+			case 'home.addProductButton': return 'Add product';
+			case 'home.addProductSaving': return 'Saving';
 			case 'productDetails.title': return 'Product details';
 			case 'productDetails.backTooltip': return 'Back';
 			case 'productDetails.refresh': return 'Refresh';
@@ -652,6 +679,15 @@ extension on _StringsPt {
 			case 'home.updatedAt': return ({required Object time}) => 'Atualizado às ${time}';
 			case 'home.emptyTitle': return 'Nenhum produto acompanhado';
 			case 'home.emptyDescription': return 'Os produtos acompanhados aparecem aqui com a melhor oferta disponível.';
+			case 'home.addProductTitle': return 'Adicionar produto';
+			case 'home.addProductDescription': return 'Cole um link de produto para comeÃ§ar a acompanhÃ¡-lo.';
+			case 'home.productNameLabel': return 'Nome do produto';
+			case 'home.productUrlLabel': return 'Link do produto';
+			case 'home.productUrlHint': return 'https://exemplo.com/produto';
+			case 'home.productNameRequired': return 'Introduza o nome do produto.';
+			case 'home.productUrlInvalid': return 'Introduza um link HTTPS vÃ¡lido.';
+			case 'home.addProductButton': return 'Adicionar produto';
+			case 'home.addProductSaving': return 'A guardar';
 			case 'productDetails.title': return 'Detalhes do produto';
 			case 'productDetails.backTooltip': return 'Voltar';
 			case 'productDetails.refresh': return 'Atualizar';

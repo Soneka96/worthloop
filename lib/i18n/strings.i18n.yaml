@@ -13,6 +13,15 @@ home:
   updatedAt: Updated $time
   emptyTitle: No tracked products
   emptyDescription: Products you track will appear here with their best available offer.
+  addProductTitle: Add a product
+  addProductDescription: Paste a product link to start tracking it.
+  productNameLabel: Product name
+  productUrlLabel: Product website link
+  productUrlHint: https://example.com/product
+  productNameRequired: Enter a product name.
+  productUrlInvalid: Enter a valid HTTPS website link.
+  addProductButton: Add product
+  addProductSaving: Saving
 
 productDetails:
   title: Product details
