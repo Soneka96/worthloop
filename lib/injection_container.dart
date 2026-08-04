@@ -21,6 +21,7 @@ import 'package:worth_loop/shared/theme/app_shape.dart';
 import 'package:worth_loop/shared/theme/app_spacing.dart';
 import 'package:worth_loop/shared/theme/app_theme.dart';
 import 'package:worth_loop/shared/theme/app_zoom.dart';
+import 'package:worth_loop/shared/utils/currency_helper_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/popup_service.dart';
 
@@ -46,6 +47,7 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<Dio>(Dio.new);
   sl.registerLazySingleton<SnugToastManager>(SnugToastManager.new);
   sl.registerLazySingleton<PopupService>(PopupService.new);
+  sl.registerLazySingleton<CurrencyHelperService>(CurrencyHelperService.new);
   sl.registerSingleton<AppTheme>(
     await AppTheme.restore(sl<AppPreferencesStore>()),
   );

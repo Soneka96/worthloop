@@ -8,7 +8,7 @@ import 'package:worth_loop/features/products/domain/entities/store_price.entity.
 
 void main() {
   group('buildFakeProducts behaves correctly', () {
-    test('returns the two illustrative EUR products', () {
+    test('returns the two illustrative USD products', () {
       final DateTime checkedAt = DateTime(2026, 1, 1, 12);
       final List<ProductModel> products = buildFakeProducts(checkedAt);
 
@@ -30,7 +30,7 @@ void main() {
         products
             .expand((ProductModel product) => product.storePrices)
             .every(
-              (StorePrice price) => price.currentPrice.currencyCode == 'EUR',
+              (StorePrice price) => price.currentPrice.currencyCode == 'USD',
             ),
         isTrue,
       );

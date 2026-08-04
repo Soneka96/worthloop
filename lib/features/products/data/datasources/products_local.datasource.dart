@@ -9,15 +9,21 @@ import 'package:worth_loop/features/products/data/models/product.model.dart';
 import 'package:worth_loop/features/products/domain/entities/store_price.entity.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
+import 'package:worth_loop/shared/utils/currency_helper_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 
 /// Local product and merchant-offer persistence.
 class ProductsLocalDatasource {
   final AppDatabase _db;
+  final CurrencyHelperService _currencyHelperService;
   final LoggerService _loggerService;
 
   /// Creates local product persistence backed by [AppDatabase].
-  ProductsLocalDatasource(this._db, this._loggerService);
+  ProductsLocalDatasource(
+    this._db,
+    this._currencyHelperService,
+    this._loggerService,
+  );
 
   /// Loads every product, inserting illustrative data on the first run.
   Future<Either<Failure, List<ProductModel>>> loadProducts() async {
@@ -32,6 +38,9 @@ class ProductsLocalDatasource {
     } on SqliteException catch (error) {
       _loggerService.e(error.toString());
       return Left(DatabaseFailure(error.toString()));
+    } on StateError catch (error) {
+      _loggerService.e(error.toString());
+      return Left(CurrencyFailure(error.toString()));
     }
   }
 
@@ -48,6 +57,9 @@ class ProductsLocalDatasource {
     } on SqliteException catch (error) {
       _loggerService.e(error.toString());
       return Left(DatabaseFailure(error.toString()));
+    } on StateError catch (error) {
+      _loggerService.e(error.toString());
+      return Left(CurrencyFailure(error.toString()));
     }
   }
 
@@ -67,11 +79,17 @@ class ProductsLocalDatasource {
     } on SqliteException catch (error) {
       _loggerService.e(error.toString());
       return Left(DatabaseFailure(error.toString()));
+    } on StateError catch (error) {
+      _loggerService.e(error.toString());
+      return Left(CurrencyFailure(error.toString()));
     }
   }
 
   Future<void> _replaceProducts(List<ProductModel> products) async {
     for (final ProductModel product in products) {
+      _currencyHelperService.validate(
+        product.storePrices.map((StorePrice price) => price.currentPrice),
+      );
       await _db.into(_db.productTable).insert(product.toCompanion());
       for (final StorePrice price in product.storePrices) {
         final StorePriceTableCompanion companion =
@@ -96,7 +114,11 @@ class ProductsLocalDatasource {
       final List<StorePriceRow> prices = await (_db.select(
         _db.storePriceTable,
       )..where((table) => table.productId.equals(product.id))).get();
-      models.add(ProductModel.fromRows(product, prices));
+      final ProductModel model = ProductModel.fromRows(product, prices);
+      _currencyHelperService.validate(
+        model.storePrices.map((StorePrice price) => price.currentPrice),
+      );
+      models.add(model);
     }
     return models;
   }
@@ -124,7 +146,11 @@ class ProductsLocalDatasource {
       final List<StorePriceRow> prices = await (_db.select(
         _db.storePriceTable,
       )..where((table) => table.productId.equals(productId))).get();
-      return ProductModel.fromRows(updated, prices);
+      final ProductModel model = ProductModel.fromRows(updated, prices);
+      _currencyHelperService.validate(
+        model.storePrices.map((StorePrice price) => price.currentPrice),
+      );
+      return model;
     });
   }
 }

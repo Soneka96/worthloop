@@ -40,3 +40,8 @@ class NetworkFailure extends Failure {
 class NotFoundFailure extends Failure {
   const NotFoundFailure(super.message);
 }
+
+/// Represents offers that cannot be compared because their currencies differ.
+class CurrencyFailure extends Failure {
+  const CurrencyFailure(super.message);
+}

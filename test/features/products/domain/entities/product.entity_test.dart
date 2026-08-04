@@ -61,6 +61,20 @@ void main() {
 
       expect(product.availablePricesSorted, isEmpty);
     });
+
+    test('rejects available offers with different currencies', () {
+      final Product product = buildProduct(
+        storePrices: [
+          buildStorePrice(currentPrice: buildMoney(currencyCode: 'USD')),
+          buildStorePrice(
+            storeName: 'Euro Store',
+            currentPrice: buildMoney(currencyCode: 'EUR'),
+          ),
+        ],
+      );
+
+      expect(() => product.availablePricesSorted, throwsStateError);
+    });
   });
 
   group('Getter bestAvailablePrice returns the correct value', () {

@@ -33,13 +33,11 @@ class Product extends Equatable {
 
   /// Available offers ordered from lowest to highest price.
   List<StorePrice> get availablePricesSorted {
+    _ensureSingleCurrency();
     final List<StorePrice> available = storePrices
         .where((StorePrice price) => price.isAvailable)
         .toList(growable: false);
-    available.sort(
-      (StorePrice first, StorePrice second) => first.currentPrice.minorUnits
-          .compareTo(second.currentPrice.minorUnits),
-    );
+    _sortByPrice(available);
     return available;
   }
 
@@ -51,10 +49,28 @@ class Product extends Equatable {
 
   /// Offers ordered by availability and then by ascending price.
   List<StorePrice> get pricesForDisplay {
+    _ensureSingleCurrency();
     final List<StorePrice> unavailable = storePrices
         .where((StorePrice price) => !price.isAvailable)
         .toList(growable: false);
+    _sortByPrice(unavailable);
     return [...availablePricesSorted, ...unavailable];
+  }
+
+  void _sortByPrice(List<StorePrice> prices) {
+    prices.sort(
+      (StorePrice first, StorePrice second) => first.currentPrice.minorUnits
+          .compareTo(second.currentPrice.minorUnits),
+    );
+  }
+
+  void _ensureSingleCurrency() {
+    final Set<String> currencyCodes = storePrices
+        .map((StorePrice price) => price.currentPrice.currencyCode)
+        .toSet();
+    if (currencyCodes.length > 1) {
+      throw StateError('Product offers must use one currency');
+    }
   }
 
   @override

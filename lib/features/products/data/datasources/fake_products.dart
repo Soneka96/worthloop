@@ -2,6 +2,7 @@
 import 'package:worth_loop/features/products/data/models/product.model.dart';
 import 'package:worth_loop/features/products/data/models/store_price.model.dart';
 import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
+import 'package:worth_loop/shared/utils/currency_helper_service.dart';
 
 /// Builds the first release's illustrative local product data.
 List<ProductModel> buildFakeProducts(DateTime checkedAt) => [
@@ -37,7 +38,10 @@ List<StorePriceModel> _offers(
       (entry) => StorePriceModel(
         storeName: entry.key,
         productUrl: 'https://example.com/$productId/${entry.key}',
-        currentPrice: Money(minorUnits: entry.value, currencyCode: 'EUR'),
+        currentPrice: Money(
+          minorUnits: entry.value,
+          currencyCode: CurrencyHelperService.defaultCurrencyCode,
+        ),
         isAvailable: true,
         lastCheckedAt: checkedAt,
       ),

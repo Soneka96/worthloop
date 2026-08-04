@@ -9,26 +9,49 @@ import 'package:mocktail/mocktail.dart';
 import 'package:worth_loop/features/products/data/datasources/products_local.datasource.dart';
 import 'package:worth_loop/features/products/data/models/product.model.dart';
 import 'package:worth_loop/features/products/domain/entities/store_price.entity.dart';
+import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
+import 'package:worth_loop/shared/utils/currency_helper_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 
 class MockLoggerService extends Mock implements LoggerService {}
 
+class MockCurrencyHelperService extends Mock implements CurrencyHelperService {}
+
 void main() {
   late AppDatabase db;
   late MockLoggerService mockLoggerService;
+  late MockCurrencyHelperService mockCurrencyHelperService;
   late ProductsLocalDatasource datasource;
 
   setUp(() {
     db = AppDatabase.forTesting(NativeDatabase.memory());
     mockLoggerService = MockLoggerService();
-    datasource = ProductsLocalDatasource(db, mockLoggerService);
+    mockCurrencyHelperService = MockCurrencyHelperService();
+    when(() => mockCurrencyHelperService.validate(any())).thenAnswer((
+      invocation,
+    ) {
+      final Iterable<Money> prices =
+          invocation.positionalArguments.single as Iterable<Money>;
+      final Set<String> currencyCodes = prices
+          .map((Money money) => money.currencyCode)
+          .toSet();
+      if (currencyCodes.length > 1) {
+        throw StateError('Prices must use one currency');
+      }
+    });
+    datasource = ProductsLocalDatasource(
+      db,
+      mockCurrencyHelperService,
+      mockLoggerService,
+    );
   });
 
   tearDown(() async {
     await db.close();
     reset(mockLoggerService);
+    reset(mockCurrencyHelperService);
   });
 
   group('Method loadProducts() returns the correct value', () {
@@ -128,6 +151,46 @@ void main() {
         verifyNoMoreInteractions(mockLoggerService);
       },
     );
+
+    test(
+      'returns Left(CurrencyFailure) for mixed-currency stored offers',
+      () async {
+        await db
+            .into(db.productTable)
+            .insert(
+              ProductTableCompanion.insert(
+                id: 'mixed-product',
+                name: 'Mixed Product',
+                lastUpdatedAt: DateTime(2026, 1, 1, 12),
+              ),
+            );
+        for (final String currencyCode in ['USD', 'EUR']) {
+          await db
+              .into(db.storePriceTable)
+              .insert(
+                StorePriceTableCompanion.insert(
+                  productId: 'mixed-product',
+                  storeName: currencyCode,
+                  productUrl: 'https://example.com/$currencyCode',
+                  minorUnits: 100,
+                  currencyCode: currencyCode,
+                  isAvailable: true,
+                  lastCheckedAt: DateTime(2026, 1, 1, 12),
+                ),
+              );
+        }
+
+        final Either<Failure, List<ProductModel>> result = await datasource
+            .loadProducts();
+        final Failure failure =
+            result.getLeft().toNullable() ??
+            const DatabaseFailure('Expected a failure');
+
+        expect(failure, isA<CurrencyFailure>());
+        verify(() => mockLoggerService.e(failure.message)).called(1);
+        verifyNoMoreInteractions(mockLoggerService);
+      },
+    );
   });
 
   group('Method refreshProduct() returns the correct value', () {
@@ -198,6 +261,46 @@ void main() {
             const DatabaseFailure('Expected a failure');
 
         expect(failure, isA<DatabaseFailure>());
+        verify(() => mockLoggerService.e(failure.message)).called(1);
+        verifyNoMoreInteractions(mockLoggerService);
+      },
+    );
+
+    test(
+      'returns Left(CurrencyFailure) when refreshed offers differ',
+      () async {
+        await db
+            .into(db.productTable)
+            .insert(
+              ProductTableCompanion.insert(
+                id: 'mixed-product',
+                name: 'Mixed Product',
+                lastUpdatedAt: DateTime(2026, 1, 1, 12),
+              ),
+            );
+        for (final String currencyCode in ['USD', 'EUR']) {
+          await db
+              .into(db.storePriceTable)
+              .insert(
+                StorePriceTableCompanion.insert(
+                  productId: 'mixed-product',
+                  storeName: currencyCode,
+                  productUrl: 'https://example.com/$currencyCode',
+                  minorUnits: 100,
+                  currencyCode: currencyCode,
+                  isAvailable: true,
+                  lastCheckedAt: DateTime(2026, 1, 1, 12),
+                ),
+              );
+        }
+
+        final Either<Failure, ProductModel> result = await datasource
+            .refreshProduct('mixed-product');
+        final Failure failure =
+            result.getLeft().toNullable() ??
+            const DatabaseFailure('Expected a failure');
+
+        expect(failure, isA<CurrencyFailure>());
         verify(() => mockLoggerService.e(failure.message)).called(1);
         verifyNoMoreInteractions(mockLoggerService);
       },
