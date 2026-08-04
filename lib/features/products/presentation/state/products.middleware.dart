@@ -1,0 +1,86 @@
+// Package imports:
+import 'package:redux/redux.dart';
+
+// Project imports:
+import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/domain/usecases/load_products.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/params/refresh_product.params.dart';
+import 'package:worth_loop/features/products/domain/usecases/refresh_all_products.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/refresh_product.usecase.dart';
+import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
+import 'package:worth_loop/injection_container.dart';
+import 'package:worth_loop/shared/state/app.state.dart';
+import 'package:worth_loop/shared/usecase/no_params.dart';
+import 'package:worth_loop/shared/utils/logger_service.dart';
+
+/// Handles tracked-product actions.
+class ProductsMiddleware extends MiddlewareClass<AppState> {
+  @override
+  void call(Store<AppState> store, dynamic action, NextDispatcher next) {
+    next(action);
+
+    switch (action) {
+      case LoadProductsAction _:
+        _loadProducts(store, action);
+      case RefreshProductAction _:
+        _refreshProduct(store, action);
+      case RefreshAllProductsAction _:
+        _refreshAllProducts(store, action);
+    }
+  }
+
+  /// Handles [LoadProductsAction].
+  Future<void> _loadProducts(
+    Store<AppState> store,
+    LoadProductsAction action,
+  ) async {
+    (await sl<LoadProductsUseCase>()(NoParams())).fold(
+      (failure) {
+        sl<LoggerService>().e(failure.message, showPopup: true);
+        store.dispatch(ProductsLoadFailedAction(failure.message));
+      },
+      (List<Product> products) {
+        store.dispatch(ProductsLoadedAction(products));
+      },
+    );
+  }
+
+  /// Handles [RefreshProductAction].
+  Future<void> _refreshProduct(
+    Store<AppState> store,
+    RefreshProductAction action,
+  ) async {
+    (await sl<RefreshProductUseCase>()(
+      RefreshProductParams(productId: action.productId),
+    )).fold(
+      (failure) {
+        sl<LoggerService>().e(failure.message, showPopup: true);
+        store.dispatch(
+          ProductRefreshFailedAction(
+            productId: action.productId,
+            message: failure.message,
+          ),
+        );
+      },
+      (Product product) {
+        store.dispatch(ProductRefreshedAction(product));
+      },
+    );
+  }
+
+  /// Handles [RefreshAllProductsAction].
+  Future<void> _refreshAllProducts(
+    Store<AppState> store,
+    RefreshAllProductsAction action,
+  ) async {
+    (await sl<RefreshAllProductsUseCase>()(NoParams())).fold(
+      (failure) {
+        sl<LoggerService>().e(failure.message, showPopup: true);
+        store.dispatch(RefreshAllProductsFailedAction(failure.message));
+      },
+      (List<Product> products) {
+        store.dispatch(ProductsLoadedAction(products));
+      },
+    );
+  }
+}

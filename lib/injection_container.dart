@@ -8,6 +8,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 // Project imports:
 import 'package:worth_loop/features/github_explorer/github_explorer.injection_container.dart';
 import 'package:worth_loop/features/home/home.injection_container.dart';
+import 'package:worth_loop/features/products/products.injection_container.dart';
 import 'package:worth_loop/features/settings/settings.injection_container.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/navigation/app_router.dart';
@@ -68,6 +69,7 @@ Future<void> initDependencies() async {
   initSettingsDependencies();
   initGithubExplorerDependencies();
   initHomeDependencies();
+  initProductsDependencies();
 
   sl.registerLazySingleton<LoggerService>(
     () => LoggerService(Logger(), sl<PopupService>()),
