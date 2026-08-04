@@ -1,7 +1,7 @@
 // Package imports:
 import 'package:drift/drift.dart';
 
-/// Persisted manual-refresh scheduling preferences.
+/// Persisted refresh scheduling preferences.
 @DataClassName('RefreshSettingsRow')
 class RefreshSettingsTable extends Table {
   /// Singleton row identifier.

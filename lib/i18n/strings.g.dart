@@ -4,16 +4,20 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 132 (66 per locale)
+/// Strings: 144 (72 per locale)
 ///
-/// Built on 2026-08-04 at 02:40 UTC
+/// Built on 2026-08-04 at 03:03 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
 
+// Flutter imports:
 import 'package:flutter/widgets.dart';
+
+// Package imports:
 import 'package:slang/builder/model/node.dart';
 import 'package:slang_flutter/slang_flutter.dart';
+
 export 'package:slang_flutter/slang_flutter.dart';
 
 const AppLocale _baseLocale = AppLocale.en;
@@ -334,6 +338,8 @@ class _StringsSettingsGeneralEn {
   String get title => 'General';
   late final _StringsSettingsGeneralLanguageEn language =
       _StringsSettingsGeneralLanguageEn._(_root);
+  late final _StringsSettingsGeneralRefreshIntervalEn refreshInterval =
+      _StringsSettingsGeneralRefreshIntervalEn._(_root);
   late final _StringsSettingsGeneralUpdatesEn updates =
       _StringsSettingsGeneralUpdatesEn._(_root);
   late final _StringsSettingsGeneralAboutEn about =
@@ -381,6 +387,22 @@ class _StringsSettingsGeneralLanguageEn {
 
   // Translations
   String get title => 'Language';
+}
+
+// Path: settings.general.refreshInterval
+class _StringsSettingsGeneralRefreshIntervalEn {
+  _StringsSettingsGeneralRefreshIntervalEn._(this._root);
+
+  final Translations _root; // ignore: unused_field
+
+  // Translations
+  String get title => 'Refresh interval';
+  String get description =>
+      'Saved now for automatic refresh support later. Background refresh is not active yet.';
+  String get hourly => 'Every hour';
+  String get everyThreeHours => 'Every 3 hours';
+  String get everySixHours => 'Every 6 hours';
+  String get everyTwelveHours => 'Every 12 hours';
 }
 
 // Path: settings.general.updates
@@ -652,6 +674,9 @@ class _StringsSettingsGeneralPt implements _StringsSettingsGeneralEn {
   late final _StringsSettingsGeneralLanguagePt language =
       _StringsSettingsGeneralLanguagePt._(_root);
   @override
+  late final _StringsSettingsGeneralRefreshIntervalPt refreshInterval =
+      _StringsSettingsGeneralRefreshIntervalPt._(_root);
+  @override
   late final _StringsSettingsGeneralUpdatesPt updates =
       _StringsSettingsGeneralUpdatesPt._(_root);
   @override
@@ -713,6 +738,30 @@ class _StringsSettingsGeneralLanguagePt
   // Translations
   @override
   String get title => 'Idioma';
+}
+
+// Path: settings.general.refreshInterval
+class _StringsSettingsGeneralRefreshIntervalPt
+    implements _StringsSettingsGeneralRefreshIntervalEn {
+  _StringsSettingsGeneralRefreshIntervalPt._(this._root);
+
+  @override
+  final _StringsPt _root; // ignore: unused_field
+
+  // Translations
+  @override
+  String get title => 'Intervalo de atualização';
+  @override
+  String get description =>
+      'Guardado agora para suportar a atualização automática mais tarde. A atualização em segundo plano ainda não está ativa.';
+  @override
+  String get hourly => 'A cada hora';
+  @override
+  String get everyThreeHours => 'A cada 3 horas';
+  @override
+  String get everySixHours => 'A cada 6 horas';
+  @override
+  String get everyTwelveHours => 'A cada 12 horas';
 }
 
 // Path: settings.general.updates
@@ -865,6 +914,18 @@ extension on Translations {
         return 'General';
       case 'settings.general.language.title':
         return 'Language';
+      case 'settings.general.refreshInterval.title':
+        return 'Refresh interval';
+      case 'settings.general.refreshInterval.description':
+        return 'Saved now for automatic refresh support later. Background refresh is not active yet.';
+      case 'settings.general.refreshInterval.hourly':
+        return 'Every hour';
+      case 'settings.general.refreshInterval.everyThreeHours':
+        return 'Every 3 hours';
+      case 'settings.general.refreshInterval.everySixHours':
+        return 'Every 6 hours';
+      case 'settings.general.refreshInterval.everyTwelveHours':
+        return 'Every 12 hours';
       case 'settings.general.updates.title':
         return 'Updates';
       case 'settings.general.updates.version':
@@ -1007,6 +1068,18 @@ extension on _StringsPt {
         return 'Geral';
       case 'settings.general.language.title':
         return 'Idioma';
+      case 'settings.general.refreshInterval.title':
+        return 'Intervalo de atualização';
+      case 'settings.general.refreshInterval.description':
+        return 'Guardado agora para suportar a atualização automática mais tarde. A atualização em segundo plano ainda não está ativa.';
+      case 'settings.general.refreshInterval.hourly':
+        return 'A cada hora';
+      case 'settings.general.refreshInterval.everyThreeHours':
+        return 'A cada 3 horas';
+      case 'settings.general.refreshInterval.everySixHours':
+        return 'A cada 6 horas';
+      case 'settings.general.refreshInterval.everyTwelveHours':
+        return 'A cada 12 horas';
       case 'settings.general.updates.title':
         return 'Atualizações';
       case 'settings.general.updates.version':

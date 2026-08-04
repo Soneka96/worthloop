@@ -11,9 +11,11 @@ import 'package:redux/redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/settings/presentation/screens/general_settings.screen.dart';
+import 'package:worth_loop/features/settings/presentation/state/general_settings.actions.dart';
 import 'package:worth_loop/features/settings/presentation/state/viewmodels/general_settings_screen.viewmodel.dart';
 import 'package:worth_loop/features/settings/presentation/widgets/general/about.section.dart';
 import 'package:worth_loop/features/settings/presentation/widgets/general/language.section.dart';
+import 'package:worth_loop/features/settings/presentation/widgets/general/refresh_interval.section.dart';
 import 'package:worth_loop/features/settings/presentation/widgets/general/updates.section.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
@@ -25,12 +27,17 @@ class MockGeneralSettingsScreenViewModel extends Mock
 void main() {
   late MockGeneralSettingsScreenViewModel mockViewModel;
   late Store<AppState> store;
+  late List<dynamic> dispatchedActions;
 
   setUp(() {
     mockViewModel = MockGeneralSettingsScreenViewModel();
+    dispatchedActions = [];
 
+    when(() => mockViewModel.refreshIntervalMinutes).thenReturn(60);
+    when(() => mockViewModel.isRefreshIntervalBusy).thenReturn(false);
     when(() => mockViewModel.onCheckForUpdates).thenReturn(() {});
     when(() => mockViewModel.onOpenPrivacyPolicy).thenReturn(() {});
+    when(() => mockViewModel.onRefreshIntervalSelected).thenReturn((_) {});
 
     sl.registerFactoryParam<
       GeneralSettingsScreenViewModel,
@@ -47,23 +54,53 @@ void main() {
     );
     sl.registerLazySingleton<AppLanguage>(AppLanguage.new);
 
-    store = Store<AppState>(
-      (AppState state, dynamic action) => state,
-      initialState: AppState.initial(),
-    );
+    store = Store<AppState>((AppState state, dynamic action) {
+      dispatchedActions.add(action);
+      return state;
+    }, initialState: AppState.initial());
   });
 
   tearDown(() => sl.reset());
 
-  Widget buildWidget() {
+  Widget buildWidget({
+    ThemeMode themeMode = ThemeMode.light,
+    TextScaler textScaler = TextScaler.noScaling,
+  }) {
     return StoreProvider<AppState>(
       store: store,
-      child: const MaterialApp(
-        home: Scaffold(
+      child: MaterialApp(
+        theme: ThemeData.light(),
+        darkTheme: ThemeData.dark(),
+        themeMode: themeMode,
+        builder: (BuildContext context, Widget? child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+          child: child ?? const SizedBox.shrink(),
+        ),
+        home: const Scaffold(
           body: SingleChildScrollView(child: GeneralSettingsScreen()),
         ),
       ),
     );
+  }
+
+  bool hasPrimaryFocusWithin(WidgetTester tester, Finder finder) {
+    final BuildContext? focusContext =
+        FocusManager.instance.primaryFocus?.context;
+    if (focusContext == null) {
+      return false;
+    }
+
+    final Element target = tester.element(finder);
+    if (focusContext == target) {
+      return true;
+    }
+
+    bool found = false;
+    (focusContext as Element).visitAncestorElements((Element ancestor) {
+      found = ancestor == target;
+      return !found;
+    });
+    return found;
   }
 
   group('GeneralSettingsScreen contains widgets', () {
@@ -95,6 +132,15 @@ void main() {
     );
 
     testWidgets(
+      'GeneralSettingsScreen contains RefreshIntervalSection with the correct parameters',
+      (tester) async {
+        await tester.pumpWidget(buildWidget());
+
+        expect(find.byType(RefreshIntervalSection), findsOneWidget);
+      },
+    );
+
+    testWidgets(
       'GeneralSettingsScreen contains AboutSection with the correct parameters',
       (tester) async {
         await tester.pumpWidget(buildWidget());
@@ -103,6 +149,23 @@ void main() {
       },
     );
   });
+
+  group(
+    "GeneralSettingsScreen's StoreConnector dispatches LoadRefreshSettingsAction on init",
+    () {
+      testWidgets(
+        'GeneralSettingsScreen dispatches LoadRefreshSettingsAction on init',
+        (tester) async {
+          await tester.pumpWidget(buildWidget());
+
+          expect(
+            dispatchedActions,
+            contains(const LoadRefreshSettingsAction()),
+          );
+        },
+      );
+    },
+  );
 
   group("GeneralSettingsScreen's elements behavior", () {
     testWidgets('GeneralSettingsScreen calls onCheckForUpdates when tapped', (
@@ -144,11 +207,18 @@ void main() {
       testWidgets('GeneralSettingsScreen meets WCAG contrast guidelines', (
         tester,
       ) async {
+        when(() => mockViewModel.isRefreshIntervalBusy).thenReturn(true);
         final SemanticsHandle handle = tester.ensureSemantics();
-        await tester.pumpWidget(buildWidget());
+        try {
+          await tester.pumpWidget(buildWidget());
+          await expectLater(tester, meetsGuideline(textContrastGuideline));
 
-        await expectLater(tester, meetsGuideline(textContrastGuideline));
-        handle.dispose();
+          await tester.pumpWidget(buildWidget(themeMode: ThemeMode.dark));
+          await tester.pumpAndSettle();
+          await expectLater(tester, meetsGuideline(textContrastGuideline));
+        } finally {
+          handle.dispose();
+        }
       });
 
       testWidgets(
@@ -177,12 +247,14 @@ void main() {
         'GeneralSettingsScreen renders without overflow at 150% text scale',
         (tester) async {
           await tester.pumpWidget(
-            MediaQuery(
-              data: const MediaQueryData(textScaler: TextScaler.linear(1.5)),
-              child: buildWidget(),
-            ),
+            buildWidget(textScaler: const TextScaler.linear(1.5)),
           );
 
+          final double scaledValue = MediaQuery.textScalerOf(
+            tester.element(find.byType(GeneralSettingsScreen)),
+          ).scale(10);
+          expect(scaledValue, isA<double>());
+          expect(scaledValue, 15);
           expect(tester.takeException(), isNull);
         },
       );
@@ -191,12 +263,14 @@ void main() {
         'GeneralSettingsScreen renders without overflow at 200% text scale',
         (tester) async {
           await tester.pumpWidget(
-            MediaQuery(
-              data: const MediaQueryData(textScaler: TextScaler.linear(2.0)),
-              child: buildWidget(),
-            ),
+            buildWidget(textScaler: const TextScaler.linear(2.0)),
           );
 
+          final double scaledValue = MediaQuery.textScalerOf(
+            tester.element(find.byType(GeneralSettingsScreen)),
+          ).scale(10);
+          expect(scaledValue, isA<double>());
+          expect(scaledValue, 20);
           expect(tester.takeException(), isNull);
         },
       );
@@ -206,15 +280,23 @@ void main() {
         (tester) async {
           await tester.pumpWidget(buildWidget());
 
-          final int focusableCount = tester
-              .widgetList(find.byWidgetPredicate((widget) => widget is Focus))
-              .length;
-          for (int i = 0; i < focusableCount; i++) {
+          const List<Key> focusOrder = [
+            Key('language-picker-dropdown'),
+            Key('refresh-interval-dropdown'),
+            Key('general-settings-check-for-updates-button'),
+            Key('general-settings-privacy-policy-button'),
+          ];
+
+          for (final Key key in focusOrder) {
             await tester.sendKeyEvent(LogicalKeyboardKey.tab);
             await tester.pump();
+            final bool isFocused = hasPrimaryFocusWithin(
+              tester,
+              find.byKey(key),
+            );
+            expect(isFocused, isA<bool>());
+            expect(isFocused, isTrue, reason: '$key should receive focus');
           }
-
-          expect(FocusManager.instance.primaryFocus, isNotNull);
         },
       );
     },

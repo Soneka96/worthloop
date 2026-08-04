@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:redux/redux.dart';
 
 // Project imports:
@@ -15,11 +16,13 @@ import 'package:worth_loop/features/home/presentation/state/viewmodels/home_scre
 import 'package:worth_loop/features/products/presentation/screens/product_details.screen.dart';
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
 import 'package:worth_loop/features/settings/presentation/screens/app_settings.screen.dart';
+import 'package:worth_loop/features/settings/presentation/state/viewmodels/general_settings_screen.viewmodel.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/navigation/app_router.dart';
 import 'package:worth_loop/shared/navigation/app_routes.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/theme/app_font.dart';
+import 'package:worth_loop/shared/theme/app_language.dart';
 import 'package:worth_loop/shared/theme/app_shape.dart';
 import 'package:worth_loop/shared/theme/app_spacing.dart';
 import 'package:worth_loop/shared/theme/app_theme.dart';
@@ -39,6 +42,15 @@ void main() {
     sl.registerLazySingleton<AppSpacing>(AppSpacing.new);
     sl.registerLazySingleton<AppZoom>(AppZoom.new);
     sl.registerLazySingleton<AppFont>(AppFont.new);
+    sl.registerLazySingleton<AppLanguage>(AppLanguage.new);
+    sl.registerLazySingleton<PackageInfo>(
+      () => PackageInfo(
+        appName: 'WorthLoop',
+        packageName: 'com.soneka96.worthloop',
+        version: '0.1.0',
+        buildNumber: '1',
+      ),
+    );
     sl.registerFactoryParam<
       GithubExplorerScreenViewModel,
       Store<AppState>,
@@ -50,6 +62,11 @@ void main() {
     sl.registerFactoryParam<ProductDetailsViewModel, Store<AppState>, String>(
       (store, productId) => ProductDetailsViewModel.fromStore(store, productId),
     );
+    sl.registerFactoryParam<
+      GeneralSettingsScreenViewModel,
+      Store<AppState>,
+      void
+    >((store, _) => GeneralSettingsScreenViewModel.fromStore(store));
   });
 
   tearDown(() => sl.reset());

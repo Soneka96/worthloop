@@ -60,6 +60,13 @@ settings:
     title: Geral
     language:
       title: Idioma
+    refreshInterval:
+      title: Intervalo de atualização
+      description: Guardado agora para suportar a atualização automática mais tarde. A atualização em segundo plano ainda não está ativa.
+      hourly: A cada hora
+      everyThreeHours: A cada 3 horas
+      everySixHours: A cada 6 horas
+      everyTwelveHours: A cada 12 horas
     updates:
       title: Atualizações
       version: Versão $version

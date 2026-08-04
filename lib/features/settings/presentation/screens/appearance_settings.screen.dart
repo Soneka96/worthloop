@@ -27,12 +27,12 @@ class AppearanceSettingsScreen extends StatelessWidget {
         SizedBox(height: context.spacing.md),
         const ThemeSection(),
         SizedBox(height: context.spacing.md),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Expanded(child: CornerStyleSection()),
-            SizedBox(width: context.spacing.lg),
-            const Expanded(child: DensitySection()),
+            const CornerStyleSection(),
+            SizedBox(height: context.spacing.md),
+            const DensitySection(),
           ],
         ),
         SizedBox(height: context.spacing.md),

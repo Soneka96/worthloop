@@ -60,6 +60,13 @@ settings:
     title: General
     language:
       title: Language
+    refreshInterval:
+      title: Refresh interval
+      description: Saved now for automatic refresh support later. Background refresh is not active yet.
+      hourly: Every hour
+      everyThreeHours: Every 3 hours
+      everySixHours: Every 6 hours
+      everyTwelveHours: Every 12 hours
     updates:
       title: Updates
       version: Version $version

@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 
 // Project imports:
-import 'package:worth_loop/features/settings/presentation/screens/app_settings.screen.dart';
 import 'package:worth_loop/features/settings/presentation/widgets/density_preview_rows.widget.dart';
 import 'package:worth_loop/features/settings/presentation/widgets/settings_option_preview_card.widget.dart';
 import 'package:worth_loop/features/settings/presentation/widgets/theme_card.widget.dart';
@@ -87,13 +86,6 @@ abstract final class SelectableCardBorders {
 
   /// Width when the selected/active option.
   static const double selected = 2;
-}
-
-/// Sizes for [AppSettingsScreen]'s layout shell.
-abstract final class SettingsSizes {
-  /// Minimum width of the category list pane — it grows to fit its widest
-  /// label at the current text scale instead of clipping/wrapping past this.
-  static const double sidebarWidth = 220;
 }
 
 /// Sizes for [ZoomControl]'s track — the draggable thumb, the dot ticks, and
