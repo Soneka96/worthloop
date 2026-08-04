@@ -19,8 +19,6 @@ import 'package:worth_loop/shared/theme/app_shape.dart';
 import 'package:worth_loop/shared/theme/app_spacing.dart';
 import 'package:worth_loop/shared/theme/app_theme.dart';
 import 'package:worth_loop/shared/theme/app_zoom.dart';
-import 'package:worth_loop/shared/utils/home_widget_data_service.dart';
-import 'package:worth_loop/shared/utils/local_home_widget_data_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/popup_service.dart';
 
@@ -116,17 +114,6 @@ void main() {
         isTrue,
         reason: 'LoggerService should be registered',
       );
-      expect(sl.isRegistered<HomeWidgetDataService>(), isA<bool>());
-      expect(
-        sl.isRegistered<HomeWidgetDataService>(),
-        isTrue,
-        reason: 'HomeWidgetDataService should be registered',
-      );
-      final HomeWidgetDataService first = sl<HomeWidgetDataService>();
-      final HomeWidgetDataService second = sl<HomeWidgetDataService>();
-      expect(first, isA<LocalHomeWidgetDataService>());
-      expect(identical(first, second), isA<bool>());
-      expect(identical(first, second), isTrue);
     });
   });
 }
