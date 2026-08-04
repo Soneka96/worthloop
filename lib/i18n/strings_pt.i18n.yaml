@@ -21,6 +21,10 @@ productDetails:
   refreshing: A atualizar
   bestPrice: Melhor preço
   offers: "Ofertas em lojas: $count"
+  availableOffers: Ofertas disponíveis
+  unavailableOffers: Ofertas sem stock
+  unavailableDescription: Estas lojas indicam que não têm stock neste momento.
+  noOffers: Ainda não existem ofertas.
   available: Em stock
   unavailable: Sem stock
   checkedAt: Verificado às $time

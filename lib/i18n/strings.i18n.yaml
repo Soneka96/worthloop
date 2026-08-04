@@ -21,6 +21,10 @@ productDetails:
   refreshing: Refreshing
   bestPrice: Best price
   offers: "Store offers: $count"
+  availableOffers: Available offers
+  unavailableOffers: Unavailable offers
+  unavailableDescription: These stores currently report no stock.
+  noOffers: No offers yet.
   available: In stock
   unavailable: Out of stock
   checkedAt: Checked at $time

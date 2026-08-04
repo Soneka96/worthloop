@@ -34,7 +34,19 @@ class ProductDetailsScreen extends StatelessWidget {
       builder: (context, viewmodel) {
         final Product? product = viewmodel.product;
         final StorePrice? bestPrice = product?.bestAvailablePrice;
-        final List<StorePrice> prices = product?.pricesForDisplay ?? [];
+        final List<StorePrice> availablePrices =
+            product?.availablePricesSorted ?? [];
+        final List<StorePrice> displayPrices = product?.pricesForDisplay ?? [];
+        final List<StorePrice> unavailablePrices = displayPrices
+            .skip(availablePrices.length)
+            .toList(growable: false);
+        final int offerListItemCount =
+            availablePrices.isEmpty && unavailablePrices.isEmpty
+            ? 1
+            : (availablePrices.isEmpty ? 0 : availablePrices.length + 1) +
+                  (unavailablePrices.isEmpty
+                      ? 0
+                      : unavailablePrices.length + 2);
         final ColorScheme colorScheme = Theme.of(context).colorScheme;
         final TextTheme textTheme = Theme.of(context).textTheme;
 
@@ -142,13 +154,85 @@ class ProductDetailsScreen extends StatelessWidget {
                       SizedBox(height: context.spacing.sm),
                       Expanded(
                         child: ListView.builder(
-                          itemCount: prices.length,
-                          itemBuilder: (context, index) => Padding(
-                            padding: EdgeInsets.only(
-                              bottom: context.spacing.sm,
-                            ),
-                            child: StorePriceWidget(storePrice: prices[index]),
-                          ),
+                          itemCount: offerListItemCount,
+                          itemBuilder: (context, index) {
+                            if (availablePrices.isEmpty &&
+                                unavailablePrices.isEmpty) {
+                              return Padding(
+                                padding: EdgeInsets.only(
+                                  bottom: context.spacing.sm,
+                                ),
+                                child: Text(
+                                  t.productDetails.noOffers,
+                                  style: textTheme.bodyMedium,
+                                ),
+                              );
+                            }
+                            if (availablePrices.isNotEmpty) {
+                              if (index == 0) {
+                                return Padding(
+                                  key: const Key(
+                                    'product-details-available-section',
+                                  ),
+                                  padding: EdgeInsets.only(
+                                    bottom: context.spacing.sm,
+                                  ),
+                                  child: Text(
+                                    t.productDetails.availableOffers,
+                                    style: textTheme.labelSmall,
+                                  ),
+                                );
+                              }
+                              if (index <= availablePrices.length) {
+                                return Padding(
+                                  padding: EdgeInsets.only(
+                                    bottom: context.spacing.sm,
+                                  ),
+                                  child: StorePriceWidget(
+                                    storePrice: availablePrices[index - 1],
+                                  ),
+                                );
+                              }
+                            }
+
+                            final int unavailableIndex = availablePrices.isEmpty
+                                ? index
+                                : index - availablePrices.length - 1;
+                            if (unavailableIndex == 0) {
+                              return Padding(
+                                key: const Key(
+                                  'product-details-unavailable-section',
+                                ),
+                                padding: EdgeInsets.only(
+                                  bottom: context.spacing.xs,
+                                ),
+                                child: Text(
+                                  t.productDetails.unavailableOffers,
+                                  style: textTheme.labelSmall,
+                                ),
+                              );
+                            }
+                            if (unavailableIndex == 1) {
+                              return Padding(
+                                padding: EdgeInsets.only(
+                                  bottom: context.spacing.sm,
+                                ),
+                                child: Text(
+                                  t.productDetails.unavailableDescription,
+                                  style: textTheme.bodySmall,
+                                ),
+                              );
+                            }
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                bottom: context.spacing.sm,
+                              ),
+                              child: StorePriceWidget(
+                                storePrice:
+                                    unavailablePrices[unavailableIndex - 2],
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ],

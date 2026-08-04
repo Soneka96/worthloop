@@ -114,6 +114,12 @@ void main() {
         expect(find.byType(IllustrativePriceNotice), findsOneWidget);
         expect(find.text(t.home.sampleDataNotice), findsOneWidget);
         expect(find.byType(StorePriceWidget), findsNWidgets(3));
+        expect(find.text(t.productDetails.availableOffers), findsOneWidget);
+        expect(find.text(t.productDetails.unavailableOffers), findsOneWidget);
+        expect(
+          find.text(t.productDetails.unavailableDescription),
+          findsOneWidget,
+        );
       },
     );
 
@@ -156,6 +162,17 @@ void main() {
         expect(find.byType(StorePriceWidget), findsNothing);
       },
     );
+
+    testWidgets('ProductDetailsScreen explains when no offers exist', (
+      WidgetTester tester,
+    ) async {
+      when(() => mockViewModel.product).thenReturn(buildProduct());
+
+      await tester.pumpWidget(buildWidget());
+
+      expect(find.text(t.productDetails.noOffers), findsOneWidget);
+      expect(find.byType(StorePriceWidget), findsNothing);
+    });
   });
 
   group("ProductDetailsScreen's elements behavior", () {
@@ -242,6 +259,12 @@ void main() {
         expect(find.text(t.home.sampleDataNotice), findsOneWidget);
         expect(find.text(t.productDetails.refresh), findsOneWidget);
         expect(find.text(t.productDetails.available), findsNWidgets(2));
+        expect(find.text(t.productDetails.availableOffers), findsOneWidget);
+        expect(find.text(t.productDetails.unavailableOffers), findsOneWidget);
+        expect(
+          find.text(t.productDetails.unavailableDescription),
+          findsOneWidget,
+        );
       } finally {
         LocaleSettings.setLocale(AppLocale.en);
       }
