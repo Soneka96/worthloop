@@ -15,12 +15,16 @@ import 'package:worth_loop/features/products/products.injection_container.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
+import 'package:worth_loop/shared/utils/logger_service.dart';
 
 class MockAppDatabase extends Mock implements AppDatabase {}
+
+class MockLoggerService extends Mock implements LoggerService {}
 
 void main() {
   setUp(() {
     sl.registerSingleton<AppDatabase>(MockAppDatabase());
+    sl.registerSingleton<LoggerService>(MockLoggerService());
     initProductsDependencies();
   });
 

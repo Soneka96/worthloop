@@ -13,11 +13,12 @@ import 'package:worth_loop/features/products/presentation/state/viewmodels/produ
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
+import 'package:worth_loop/shared/utils/logger_service.dart';
 
 /// Registers tracked-product dependencies.
 void initProductsDependencies() {
   sl.registerLazySingleton<ProductsLocalDatasource>(
-    () => ProductsLocalDatasource(sl<AppDatabase>()),
+    () => ProductsLocalDatasource(sl<AppDatabase>(), sl<LoggerService>()),
   );
   sl.registerLazySingleton<IProductsRepository>(
     () => ProductsRepository(sl<ProductsLocalDatasource>()),

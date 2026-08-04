@@ -7,7 +7,6 @@ import 'package:sqlite3/sqlite3.dart';
 import 'package:worth_loop/features/products/data/datasources/fake_products.dart';
 import 'package:worth_loop/features/products/data/models/product.model.dart';
 import 'package:worth_loop/features/products/domain/entities/store_price.entity.dart';
-import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
@@ -15,9 +14,10 @@ import 'package:worth_loop/shared/utils/logger_service.dart';
 /// Local product and merchant-offer persistence.
 class ProductsLocalDatasource {
   final AppDatabase _db;
+  final LoggerService _loggerService;
 
   /// Creates local product persistence backed by [AppDatabase].
-  ProductsLocalDatasource(this._db);
+  ProductsLocalDatasource(this._db, this._loggerService);
 
   /// Loads every product, inserting illustrative data on the first run.
   Future<Either<Failure, List<ProductModel>>> loadProducts() async {
@@ -27,7 +27,7 @@ class ProductsLocalDatasource {
       }
       return Right(await _readProducts());
     } on SqliteException catch (error) {
-      sl<LoggerService>().e(error.toString());
+      _loggerService.e(error.toString());
       return Left(DatabaseFailure(error.toString()));
     }
   }
@@ -43,7 +43,7 @@ class ProductsLocalDatasource {
           ? const Left(NotFoundFailure('Product not found'))
           : Right(product);
     } on SqliteException catch (error) {
-      sl<LoggerService>().e(error.toString());
+      _loggerService.e(error.toString());
       return Left(DatabaseFailure(error.toString()));
     }
   }
@@ -62,7 +62,7 @@ class ProductsLocalDatasource {
       });
       return Right(await _readProducts());
     } on SqliteException catch (error) {
-      sl<LoggerService>().e(error.toString());
+      _loggerService.e(error.toString());
       return Left(DatabaseFailure(error.toString()));
     }
   }

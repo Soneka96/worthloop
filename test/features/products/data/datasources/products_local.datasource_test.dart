@@ -9,7 +9,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:worth_loop/features/products/data/datasources/products_local.datasource.dart';
 import 'package:worth_loop/features/products/data/models/product.model.dart';
 import 'package:worth_loop/features/products/domain/entities/store_price.entity.dart';
-import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
@@ -24,13 +23,11 @@ void main() {
   setUp(() {
     db = AppDatabase.forTesting(NativeDatabase.memory());
     mockLoggerService = MockLoggerService();
-    sl.registerSingleton<LoggerService>(mockLoggerService);
-    datasource = ProductsLocalDatasource(db);
+    datasource = ProductsLocalDatasource(db, mockLoggerService);
   });
 
   tearDown(() async {
     await db.close();
-    await sl.reset();
     reset(mockLoggerService);
   });
 
@@ -228,6 +225,7 @@ void main() {
             .every((StorePrice price) => price.isAvailable),
         isTrue,
       );
+      verifyZeroInteractions(mockLoggerService);
     });
 
     test(
