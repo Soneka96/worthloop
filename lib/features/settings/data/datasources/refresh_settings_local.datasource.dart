@@ -5,7 +5,7 @@ import 'package:sqlite3/sqlite3.dart';
 // Project imports:
 import 'package:worth_loop/features/settings/data/models/refresh_settings.model.dart';
 import 'package:worth_loop/injection_container.dart';
-import 'package:worth_loop/shared/constants/app_constants.dart';
+import 'package:worth_loop/shared/constants/refresh_interval_constants.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';

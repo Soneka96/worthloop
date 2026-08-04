@@ -4,7 +4,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:meta/meta.dart';
 
 // Project imports:
-import 'package:worth_loop/shared/constants/app_constants.dart';
+import 'package:worth_loop/shared/constants/refresh_interval_constants.dart';
 
 /// Redux state for refresh scheduling preferences.
 @immutable

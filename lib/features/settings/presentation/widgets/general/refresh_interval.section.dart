@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 // Project imports:
 import 'package:worth_loop/i18n/strings.g.dart';
-import 'package:worth_loop/shared/constants/app_constants.dart';
+import 'package:worth_loop/shared/constants/refresh_interval_constants.dart';
 import 'package:worth_loop/shared/theme/app_spacing_theme_extension.dart';
 
 /// Refresh interval preference.
