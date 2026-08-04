@@ -1,0 +1,23 @@
+// Project imports:
+import 'package:worth_loop/features/products/domain/entities/store_price.entity.dart';
+import 'package:worth_loop/features/products/domain/usecases/params/compare_prices.params.dart';
+import 'package:worth_loop/shared/usecase/usecase.dart';
+
+/// Orders a product's available offers by exact minor-unit price.
+class ComparePricesUseCase
+    extends UseCase<List<StorePrice>, ComparePricesParams> {
+  @override
+  Future<List<StorePrice>> call(ComparePricesParams params) {
+    final List<StorePrice> availablePrices =
+        params.product.storePrices
+            .where((StorePrice price) => price.isAvailable)
+            .toList()
+          ..sort(
+            (StorePrice first, StorePrice second) => first
+                .currentPrice
+                .minorUnits
+                .compareTo(second.currentPrice.minorUnits),
+          );
+    return Future<List<StorePrice>>.value(availablePrices);
+  }
+}
