@@ -35,3 +35,8 @@ class FileSystemFailure extends Failure {
 class NetworkFailure extends Failure {
   const NetworkFailure(super.message);
 }
+
+/// Represents a requested record that does not exist.
+class NotFoundFailure extends Failure {
+  const NotFoundFailure(super.message);
+}
