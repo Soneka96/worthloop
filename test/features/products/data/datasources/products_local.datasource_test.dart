@@ -8,6 +8,8 @@ import 'package:mocktail/mocktail.dart';
 // Project imports:
 import 'package:worth_loop/features/products/data/datasources/products_local.datasource.dart';
 import 'package:worth_loop/features/products/data/models/product.model.dart';
+import 'package:worth_loop/features/products/data/models/product_source.model.dart';
+import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/store_price.entity.dart';
 import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
@@ -373,6 +375,115 @@ void main() {
         expect(failure, isA<DatabaseFailure>());
         verify(() => mockLoggerService.e(failure.message)).called(1);
         verifyNoMoreInteractions(mockLoggerService);
+      },
+    );
+  });
+
+  group('Method saveProductSource() returns the correct value', () {
+    test('saves and returns a product source', () async {
+      await db
+          .into(db.productTable)
+          .insert(
+            ProductTableCompanion.insert(
+              id: 'product-1',
+              name: 'Example Product',
+              lastUpdatedAt: DateTime(2026, 1, 1),
+            ),
+          );
+      final ProductSource source = ProductSource.fromUrl(
+        id: 'source-1',
+        productId: 'product-1',
+        url: 'https://example.com/products/1',
+        createdAt: DateTime(2026, 1, 1),
+      );
+
+      final Either<Failure, ProductSourceModel> result = await datasource
+          .saveProductSource(source);
+      final List<ProductSourceRow> rows = await db
+          .select(db.productSourceTable)
+          .get();
+
+      expect(result.getRight().toNullable(), isA<ProductSourceModel>());
+      expect(rows.length, 1);
+      expect(rows.single.url, source.url);
+      verifyZeroInteractions(mockLoggerService);
+    });
+
+    test('returns Left(DatabaseFailure) for a duplicate source id', () async {
+      await db
+          .into(db.productTable)
+          .insert(
+            ProductTableCompanion.insert(
+              id: 'product-1',
+              name: 'Example Product',
+              lastUpdatedAt: DateTime(2026, 1, 1),
+            ),
+          );
+      final ProductSource source = ProductSource.fromUrl(
+        id: 'source-1',
+        productId: 'product-1',
+        url: 'https://example.com/products/1',
+        createdAt: DateTime(2026, 1, 1),
+      );
+      await datasource.saveProductSource(source);
+
+      final Either<Failure, ProductSourceModel> result = await datasource
+          .saveProductSource(source);
+      final Failure failure =
+          result.getLeft().toNullable() ??
+          const DatabaseFailure('Expected a failure');
+
+      expect(failure, isA<DatabaseFailure>());
+      verify(() => mockLoggerService.e(failure.message)).called(1);
+    });
+  });
+
+  group('Method loadProductSources() returns the correct value', () {
+    test('loads every saved product source', () async {
+      await db
+          .into(db.productTable)
+          .insert(
+            ProductTableCompanion.insert(
+              id: 'product-1',
+              name: 'Example Product',
+              lastUpdatedAt: DateTime(2026, 1, 1),
+            ),
+          );
+      await db
+          .into(db.productSourceTable)
+          .insert(
+            ProductSourceTableCompanion.insert(
+              id: 'source-1',
+              productId: 'product-1',
+              url: 'https://example.com/products/1',
+              merchantDomain: 'example.com',
+              createdAt: DateTime(2026, 1, 1),
+            ),
+          );
+
+      final Either<Failure, List<ProductSourceModel>> result = await datasource
+          .loadProductSources();
+      final List<ProductSourceModel> sources =
+          result.getRight().toNullable() ?? [];
+
+      expect(sources.length, 1);
+      expect(sources.single.id, 'source-1');
+      verifyZeroInteractions(mockLoggerService);
+    });
+
+    test(
+      'returns Left(DatabaseFailure) when the source table is missing',
+      () async {
+        await db.customStatement('DROP TABLE product_source_table');
+
+        final Either<Failure, List<ProductSourceModel>> result =
+            await datasource.loadProductSources();
+        final Failure failure =
+            result.getLeft().toNullable() ??
+            const DatabaseFailure('Expected a failure');
+
+        expect(failure, isA<DatabaseFailure>());
+        verify(() => mockLoggerService.e(failure.message)).called(1);
       },
     );
   });

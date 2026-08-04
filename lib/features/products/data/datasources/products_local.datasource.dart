@@ -6,7 +6,9 @@ import 'package:sqlite3/sqlite3.dart';
 // Project imports:
 import 'package:worth_loop/features/products/data/datasources/fake_products.dart';
 import 'package:worth_loop/features/products/data/models/product.model.dart';
+import 'package:worth_loop/features/products/data/models/product_source.model.dart';
 import 'package:worth_loop/features/products/domain/entities/store_price.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/utils/currency_helper_service.dart';
@@ -82,6 +84,35 @@ class ProductsLocalDatasource {
     } on StateError catch (error) {
       _loggerService.e(error.toString());
       return Left(CurrencyFailure(error.toString()));
+    }
+  }
+
+  /// Saves a product website link and returns its persisted representation.
+  Future<Either<Failure, ProductSourceModel>> saveProductSource(
+    ProductSource source,
+  ) async {
+    try {
+      final ProductSourceModel model = ProductSourceModel.fromEntity(source);
+      await _db.into(_db.productSourceTable).insert(model.toCompanion());
+      return Right(model);
+    } on SqliteException catch (error) {
+      _loggerService.e(error.toString());
+      return Left(DatabaseFailure(error.toString()));
+    }
+  }
+
+  /// Loads every saved product website link.
+  Future<Either<Failure, List<ProductSourceModel>>> loadProductSources() async {
+    try {
+      final List<ProductSourceRow> rows = await _db
+          .select(_db.productSourceTable)
+          .get();
+      return Right(
+        rows.map(ProductSourceModel.fromRow).toList(growable: false),
+      );
+    } on SqliteException catch (error) {
+      _loggerService.e(error.toString());
+      return Left(DatabaseFailure(error.toString()));
     }
   }
 

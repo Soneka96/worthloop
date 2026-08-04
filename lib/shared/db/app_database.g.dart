@@ -325,6 +325,385 @@ class ProductTableCompanion extends UpdateCompanion<ProductRow> {
   }
 }
 
+class $ProductSourceTableTable extends ProductSourceTable
+    with TableInfo<$ProductSourceTableTable, ProductSourceRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ProductSourceTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _productIdMeta = const VerificationMeta(
+    'productId',
+  );
+  @override
+  late final GeneratedColumn<String> productId = GeneratedColumn<String>(
+    'product_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES product_table (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _urlMeta = const VerificationMeta('url');
+  @override
+  late final GeneratedColumn<String> url = GeneratedColumn<String>(
+    'url',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _merchantDomainMeta = const VerificationMeta(
+    'merchantDomain',
+  );
+  @override
+  late final GeneratedColumn<String> merchantDomain = GeneratedColumn<String>(
+    'merchant_domain',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    productId,
+    url,
+    merchantDomain,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'product_source_table';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ProductSourceRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('product_id')) {
+      context.handle(
+        _productIdMeta,
+        productId.isAcceptableOrUnknown(data['product_id']!, _productIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_productIdMeta);
+    }
+    if (data.containsKey('url')) {
+      context.handle(
+        _urlMeta,
+        url.isAcceptableOrUnknown(data['url']!, _urlMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_urlMeta);
+    }
+    if (data.containsKey('merchant_domain')) {
+      context.handle(
+        _merchantDomainMeta,
+        merchantDomain.isAcceptableOrUnknown(
+          data['merchant_domain']!,
+          _merchantDomainMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_merchantDomainMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ProductSourceRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ProductSourceRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      productId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}product_id'],
+      )!,
+      url: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}url'],
+      )!,
+      merchantDomain: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}merchant_domain'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ProductSourceTableTable createAlias(String alias) {
+    return $ProductSourceTableTable(attachedDatabase, alias);
+  }
+}
+
+class ProductSourceRow extends DataClass
+    implements Insertable<ProductSourceRow> {
+  /// Stable source identifier.
+  final String id;
+
+  /// Product this source belongs to.
+  final String productId;
+
+  /// Website link supplied for the product.
+  final String url;
+
+  /// Lower-case merchant domain extracted from [url].
+  final String merchantDomain;
+
+  /// When the source was added.
+  final DateTime createdAt;
+  const ProductSourceRow({
+    required this.id,
+    required this.productId,
+    required this.url,
+    required this.merchantDomain,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['product_id'] = Variable<String>(productId);
+    map['url'] = Variable<String>(url);
+    map['merchant_domain'] = Variable<String>(merchantDomain);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  ProductSourceTableCompanion toCompanion(bool nullToAbsent) {
+    return ProductSourceTableCompanion(
+      id: Value(id),
+      productId: Value(productId),
+      url: Value(url),
+      merchantDomain: Value(merchantDomain),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory ProductSourceRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ProductSourceRow(
+      id: serializer.fromJson<String>(json['id']),
+      productId: serializer.fromJson<String>(json['productId']),
+      url: serializer.fromJson<String>(json['url']),
+      merchantDomain: serializer.fromJson<String>(json['merchantDomain']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'productId': serializer.toJson<String>(productId),
+      'url': serializer.toJson<String>(url),
+      'merchantDomain': serializer.toJson<String>(merchantDomain),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  ProductSourceRow copyWith({
+    String? id,
+    String? productId,
+    String? url,
+    String? merchantDomain,
+    DateTime? createdAt,
+  }) => ProductSourceRow(
+    id: id ?? this.id,
+    productId: productId ?? this.productId,
+    url: url ?? this.url,
+    merchantDomain: merchantDomain ?? this.merchantDomain,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  ProductSourceRow copyWithCompanion(ProductSourceTableCompanion data) {
+    return ProductSourceRow(
+      id: data.id.present ? data.id.value : this.id,
+      productId: data.productId.present ? data.productId.value : this.productId,
+      url: data.url.present ? data.url.value : this.url,
+      merchantDomain: data.merchantDomain.present
+          ? data.merchantDomain.value
+          : this.merchantDomain,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProductSourceRow(')
+          ..write('id: $id, ')
+          ..write('productId: $productId, ')
+          ..write('url: $url, ')
+          ..write('merchantDomain: $merchantDomain, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, productId, url, merchantDomain, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ProductSourceRow &&
+          other.id == this.id &&
+          other.productId == this.productId &&
+          other.url == this.url &&
+          other.merchantDomain == this.merchantDomain &&
+          other.createdAt == this.createdAt);
+}
+
+class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
+  final Value<String> id;
+  final Value<String> productId;
+  final Value<String> url;
+  final Value<String> merchantDomain;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const ProductSourceTableCompanion({
+    this.id = const Value.absent(),
+    this.productId = const Value.absent(),
+    this.url = const Value.absent(),
+    this.merchantDomain = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ProductSourceTableCompanion.insert({
+    required String id,
+    required String productId,
+    required String url,
+    required String merchantDomain,
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       productId = Value(productId),
+       url = Value(url),
+       merchantDomain = Value(merchantDomain),
+       createdAt = Value(createdAt);
+  static Insertable<ProductSourceRow> custom({
+    Expression<String>? id,
+    Expression<String>? productId,
+    Expression<String>? url,
+    Expression<String>? merchantDomain,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (productId != null) 'product_id': productId,
+      if (url != null) 'url': url,
+      if (merchantDomain != null) 'merchant_domain': merchantDomain,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ProductSourceTableCompanion copyWith({
+    Value<String>? id,
+    Value<String>? productId,
+    Value<String>? url,
+    Value<String>? merchantDomain,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return ProductSourceTableCompanion(
+      id: id ?? this.id,
+      productId: productId ?? this.productId,
+      url: url ?? this.url,
+      merchantDomain: merchantDomain ?? this.merchantDomain,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (productId.present) {
+      map['product_id'] = Variable<String>(productId.value);
+    }
+    if (url.present) {
+      map['url'] = Variable<String>(url.value);
+    }
+    if (merchantDomain.present) {
+      map['merchant_domain'] = Variable<String>(merchantDomain.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProductSourceTableCompanion(')
+          ..write('id: $id, ')
+          ..write('productId: $productId, ')
+          ..write('url: $url, ')
+          ..write('merchantDomain: $merchantDomain, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $StorePriceTableTable extends StorePriceTable
     with TableInfo<$StorePriceTableTable, StorePriceRow> {
   @override
@@ -1046,6 +1425,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $ProductTableTable productTable = $ProductTableTable(this);
+  late final $ProductSourceTableTable productSourceTable =
+      $ProductSourceTableTable(this);
   late final $StorePriceTableTable storePriceTable = $StorePriceTableTable(
     this,
   );
@@ -1057,11 +1438,19 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     productTable,
+    productSourceTable,
     storePriceTable,
     refreshSettingsTable,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'product_table',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('product_source_table', kind: UpdateKind.delete)],
+    ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
         'product_table',
@@ -1092,6 +1481,30 @@ typedef $$ProductTableTableUpdateCompanionBuilder =
 final class $$ProductTableTableReferences
     extends BaseReferences<_$AppDatabase, $ProductTableTable, ProductRow> {
   $$ProductTableTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$ProductSourceTableTable, List<ProductSourceRow>>
+  _productSourceTableRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.productSourceTable,
+        aliasName: $_aliasNameGenerator(
+          db.productTable.id,
+          db.productSourceTable.productId,
+        ),
+      );
+
+  $$ProductSourceTableTableProcessedTableManager get productSourceTableRefs {
+    final manager = $$ProductSourceTableTableTableManager(
+      $_db,
+      $_db.productSourceTable,
+    ).filter((f) => f.productId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _productSourceTableRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 
   static MultiTypedResultKey<$StorePriceTableTable, List<StorePriceRow>>
   _storePriceTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
@@ -1145,6 +1558,31 @@ class $$ProductTableTableFilterComposer
     column: $table.lastUpdatedAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  Expression<bool> productSourceTableRefs(
+    Expression<bool> Function($$ProductSourceTableTableFilterComposer f) f,
+  ) {
+    final $$ProductSourceTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.productSourceTable,
+      getReferencedColumn: (t) => t.productId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProductSourceTableTableFilterComposer(
+            $db: $db,
+            $table: $db.productSourceTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 
   Expression<bool> storePriceTableRefs(
     Expression<bool> Function($$StorePriceTableTableFilterComposer f) f,
@@ -1225,6 +1663,32 @@ class $$ProductTableTableAnnotationComposer
     builder: (column) => column,
   );
 
+  Expression<T> productSourceTableRefs<T extends Object>(
+    Expression<T> Function($$ProductSourceTableTableAnnotationComposer a) f,
+  ) {
+    final $$ProductSourceTableTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.productSourceTable,
+          getReferencedColumn: (t) => t.productId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$ProductSourceTableTableAnnotationComposer(
+                $db: $db,
+                $table: $db.productSourceTable,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
   Expression<T> storePriceTableRefs<T extends Object>(
     Expression<T> Function($$StorePriceTableTableAnnotationComposer a) f,
   ) {
@@ -1264,7 +1728,10 @@ class $$ProductTableTableTableManager
           $$ProductTableTableUpdateCompanionBuilder,
           (ProductRow, $$ProductTableTableReferences),
           ProductRow,
-          PrefetchHooks Function({bool storePriceTableRefs})
+          PrefetchHooks Function({
+            bool productSourceTableRefs,
+            bool storePriceTableRefs,
+          })
         > {
   $$ProductTableTableTableManager(_$AppDatabase db, $ProductTableTable table)
     : super(
@@ -1313,38 +1780,63 @@ class $$ProductTableTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({storePriceTableRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [
-                if (storePriceTableRefs) db.storePriceTable,
-              ],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (storePriceTableRefs)
-                    await $_getPrefetchedData<
-                      ProductRow,
-                      $ProductTableTable,
-                      StorePriceRow
-                    >(
-                      currentTable: table,
-                      referencedTable: $$ProductTableTableReferences
-                          ._storePriceTableRefsTable(db),
-                      managerFromTypedResult: (p0) =>
-                          $$ProductTableTableReferences(
-                            db,
-                            table,
-                            p0,
-                          ).storePriceTableRefs,
-                      referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where((e) => e.productId == item.id),
-                      typedResults: items,
-                    ),
-                ];
+          prefetchHooksCallback:
+              ({productSourceTableRefs = false, storePriceTableRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (productSourceTableRefs) db.productSourceTable,
+                    if (storePriceTableRefs) db.storePriceTable,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (productSourceTableRefs)
+                        await $_getPrefetchedData<
+                          ProductRow,
+                          $ProductTableTable,
+                          ProductSourceRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ProductTableTableReferences
+                              ._productSourceTableRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ProductTableTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).productSourceTableRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.productId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (storePriceTableRefs)
+                        await $_getPrefetchedData<
+                          ProductRow,
+                          $ProductTableTable,
+                          StorePriceRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ProductTableTableReferences
+                              ._storePriceTableRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ProductTableTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).storePriceTableRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.productId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -1361,7 +1853,350 @@ typedef $$ProductTableTableProcessedTableManager =
       $$ProductTableTableUpdateCompanionBuilder,
       (ProductRow, $$ProductTableTableReferences),
       ProductRow,
-      PrefetchHooks Function({bool storePriceTableRefs})
+      PrefetchHooks Function({
+        bool productSourceTableRefs,
+        bool storePriceTableRefs,
+      })
+    >;
+typedef $$ProductSourceTableTableCreateCompanionBuilder =
+    ProductSourceTableCompanion Function({
+      required String id,
+      required String productId,
+      required String url,
+      required String merchantDomain,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$ProductSourceTableTableUpdateCompanionBuilder =
+    ProductSourceTableCompanion Function({
+      Value<String> id,
+      Value<String> productId,
+      Value<String> url,
+      Value<String> merchantDomain,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+final class $$ProductSourceTableTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $ProductSourceTableTable,
+          ProductSourceRow
+        > {
+  $$ProductSourceTableTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $ProductTableTable _productIdTable(_$AppDatabase db) =>
+      db.productTable.createAlias(
+        $_aliasNameGenerator(
+          db.productSourceTable.productId,
+          db.productTable.id,
+        ),
+      );
+
+  $$ProductTableTableProcessedTableManager get productId {
+    final $_column = $_itemColumn<String>('product_id')!;
+
+    final manager = $$ProductTableTableTableManager(
+      $_db,
+      $_db.productTable,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_productIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ProductSourceTableTableFilterComposer
+    extends Composer<_$AppDatabase, $ProductSourceTableTable> {
+  $$ProductSourceTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get url => $composableBuilder(
+    column: $table.url,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get merchantDomain => $composableBuilder(
+    column: $table.merchantDomain,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ProductTableTableFilterComposer get productId {
+    final $$ProductTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.productId,
+      referencedTable: $db.productTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProductTableTableFilterComposer(
+            $db: $db,
+            $table: $db.productTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ProductSourceTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $ProductSourceTableTable> {
+  $$ProductSourceTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get url => $composableBuilder(
+    column: $table.url,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get merchantDomain => $composableBuilder(
+    column: $table.merchantDomain,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ProductTableTableOrderingComposer get productId {
+    final $$ProductTableTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.productId,
+      referencedTable: $db.productTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProductTableTableOrderingComposer(
+            $db: $db,
+            $table: $db.productTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ProductSourceTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ProductSourceTableTable> {
+  $$ProductSourceTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get url =>
+      $composableBuilder(column: $table.url, builder: (column) => column);
+
+  GeneratedColumn<String> get merchantDomain => $composableBuilder(
+    column: $table.merchantDomain,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$ProductTableTableAnnotationComposer get productId {
+    final $$ProductTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.productId,
+      referencedTable: $db.productTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProductTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.productTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ProductSourceTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ProductSourceTableTable,
+          ProductSourceRow,
+          $$ProductSourceTableTableFilterComposer,
+          $$ProductSourceTableTableOrderingComposer,
+          $$ProductSourceTableTableAnnotationComposer,
+          $$ProductSourceTableTableCreateCompanionBuilder,
+          $$ProductSourceTableTableUpdateCompanionBuilder,
+          (ProductSourceRow, $$ProductSourceTableTableReferences),
+          ProductSourceRow,
+          PrefetchHooks Function({bool productId})
+        > {
+  $$ProductSourceTableTableTableManager(
+    _$AppDatabase db,
+    $ProductSourceTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ProductSourceTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ProductSourceTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ProductSourceTableTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> productId = const Value.absent(),
+                Value<String> url = const Value.absent(),
+                Value<String> merchantDomain = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ProductSourceTableCompanion(
+                id: id,
+                productId: productId,
+                url: url,
+                merchantDomain: merchantDomain,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String productId,
+                required String url,
+                required String merchantDomain,
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => ProductSourceTableCompanion.insert(
+                id: id,
+                productId: productId,
+                url: url,
+                merchantDomain: merchantDomain,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ProductSourceTableTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({productId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (productId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.productId,
+                                referencedTable:
+                                    $$ProductSourceTableTableReferences
+                                        ._productIdTable(db),
+                                referencedColumn:
+                                    $$ProductSourceTableTableReferences
+                                        ._productIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ProductSourceTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ProductSourceTableTable,
+      ProductSourceRow,
+      $$ProductSourceTableTableFilterComposer,
+      $$ProductSourceTableTableOrderingComposer,
+      $$ProductSourceTableTableAnnotationComposer,
+      $$ProductSourceTableTableCreateCompanionBuilder,
+      $$ProductSourceTableTableUpdateCompanionBuilder,
+      (ProductSourceRow, $$ProductSourceTableTableReferences),
+      ProductSourceRow,
+      PrefetchHooks Function({bool productId})
     >;
 typedef $$StorePriceTableTableCreateCompanionBuilder =
     StorePriceTableCompanion Function({
@@ -1900,6 +2735,8 @@ class $AppDatabaseManager {
   $AppDatabaseManager(this._db);
   $$ProductTableTableTableManager get productTable =>
       $$ProductTableTableTableManager(_db, _db.productTable);
+  $$ProductSourceTableTableTableManager get productSourceTable =>
+      $$ProductSourceTableTableTableManager(_db, _db.productSourceTable);
   $$StorePriceTableTableTableManager get storePriceTable =>
       $$StorePriceTableTableTableManager(_db, _db.storePriceTable);
   $$RefreshSettingsTableTableTableManager get refreshSettingsTable =>

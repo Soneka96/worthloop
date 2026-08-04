@@ -34,9 +34,9 @@ void main() {
       await db.close();
     });
 
-    test('AppDatabase.forTesting opens with schema version 2', () {
+    test('AppDatabase.forTesting opens with schema version 3', () {
       expect(db.schemaVersion, isA<int>());
-      expect(db.schemaVersion, 2);
+      expect(db.schemaVersion, 3);
     });
 
     test('AppDatabase.forTesting exposes the WorthLoop tables', () async {
@@ -44,12 +44,16 @@ void main() {
       final List<StorePriceRow> prices = await db
           .select(db.storePriceTable)
           .get();
+      final List<ProductSourceRow> sources = await db
+          .select(db.productSourceTable)
+          .get();
       final List<RefreshSettingsRow> settings = await db
           .select(db.refreshSettingsTable)
           .get();
 
       expect(products, isEmpty);
       expect(prices, isEmpty);
+      expect(sources, isEmpty);
       expect(settings, isEmpty);
     });
   });
@@ -101,7 +105,39 @@ void main() {
       );
       final File file = File(p.join(tempDirectory.path, 'legacy.sqlite'));
       final sqlite.Database legacy = sqlite.sqlite3.open(file.path);
-      legacy.execute('PRAGMA user_version = 1');
+      legacy.execute('''
+        CREATE TABLE product_table (
+          id TEXT NOT NULL PRIMARY KEY,
+          name TEXT NOT NULL,
+          image_url TEXT,
+          last_updated_at INTEGER NOT NULL
+        )
+      ''');
+      legacy.execute('''
+        INSERT INTO product_table
+          (id, name, image_url, last_updated_at)
+        VALUES ('legacy-product', 'Legacy Product', NULL, 1767268800000)
+      ''');
+      legacy.execute('''
+        CREATE TABLE store_price_table (
+          product_id TEXT NOT NULL REFERENCES product_table (id) ON DELETE CASCADE,
+          store_name TEXT NOT NULL,
+          product_url TEXT NOT NULL,
+          minor_units INTEGER NOT NULL,
+          currency_code TEXT NOT NULL,
+          is_available INTEGER NOT NULL,
+          last_checked_at INTEGER NOT NULL,
+          PRIMARY KEY (product_id, store_name)
+        )
+      ''');
+      legacy.execute('''
+        CREATE TABLE refresh_settings_table (
+          id INTEGER NOT NULL DEFAULT 1 PRIMARY KEY,
+          interval_minutes INTEGER NOT NULL DEFAULT 60,
+          CHECK (id = 1)
+        )
+      ''');
+      legacy.execute('PRAGMA user_version = 2');
       legacy.dispose();
       db = AppDatabase.forTesting(NativeDatabase(file));
     });
@@ -111,16 +147,21 @@ void main() {
       tempDirectory.deleteSync(recursive: true);
     });
 
-    test('migrates schema version 1 and preserves existing rows', () async {
+    test('migrates schema version 2 and preserves existing rows', () async {
       final List<ProductRow> products = await db.select(db.productTable).get();
       final List<StorePriceRow> prices = await db
           .select(db.storePriceTable)
           .get();
+      final List<ProductSourceRow> sources = await db
+          .select(db.productSourceTable)
+          .get();
       final List<RefreshSettingsRow> settings = await db
           .select(db.refreshSettingsTable)
           .get();
-      expect(products, isEmpty);
+      expect(products.length, 1);
+      expect(products.single.id, 'legacy-product');
       expect(prices, isEmpty);
+      expect(sources, isEmpty);
       expect(settings, isEmpty);
     });
   });
