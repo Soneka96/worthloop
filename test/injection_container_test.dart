@@ -4,6 +4,7 @@ import 'dart:io';
 // Package imports:
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:package_info_plus_platform_interface/package_info_data.dart';
 import 'package:package_info_plus_platform_interface/package_info_platform_interface.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
@@ -35,10 +36,10 @@ class FakePathProviderPlatform extends PathProviderPlatform {
 class FakePackageInfoPlatform extends PackageInfoPlatform {
   @override
   Future<PackageInfoData> getAll({String? baseUrl}) async => PackageInfoData(
-    appName: 'worth_loop',
-    packageName: 'com.soneka96.starter',
+    appName: 'WorthLoop Test',
+    packageName: 'io.github.soneka96.worthloop.test',
     version: '0.0.0-test',
-    buildNumber: '1',
+    buildNumber: '0',
     buildSignature: '',
   );
 }
@@ -114,6 +115,20 @@ void main() {
         isTrue,
         reason: 'LoggerService should be registered',
       );
+    });
+
+    test('PackageInfo preserves platform metadata', () {
+      expect(sl<PackageInfo>().appName, isA<String>());
+      expect(sl<PackageInfo>().appName, 'WorthLoop Test');
+      expect(sl<PackageInfo>().packageName, isA<String>());
+      expect(
+        sl<PackageInfo>().packageName,
+        'io.github.soneka96.worthloop.test',
+      );
+      expect(sl<PackageInfo>().version, isA<String>());
+      expect(sl<PackageInfo>().version, '0.0.0-test');
+      expect(sl<PackageInfo>().buildNumber, isA<String>());
+      expect(sl<PackageInfo>().buildNumber, '0');
     });
   });
 }

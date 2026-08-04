@@ -24,10 +24,10 @@ class FakePathProviderPlatform extends PathProviderPlatform {
 class FakePackageInfoPlatform extends PackageInfoPlatform {
   @override
   Future<PackageInfoData> getAll({String? baseUrl}) async => PackageInfoData(
-    appName: 'worth_loop',
-    packageName: 'com.soneka96.starter',
+    appName: 'WorthLoop Test',
+    packageName: 'io.github.soneka96.worthloop.test',
     version: '0.0.0-test',
-    buildNumber: '1',
+    buildNumber: '0',
     buildSignature: '',
   );
 }

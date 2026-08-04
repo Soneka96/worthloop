@@ -48,10 +48,10 @@ void main() {
     sl.registerLazySingleton<AppLanguage>(AppLanguage.new);
     sl.registerLazySingleton<PackageInfo>(
       () => PackageInfo(
-        appName: 'Clean Architecture Starter',
-        packageName: 'com.soneka96.starter',
-        version: '0.1.0',
-        buildNumber: '1',
+        appName: 'WorthLoop Test',
+        packageName: 'io.github.soneka96.worthloop.test',
+        version: '0.0.0-test',
+        buildNumber: '0',
       ),
     );
     sl.registerFactoryParam<

@@ -46,10 +46,10 @@ void main() {
     >((store, _) => mockViewModel);
     sl.registerLazySingleton<PackageInfo>(
       () => PackageInfo(
-        appName: 'WorthLoop',
-        packageName: 'com.soneka96.starter',
-        version: '0.1.0',
-        buildNumber: '1',
+        appName: 'WorthLoop Test',
+        packageName: 'io.github.soneka96.worthloop.test',
+        version: '0.0.0-test',
+        buildNumber: '0',
       ),
     );
     sl.registerLazySingleton<AppLanguage>(AppLanguage.new);
