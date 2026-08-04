@@ -10,11 +10,11 @@ import 'package:worth_loop/features/products/domain/entities/store_price.entity.
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
 import 'package:worth_loop/features/products/presentation/widgets/illustrative_price_notice.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_best_price_card.widget.dart';
+import 'package:worth_loop/features/products/presentation/widgets/product_offers_header.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_offers.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_not_found.widget.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
-import 'package:worth_loop/shared/constants/layout_constants.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/theme/app_spacing_theme_extension.dart';
 
@@ -40,7 +40,6 @@ class ProductDetailsScreen extends StatelessWidget {
         final List<StorePrice> unavailablePrices = displayPrices
             .skip(availablePrices.length)
             .toList(growable: false);
-        final TextTheme textTheme = Theme.of(context).textTheme;
         return Scaffold(
           appBar: AppBar(
             leading: IconButton(
@@ -62,34 +61,10 @@ class ProductDetailsScreen extends StatelessWidget {
                       SizedBox(height: context.spacing.sm),
                       const IllustrativePriceNotice(),
                       SizedBox(height: context.spacing.md),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              t.productDetails.offers(
-                                count: product.storePrices.length,
-                              ),
-                              style: textTheme.labelSmall,
-                            ),
-                          ),
-                          FilledButton.icon(
-                            key: const Key('product-details-refresh-button'),
-                            onPressed: viewmodel.isRefreshing
-                                ? null
-                                : viewmodel.onRefresh,
-                            icon: viewmodel.isRefreshing
-                                ? const SizedBox.square(
-                                    dimension: IconSizes.md,
-                                    child: CircularProgressIndicator(),
-                                  )
-                                : const Icon(Icons.refresh),
-                            label: Text(
-                              viewmodel.isRefreshing
-                                  ? t.productDetails.refreshing
-                                  : t.productDetails.refresh,
-                            ),
-                          ),
-                        ],
+                      ProductOffersHeader(
+                        offerCount: product.storePrices.length,
+                        isRefreshing: viewmodel.isRefreshing,
+                        onRefresh: viewmodel.onRefresh,
                       ),
                       SizedBox(height: context.spacing.sm),
                       Expanded(
