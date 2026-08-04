@@ -59,6 +59,34 @@ void main() {
       expect(rows.length, 2);
     });
 
+    test('succeeds when two loads run concurrently', () async {
+      final List<Either<Failure, List<ProductModel>>> results =
+          await Future.wait([
+            datasource.loadProducts(),
+            datasource.loadProducts(),
+          ]);
+      final List<ProductRow> rows = await db.select(db.productTable).get();
+      final List<StorePriceRow> priceRows = await db
+          .select(db.storePriceTable)
+          .get();
+
+      expect(results, everyElement(isA<Right<Failure, List<ProductModel>>>()));
+      for (final Either<Failure, List<ProductModel>> result in results) {
+        final List<ProductModel> products =
+            result.getRight().toNullable() ?? [];
+        expect(products.length, 2);
+        expect(
+          products.every(
+            (ProductModel product) => product.storePrices.isNotEmpty,
+          ),
+          isTrue,
+        );
+      }
+      expect(rows.length, 2);
+      expect(priceRows.length, 7);
+      verifyZeroInteractions(mockLoggerService);
+    });
+
     test(
       'preserves existing products without inserting illustrative data',
       () async {

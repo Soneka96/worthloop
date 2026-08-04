@@ -22,10 +22,13 @@ class ProductsLocalDatasource {
   /// Loads every product, inserting illustrative data on the first run.
   Future<Either<Failure, List<ProductModel>>> loadProducts() async {
     try {
-      if (await _db.productTable.count().getSingle() == 0) {
-        await _replaceProducts(buildFakeProducts(DateTime.now()));
-      }
-      return Right(await _readProducts());
+      final List<ProductModel> products = await _db.transaction(() async {
+        if (await _db.productTable.count().getSingle() == 0) {
+          await _replaceProducts(buildFakeProducts(DateTime.now()));
+        }
+        return _readProducts();
+      });
+      return Right(products);
     } on SqliteException catch (error) {
       _loggerService.e(error.toString());
       return Left(DatabaseFailure(error.toString()));
@@ -68,24 +71,22 @@ class ProductsLocalDatasource {
   }
 
   Future<void> _replaceProducts(List<ProductModel> products) async {
-    await _db.transaction(() async {
-      for (final ProductModel product in products) {
-        await _db.into(_db.productTable).insert(product.toCompanion());
-        for (final StorePrice price in product.storePrices) {
-          final StorePriceTableCompanion companion =
-              StorePriceTableCompanion.insert(
-                productId: product.id,
-                storeName: price.storeName,
-                productUrl: price.productUrl,
-                minorUnits: price.currentPrice.minorUnits,
-                currencyCode: price.currentPrice.currencyCode,
-                isAvailable: price.isAvailable,
-                lastCheckedAt: price.lastCheckedAt,
-              );
-          await _db.into(_db.storePriceTable).insert(companion);
-        }
+    for (final ProductModel product in products) {
+      await _db.into(_db.productTable).insert(product.toCompanion());
+      for (final StorePrice price in product.storePrices) {
+        final StorePriceTableCompanion companion =
+            StorePriceTableCompanion.insert(
+              productId: product.id,
+              storeName: price.storeName,
+              productUrl: price.productUrl,
+              minorUnits: price.currentPrice.minorUnits,
+              currencyCode: price.currentPrice.currencyCode,
+              isAvailable: price.isAvailable,
+              lastCheckedAt: price.lastCheckedAt,
+            );
+        await _db.into(_db.storePriceTable).insert(companion);
       }
-    });
+    }
   }
 
   Future<List<ProductModel>> _readProducts() async {
