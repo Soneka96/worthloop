@@ -1,4 +1,4 @@
-package com.worthloop.worth_loop
+package io.github.soneka96.worthloop
 
 import io.flutter.embedding.android.FlutterActivity
 

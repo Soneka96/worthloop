@@ -1,86 +1,74 @@
 # WorthLoop
 
-A Flutter Android application for tracking and comparing product prices, built with Redux,
-layered clean architecture, Drift persistence, and the starter's existing theme system.
+WorthLoop is an Android app for tracking products, comparing merchant offers, and making the
+lowest available price obvious. It is category-neutral: simulation hardware is the initial sample
+data, but the model also fits car parts, electronics, tools, household goods, and other purchases.
 
-Includes one complete, working example feature — **GitHub Explorer** — that exercises the entire
-stack end to end: a real HTTP call, a real local database, offline fallback, Redux, and a tested UI.
-A temporary **Home** launcher remains while the WorthLoop experience is built incrementally.
+## Current capabilities
 
-## Why this exists
+- Persist tracked products, merchant URLs, prices, availability, and checked timestamps locally.
+- Compare available offers and sort them from lowest to highest price.
+- Refresh one product or the full watchlist manually.
+- Store a configurable refresh interval without scheduling background work yet.
+- Display English and Portuguese interfaces with accessible light and dark themes.
 
-Most Flutter starters give you a folder structure and a "Hello World" screen. This one gives you
-a real feature built the way the rest of your app is expected to be built — so the first feature
-you add has an actual pattern to copy, not just documentation describing one in the abstract.
+The bundled products and prices are illustrative local data, not live merchant offers. Real price
+collection, scheduled background refresh, and an Android home-screen widget are deferred.
 
-## What it demonstrates
+## Architecture
 
-- **Layered architecture**, enforced in both directions: `Datasources → Repositories → Use cases →
-  Presentation`. Domain code never imports `dio`/`drift`/Flutter widgets directly; each layer only
-  knows about the one below it.
-- **A real remote + local datasource pair**, not a mocked stand-in: `GithubRemoteDatasource` hits
-  GitHub's public REST API via `dio`; `GithubLocalDatasource` caches results in a `drift` (SQLite)
-  table. The repository is **fail-open** — a network failure falls back to the last cached copy
-  instead of breaking the UI, and only surfaces an error when there's nothing to fall back to.
-- **Redux done properly**: typed actions, `combineReducers` with per-action `TypedReducer`s,
-  middleware as the only layer that ever unwraps an `Either<Failure, T>`, and a `ViewModel` layer
-  so screens never touch the store directly.
-- **A 20-preset theming system** — two hand-designed, unbranded defaults (`Default Dark`/`Default
-  Light`, generated via `ColorScheme.fromSeed` deliberately, so they stay replaceable) plus 18 real,
-  hand-authored ports of recognized community palettes (Dracula, Nord, Solarized, Catppuccin,
-  Gruvbox, Monokai, Rosé Pine, and more). Every widget reads color/spacing/corner-radius from
-  `Theme.of(context)` — nothing is hardcoded.
-- **Full test coverage on the example feature** — 122 tests across the entity, model, drift table,
-  both datasources, the repository, every usecase, the full Redux layer, every widget, and the
-  screen (including a fixed WCAG accessibility-guideline check group: contrast, tap-target size,
-  semantic labels, text-scaling overflow, and keyboard tab order).
-- **Documented conventions that are actually enforced** — `ai/context/*.md` defines the
-  architecture, Dart style, error-handling, and testing rules this codebase itself follows; a
-  `.claude/skills/add-theme-preset` skill exists to add another theme preset correctly on the
-  first try.
+The project follows the existing layered Clean Architecture and Redux conventions:
+
+```text
+Datasource -> Repository -> Use case -> Redux middleware -> State -> ViewModel -> Screen
+```
+
+The products feature currently uses Drift for local persistence. A remote datasource contract
+defines the future price-collection boundary but is intentionally not wired until a real collector
+exists. The retained GitHub Explorer feature is the starter's complete remote-and-local reference
+implementation.
 
 ## Getting started
 
 ```bash
-git clone <this-repo>
+git clone https://github.com/Soneka96/worthloop.git
 cd worthloop
 flutter pub get
-dart run build_runner build -d   # generates the drift schema + i18n code
+dart run build_runner build -d
 flutter run -d android
 ```
+
+The Android application ID is `io.github.soneka96.worthloop`.
 
 ## Commands
 
 ```bash
-flutter analyze                          # lint — run before every commit
-flutter test                             # unit + widget tests
-dart run taskflare test                  # same, with completion feedback
-flutter pub get                          # resolve dependencies
-dart format .                            # format
-dart run build_runner build -d           # code generation (drift schema + slang)
-flutter build apk                        # Android APK
+flutter analyze
+flutter test
+dart run taskflare test
+dart format .
+dart run build_runner build -d
+flutter build apk
 ```
 
 ## Project structure
 
-```
+```text
 lib/
   features/
-    home/                   temporary launcher, replaced during WorthLoop Phase 1
-    github_explorer/       # the reference example feature — copy this shape
-      domain/               entities, repository interface, usecases (+ params)
-      data/                 models, drift schema, remote + local datasources, repository impl
-      presentation/         Redux state/actions/reducer/selectors/middleware, viewmodel, screen, widgets
-    settings/               appearance/theme/general settings screens
+    products/              product data, persistence, comparison, refresh, and details
+    home/                  tracked-product watchlist
+    settings/              appearance, language, and refresh-interval settings
+    github_explorer/       retained reference implementation of the full remote/local chain
   shared/
-    theme/                  the 20-preset theming system
-    state/                  root AppState, reducer, Redux store construction
-    navigation/             GoRouter wrapper (NavigatorService) + route table
-    db/                     the single drift AppDatabase aggregating every feature's tables
-    failures/               the Failure hierarchy (NetworkFailure, DatabaseFailure, FileSystemFailure)
-ai/context/                 architecture, Dart style, testing, and error-handling conventions
-design/                     approved-look screenshots + the app's design-essence doc
-test/                       mirrors lib/ exactly, one test file per source file
+    db/                    Drift database aggregation
+    failures/              typed infrastructure failures
+    navigation/            GoRouter wrapper and route table
+    state/                 root Redux store
+    theme/                 application themes and display preferences
+ai/context/                architecture, Dart, testing, and error-handling conventions
+design/                    approved visual references and design direction
+test/                      source-mirrored unit and widget tests
 ```
 
 ## Tech stack
@@ -88,17 +76,12 @@ test/                       mirrors lib/ exactly, one test file per source file
 | Concern | Package |
 |---|---|
 | State | `flutter_redux` + `redux` |
-| Local DB | `drift` + `sqlite3_flutter_libs` |
+| Local persistence | `drift` + SQLite |
 | HTTP | `dio` |
-| Navigation | `go_router` (via `NavigatorService`) |
-| File system | `path_provider`, `path` |
-| i18n | `slang` + `slang_flutter` |
-| App version | `package_info_plus` |
-| DI | manual `injection_container.dart` (no code generation) |
+| Navigation | `go_router` through `NavigatorService` |
+| Dependency injection | `get_it` with manual feature containers |
+| Internationalization | `slang` + `slang_flutter` |
 | Testing | `flutter_test` + `mocktail` |
-| Test/command runner | `taskflare` |
-
-**Platform:** Android. Background refresh and native home-screen widgets are deferred.
 
 ## License
 

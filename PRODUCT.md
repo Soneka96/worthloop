@@ -35,7 +35,7 @@ Users primarily scan a compact Android home screen, open an item to compare merc
 - Refresh interval settings are stored and shown, but do not schedule work yet.
 - Initial illustrative data includes Moza R12 V2 and Next Level Racing Wheel Stand 2.0.
 - Currency is attached to monetary values; the initial data uses EUR.
-- The final Android application ID owner prefix is undecided.
+- Android application ID: `io.github.soneka96.worthloop`.
 
 ## Brand Commitments
 
