@@ -7,13 +7,17 @@ data, but the model also fits car parts, electronics, tools, household goods, an
 ## Current capabilities
 
 - Persist tracked products, merchant URLs, prices, availability, and checked timestamps locally.
+- Model multiple merchant URLs as sources belonging to one tracked product.
 - Compare available offers and sort them from lowest to highest price.
 - Refresh one product or the full watchlist manually.
+- Extract prices from supported JSON-LD product and aggregate-offer markup.
+- Explain blocked, unsupported, invalid, and unreachable refresh results while keeping the last known price.
 - Store a configurable refresh interval without scheduling background work yet.
 - Display English and Portuguese interfaces with accessible light and dark themes.
 
-The bundled products and prices are illustrative local data, not live merchant offers. Real price
-collection, scheduled background refresh, and an Android home-screen widget are deferred.
+The bundled products and prices are still illustrative local data, not live merchant offers. The
+generic remote collector is a foundation for user-provided sources, not a guarantee that every
+website can be read. Scheduled background refresh and an Android home-screen widget are deferred.
 
 ## Architecture
 
@@ -23,9 +27,9 @@ The project follows the existing layered Clean Architecture and Redux convention
 Datasource -> Repository -> Use case -> Redux middleware -> State -> ViewModel -> Screen
 ```
 
-The products feature currently uses Drift for local persistence. A remote datasource contract
-defines the future price-collection boundary but is intentionally not wired until a real collector
-exists.
+The products feature uses Drift for local persistence and has a remote datasource boundary for
+generic JSON-LD price collection. Source-specific support, access permissions, and legal usage
+still need to be confirmed before presenting any website as a guaranteed integration.
 
 ## Getting started
 

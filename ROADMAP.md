@@ -34,20 +34,27 @@ on an Android device.
 
 **Exit condition:** the app has a coherent, tested foundation for the real MVP.
 
-## Phase 2 — Choose the real data path
+## Phase 2 — Product source onboarding
 
-- [ ] Choose the first supported source or sources.
-- [ ] Confirm the source permits the intended access and usage.
-- [ ] Define what a refresh can reliably return: price, currency, availability, URL,
-      merchant, and checked time.
-- [ ] Decide the fallback when automatic collection is unavailable.
+- [x] Define a source model that allows one product to have multiple merchant URLs.
+- [x] Add a generic JSON-LD and aggregate-offer response path.
+- [x] Validate currency metadata and normalize extracted prices.
+- [x] Classify blocked, unsupported, invalid, and network refresh failures.
+- [x] Preserve the last known offers when a refresh fails.
+- [x] Show refresh failure explanations in the Home and Product Details screens.
+- [x] Decide the current fallback when automatic collection is unavailable: retain the last
+      known offers and explain the refresh failure.
 
-**Exit condition:** the app has one concrete, legally usable path to obtain real offers.
+**Exit condition:** the app has a tested, reusable product-source foundation that can support
+multiple merchant URLs per product.
 
-## Phase 3 — Complete the product lifecycle
+## Phase 3 — Complete the product and source lifecycle
 
 - [ ] Add a product from the UI.
-- [ ] Validate product name and offer URL input.
+- [ ] Add one or more merchant source URLs to that product.
+- [ ] Validate product name and each source URL.
+- [ ] Detect or confirm the merchant for each source.
+- [ ] Edit and delete individual source URLs.
 - [ ] Edit and delete tracked products.
 - [ ] Confirm destructive actions.
 - [ ] Persist products across app restarts.
@@ -58,15 +65,17 @@ code or seeded data.
 
 ## Phase 4 — Build the real offer loop
 
-- [ ] Implement the first real datasource.
-- [ ] Map source responses into `StorePrice` safely.
+- [x] Integrate the generic dynamic datasource into the product refresh flow.
+- [x] Define the generic refresh contract: price, currency, availability, URL, merchant,
+      and checked time.
+- [x] Map generic JSON-LD responses into `StorePrice` safely.
 - [ ] Handle currency, unavailable offers, stale data, rate limits, and malformed responses.
 - [ ] Refresh one product and the full watchlist using real data.
 - [ ] Show the last successful refresh separately from a failed attempt.
 - [ ] Keep old trustworthy data when a refresh fails.
 
-**Exit condition:** the core promise works with real merchant data and does not silently
-replace good data with bad or empty data.
+**Exit condition:** the core promise works end-to-end with websites supported by the generic
+dynamic path, without silently replacing good data with bad or empty data.
 
 ## Phase 5 — Make failure and offline behavior trustworthy
 
@@ -90,6 +99,17 @@ replace good data with bad or empty data.
 
 **Exit condition:** a new user can install the release build and complete the full product
 tracking journey without developer help.
+
+## Source coverage after the generic loop
+
+- [ ] Record unsupported and blocked source URLs locally for review.
+- [ ] Group failures by domain and detected failure status.
+- [ ] Add a privacy-safe way to inspect or export the source coverage report.
+- [ ] Confirm access permissions and legal usage before implementing a source-specific adapter.
+- [ ] Implement source-specific handling only for recurring, worthwhile cases.
+
+**Exit condition:** real usage tells us which source-specific integrations are worth building,
+instead of guessing before the generic flow is working.
 
 ## Explicitly after MVP
 
