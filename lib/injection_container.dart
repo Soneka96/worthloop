@@ -1,5 +1,7 @@
 // Package imports:
+import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
+import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logger/logger.dart';
@@ -22,6 +24,7 @@ import 'package:worth_loop/shared/theme/app_spacing.dart';
 import 'package:worth_loop/shared/theme/app_theme.dart';
 import 'package:worth_loop/shared/theme/app_zoom.dart';
 import 'package:worth_loop/shared/utils/currency_helper_service.dart';
+import 'package:worth_loop/shared/utils/browser_request_headers.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/popup_service.dart';
 import 'package:worth_loop/shared/utils/retry_on_connection_error_interceptor.dart';
@@ -38,6 +41,8 @@ final sl = GetIt.instance;
 Future<void> initDependencies() async {
   // Shared
   final PackageInfo packageInfo = await PackageInfo.fromPlatform();
+  final Map<String, String> browserRequestHeaders =
+      await BrowserRequestHeaders.build();
   sl.registerLazySingleton<PackageInfo>(() => packageInfo);
   sl.registerLazySingleton<AppPreferencesStore>(AppPreferencesStore.new);
   sl.registerLazySingleton<GoRouter>(createRouter);
@@ -46,8 +51,10 @@ Future<void> initDependencies() async {
   );
   sl.registerLazySingleton<AppDatabase>(AppDatabase.new);
   sl.registerLazySingleton<Dio>(() {
-    final Dio dio = Dio(_buildDioBaseOptions());
-    dio.interceptors.add(RetryOnConnectionErrorInterceptor(dio));
+    final Dio dio = Dio(_buildDioBaseOptions(browserRequestHeaders));
+    dio.interceptors
+      ..add(CookieManager(CookieJar()))
+      ..add(RetryOnConnectionErrorInterceptor(dio));
     return dio;
   });
   sl.registerLazySingleton<SnugToastManager>(SnugToastManager.new);
@@ -84,17 +91,11 @@ Future<void> initDependencies() async {
 
 // Browser-like headers so merchant sites don't reject the app as a bot;
 // timeouts bound requests to sites that never respond.
-BaseOptions _buildDioBaseOptions() => BaseOptions(
+BaseOptions _buildDioBaseOptions(Map<String, String> headers) => BaseOptions(
   connectTimeout: PriceFetchConstants.connectTimeout,
   receiveTimeout: PriceFetchConstants.receiveTimeout,
   sendTimeout: PriceFetchConstants.sendTimeout,
-  headers: {
-    'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
-        '(KHTML, like Gecko) Chrome/120 Safari/537.36',
-    'Accept':
-        'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-    'Accept-Language': 'pt-PT,pt;q=0.9,en;q=0.8',
-    'Connection': 'keep-alive',
-  },
+  followRedirects: true,
+  maxRedirects: 5,
+  headers: {...headers, 'Accept-Encoding': 'gzip, deflate'},
 );

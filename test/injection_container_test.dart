@@ -3,6 +3,7 @@ import 'dart:io';
 
 // Package imports:
 import 'package:dio/dio.dart';
+import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -138,26 +139,23 @@ void main() {
       final BaseOptions options = sl<Dio>().options;
 
       expect(options.headers['User-Agent'], isA<String>());
-      expect(
-        options.headers['User-Agent'],
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
-        '(KHTML, like Gecko) Chrome/120 Safari/537.36',
-      );
+      expect(options.headers['User-Agent'], startsWith('Mozilla/5.0'));
       expect(options.headers['Accept'], isA<String>());
       expect(
         options.headers['Accept'],
         'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
       );
       expect(options.headers['Accept-Language'], isA<String>());
-      expect(options.headers['Accept-Language'], 'pt-PT,pt;q=0.9,en;q=0.8');
-      expect(options.headers['Connection'], isA<String>());
-      expect(options.headers['Connection'], 'keep-alive');
+      expect(options.headers['Accept-Language'], contains(','));
+      expect(options.headers['Accept-Encoding'], 'gzip, deflate');
       expect(options.connectTimeout, isA<Duration>());
       expect(options.connectTimeout, PriceFetchConstants.connectTimeout);
       expect(options.receiveTimeout, isA<Duration>());
       expect(options.receiveTimeout, PriceFetchConstants.receiveTimeout);
       expect(options.sendTimeout, isA<Duration>());
       expect(options.sendTimeout, PriceFetchConstants.sendTimeout);
+      expect(options.followRedirects, isTrue);
+      expect(options.maxRedirects, 5);
     });
 
     test('Dio has RetryOnConnectionErrorInterceptor attached', () {
@@ -165,6 +163,10 @@ void main() {
         sl<Dio>().interceptors.whereType<RetryOnConnectionErrorInterceptor>(),
         hasLength(1),
       );
+    });
+
+    test('Dio has an app-owned CookieManager attached', () {
+      expect(sl<Dio>().interceptors.whereType<CookieManager>(), hasLength(1));
     });
   });
 }
