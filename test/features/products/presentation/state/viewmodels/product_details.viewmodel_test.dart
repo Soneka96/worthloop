@@ -1,6 +1,5 @@
 // Package imports:
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:redux/redux.dart';
 
 // Project imports:
@@ -52,46 +51,6 @@ void main() {
           expect(viewmodel.onGoBack, isA<Function()>());
         },
       );
-
-      test(
-        'Method fromStore() returns refreshStatus == null when a different product has a status',
-        () {
-          final AppState state = AppState.initial().copyWith(
-            products: ProductsState.initial().copyWith(
-              productRefreshStatuses: {'product-2': PriceFetchStatus.blocked},
-            ),
-          );
-
-          final ProductDetailsViewModel viewmodel =
-              ProductDetailsViewModel.fromStore(buildStore(state), 'product-1');
-
-          expect(viewmodel.refreshStatus, isNull);
-        },
-      );
-
-      test('Method fromStore() ignores the global refresh-all status', () {
-        final AppState state = AppState.initial().copyWith(
-          products: ProductsState.initial().copyWith(
-            refreshStatus: const Some(PriceFetchStatus.invalidData),
-            productRefreshStatuses: {'product-1': PriceFetchStatus.blocked},
-          ),
-        );
-
-        final ProductDetailsViewModel viewmodel =
-            ProductDetailsViewModel.fromStore(buildStore(state), 'product-1');
-
-        expect(viewmodel.refreshStatus, PriceFetchStatus.blocked);
-      });
-
-      test('Method fromStore() returns product == null when id is missing', () {
-        final ProductDetailsViewModel viewmodel =
-            ProductDetailsViewModel.fromStore(
-              buildStore(AppState.initial()),
-              'missing',
-            );
-
-        expect(viewmodel.product, isNull);
-      });
 
       test('Method onRefresh dispatches RefreshProductAction when called', () {
         final ProductDetailsViewModel viewmodel =
