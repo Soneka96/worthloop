@@ -24,6 +24,7 @@ import 'package:worth_loop/shared/theme/app_theme.dart';
 import 'package:worth_loop/shared/theme/app_zoom.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/popup_service.dart';
+import 'package:worth_loop/shared/utils/retry_on_connection_error_interceptor.dart';
 
 class FakePathProviderPlatform extends PathProviderPlatform {
   @override
@@ -157,6 +158,13 @@ void main() {
       expect(options.receiveTimeout, PriceFetchConstants.receiveTimeout);
       expect(options.sendTimeout, isA<Duration>());
       expect(options.sendTimeout, PriceFetchConstants.sendTimeout);
+    });
+
+    test('Dio has RetryOnConnectionErrorInterceptor attached', () {
+      expect(
+        sl<Dio>().interceptors.whereType<RetryOnConnectionErrorInterceptor>(),
+        hasLength(1),
+      );
     });
   });
 }

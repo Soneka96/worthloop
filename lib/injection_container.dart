@@ -24,6 +24,7 @@ import 'package:worth_loop/shared/theme/app_zoom.dart';
 import 'package:worth_loop/shared/utils/currency_helper_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/popup_service.dart';
+import 'package:worth_loop/shared/utils/retry_on_connection_error_interceptor.dart';
 
 /// Global service locator. Widgets and use cases resolve dependencies via
 /// `sl<Type>()` — never instantiate services directly.
@@ -44,7 +45,11 @@ Future<void> initDependencies() async {
     () => NavigatorService(sl<GoRouter>()),
   );
   sl.registerLazySingleton<AppDatabase>(AppDatabase.new);
-  sl.registerLazySingleton<Dio>(() => Dio(_buildDioBaseOptions()));
+  sl.registerLazySingleton<Dio>(() {
+    final Dio dio = Dio(_buildDioBaseOptions());
+    dio.interceptors.add(RetryOnConnectionErrorInterceptor(dio));
+    return dio;
+  });
   sl.registerLazySingleton<SnugToastManager>(SnugToastManager.new);
   sl.registerLazySingleton<PopupService>(PopupService.new);
   sl.registerLazySingleton<CurrencyHelperService>(CurrencyHelperService.new);
