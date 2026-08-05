@@ -1,4 +1,5 @@
 // Package imports:
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:redux/redux.dart';
@@ -21,11 +22,14 @@ import 'package:worth_loop/shared/utils/logger_service.dart';
 
 class MockAppDatabase extends Mock implements AppDatabase {}
 
+class MockDio extends Mock implements Dio {}
+
 class MockLoggerService extends Mock implements LoggerService {}
 
 void main() {
   setUp(() {
     sl.registerSingleton<AppDatabase>(MockAppDatabase());
+    sl.registerSingleton<Dio>(MockDio());
     sl.registerSingleton<CurrencyHelperService>(const CurrencyHelperService());
     sl.registerSingleton<LoggerService>(MockLoggerService());
     initProductsDependencies();

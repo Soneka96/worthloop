@@ -2,7 +2,10 @@
 import 'package:redux/redux.dart';
 
 // Project imports:
+import 'package:worth_loop/features/products/data/datasources/generic_products_remote.datasource.dart';
 import 'package:worth_loop/features/products/data/datasources/products_local.datasource.dart';
+import 'package:worth_loop/features/products/data/datasources/price_response_detector.datasource.dart';
+import 'package:worth_loop/features/products/data/datasources/products_remote.datasource.dart';
 import 'package:worth_loop/features/products/data/repositories/products.repository.dart';
 import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
 import 'package:worth_loop/features/products/domain/usecases/compare_prices.usecase.dart';
@@ -26,8 +29,15 @@ void initProductsDependencies() {
       sl<LoggerService>(),
     ),
   );
+  sl.registerLazySingleton<PriceResponseDetector>(PriceResponseDetector.new);
+  sl.registerLazySingleton<ProductsRemoteDatasource>(
+    () => GenericProductsRemoteDatasource(sl(), sl(), sl()),
+  );
   sl.registerLazySingleton<IProductsRepository>(
-    () => ProductsRepository(sl<ProductsLocalDatasource>()),
+    () => ProductsRepository(
+      sl<ProductsLocalDatasource>(),
+      sl<ProductsRemoteDatasource>(),
+    ),
   );
   sl.registerLazySingleton<LoadProductsUseCase>(
     () => LoadProductsUseCase(sl<IProductsRepository>()),

@@ -9,6 +9,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:worth_loop/features/products/data/datasources/products_local.datasource.dart';
 import 'package:worth_loop/features/products/data/models/product.model.dart';
 import 'package:worth_loop/features/products/data/models/product_source.model.dart';
+import 'package:worth_loop/features/products/data/models/store_price.model.dart';
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/store_price.entity.dart';
@@ -561,6 +562,76 @@ void main() {
         verifyZeroInteractions(mockLoggerService);
       },
     );
+  });
+
+  group('Method loadProductSourcesForProduct() returns the correct value', () {
+    test('loads the saved source for a product', () async {
+      await db
+          .into(db.productTable)
+          .insert(
+            ProductTableCompanion.insert(
+              id: 'product-1',
+              name: 'Example Product',
+              lastUpdatedAt: DateTime(2026, 1, 1),
+            ),
+          );
+      await db
+          .into(db.productSourceTable)
+          .insert(
+            ProductSourceTableCompanion.insert(
+              id: 'source-1',
+              productId: 'product-1',
+              url: 'https://example.com/products/1',
+              merchantDomain: 'example.com',
+              createdAt: DateTime(2026, 1, 1),
+            ),
+          );
+
+      final Either<Failure, List<ProductSourceModel>> result = await datasource
+          .loadProductSourcesForProduct('product-1');
+
+      expect(result.getRight().toNullable()?.single.id, 'source-1');
+      verifyZeroInteractions(mockLoggerService);
+    });
+
+    test('returns an empty list when a product has no saved source', () async {
+      final Either<Failure, List<ProductSourceModel>> result = await datasource
+          .loadProductSourcesForProduct('product-1');
+
+      expect(result.getRight().toNullable(), isEmpty);
+      verifyZeroInteractions(mockLoggerService);
+    });
+  });
+
+  group('Method replaceProductPrices() returns the correct value', () {
+    test('replaces persisted offers and updates the product', () async {
+      await db
+          .into(db.productTable)
+          .insert(
+            ProductTableCompanion.insert(
+              id: 'product-1',
+              name: 'Example Product',
+              lastUpdatedAt: DateTime(2026, 1, 1),
+            ),
+          );
+      final StorePriceModel price = StorePriceModel(
+        storeName: 'Example Store',
+        productUrl: 'https://example.com/products/1',
+        currentPrice: const Money(minorUnits: 1999, currencyCode: 'USD'),
+        isAvailable: true,
+        lastCheckedAt: DateTime(2026, 1, 2),
+      );
+
+      final Either<Failure, ProductModel> result = await datasource
+          .replaceProductPrices('product-1', [price]);
+      final List<StorePriceRow> rows = await (db.select(
+        db.storePriceTable,
+      )..where((table) => table.productId.equals('product-1'))).get();
+
+      expect(result.getRight().toNullable()?.storePrices.single, price);
+      expect(rows.single.minorUnits, 1999);
+      verifyZeroInteractions(mockLoggerService);
+    });
   });
 
   group('Method loadProductSources() returns the correct value', () {
