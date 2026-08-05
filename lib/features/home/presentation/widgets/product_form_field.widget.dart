@@ -21,6 +21,9 @@ class ProductFormField extends StatelessWidget {
   /// Called when the user submits the field from the keyboard.
   final ValueChanged<String>? onFieldSubmitted;
 
+  /// Whether the field should request focus as soon as it's built.
+  final bool autofocus;
+
   const ProductFormField({
     required this.controller,
     required this.label,
@@ -28,6 +31,7 @@ class ProductFormField extends StatelessWidget {
     this.hint,
     this.keyboardType = TextInputType.text,
     this.onFieldSubmitted,
+    this.autofocus = false,
     super.key,
   });
 
@@ -35,6 +39,7 @@ class ProductFormField extends StatelessWidget {
   Widget build(BuildContext context) => TextFormField(
     controller: controller,
     keyboardType: keyboardType,
+    autofocus: autofocus,
     decoration: InputDecoration(labelText: label, hintText: hint),
     textInputAction: onFieldSubmitted == null
         ? TextInputAction.next

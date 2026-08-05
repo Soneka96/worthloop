@@ -221,10 +221,7 @@ void main() {
 
         middleware.call(
           store,
-          const CreateProductAction(
-            name: 'Example Product',
-            url: 'https://example.com/products/1',
-          ),
+          const CreateProductAction(name: 'Example Product'),
           next,
         );
         await Future<void>.delayed(Duration.zero);
@@ -252,10 +249,7 @@ void main() {
 
         middleware.call(
           store,
-          const CreateProductAction(
-            name: 'Example Product',
-            url: 'http://example.com/products/1',
-          ),
+          const CreateProductAction(name: 'Example Product'),
           next,
         );
         await Future<void>.delayed(Duration.zero);

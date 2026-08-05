@@ -109,10 +109,7 @@ void main() {
 
       final ProductsState reducedState = productsReducer(
         state,
-        const CreateProductAction(
-          name: 'Example Product',
-          url: 'https://example.com/products/1',
-        ),
+        const CreateProductAction(name: 'Example Product'),
       );
 
       expect(state.isCreatingProduct, isFalse, reason: 'creation starts idle');

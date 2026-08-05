@@ -44,7 +44,7 @@ class HomeScreenViewModel extends Equatable {
   final void Function(String productId) onOpenProduct;
 
   /// Dispatches [CreateProductAction].
-  final void Function(String name, String url) onCreateProduct;
+  final void Function(String name) onCreateProduct;
 
   const HomeScreenViewModel({
     required this.products,
@@ -77,8 +77,8 @@ class HomeScreenViewModel extends Equatable {
       onOpenSettings: () => store.dispatch(const GoToSettingsAction()),
       onOpenProduct: (String productId) =>
           store.dispatch(GoToProductDetailsAction(productId)),
-      onCreateProduct: (String name, String url) =>
-          store.dispatch(CreateProductAction(name: name, url: url)),
+      onCreateProduct: (String name) =>
+          store.dispatch(CreateProductAction(name: name)),
     );
   }
 

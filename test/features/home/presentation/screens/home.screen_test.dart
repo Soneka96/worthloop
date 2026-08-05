@@ -11,6 +11,7 @@ import 'package:redux/redux.dart';
 // Project imports:
 import 'package:worth_loop/features/home/presentation/screens/home.screen.dart';
 import 'package:worth_loop/features/home/presentation/state/viewmodels/home_screen.viewmodel.dart';
+import 'package:worth_loop/features/home/presentation/widgets/add_product_dialog.widget.dart';
 import 'package:worth_loop/features/home/presentation/widgets/tracked_product.widget.dart';
 import 'package:worth_loop/features/home/presentation/widgets/tracked_products_empty.widget.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
@@ -42,7 +43,7 @@ void main() {
     when(() => mockViewModel.onRefreshAll).thenReturn(() {});
     when(() => mockViewModel.onOpenSettings).thenReturn(() {});
     when(() => mockViewModel.onOpenProduct).thenReturn((_) {});
-    when(() => mockViewModel.onCreateProduct).thenReturn((_, _) {});
+    when(() => mockViewModel.onCreateProduct).thenReturn((_) {});
 
     sl.registerFactoryParam<HomeScreenViewModel, Store<AppState>, void>(
       (store, _) => mockViewModel,
@@ -73,7 +74,7 @@ void main() {
           data: MediaQuery.of(context).copyWith(textScaler: textScaler),
           child: child ?? const SizedBox.shrink(),
         ),
-        home: const Scaffold(body: HomeScreen()),
+        home: const HomeScreen(),
       ),
     ),
   );
@@ -172,6 +173,18 @@ void main() {
         expect(find.byType(TrackedProductsEmptyWidget), findsOneWidget);
       },
     );
+
+    testWidgets(
+      'HomeScreen contains a "home-add-product-button" FloatingActionButton with the correct parameters',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildWidget());
+
+        expect(
+          find.byKey(const Key('home-add-product-button')),
+          findsOneWidget,
+        );
+      },
+    );
   });
 
   group("HomeScreen's elements behavior", () {
@@ -234,6 +247,18 @@ void main() {
           () => tester.tap(find.byKey(const Key('tracked-product-product-1'))),
           prints('opened product-1\n'),
         );
+      },
+    );
+
+    testWidgets(
+      'HomeScreen contains a "home-add-product-button" FloatingActionButton with the correct behavior',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildWidget());
+
+        await tester.tap(find.byKey(const Key('home-add-product-button')));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AddProductDialog), findsOneWidget);
       },
     );
   });
@@ -344,19 +369,13 @@ void main() {
       const Key settingsKey = Key('home-settings-button');
       const Key refreshKey = Key('home-refresh-all-button');
       const Key productKey = Key('tracked-product-product-1');
+      const Key addProductKey = Key('home-add-product-button');
 
       await tester.sendKeyEvent(LogicalKeyboardKey.tab);
       await tester.pump();
       final bool settingsFocused = hasPrimaryFocusWithin(
         tester,
         find.byKey(settingsKey),
-      );
-
-      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-      await tester.pump();
-      final bool addProductFocused = hasPrimaryFocusWithin(
-        tester,
-        find.byKey(const Key('add-product-section')),
       );
 
       await tester.sendKeyEvent(LogicalKeyboardKey.tab);
@@ -373,14 +392,21 @@ void main() {
         find.byKey(productKey),
       );
 
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      final bool addProductFocused = hasPrimaryFocusWithin(
+        tester,
+        find.byKey(addProductKey),
+      );
+
       expect(settingsFocused, isA<bool>());
       expect(settingsFocused, isTrue);
       expect(refreshFocused, isA<bool>());
       expect(refreshFocused, isTrue);
-      expect(addProductFocused, isA<bool>());
-      expect(addProductFocused, isTrue);
       expect(productFocused, isA<bool>());
       expect(productFocused, isTrue);
+      expect(addProductFocused, isA<bool>());
+      expect(addProductFocused, isTrue);
     });
   });
 }

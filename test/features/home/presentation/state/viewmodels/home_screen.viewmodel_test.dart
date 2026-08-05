@@ -57,7 +57,7 @@ void main() {
         expect(viewmodel.onRefreshAll, isA<Function()>());
         expect(viewmodel.onOpenSettings, isA<Function()>());
         expect(viewmodel.onOpenProduct, isA<void Function(String)>());
-        expect(viewmodel.onCreateProduct, isA<void Function(String, String)>());
+        expect(viewmodel.onCreateProduct, isA<void Function(String)>());
       });
 
       test(
@@ -108,16 +108,10 @@ void main() {
             buildStore(AppState.initial()),
           );
 
-          viewmodel.onCreateProduct(
-            'Example Product',
-            'https://example.com/products/1',
-          );
+          viewmodel.onCreateProduct('Example Product');
 
           expect(dispatchedActions, [
-            const CreateProductAction(
-              name: 'Example Product',
-              url: 'https://example.com/products/1',
-            ),
+            const CreateProductAction(name: 'Example Product'),
           ]);
         },
       );

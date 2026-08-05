@@ -40,21 +40,16 @@ class ProductsLoadFailedAction extends Equatable {
   List<Object?> get props => [message];
 }
 
-/// Requests creating a tracked product from a website link.
+/// Requests creating a tracked product.
 @immutable
 class CreateProductAction extends Equatable {
   /// Product display name entered by the user.
   final String name;
 
-  // TODO: url is unused by ProductsMiddleware pending a dedicated add-source
-  // flow — CreateProductUseCase no longer accepts a source at creation time.
-  /// Product website link entered by the user.
-  final String url;
-
-  const CreateProductAction({required this.name, required this.url});
+  const CreateProductAction({required this.name});
 
   @override
-  List<Object?> get props => [name, url];
+  List<Object?> get props => [name];
 }
 
 /// Carries a newly created product.
