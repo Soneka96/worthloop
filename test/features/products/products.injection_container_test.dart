@@ -7,6 +7,7 @@ import 'package:redux/redux.dart';
 // Project imports:
 import 'package:worth_loop/features/products/data/datasources/products_local.datasource.dart';
 import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
+import 'package:worth_loop/features/products/domain/usecases/add_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/compare_prices.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/create_product.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/load_products.usecase.dart';
@@ -55,6 +56,8 @@ void main() {
       expect(sl.isRegistered<LoadProductsUseCase>(), isTrue);
       expect(sl.isRegistered<CreateProductUseCase>(), isA<bool>());
       expect(sl.isRegistered<CreateProductUseCase>(), isTrue);
+      expect(sl.isRegistered<AddSourceUseCase>(), isA<bool>());
+      expect(sl.isRegistered<AddSourceUseCase>(), isTrue);
       expect(sl.isRegistered<RefreshProductUseCase>(), isA<bool>());
       expect(sl.isRegistered<RefreshProductUseCase>(), isTrue);
       expect(sl.isRegistered<RefreshAllProductsUseCase>(), isA<bool>());
@@ -63,6 +66,7 @@ void main() {
       expect(sl.isRegistered<ComparePricesUseCase>(), isTrue);
       expect(sl<LoadProductsUseCase>(), isA<LoadProductsUseCase>());
       expect(sl<CreateProductUseCase>(), isA<CreateProductUseCase>());
+      expect(sl<AddSourceUseCase>(), isA<AddSourceUseCase>());
       expect(sl<RefreshProductUseCase>(), isA<RefreshProductUseCase>());
       expect(sl<RefreshAllProductsUseCase>(), isA<RefreshAllProductsUseCase>());
       expect(sl<ComparePricesUseCase>(), isA<ComparePricesUseCase>());

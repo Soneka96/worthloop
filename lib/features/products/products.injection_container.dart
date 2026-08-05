@@ -8,6 +8,7 @@ import 'package:worth_loop/features/products/data/datasources/price_response_det
 import 'package:worth_loop/features/products/data/datasources/products_remote.datasource.dart';
 import 'package:worth_loop/features/products/data/repositories/products.repository.dart';
 import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
+import 'package:worth_loop/features/products/domain/usecases/add_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/compare_prices.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/create_product.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/load_products.usecase.dart';
@@ -44,6 +45,9 @@ void initProductsDependencies() {
   );
   sl.registerLazySingleton<CreateProductUseCase>(
     () => CreateProductUseCase(sl<IProductsRepository>()),
+  );
+  sl.registerLazySingleton<AddSourceUseCase>(
+    () => AddSourceUseCase(sl<IProductsRepository>()),
   );
   sl.registerLazySingleton<RefreshProductUseCase>(
     () => RefreshProductUseCase(sl<IProductsRepository>()),

@@ -88,4 +88,9 @@ class ProductsRepository implements IProductsRepository {
       return _localDatasource.refreshAllProducts();
     });
   }
+
+  @override
+  Future<Either<Failure, ProductSource>> addSource(ProductSource source) {
+    return _localDatasource.saveProductSource(source);
+  }
 }

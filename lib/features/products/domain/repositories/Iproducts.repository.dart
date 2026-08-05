@@ -23,4 +23,7 @@ abstract class IProductsRepository {
 
   /// Refreshes and persists every tracked product.
   Future<Either<Failure, List<Product>>> refreshAllProducts();
+
+  /// Adds a website source to an existing product.
+  Future<Either<Failure, ProductSource>> addSource(ProductSource source);
 }

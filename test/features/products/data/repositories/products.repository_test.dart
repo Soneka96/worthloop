@@ -131,6 +131,53 @@ void main() {
     );
   });
 
+  group('ProductsRepository implements addSource() correctly', () {
+    test('Method addSource() returns the datasource result', () async {
+      final ProductSourceModel source = ProductSourceModel.fromEntity(
+        ProductSource.fromUrl(
+          id: 'source-1',
+          productId: 'product-1',
+          url: 'https://example.com/products/1',
+          createdAt: DateTime(2026),
+        ),
+      );
+      when(
+        () => mockDatasource.saveProductSource(source),
+      ).thenAnswer((_) async => Right(source));
+
+      final Either<Failure, ProductSource> result = await repository.addSource(
+        source,
+      );
+
+      expect(result, Right(source));
+      verify(() => mockDatasource.saveProductSource(source)).called(1);
+      verifyNoMoreInteractions(mockDatasource);
+    });
+
+    test('Method addSource() forwards datasource failures unchanged', () async {
+      final ProductSourceModel source = ProductSourceModel.fromEntity(
+        ProductSource.fromUrl(
+          id: 'source-1',
+          productId: 'product-1',
+          url: 'https://example.com/products/1',
+          createdAt: DateTime(2026),
+        ),
+      );
+      const DatabaseFailure failure = DatabaseFailure('database failed');
+      when(
+        () => mockDatasource.saveProductSource(source),
+      ).thenAnswer((_) async => const Left(failure));
+
+      final Either<Failure, ProductSource> result = await repository.addSource(
+        source,
+      );
+
+      expect(result, const Left(failure));
+      verify(() => mockDatasource.saveProductSource(source)).called(1);
+      verifyNoMoreInteractions(mockDatasource);
+    });
+  });
+
   group('ProductsRepository implements refreshProduct() correctly', () {
     test('refreshes a product source through the remote datasource', () async {
       final ProductModel product = buildProductModel();
