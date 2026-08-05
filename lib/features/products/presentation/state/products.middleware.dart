@@ -13,6 +13,7 @@ import 'package:worth_loop/features/products/presentation/state/products.actions
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/navigation/app_routes.dart';
 import 'package:worth_loop/shared/navigation/navigator_service.dart';
+import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/usecase/no_params.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
@@ -87,6 +88,7 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
           ProductRefreshFailedAction(
             productId: action.productId,
             message: failure.message,
+            status: failure is PriceFetchFailure ? failure.status : null,
           ),
         );
       },
@@ -104,7 +106,12 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
     (await sl<RefreshAllProductsUseCase>()(NoParams())).fold(
       (failure) {
         sl<LoggerService>().e(failure.message, showPopup: true);
-        store.dispatch(RefreshAllProductsFailedAction(failure.message));
+        store.dispatch(
+          RefreshAllProductsFailedAction(
+            failure.message,
+            status: failure is PriceFetchFailure ? failure.status : null,
+          ),
+        );
       },
       (List<Product> products) {
         store.dispatch(ProductsLoadedAction(products));

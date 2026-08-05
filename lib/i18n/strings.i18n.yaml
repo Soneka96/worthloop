@@ -40,6 +40,10 @@ productDetails:
   checkedAt: Checked at $time
   productNotFound: Product not found
   productNotFoundDescription: Return to your tracked products and choose an item again.
+  refreshBlocked: This website blocked the refresh attempt. Try again later.
+  refreshUnsupported: This website does not provide a readable price yet.
+  refreshNetworkError: The website could not be reached. Your last price is still shown.
+  refreshInvalidData: The website returned an unreadable price. Your last price is still shown.
 
 settings:
   title: Settings

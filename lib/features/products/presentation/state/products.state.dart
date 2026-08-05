@@ -5,6 +5,7 @@ import 'package:meta/meta.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 
 /// Redux state for tracked products.
 @immutable
@@ -24,6 +25,9 @@ class ProductsState extends Equatable {
   /// The most recent operation failure, or `null`.
   final String? error;
 
+  /// Classified reason for the latest refresh failure, or `null`.
+  final PriceFetchStatus? refreshStatus;
+
   /// Whether a product is being created.
   final bool isCreatingProduct;
 
@@ -39,6 +43,7 @@ class ProductsState extends Equatable {
     required this.isRefreshingAll,
     required this.refreshingProductIds,
     required this.error,
+    this.refreshStatus,
     required this.isCreatingProduct,
     required this.creationError,
     required this.createdProductId,
@@ -63,6 +68,7 @@ class ProductsState extends Equatable {
     bool? isRefreshingAll,
     Set<String>? refreshingProductIds,
     Option<String>? error,
+    Option<PriceFetchStatus>? refreshStatus,
     bool? isCreatingProduct,
     Option<String>? creationError,
     Option<String>? createdProductId,
@@ -72,6 +78,9 @@ class ProductsState extends Equatable {
     isRefreshingAll: isRefreshingAll ?? this.isRefreshingAll,
     refreshingProductIds: refreshingProductIds ?? this.refreshingProductIds,
     error: error == null ? this.error : error.toNullable(),
+    refreshStatus: refreshStatus == null
+        ? this.refreshStatus
+        : refreshStatus.toNullable(),
     isCreatingProduct: isCreatingProduct ?? this.isCreatingProduct,
     creationError: creationError == null
         ? this.creationError
@@ -88,6 +97,7 @@ class ProductsState extends Equatable {
     isRefreshingAll,
     refreshingProductIds,
     error,
+    refreshStatus,
     isCreatingProduct,
     creationError,
     createdProductId,

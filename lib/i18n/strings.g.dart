@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 146 (73 per locale)
+/// Strings: 154 (77 per locale)
 ///
-/// Built on 2026-08-04 at 17:32 UTC
+/// Built on 2026-08-05 at 09:03 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -208,6 +208,10 @@ class _StringsProductDetailsEn {
 	String checkedAt({required Object time}) => 'Checked at ${time}';
 	String get productNotFound => 'Product not found';
 	String get productNotFoundDescription => 'Return to your tracked products and choose an item again.';
+	String get refreshBlocked => 'This website blocked the refresh attempt. Try again later.';
+	String get refreshUnsupported => 'This website does not provide a readable price yet.';
+	String get refreshNetworkError => 'The website could not be reached. Your last price is still shown.';
+	String get refreshInvalidData => 'The website returned an unreadable price. Your last price is still shown.';
 }
 
 // Path: settings
@@ -437,6 +441,10 @@ class _StringsProductDetailsPt implements _StringsProductDetailsEn {
 	@override String checkedAt({required Object time}) => 'Verificado às ${time}';
 	@override String get productNotFound => 'Produto não encontrado';
 	@override String get productNotFoundDescription => 'Volte aos produtos acompanhados e escolha novamente um artigo.';
+	@override String get refreshBlocked => 'Este site bloqueou a tentativa de atualização. Tente novamente mais tarde.';
+	@override String get refreshUnsupported => 'Este site ainda não fornece um preço legível.';
+	@override String get refreshNetworkError => 'Não foi possível contactar o site. O último preço continua visível.';
+	@override String get refreshInvalidData => 'O site devolveu um preço ilegível. O último preço continua visível.';
 }
 
 // Path: settings
@@ -626,6 +634,10 @@ extension on Translations {
 			case 'productDetails.checkedAt': return ({required Object time}) => 'Checked at ${time}';
 			case 'productDetails.productNotFound': return 'Product not found';
 			case 'productDetails.productNotFoundDescription': return 'Return to your tracked products and choose an item again.';
+			case 'productDetails.refreshBlocked': return 'This website blocked the refresh attempt. Try again later.';
+			case 'productDetails.refreshUnsupported': return 'This website does not provide a readable price yet.';
+			case 'productDetails.refreshNetworkError': return 'The website could not be reached. Your last price is still shown.';
+			case 'productDetails.refreshInvalidData': return 'The website returned an unreadable price. Your last price is still shown.';
 			case 'settings.title': return 'Settings';
 			case 'settings.appearance.title': return 'Appearance';
 			case 'settings.appearance.theme': return 'Theme';
@@ -707,6 +719,10 @@ extension on _StringsPt {
 			case 'productDetails.checkedAt': return ({required Object time}) => 'Verificado às ${time}';
 			case 'productDetails.productNotFound': return 'Produto não encontrado';
 			case 'productDetails.productNotFoundDescription': return 'Volte aos produtos acompanhados e escolha novamente um artigo.';
+			case 'productDetails.refreshBlocked': return 'Este site bloqueou a tentativa de atualização. Tente novamente mais tarde.';
+			case 'productDetails.refreshUnsupported': return 'Este site ainda não fornece um preço legível.';
+			case 'productDetails.refreshNetworkError': return 'Não foi possível contactar o site. O último preço continua visível.';
+			case 'productDetails.refreshInvalidData': return 'O site devolveu um preço ilegível. O último preço continua visível.';
 			case 'settings.title': return 'Definições';
 			case 'settings.appearance.title': return 'Aparência';
 			case 'settings.appearance.theme': return 'Tema';

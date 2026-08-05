@@ -4,6 +4,7 @@ import 'package:meta/meta.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 
 /// Requests loading every tracked product.
 @immutable
@@ -110,13 +111,17 @@ class ProductRefreshFailedAction extends Equatable {
   /// The failure message.
   final String message;
 
+  /// Classified reason for the failed refresh, when available.
+  final PriceFetchStatus? status;
+
   const ProductRefreshFailedAction({
     required this.productId,
     required this.message,
+    this.status,
   });
 
   @override
-  List<Object?> get props => [productId, message];
+  List<Object?> get props => [productId, message, status];
 }
 
 /// Requests refreshing every tracked product.
@@ -134,10 +139,13 @@ class RefreshAllProductsFailedAction extends Equatable {
   /// The failure message.
   final String message;
 
-  const RefreshAllProductsFailedAction(this.message);
+  /// Classified reason for the failed refresh, when available.
+  final PriceFetchStatus? status;
+
+  const RefreshAllProductsFailedAction(this.message, {this.status});
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, status];
 }
 
 /// Requests navigation to one product's details.

@@ -9,6 +9,7 @@ import 'package:worth_loop/features/products/domain/entities/product.entity.dart
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/products.selectors.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 
 /// ViewModel representing the data required by [HomeScreen].
 class HomeScreenViewModel extends Equatable {
@@ -26,6 +27,9 @@ class HomeScreenViewModel extends Equatable {
 
   /// The latest product-creation failure, or `null`.
   final String? productCreationError;
+
+  /// Classified reason for the latest refresh failure, or `null`.
+  final PriceFetchStatus? refreshStatus;
 
   /// Identifier of the latest created product, or `null`.
   final String? createdProductId;
@@ -48,6 +52,7 @@ class HomeScreenViewModel extends Equatable {
     required this.isRefreshingAll,
     required this.isCreatingProduct,
     required this.productCreationError,
+    this.refreshStatus,
     required this.createdProductId,
     required this.onRefreshAll,
     required this.onOpenSettings,
@@ -66,6 +71,7 @@ class HomeScreenViewModel extends Equatable {
       productCreationError: ProductsSelectors.productCreationErrorSelector(
         store.state,
       ),
+      refreshStatus: ProductsSelectors.refreshStatusSelector(store.state),
       createdProductId: ProductsSelectors.createdProductIdSelector(store.state),
       onRefreshAll: () => store.dispatch(const RefreshAllProductsAction()),
       onOpenSettings: () => store.dispatch(const GoToSettingsAction()),
@@ -83,6 +89,7 @@ class HomeScreenViewModel extends Equatable {
     isRefreshingAll,
     isCreatingProduct,
     productCreationError,
+    refreshStatus,
     createdProductId,
   ];
 }

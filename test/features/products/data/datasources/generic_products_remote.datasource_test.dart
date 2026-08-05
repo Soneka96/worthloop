@@ -9,6 +9,7 @@ import 'package:worth_loop/features/products/data/datasources/generic_products_r
 import 'package:worth_loop/features/products/data/datasources/price_response_detector.datasource.dart';
 import 'package:worth_loop/features/products/data/models/store_price.model.dart';
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 
@@ -21,6 +22,7 @@ void main() {
   late MockLoggerService loggerService;
   late GenericProductsRemoteDatasource datasource;
   late ProductSource source;
+  final DateTime now = DateTime(2026);
 
   setUp(() {
     dio = MockDio();
@@ -29,6 +31,7 @@ void main() {
       dio,
       PriceResponseDetector(),
       loggerService,
+      now: () => now,
     );
     source = ProductSource.fromUrl(
       id: 'source-1',
@@ -86,7 +89,12 @@ void main() {
 
       expect(
         result,
-        const Left(ValidationFailure('Website returned invalid price data')),
+        const Left(
+          PriceFetchFailure(
+            status: PriceFetchStatus.invalidData,
+            message: 'Website returned invalid price data',
+          ),
+        ),
       );
     });
 
@@ -140,10 +148,47 @@ void main() {
 
         expect(
           result,
-          const Left(NetworkFailure('Website blocked the price request')),
+          const Left(
+            PriceFetchFailure(
+              status: PriceFetchStatus.blocked,
+              message: 'Website blocked the price request',
+            ),
+          ),
         );
       },
     );
+
+    test('does not retry a blocked website during its cooldown', () async {
+      when(
+        () => dio.get<String>(source.url, options: any(named: 'options')),
+      ).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: source.url),
+          response: Response<String>(
+            requestOptions: RequestOptions(path: source.url),
+            statusCode: 403,
+            data: 'Access denied',
+          ),
+        ),
+      );
+
+      await datasource.fetchPrices(source);
+      final Either<Failure, List<StorePriceModel>> result = await datasource
+          .fetchPrices(source);
+
+      expect(
+        result,
+        const Left(
+          PriceFetchFailure(
+            status: PriceFetchStatus.blocked,
+            message: 'Website blocked the price request',
+          ),
+        ),
+      );
+      verify(
+        () => dio.get<String>(source.url, options: any(named: 'options')),
+      ).called(1);
+    });
 
     test(
       'returns a validation failure when no supported price is found',
@@ -164,7 +209,10 @@ void main() {
         expect(
           result,
           const Left(
-            ValidationFailure('Website does not expose supported price data'),
+            PriceFetchFailure(
+              status: PriceFetchStatus.unsupported,
+              message: 'Website does not expose supported price data',
+            ),
           ),
         );
       },

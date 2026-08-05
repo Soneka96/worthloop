@@ -41,6 +41,10 @@ productDetails:
   checkedAt: Verificado às $time
   productNotFound: Produto não encontrado
   productNotFoundDescription: Volte aos produtos acompanhados e escolha novamente um artigo.
+  refreshBlocked: Este site bloqueou a tentativa de atualização. Tente novamente mais tarde.
+  refreshUnsupported: Este site ainda não fornece um preço legível.
+  refreshNetworkError: Não foi possível contactar o site. O último preço continua visível.
+  refreshInvalidData: O site devolveu um preço ilegível. O último preço continua visível.
 
 settings:
   title: Definições

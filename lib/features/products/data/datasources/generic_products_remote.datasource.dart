@@ -20,18 +20,27 @@ class GenericProductsRemoteDatasource implements ProductsRemoteDatasource {
   final Dio _dio;
   final PriceResponseDetector _detector;
   final LoggerService _loggerService;
+  final DateTime Function() _now;
+  final Map<String, DateTime> _blockedUntilByUrl = {};
 
   /// Creates a generic remote datasource with HTTP and response detection.
   GenericProductsRemoteDatasource(
     this._dio,
     this._detector,
-    this._loggerService,
-  );
+    this._loggerService, {
+    DateTime Function() now = DateTime.now,
+  }) : _now = now;
 
   @override
   Future<Either<Failure, List<StorePriceModel>>> fetchPrices(
     ProductSource source,
   ) async {
+    final DateTime? blockedUntil = _blockedUntilByUrl[source.url];
+    if (blockedUntil != null && _now().isBefore(blockedUntil)) {
+      final Failure failure = _failureFor(PriceFetchStatus.blocked);
+      _loggerService.e(failure.message);
+      return Left(failure);
+    }
     try {
       final Response<String> response = await _dio.get<String>(
         source.url,
@@ -47,6 +56,9 @@ class GenericProductsRemoteDatasource implements ProductsRemoteDatasource {
       );
       if (status != PriceFetchStatus.success || offer == null) {
         final Failure failure = _failureFor(status);
+        if (status == PriceFetchStatus.blocked) {
+          _blockedUntilByUrl[source.url] = _now().add(const Duration(hours: 1));
+        }
         _loggerService.e(failure.message);
         return Left(failure);
       }
@@ -68,6 +80,9 @@ class GenericProductsRemoteDatasource implements ProductsRemoteDatasource {
         responseBody: error.response?.data?.toString() ?? '',
         hasUsablePrice: false,
       );
+      if (status == PriceFetchStatus.blocked) {
+        _blockedUntilByUrl[source.url] = _now().add(const Duration(hours: 1));
+      }
       _loggerService.e(error.toString());
       return Left(_failureFor(status));
     }
@@ -152,17 +167,21 @@ class GenericProductsRemoteDatasource implements ProductsRemoteDatasource {
   }
 
   Failure _failureFor(PriceFetchStatus status) => switch (status) {
-    PriceFetchStatus.blocked => const NetworkFailure(
-      'Website blocked the price request',
+    PriceFetchStatus.blocked => const PriceFetchFailure(
+      status: PriceFetchStatus.blocked,
+      message: 'Website blocked the price request',
     ),
-    PriceFetchStatus.networkError => const NetworkFailure(
-      'Unable to fetch the product price',
+    PriceFetchStatus.networkError => const PriceFetchFailure(
+      status: PriceFetchStatus.networkError,
+      message: 'Unable to fetch the product price',
     ),
-    PriceFetchStatus.invalidData => const ValidationFailure(
-      'Website returned invalid price data',
+    PriceFetchStatus.invalidData => const PriceFetchFailure(
+      status: PriceFetchStatus.invalidData,
+      message: 'Website returned invalid price data',
     ),
-    PriceFetchStatus.unsupported => const ValidationFailure(
-      'Website does not expose supported price data',
+    PriceFetchStatus.unsupported => const PriceFetchFailure(
+      status: PriceFetchStatus.unsupported,
+      message: 'Website does not expose supported price data',
     ),
     PriceFetchStatus.success => const ValidationFailure(
       'Price fetch unexpectedly succeeded',

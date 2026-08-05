@@ -13,6 +13,7 @@ import 'package:worth_loop/features/home/presentation/widgets/tracked_product.wi
 import 'package:worth_loop/features/home/presentation/widgets/tracked_products_empty.widget.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/widgets/illustrative_price_notice.widget.dart';
+import 'package:worth_loop/features/products/presentation/widgets/product_refresh_status_notice.widget.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/theme/app_spacing_theme_extension.dart';
@@ -37,6 +38,7 @@ class HomeScreen extends StatelessWidget {
                   delegate: SliverChildListDelegate([
                     HomeHeader(onOpenSettings: viewmodel.onOpenSettings),
                     const IllustrativePriceNotice(),
+                    ProductRefreshStatusNotice(status: viewmodel.refreshStatus),
                     SizedBox(height: context.spacing.md),
                     AddProductSection(
                       isSubmitting: viewmodel.isCreatingProduct,

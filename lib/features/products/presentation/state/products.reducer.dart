@@ -6,6 +6,7 @@ import 'package:redux/redux.dart';
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/products.state.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 
 /// Reduces actions into [ProductsState].
 Reducer<ProductsState> productsReducer = combineReducers<ProductsState>([
@@ -71,7 +72,11 @@ Reducer<ProductsState> productsReducer = combineReducers<ProductsState>([
 ProductsState loadProductsReducer(
   ProductsState state,
   LoadProductsAction action,
-) => state.copyWith(isLoading: true, error: const None());
+) => state.copyWith(
+  isLoading: true,
+  error: const None(),
+  refreshStatus: const None(),
+);
 
 /// Handles [ProductsLoadedAction].
 /// Updates [ProductsState.products], [ProductsState.isLoading], [ProductsState.error].
@@ -84,6 +89,7 @@ ProductsState productsLoadedReducer(
   isRefreshingAll: false,
   refreshingProductIds: {},
   error: const None(),
+  refreshStatus: const None(),
 );
 
 /// Handles [ProductsLoadFailedAction].
@@ -134,6 +140,7 @@ ProductsState refreshProductReducer(
 ) => state.copyWith(
   refreshingProductIds: {...state.refreshingProductIds, action.productId},
   error: const None(),
+  refreshStatus: const None(),
 );
 
 /// Handles [ProductRefreshedAction].
@@ -154,6 +161,7 @@ ProductsState productRefreshedReducer(
     products: products,
     refreshingProductIds: refreshingProductIds,
     error: const None(),
+    refreshStatus: const None(),
   );
 }
 
@@ -168,6 +176,9 @@ ProductsState productRefreshFailedReducer(
   return state.copyWith(
     refreshingProductIds: refreshingProductIds,
     error: Some(action.message),
+    refreshStatus: action.status == null
+        ? const None()
+        : Some(action.status ?? PriceFetchStatus.none),
   );
 }
 
@@ -176,11 +187,21 @@ ProductsState productRefreshFailedReducer(
 ProductsState refreshAllProductsReducer(
   ProductsState state,
   RefreshAllProductsAction action,
-) => state.copyWith(isRefreshingAll: true, error: const None());
+) => state.copyWith(
+  isRefreshingAll: true,
+  error: const None(),
+  refreshStatus: const None(),
+);
 
 /// Handles [RefreshAllProductsFailedAction].
 /// Updates [ProductsState.isRefreshingAll], [ProductsState.error].
 ProductsState refreshAllProductsFailedReducer(
   ProductsState state,
   RefreshAllProductsFailedAction action,
-) => state.copyWith(isRefreshingAll: false, error: Some(action.message));
+) => state.copyWith(
+  isRefreshingAll: false,
+  error: Some(action.message),
+  refreshStatus: action.status == null
+      ? const None()
+      : Some(action.status ?? PriceFetchStatus.none),
+);
