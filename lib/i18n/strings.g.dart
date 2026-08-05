@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 154 (77 per locale)
+/// Strings: 156 (78 per locale)
 ///
-/// Built on 2026-08-05 at 12:13 UTC
+/// Built on 2026-08-05 at 14:45 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -149,10 +149,21 @@ class Translations implements BaseTranslations<AppLocale, Translations> {
 
 	// Translations
 	String get appTitle => 'WorthLoop';
+	late final _StringsCommonEn common = _StringsCommonEn._(_root);
 	late final _StringsHomeEn home = _StringsHomeEn._(_root);
 	late final _StringsProductDetailsEn productDetails = _StringsProductDetailsEn._(_root);
 	late final _StringsSettingsEn settings = _StringsSettingsEn._(_root);
 	late final _StringsEnumsEn enums = _StringsEnumsEn._(_root);
+}
+
+// Path: common
+class _StringsCommonEn {
+	_StringsCommonEn._(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	String get cancel => 'Cancel';
 }
 
 // Path: home
@@ -382,10 +393,21 @@ class _StringsPt implements Translations {
 
 	// Translations
 	@override String get appTitle => 'WorthLoop';
+	@override late final _StringsCommonPt common = _StringsCommonPt._(_root);
 	@override late final _StringsHomePt home = _StringsHomePt._(_root);
 	@override late final _StringsProductDetailsPt productDetails = _StringsProductDetailsPt._(_root);
 	@override late final _StringsSettingsPt settings = _StringsSettingsPt._(_root);
 	@override late final _StringsEnumsPt enums = _StringsEnumsPt._(_root);
+}
+
+// Path: common
+class _StringsCommonPt implements _StringsCommonEn {
+	_StringsCommonPt._(this._root);
+
+	@override final _StringsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get cancel => 'Cancelar';
 }
 
 // Path: home
@@ -597,6 +619,7 @@ extension on Translations {
 	dynamic _flatMapFunction(String path) {
 		switch (path) {
 			case 'appTitle': return 'WorthLoop';
+			case 'common.cancel': return 'Cancel';
 			case 'home.subtitle': return 'Your watchlist, with the best current offer first.';
 			case 'home.sampleDataNotice': return 'Demo prices — local sample data, not live offers.';
 			case 'home.trackedProducts': return ({required Object count}) => '${count} tracked';
@@ -682,6 +705,7 @@ extension on _StringsPt {
 	dynamic _flatMapFunction(String path) {
 		switch (path) {
 			case 'appTitle': return 'WorthLoop';
+			case 'common.cancel': return 'Cancelar';
 			case 'home.subtitle': return 'A sua lista, com a melhor oferta atual em primeiro lugar.';
 			case 'home.sampleDataNotice': return 'Preços de demonstração — dados de exemplo locais, não são ofertas em tempo real.';
 			case 'home.trackedProducts': return ({required Object count}) => '${count} acompanhados';
