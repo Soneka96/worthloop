@@ -64,7 +64,7 @@ class ProductsRepository implements IProductsRepository {
     return sourcesResult.match((Failure failure) async => Left(failure), (
       List<ProductSourceModel> sources,
     ) async {
-      final List<(String, List<StorePriceModel>)> refreshedOffers = [];
+      final Map<String, List<StorePriceModel>> refreshedOffersByProduct = {};
       for (final ProductSourceModel source in sources) {
         final Either<Failure, List<StorePriceModel>> prices =
             await _remoteDatasource.fetchPrices(source);
@@ -72,15 +72,14 @@ class ProductsRepository implements IProductsRepository {
         if (failure != null) {
           return Left(failure);
         }
-        refreshedOffers.add((
-          source.productId,
-          prices.getRight().toNullable() ?? [],
-        ));
+        refreshedOffersByProduct
+            .putIfAbsent(source.productId, () => <StorePriceModel>[])
+            .addAll(prices.getRight().toNullable() ?? []);
       }
-      for (final (String sourceProductId, List<StorePriceModel> offers)
-          in refreshedOffers) {
+      for (final MapEntry<String, List<StorePriceModel>> entry
+          in refreshedOffersByProduct.entries) {
         final Either<Failure, ProductModel> savedPrices = await _localDatasource
-            .replaceProductPrices(sourceProductId, offers);
+            .replaceProductPrices(entry.key, entry.value);
         final Failure? failure = savedPrices.getLeft().toNullable();
         if (failure != null) {
           return Left(failure);

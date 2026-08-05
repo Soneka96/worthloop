@@ -188,5 +188,158 @@ void main() {
       verify(() => mockDatasource.refreshAllProducts()).called(1);
       verifyNoMoreInteractions(mockDatasource);
     });
+
+    test(
+      'merges offers from multiple sources of the same product before replacing prices',
+      () async {
+        final ProductModel product = buildProductModel();
+        final ProductSourceModel firstSource = ProductSourceModel(
+          id: 'source-1',
+          productId: product.id,
+          url: 'https://example.com/products/1',
+          merchantDomain: 'example.com',
+          createdAt: DateTime(2026),
+        );
+        final ProductSourceModel secondSource = ProductSourceModel(
+          id: 'source-2',
+          productId: product.id,
+          url: 'https://other.com/products/1',
+          merchantDomain: 'other.com',
+          createdAt: DateTime(2026),
+        );
+        final StorePriceModel firstOffer = buildStorePriceModel(
+          storeName: 'Example Store',
+        );
+        final StorePriceModel secondOffer = buildStorePriceModel(
+          storeName: 'Other Store',
+        );
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([firstSource, secondSource]));
+        when(
+          () => mockRemoteDatasource.fetchPrices(firstSource),
+        ).thenAnswer((_) async => Right([firstOffer]));
+        when(
+          () => mockRemoteDatasource.fetchPrices(secondSource),
+        ).thenAnswer((_) async => Right([secondOffer]));
+        when(
+          () => mockDatasource.replaceProductPrices(product.id, [
+            firstOffer,
+            secondOffer,
+          ]),
+        ).thenAnswer((_) async => Right(product));
+        final List<ProductModel> refreshedProducts = [product];
+        when(
+          () => mockDatasource.refreshAllProducts(),
+        ).thenAnswer((_) async => Right(refreshedProducts));
+
+        final Either<Failure, List<Product>> result = await repository
+            .refreshAllProducts();
+
+        expect(result, Right(refreshedProducts));
+        verify(() => mockRemoteDatasource.fetchPrices(firstSource)).called(1);
+        verify(() => mockRemoteDatasource.fetchPrices(secondSource)).called(1);
+        verify(
+          () => mockDatasource.replaceProductPrices(product.id, [
+            firstOffer,
+            secondOffer,
+          ]),
+        ).called(1);
+        verifyNoMoreInteractions(mockRemoteDatasource);
+        verify(() => mockDatasource.loadProductSources()).called(1);
+        verify(() => mockDatasource.refreshAllProducts()).called(1);
+        verifyNoMoreInteractions(mockDatasource);
+      },
+    );
+
+    test('replaces prices separately for each distinct product', () async {
+      final ProductModel firstProduct = buildProductModel();
+      final ProductModel secondProduct = buildProductModel(id: 'product-2');
+      final ProductSourceModel firstSource = ProductSourceModel(
+        id: 'source-1',
+        productId: firstProduct.id,
+        url: 'https://example.com/products/1',
+        merchantDomain: 'example.com',
+        createdAt: DateTime(2026),
+      );
+      final ProductSourceModel secondSource = ProductSourceModel(
+        id: 'source-2',
+        productId: secondProduct.id,
+        url: 'https://example.com/products/2',
+        merchantDomain: 'example.com',
+        createdAt: DateTime(2026),
+      );
+      final StorePriceModel firstOffer = buildStorePriceModel(
+        storeName: 'Example Store',
+      );
+      final StorePriceModel secondOffer = buildStorePriceModel(
+        storeName: 'Other Store',
+      );
+      when(
+        () => mockDatasource.loadProductSources(),
+      ).thenAnswer((_) async => Right([firstSource, secondSource]));
+      when(
+        () => mockRemoteDatasource.fetchPrices(firstSource),
+      ).thenAnswer((_) async => Right([firstOffer]));
+      when(
+        () => mockRemoteDatasource.fetchPrices(secondSource),
+      ).thenAnswer((_) async => Right([secondOffer]));
+      when(
+        () =>
+            mockDatasource.replaceProductPrices(firstProduct.id, [firstOffer]),
+      ).thenAnswer((_) async => Right(firstProduct));
+      when(
+        () => mockDatasource.replaceProductPrices(secondProduct.id, [
+          secondOffer,
+        ]),
+      ).thenAnswer((_) async => Right(secondProduct));
+      when(
+        () => mockDatasource.refreshAllProducts(),
+      ).thenAnswer((_) async => Right([firstProduct, secondProduct]));
+
+      await repository.refreshAllProducts();
+
+      verify(
+        () =>
+            mockDatasource.replaceProductPrices(firstProduct.id, [firstOffer]),
+      ).called(1);
+      verify(
+        () => mockDatasource.replaceProductPrices(secondProduct.id, [
+          secondOffer,
+        ]),
+      ).called(1);
+    });
+
+    test(
+      'replaces prices with an empty list when a source returns no offers',
+      () async {
+        final ProductModel product = buildProductModel();
+        final ProductSourceModel source = ProductSourceModel(
+          id: 'source-1',
+          productId: product.id,
+          url: 'https://example.com/products/1',
+          merchantDomain: 'example.com',
+          createdAt: DateTime(2026),
+        );
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([source]));
+        when(
+          () => mockRemoteDatasource.fetchPrices(source),
+        ).thenAnswer((_) async => const Right(<StorePriceModel>[]));
+        when(
+          () => mockDatasource.replaceProductPrices(product.id, []),
+        ).thenAnswer((_) async => Right(product));
+        when(
+          () => mockDatasource.refreshAllProducts(),
+        ).thenAnswer((_) async => Right([product]));
+
+        await repository.refreshAllProducts();
+
+        verify(
+          () => mockDatasource.replaceProductPrices(product.id, []),
+        ).called(1);
+      },
+    );
   });
 }
