@@ -45,7 +45,10 @@ class ProductDetailsViewModel extends Equatable {
       store.state,
       productId,
     ),
-    refreshStatus: ProductsSelectors.refreshStatusSelector(store.state),
+    refreshStatus: ProductsSelectors.refreshStatusForProductSelector(
+      store.state,
+      productId,
+    ),
     onRefresh: () => store.dispatch(RefreshProductAction(productId)),
     onGoBack: () => store.dispatch(const GoBackFromProductDetailsAction()),
   );
