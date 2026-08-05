@@ -9,8 +9,7 @@ import 'package:worth_loop/features/home/presentation/state/viewmodels/home_scre
 import 'package:worth_loop/features/home/presentation/widgets/add_product_dialog.widget.dart';
 import 'package:worth_loop/features/home/presentation/widgets/home_header.widget.dart';
 import 'package:worth_loop/features/home/presentation/widgets/home_products_header.widget.dart';
-import 'package:worth_loop/features/home/presentation/widgets/tracked_product.widget.dart';
-import 'package:worth_loop/features/home/presentation/widgets/tracked_products_empty.widget.dart';
+import 'package:worth_loop/features/home/presentation/widgets/tracked_products_list.section.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/widgets/illustrative_price_notice.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_refresh_status_notice.widget.dart';
@@ -62,36 +61,11 @@ class HomeScreen extends StatelessWidget {
                     ]),
                   ),
                 ),
-                if (viewmodel.isLoading)
-                  const SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                else if (viewmodel.products.isEmpty)
-                  const SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: TrackedProductsEmptyWidget(),
-                  )
-                else
-                  SliverPadding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: context.spacing.md,
-                    ),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) => Padding(
-                          padding: EdgeInsets.only(bottom: context.spacing.sm),
-                          child: TrackedProductWidget(
-                            product: viewmodel.products[index],
-                            onTap: () => viewmodel.onOpenProduct(
-                              viewmodel.products[index].id,
-                            ),
-                          ),
-                        ),
-                        childCount: viewmodel.products.length,
-                      ),
-                    ),
-                  ),
+                TrackedProductsListSection(
+                  products: viewmodel.products,
+                  isLoading: viewmodel.isLoading,
+                  onProductTap: viewmodel.onOpenProduct,
+                ),
               ],
             ),
           ),

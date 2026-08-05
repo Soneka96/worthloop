@@ -26,6 +26,10 @@ home:
   addProductButton: Add product
   addProductSaving: Saving
   productSourceSupportDescription: Links can be saved now. Automatic price updates are available only for supported websites.
+  searchHint: Search your tracked items
+  searchClearTooltip: Clear search
+  noSearchResultsTitle: No matches
+  noSearchResultsDescription: No tracked items match "$query".
 
 productDetails:
   title: Product details

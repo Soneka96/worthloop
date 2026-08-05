@@ -27,6 +27,10 @@ home:
   addProductButton: Adicionar produto
   addProductSaving: A guardar
   productSourceSupportDescription: Os links podem ser guardados agora. A atualização automática só está disponível para sites suportados.
+  searchHint: Pesquisar nos seus produtos acompanhados
+  searchClearTooltip: Limpar pesquisa
+  noSearchResultsTitle: Sem resultados
+  noSearchResultsDescription: Nenhum produto acompanhado corresponde a "$query".
 
 productDetails:
   title: Detalhes do produto

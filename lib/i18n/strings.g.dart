@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 156 (78 per locale)
+/// Strings: 164 (82 per locale)
 ///
-/// Built on 2026-08-05 at 14:45 UTC
+/// Built on 2026-08-05 at 15:27 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -195,6 +195,10 @@ class _StringsHomeEn {
 	String get addProductButton => 'Add product';
 	String get addProductSaving => 'Saving';
 	String get productSourceSupportDescription => 'Links can be saved now. Automatic price updates are available only for supported websites.';
+	String get searchHint => 'Search your tracked items';
+	String get searchClearTooltip => 'Clear search';
+	String get noSearchResultsTitle => 'No matches';
+	String noSearchResultsDescription({required Object query}) => 'No tracked items match "${query}".';
 }
 
 // Path: productDetails
@@ -439,6 +443,10 @@ class _StringsHomePt implements _StringsHomeEn {
 	@override String get addProductButton => 'Adicionar produto';
 	@override String get addProductSaving => 'A guardar';
 	@override String get productSourceSupportDescription => 'Os links podem ser guardados agora. A atualização automática só está disponível para sites suportados.';
+	@override String get searchHint => 'Pesquisar nos seus produtos acompanhados';
+	@override String get searchClearTooltip => 'Limpar pesquisa';
+	@override String get noSearchResultsTitle => 'Sem resultados';
+	@override String noSearchResultsDescription({required Object query}) => 'Nenhum produto acompanhado corresponde a "${query}".';
 }
 
 // Path: productDetails
@@ -642,6 +650,10 @@ extension on Translations {
 			case 'home.addProductButton': return 'Add product';
 			case 'home.addProductSaving': return 'Saving';
 			case 'home.productSourceSupportDescription': return 'Links can be saved now. Automatic price updates are available only for supported websites.';
+			case 'home.searchHint': return 'Search your tracked items';
+			case 'home.searchClearTooltip': return 'Clear search';
+			case 'home.noSearchResultsTitle': return 'No matches';
+			case 'home.noSearchResultsDescription': return ({required Object query}) => 'No tracked items match "${query}".';
 			case 'productDetails.title': return 'Product details';
 			case 'productDetails.backTooltip': return 'Back';
 			case 'productDetails.refresh': return 'Refresh';
@@ -728,6 +740,10 @@ extension on _StringsPt {
 			case 'home.addProductButton': return 'Adicionar produto';
 			case 'home.addProductSaving': return 'A guardar';
 			case 'home.productSourceSupportDescription': return 'Os links podem ser guardados agora. A atualização automática só está disponível para sites suportados.';
+			case 'home.searchHint': return 'Pesquisar nos seus produtos acompanhados';
+			case 'home.searchClearTooltip': return 'Limpar pesquisa';
+			case 'home.noSearchResultsTitle': return 'Sem resultados';
+			case 'home.noSearchResultsDescription': return ({required Object query}) => 'Nenhum produto acompanhado corresponde a "${query}".';
 			case 'productDetails.title': return 'Detalhes do produto';
 			case 'productDetails.backTooltip': return 'Voltar';
 			case 'productDetails.refresh': return 'Atualizar';

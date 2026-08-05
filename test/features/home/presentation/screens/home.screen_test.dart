@@ -132,6 +132,15 @@ void main() {
     );
 
     testWidgets(
+      'HomeScreen contains a "home-search-field" TextField with the correct parameters',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildWidget());
+
+        expect(find.byKey(const Key('home-search-field')), findsOneWidget);
+      },
+    );
+
+    testWidgets(
       'HomeScreen contains an IllustrativePriceNotice with the correct parameters',
       (WidgetTester tester) async {
         await tester.pumpWidget(buildWidget());
@@ -368,6 +377,7 @@ void main() {
 
       const Key settingsKey = Key('home-settings-button');
       const Key refreshKey = Key('home-refresh-all-button');
+      const Key searchKey = Key('home-search-field');
       const Key productKey = Key('tracked-product-product-1');
       const Key addProductKey = Key('home-add-product-button');
 
@@ -383,6 +393,13 @@ void main() {
       final bool refreshFocused = hasPrimaryFocusWithin(
         tester,
         find.byKey(refreshKey),
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      final bool searchFocused = hasPrimaryFocusWithin(
+        tester,
+        find.byKey(searchKey),
       );
 
       await tester.sendKeyEvent(LogicalKeyboardKey.tab);
@@ -403,6 +420,8 @@ void main() {
       expect(settingsFocused, isTrue);
       expect(refreshFocused, isA<bool>());
       expect(refreshFocused, isTrue);
+      expect(searchFocused, isA<bool>());
+      expect(searchFocused, isTrue);
       expect(productFocused, isA<bool>());
       expect(productFocused, isTrue);
       expect(addProductFocused, isA<bool>());
