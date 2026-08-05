@@ -37,4 +37,7 @@ abstract class IProductsRepository {
     String sourceId,
     String url,
   );
+
+  /// Deletes a saved source.
+  Future<Either<Failure, Unit>> deleteSource(String sourceId);
 }

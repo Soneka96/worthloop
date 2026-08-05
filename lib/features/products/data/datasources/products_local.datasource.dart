@@ -210,6 +210,21 @@ class ProductsLocalDatasource {
     }
   }
 
+  /// Deletes a saved source.
+  Future<Either<Failure, Unit>> deleteProductSource(String sourceId) async {
+    try {
+      final int rowsDeleted = await (_db.delete(
+        _db.productSourceTable,
+      )..where((table) => table.id.equals(sourceId))).go();
+      return rowsDeleted == 0
+          ? const Left(NotFoundFailure('Source not found'))
+          : const Right(unit);
+    } on SqliteException catch (error) {
+      _loggerService.e(error.toString());
+      return Left(DatabaseFailure(error.toString()));
+    }
+  }
+
   /// Loads every saved product website link.
   Future<Either<Failure, List<ProductSourceModel>>> loadProductSources() async {
     try {

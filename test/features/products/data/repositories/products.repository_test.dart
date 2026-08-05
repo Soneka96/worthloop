@@ -272,6 +272,40 @@ void main() {
     );
   });
 
+  group('ProductsRepository implements deleteSource() correctly', () {
+    test('Method deleteSource() returns the datasource result', () async {
+      when(
+        () => mockDatasource.deleteProductSource('source-1'),
+      ).thenAnswer((_) async => const Right(unit));
+
+      final Either<Failure, Unit> result = await repository.deleteSource(
+        'source-1',
+      );
+
+      expect(result, const Right(unit));
+      verify(() => mockDatasource.deleteProductSource('source-1')).called(1);
+      verifyNoMoreInteractions(mockDatasource);
+    });
+
+    test(
+      'Method deleteSource() forwards datasource failures unchanged',
+      () async {
+        const DatabaseFailure failure = DatabaseFailure('database failed');
+        when(
+          () => mockDatasource.deleteProductSource('source-1'),
+        ).thenAnswer((_) async => const Left(failure));
+
+        final Either<Failure, Unit> result = await repository.deleteSource(
+          'source-1',
+        );
+
+        expect(result, const Left(failure));
+        verify(() => mockDatasource.deleteProductSource('source-1')).called(1);
+        verifyNoMoreInteractions(mockDatasource);
+      },
+    );
+  });
+
   group('ProductsRepository implements refreshProduct() correctly', () {
     test('refreshes a product source through the remote datasource', () async {
       final ProductModel product = buildProductModel();

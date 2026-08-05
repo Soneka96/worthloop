@@ -633,6 +633,95 @@ void main() {
     );
   });
 
+  group('Method deleteProductSource() returns the correct value', () {
+    test('deletes the source and returns Right(unit)', () async {
+      await db
+          .into(db.productTable)
+          .insert(
+            ProductTableCompanion.insert(
+              id: 'product-1',
+              name: 'Example Product',
+              lastUpdatedAt: DateTime(2026, 1, 1),
+            ),
+          );
+      await db
+          .into(db.productSourceTable)
+          .insert(
+            ProductSourceModel.fromEntity(buildProductSource()).toCompanion(),
+          );
+
+      final Either<Failure, Unit> result = await datasource.deleteProductSource(
+        'source-1',
+      );
+      final List<ProductSourceRow> rows = await db
+          .select(db.productSourceTable)
+          .get();
+
+      expect(result, const Right(unit));
+      expect(rows, isEmpty);
+      verifyZeroInteractions(mockLoggerService);
+    });
+
+    test('leaves other sources untouched', () async {
+      await db
+          .into(db.productTable)
+          .insert(
+            ProductTableCompanion.insert(
+              id: 'product-1',
+              name: 'Example Product',
+              lastUpdatedAt: DateTime(2026, 1, 1),
+            ),
+          );
+      await db
+          .into(db.productSourceTable)
+          .insert(
+            ProductSourceModel.fromEntity(buildProductSource()).toCompanion(),
+          );
+      await db
+          .into(db.productSourceTable)
+          .insert(
+            ProductSourceModel.fromEntity(
+              buildProductSource(id: 'source-2'),
+            ).toCompanion(),
+          );
+
+      await datasource.deleteProductSource('source-1');
+      final List<ProductSourceRow> rows = await db
+          .select(db.productSourceTable)
+          .get();
+
+      expect(rows, hasLength(1));
+      expect(rows.single.id, 'source-2');
+    });
+
+    test(
+      'returns Left(NotFoundFailure) when the source does not exist',
+      () async {
+        final Either<Failure, Unit> result = await datasource
+            .deleteProductSource('missing-source');
+
+        expect(result, const Left(NotFoundFailure('Source not found')));
+        verifyZeroInteractions(mockLoggerService);
+      },
+    );
+
+    test(
+      'returns Left(DatabaseFailure) when the source table is missing',
+      () async {
+        await db.customStatement('DROP TABLE product_source_table');
+
+        final Either<Failure, Unit> result = await datasource
+            .deleteProductSource('source-1');
+        final Failure failure =
+            result.getLeft().toNullable() ??
+            const DatabaseFailure('Expected a failure');
+
+        expect(failure, isA<DatabaseFailure>());
+        verify(() => mockLoggerService.e(failure.message)).called(1);
+      },
+    );
+  });
+
   group('Method createProduct() returns the correct value', () {
     test('creates the product and source atomically', () async {
       final Product product = Product(

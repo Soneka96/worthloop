@@ -108,4 +108,9 @@ class ProductsRepository implements IProductsRepository {
   ) {
     return _localDatasource.updateProductSource(sourceId, url);
   }
+
+  @override
+  Future<Either<Failure, Unit>> deleteSource(String sourceId) {
+    return _localDatasource.deleteProductSource(sourceId);
+  }
 }
