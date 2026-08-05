@@ -2,6 +2,7 @@
 import 'dart:io';
 
 // Package imports:
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -11,6 +12,7 @@ import 'package:path_provider_platform_interface/path_provider_platform_interfac
 
 // Project imports:
 import 'package:worth_loop/injection_container.dart';
+import 'package:worth_loop/shared/constants/price_fetch_constants.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/navigation/navigator_service.dart';
 import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
@@ -129,6 +131,32 @@ void main() {
       expect(sl<PackageInfo>().version, '0.0.0-test');
       expect(sl<PackageInfo>().buildNumber, isA<String>());
       expect(sl<PackageInfo>().buildNumber, '0');
+    });
+
+    test('Dio is configured with browser-like headers and timeouts', () {
+      final BaseOptions options = sl<Dio>().options;
+
+      expect(options.headers['User-Agent'], isA<String>());
+      expect(
+        options.headers['User-Agent'],
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+        '(KHTML, like Gecko) Chrome/120 Safari/537.36',
+      );
+      expect(options.headers['Accept'], isA<String>());
+      expect(
+        options.headers['Accept'],
+        'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+      );
+      expect(options.headers['Accept-Language'], isA<String>());
+      expect(options.headers['Accept-Language'], 'pt-PT,pt;q=0.9,en;q=0.8');
+      expect(options.headers['Connection'], isA<String>());
+      expect(options.headers['Connection'], 'keep-alive');
+      expect(options.connectTimeout, isA<Duration>());
+      expect(options.connectTimeout, PriceFetchConstants.connectTimeout);
+      expect(options.receiveTimeout, isA<Duration>());
+      expect(options.receiveTimeout, PriceFetchConstants.receiveTimeout);
+      expect(options.sendTimeout, isA<Duration>());
+      expect(options.sendTimeout, PriceFetchConstants.sendTimeout);
     });
   });
 }

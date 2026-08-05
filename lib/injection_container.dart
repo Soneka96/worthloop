@@ -9,6 +9,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:worth_loop/features/home/home.injection_container.dart';
 import 'package:worth_loop/features/products/products.injection_container.dart';
 import 'package:worth_loop/features/settings/settings.injection_container.dart';
+import 'package:worth_loop/shared/constants/price_fetch_constants.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/navigation/app_router.dart';
 import 'package:worth_loop/shared/navigation/navigator_service.dart';
@@ -43,7 +44,7 @@ Future<void> initDependencies() async {
     () => NavigatorService(sl<GoRouter>()),
   );
   sl.registerLazySingleton<AppDatabase>(AppDatabase.new);
-  sl.registerLazySingleton<Dio>(Dio.new);
+  sl.registerLazySingleton<Dio>(() => Dio(_buildDioBaseOptions()));
   sl.registerLazySingleton<SnugToastManager>(SnugToastManager.new);
   sl.registerLazySingleton<PopupService>(PopupService.new);
   sl.registerLazySingleton<CurrencyHelperService>(CurrencyHelperService.new);
@@ -75,3 +76,20 @@ Future<void> initDependencies() async {
     () => LoggerService(Logger(), sl<PopupService>()),
   );
 }
+
+// Browser-like headers so merchant sites don't reject the app as a bot;
+// timeouts bound requests to sites that never respond.
+BaseOptions _buildDioBaseOptions() => BaseOptions(
+  connectTimeout: PriceFetchConstants.connectTimeout,
+  receiveTimeout: PriceFetchConstants.receiveTimeout,
+  sendTimeout: PriceFetchConstants.sendTimeout,
+  headers: {
+    'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+        '(KHTML, like Gecko) Chrome/120 Safari/537.36',
+    'Accept':
+        'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Language': 'pt-PT,pt;q=0.9,en;q=0.8',
+    'Connection': 'keep-alive',
+  },
+);

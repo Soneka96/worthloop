@@ -44,18 +44,7 @@ class GenericProductsRemoteDatasource implements ProductsRemoteDatasource {
     try {
       final Response<String> response = await _dio.get<String>(
         source.url,
-        options: Options(
-          responseType: ResponseType.plain,
-          headers: {
-            'User-Agent':
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
-                '(KHTML, like Gecko) Chrome/120 Safari/537.36',
-            'Accept':
-                'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'pt-PT,pt;q=0.9,en;q=0.8',
-            'Connection': 'keep-alive',
-          },
-        ),
+        options: Options(responseType: ResponseType.plain),
       );
       final String responseBody = response.data ?? '';
       final ({int minorUnits, String currencyCode, bool isAvailable})? offer =
