@@ -23,10 +23,25 @@ void main() {
       requestOptions = RequestOptions(path: '/test');
     });
 
-    test('calls handler.next() when err.type != DioExceptionType.connectionError', () async {
+    test('calls handler.next() when err.type is not retryable', () async {
       final DioException err = DioException(
         requestOptions: requestOptions,
-        type: DioExceptionType.badResponse,
+        type: DioExceptionType.connectionTimeout,
+      );
+
+      await interceptor.onError(err, handler);
+
+      verify(() => handler.next(err)).called(1);
+      verifyNoMoreInteractions(dio);
+      verifyNoMoreInteractions(handler);
+    });
+
+    test('does not retry a request that was already retried', () async {
+      requestOptions.extra['retry_on_connection_error_interceptor_attempted'] =
+          true;
+      final DioException err = DioException(
+        requestOptions: requestOptions,
+        type: DioExceptionType.connectionError,
       );
 
       await interceptor.onError(err, handler);
@@ -45,8 +60,9 @@ void main() {
         requestOptions: requestOptions,
         statusCode: 200,
       );
-      when(() => dio.fetch<dynamic>(requestOptions))
-          .thenAnswer((_) async => response);
+      when(
+        () => dio.fetch<dynamic>(requestOptions),
+      ).thenAnswer((_) async => response);
 
       await interceptor.onError(err, handler);
 
@@ -67,9 +83,7 @@ void main() {
           requestOptions: requestOptions,
           type: DioExceptionType.connectionError,
         );
-        when(
-          () => dio.fetch<dynamic>(requestOptions),
-        ).thenThrow(retryError);
+        when(() => dio.fetch<dynamic>(requestOptions)).thenThrow(retryError);
 
         await interceptor.onError(err, handler);
 
