@@ -6,7 +6,7 @@
 /// Locales: 2
 /// Strings: 154 (77 per locale)
 ///
-/// Built on 2026-08-05 at 09:03 UTC
+/// Built on 2026-08-05 at 12:13 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -408,12 +408,12 @@ class _StringsHomePt implements _StringsHomeEn {
 	@override String get emptyTitle => 'Nenhum produto acompanhado';
 	@override String get emptyDescription => 'Os produtos acompanhados aparecem aqui com a melhor oferta disponível.';
 	@override String get addProductTitle => 'Adicionar produto';
-	@override String get addProductDescription => 'Cole um link de produto para comeÃ§ar a acompanhÃ¡-lo.';
+	@override String get addProductDescription => 'Cole um link de produto para começar a acompanhá-lo.';
 	@override String get productNameLabel => 'Nome do produto';
 	@override String get productUrlLabel => 'Link do produto';
 	@override String get productUrlHint => 'https://exemplo.com/produto';
 	@override String get productNameRequired => 'Introduza o nome do produto.';
-	@override String get productUrlInvalid => 'Introduza um link HTTPS vÃ¡lido.';
+	@override String get productUrlInvalid => 'Introduza um link HTTPS válido.';
 	@override String get addProductButton => 'Adicionar produto';
 	@override String get addProductSaving => 'A guardar';
 	@override String get productSourceSupportDescription => 'Os links podem ser guardados agora. A atualização automática só está disponível para sites suportados.';
@@ -695,12 +695,12 @@ extension on _StringsPt {
 			case 'home.emptyTitle': return 'Nenhum produto acompanhado';
 			case 'home.emptyDescription': return 'Os produtos acompanhados aparecem aqui com a melhor oferta disponível.';
 			case 'home.addProductTitle': return 'Adicionar produto';
-			case 'home.addProductDescription': return 'Cole um link de produto para comeÃ§ar a acompanhÃ¡-lo.';
+			case 'home.addProductDescription': return 'Cole um link de produto para começar a acompanhá-lo.';
 			case 'home.productNameLabel': return 'Nome do produto';
 			case 'home.productUrlLabel': return 'Link do produto';
 			case 'home.productUrlHint': return 'https://exemplo.com/produto';
 			case 'home.productNameRequired': return 'Introduza o nome do produto.';
-			case 'home.productUrlInvalid': return 'Introduza um link HTTPS vÃ¡lido.';
+			case 'home.productUrlInvalid': return 'Introduza um link HTTPS válido.';
 			case 'home.addProductButton': return 'Adicionar produto';
 			case 'home.addProductSaving': return 'A guardar';
 			case 'home.productSourceSupportDescription': return 'Os links podem ser guardados agora. A atualização automática só está disponível para sites suportados.';

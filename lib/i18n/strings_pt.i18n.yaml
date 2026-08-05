@@ -15,12 +15,12 @@ home:
   emptyDescription: Os produtos acompanhados aparecem aqui com a melhor oferta disponível.
 
   addProductTitle: Adicionar produto
-  addProductDescription: Cole um link de produto para comeÃ§ar a acompanhÃ¡-lo.
+  addProductDescription: Cole um link de produto para começar a acompanhá-lo.
   productNameLabel: Nome do produto
   productUrlLabel: Link do produto
   productUrlHint: https://exemplo.com/produto
   productNameRequired: Introduza o nome do produto.
-  productUrlInvalid: Introduza um link HTTPS vÃ¡lido.
+  productUrlInvalid: Introduza um link HTTPS válido.
   addProductButton: Adicionar produto
   addProductSaving: A guardar
   productSourceSupportDescription: Os links podem ser guardados agora. A atualização automática só está disponível para sites suportados.

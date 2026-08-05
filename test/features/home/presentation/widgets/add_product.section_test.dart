@@ -171,5 +171,33 @@ void main() {
         }
       });
     });
+
+    testWidgets('displays the Portuguese add-product description', (
+      WidgetTester tester,
+    ) async {
+      await TestHelper.pumpEachLocale(tester, buildWidget, () async {
+        if (LocaleSettings.currentLocale == AppLocale.pt) {
+          expect(
+            find.text('Cole um link de produto para começar a acompanhá-lo.'),
+            findsOneWidget,
+          );
+        }
+      });
+    });
+
+    testWidgets('displays the Portuguese invalid-URL validation message', (
+      WidgetTester tester,
+    ) async {
+      await TestHelper.pumpEachLocale(tester, buildWidget, () async {
+        if (LocaleSettings.currentLocale == AppLocale.pt) {
+          await tester.tap(find.byKey(const Key('add-product-section')));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byKey(const Key('add-product-submit-button')));
+          await tester.pump();
+
+          expect(find.text('Introduza um link HTTPS válido.'), findsOneWidget);
+        }
+      });
+    });
   });
 }
