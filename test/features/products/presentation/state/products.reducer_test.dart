@@ -7,6 +7,7 @@ import 'package:worth_loop/features/products/domain/entities/product.entity.dart
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/products.reducer.dart';
 import 'package:worth_loop/features/products/presentation/state/products.state.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import '../../fixtures/product.fixture.dart';
 
 void main() {
@@ -41,6 +42,7 @@ void main() {
         isRefreshingAll: true,
         refreshingProductIds: {'product-1'},
         error: const Some('old failure'),
+        productRefreshStatuses: {'product-1': PriceFetchStatus.blocked},
       );
       final Product product = buildProduct();
       final ProductsState reducedState = productsReducer(
@@ -64,6 +66,16 @@ void main() {
         reason: 'individual refreshes complete',
       );
       expect(reducedState.error, isNull, reason: 'old error is cleared');
+      expect(
+        state.productRefreshStatuses,
+        {'product-1': PriceFetchStatus.blocked},
+        reason: 'a stale per-product status existed before the load',
+      );
+      expect(
+        reducedState.productRefreshStatuses,
+        isEmpty,
+        reason: 'stale per-product statuses clear on a fresh load',
+      );
     });
   });
 
@@ -175,6 +187,10 @@ void main() {
       final ProductsState state = ProductsState.initial().copyWith(
         products: [buildProduct()],
         error: const Some('old failure'),
+        productRefreshStatuses: {
+          'product-1': PriceFetchStatus.networkError,
+          'product-2': PriceFetchStatus.blocked,
+        },
       );
       final ProductsState reducedState = productsReducer(
         state,
@@ -192,6 +208,16 @@ void main() {
         reason: 'requested product starts refreshing',
       );
       expect(reducedState.error, isNull, reason: 'old error is cleared');
+      expect(state.productRefreshStatuses, {
+        'product-1': PriceFetchStatus.networkError,
+        'product-2': PriceFetchStatus.blocked,
+      }, reason: 'both products had a stale status');
+      expect(
+        reducedState.productRefreshStatuses,
+        {'product-2': PriceFetchStatus.blocked},
+        reason:
+            "the refreshing product's stale status clears, other products' statuses are preserved",
+      );
       expect(
         reducedState.products,
         state.products,
@@ -209,6 +235,10 @@ void main() {
         products: [first, second],
         refreshingProductIds: {'product-1', 'product-2'},
         error: const Some('old failure'),
+        productRefreshStatuses: {
+          'product-1': PriceFetchStatus.networkError,
+          'product-2': PriceFetchStatus.blocked,
+        },
       );
       final ProductsState reducedState = productsReducer(
         state,
@@ -228,35 +258,85 @@ void main() {
         'product-2',
       }, reason: 'matching refresh completes');
       expect(reducedState.error, isNull, reason: 'old error is cleared');
+      expect(state.productRefreshStatuses, {
+        'product-1': PriceFetchStatus.networkError,
+        'product-2': PriceFetchStatus.blocked,
+      }, reason: 'both products had a stale status');
+      expect(
+        reducedState.productRefreshStatuses,
+        {'product-2': PriceFetchStatus.blocked},
+        reason:
+            "the refreshed product's stale status clears, the other product's status is preserved",
+      );
     });
   });
 
   group('productsReducer processes ProductRefreshFailedAction correctly', () {
-    test(
-      'ProductRefreshFailedAction modifies refresh identifiers and error',
-      () {
-        final ProductsState state = ProductsState.initial().copyWith(
-          refreshingProductIds: {'product-1', 'product-2'},
-        );
-        final ProductsState reducedState = productsReducer(
-          state,
-          const ProductRefreshFailedAction(
-            productId: 'product-1',
-            message: 'failed',
-          ),
-        );
+    test('ProductRefreshFailedAction modifies refresh identifiers and error', () {
+      final ProductsState state = ProductsState.initial().copyWith(
+        refreshingProductIds: {'product-1', 'product-2'},
+        productRefreshStatuses: {'product-2': PriceFetchStatus.blocked},
+      );
+      final ProductsState reducedState = productsReducer(
+        state,
+        const ProductRefreshFailedAction(
+          productId: 'product-1',
+          message: 'failed',
+          status: PriceFetchStatus.networkError,
+        ),
+      );
 
-        expect(state.refreshingProductIds, {
-          'product-1',
-          'product-2',
-        }, reason: 'both refreshes were active');
-        expect(reducedState.refreshingProductIds, {
-          'product-2',
-        }, reason: 'failed refresh completes');
-        expect(reducedState.error, isA<String>());
-        expect(reducedState.error, 'failed', reason: 'failure is stored');
-      },
-    );
+      expect(state.refreshingProductIds, {
+        'product-1',
+        'product-2',
+      }, reason: 'both refreshes were active');
+      expect(reducedState.refreshingProductIds, {
+        'product-2',
+      }, reason: 'failed refresh completes');
+      expect(reducedState.error, isA<String>());
+      expect(reducedState.error, 'failed', reason: 'failure is stored');
+      expect(
+        state.productRefreshStatuses,
+        {'product-2': PriceFetchStatus.blocked},
+        reason: 'only the other product had a stale status',
+      );
+      expect(
+        reducedState.productRefreshStatuses,
+        {
+          'product-1': PriceFetchStatus.networkError,
+          'product-2': PriceFetchStatus.blocked,
+        },
+        reason:
+            "the failed product's status is recorded, the other product's status is untouched",
+      );
+    });
+
+    test('ProductRefreshFailedAction clears the status when status = null', () {
+      final ProductsState state = ProductsState.initial().copyWith(
+        productRefreshStatuses: {
+          'product-1': PriceFetchStatus.blocked,
+          'product-2': PriceFetchStatus.blocked,
+        },
+      );
+      final ProductsState reducedState = productsReducer(
+        state,
+        const ProductRefreshFailedAction(
+          productId: 'product-1',
+          message: 'failed',
+        ),
+      );
+
+      expect(state.productRefreshStatuses, {
+        'product-1': PriceFetchStatus.blocked,
+        'product-2': PriceFetchStatus.blocked,
+      }, reason: 'both products had a stale status');
+      expect(
+        reducedState.productRefreshStatuses,
+        {'product-2': PriceFetchStatus.blocked},
+        reason:
+            'no classified status means nothing to display for product-1, but product-2 is untouched',
+      );
+    });
   });
 
   group('productsReducer processes RefreshAllProductsAction correctly', () {

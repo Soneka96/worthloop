@@ -90,6 +90,7 @@ ProductsState productsLoadedReducer(
   refreshingProductIds: {},
   error: const None(),
   refreshStatus: const None(),
+  productRefreshStatuses: {},
 );
 
 /// Handles [ProductsLoadFailedAction].
@@ -137,11 +138,16 @@ ProductsState productCreationFailedReducer(
 ProductsState refreshProductReducer(
   ProductsState state,
   RefreshProductAction action,
-) => state.copyWith(
-  refreshingProductIds: {...state.refreshingProductIds, action.productId},
-  error: const None(),
-  refreshStatus: const None(),
-);
+) {
+  final Map<String, PriceFetchStatus> productRefreshStatuses = {
+    ...state.productRefreshStatuses,
+  }..remove(action.productId);
+  return state.copyWith(
+    refreshingProductIds: {...state.refreshingProductIds, action.productId},
+    error: const None(),
+    productRefreshStatuses: productRefreshStatuses,
+  );
+}
 
 /// Handles [ProductRefreshedAction].
 /// Updates [ProductsState.products], [ProductsState.refreshingProductIds], [ProductsState.error].
@@ -157,11 +163,14 @@ ProductsState productRefreshedReducer(
       .toList(growable: false);
   final Set<String> refreshingProductIds = {...state.refreshingProductIds}
     ..remove(action.product.id);
+  final Map<String, PriceFetchStatus> productRefreshStatuses = {
+    ...state.productRefreshStatuses,
+  }..remove(action.product.id);
   return state.copyWith(
     products: products,
     refreshingProductIds: refreshingProductIds,
     error: const None(),
-    refreshStatus: const None(),
+    productRefreshStatuses: productRefreshStatuses,
   );
 }
 
@@ -173,12 +182,19 @@ ProductsState productRefreshFailedReducer(
 ) {
   final Set<String> refreshingProductIds = {...state.refreshingProductIds}
     ..remove(action.productId);
+  final Map<String, PriceFetchStatus> productRefreshStatuses = {
+    ...state.productRefreshStatuses,
+  };
+  if (action.status == null) {
+    productRefreshStatuses.remove(action.productId);
+  } else {
+    productRefreshStatuses[action.productId] =
+        action.status ?? PriceFetchStatus.none;
+  }
   return state.copyWith(
     refreshingProductIds: refreshingProductIds,
     error: Some(action.message),
-    refreshStatus: action.status == null
-        ? const None()
-        : Some(action.status ?? PriceFetchStatus.none),
+    productRefreshStatuses: productRefreshStatuses,
   );
 }
 
