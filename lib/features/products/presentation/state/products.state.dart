@@ -25,8 +25,12 @@ class ProductsState extends Equatable {
   /// The most recent operation failure, or `null`.
   final String? error;
 
-  /// Classified reason for the latest refresh failure, or `null`.
+  /// Classified reason for the latest refresh-all failure, or `null`.
   final PriceFetchStatus? refreshStatus;
+
+  /// Classified reason for each product's latest refresh failure, keyed by
+  /// product identifier.
+  final Map<String, PriceFetchStatus> productRefreshStatuses;
 
   /// Whether a product is being created.
   final bool isCreatingProduct;
@@ -44,6 +48,7 @@ class ProductsState extends Equatable {
     required this.refreshingProductIds,
     required this.error,
     this.refreshStatus,
+    required this.productRefreshStatuses,
     required this.isCreatingProduct,
     required this.creationError,
     required this.createdProductId,
@@ -56,6 +61,7 @@ class ProductsState extends Equatable {
     isRefreshingAll: false,
     refreshingProductIds: {},
     error: null,
+    productRefreshStatuses: {},
     isCreatingProduct: false,
     creationError: null,
     createdProductId: null,
@@ -69,6 +75,7 @@ class ProductsState extends Equatable {
     Set<String>? refreshingProductIds,
     Option<String>? error,
     Option<PriceFetchStatus>? refreshStatus,
+    Map<String, PriceFetchStatus>? productRefreshStatuses,
     bool? isCreatingProduct,
     Option<String>? creationError,
     Option<String>? createdProductId,
@@ -81,6 +88,8 @@ class ProductsState extends Equatable {
     refreshStatus: refreshStatus == null
         ? this.refreshStatus
         : refreshStatus.toNullable(),
+    productRefreshStatuses:
+        productRefreshStatuses ?? this.productRefreshStatuses,
     isCreatingProduct: isCreatingProduct ?? this.isCreatingProduct,
     creationError: creationError == null
         ? this.creationError
@@ -98,6 +107,7 @@ class ProductsState extends Equatable {
     refreshingProductIds,
     error,
     refreshStatus,
+    productRefreshStatuses,
     isCreatingProduct,
     creationError,
     createdProductId,
