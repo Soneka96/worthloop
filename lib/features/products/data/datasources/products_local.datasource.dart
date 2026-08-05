@@ -46,6 +46,13 @@ class ProductsLocalDatasource {
           ValidationFailure('Product and source identifiers do not match'),
         );
       }
+      if (product.storePrices.isNotEmpty) {
+        return const Left(
+          ValidationFailure(
+            'Product creation does not accept pre-populated store prices',
+          ),
+        );
+      }
       final ProductModel model = ProductModel(
         id: product.id,
         name: product.name,

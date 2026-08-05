@@ -537,6 +537,44 @@ void main() {
       verify(() => mockLoggerService.e(any())).called(1);
     });
 
+    test('rejects non-empty storePrices', () async {
+      final Product product = Product(
+        id: 'product-1',
+        name: 'Example Product',
+        storePrices: [
+          StorePrice(
+            storeName: 'Example Store',
+            productUrl: 'https://example.com/products/1',
+            currentPrice: const Money(minorUnits: 999, currencyCode: 'USD'),
+            isAvailable: true,
+            lastCheckedAt: DateTime(2026),
+          ),
+        ],
+        lastUpdatedAt: DateTime(2026),
+      );
+      final ProductSource source = ProductSource.fromUrl(
+        id: 'source-1',
+        productId: 'product-1',
+        url: 'https://example.com/products/1',
+        createdAt: DateTime(2026),
+      );
+
+      final Either<Failure, ProductModel> result = await datasource
+          .createProduct(product, source);
+
+      expect(
+        result,
+        const Left(
+          ValidationFailure(
+            'Product creation does not accept pre-populated store prices',
+          ),
+        ),
+      );
+      expect(await db.select(db.productTable).get(), isEmpty);
+      expect(await db.select(db.productSourceTable).get(), isEmpty);
+      verifyZeroInteractions(mockLoggerService);
+    });
+
     test(
       'returns ValidationFailure for a directly constructed invalid source',
       () async {
