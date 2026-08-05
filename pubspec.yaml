@@ -37,6 +37,7 @@ dependencies:
 
   # App version (About section)
   package_info_plus: ^8.3.0
+  device_info_plus: ^11.5.0
 
   # Scroll fade edges
   fading_edge_scrollview: ^4.1.1
