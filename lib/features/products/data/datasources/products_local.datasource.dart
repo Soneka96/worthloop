@@ -13,6 +13,7 @@ import 'package:worth_loop/features/products/domain/entities/product_source.enti
 import 'package:worth_loop/features/products/domain/entities/store_price.entity.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
+import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
 import 'package:worth_loop/shared/utils/currency_helper_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 
@@ -21,12 +22,14 @@ class ProductsLocalDatasource {
   final AppDatabase _db;
   final CurrencyHelperService _currencyHelperService;
   final LoggerService _loggerService;
+  final AppPreferencesStore _appPreferencesStore;
 
   /// Creates local product persistence backed by [AppDatabase].
   ProductsLocalDatasource(
     this._db,
     this._currencyHelperService,
     this._loggerService,
+    this._appPreferencesStore,
   );
 
   /// Creates a product, and its source when one is given, in one transaction.
@@ -81,15 +84,21 @@ class ProductsLocalDatasource {
     }
   }
 
-  /// Loads every product, inserting illustrative data on the first run.
+  /// Loads every product, inserting illustrative data on the very first
+  /// launch only — a table emptied by later deletions is never reseeded.
   Future<Either<Failure, List<ProductModel>>> loadProducts() async {
     try {
+      final bool hasSeeded = await _appPreferencesStore
+          .readHasSeededIllustrativeProducts();
       final List<ProductModel> products = await _db.transaction(() async {
-        if (await _db.productTable.count().getSingle() == 0) {
+        if (!hasSeeded && await _db.productTable.count().getSingle() == 0) {
           await _replaceProducts(buildFakeProducts(DateTime.now()));
         }
         return _readProducts();
       });
+      if (!hasSeeded) {
+        await _appPreferencesStore.writeHasSeededIllustrativeProducts();
+      }
       return Right(products);
     } on SqliteException catch (error) {
       _loggerService.e(error.toString());

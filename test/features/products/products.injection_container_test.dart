@@ -17,6 +17,7 @@ import 'package:worth_loop/features/products/presentation/state/viewmodels/produ
 import 'package:worth_loop/features/products/products.injection_container.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
+import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/utils/currency_helper_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
@@ -27,12 +28,15 @@ class MockDio extends Mock implements Dio {}
 
 class MockLoggerService extends Mock implements LoggerService {}
 
+class MockAppPreferencesStore extends Mock implements AppPreferencesStore {}
+
 void main() {
   setUp(() {
     sl.registerSingleton<AppDatabase>(MockAppDatabase());
     sl.registerSingleton<Dio>(MockDio());
     sl.registerSingleton<CurrencyHelperService>(const CurrencyHelperService());
     sl.registerSingleton<LoggerService>(MockLoggerService());
+    sl.registerSingleton<AppPreferencesStore>(MockAppPreferencesStore());
     initProductsDependencies();
   });
 

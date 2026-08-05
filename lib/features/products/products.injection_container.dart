@@ -17,6 +17,7 @@ import 'package:worth_loop/features/products/domain/usecases/refresh_product.use
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
+import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/utils/currency_helper_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
@@ -28,6 +29,7 @@ void initProductsDependencies() {
       sl<AppDatabase>(),
       sl<CurrencyHelperService>(),
       sl<LoggerService>(),
+      sl<AppPreferencesStore>(),
     ),
   );
   sl.registerLazySingleton<PriceResponseDetector>(PriceResponseDetector.new);

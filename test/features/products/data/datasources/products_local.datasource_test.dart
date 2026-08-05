@@ -16,6 +16,7 @@ import 'package:worth_loop/features/products/domain/entities/store_price.entity.
 import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
+import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
 import 'package:worth_loop/shared/utils/currency_helper_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 
@@ -23,16 +24,26 @@ class MockLoggerService extends Mock implements LoggerService {}
 
 class MockCurrencyHelperService extends Mock implements CurrencyHelperService {}
 
+class MockAppPreferencesStore extends Mock implements AppPreferencesStore {}
+
 void main() {
   late AppDatabase db;
   late MockLoggerService mockLoggerService;
   late MockCurrencyHelperService mockCurrencyHelperService;
+  late MockAppPreferencesStore mockAppPreferencesStore;
   late ProductsLocalDatasource datasource;
 
   setUp(() {
     db = AppDatabase.forTesting(NativeDatabase.memory());
     mockLoggerService = MockLoggerService();
     mockCurrencyHelperService = MockCurrencyHelperService();
+    mockAppPreferencesStore = MockAppPreferencesStore();
+    when(
+      () => mockAppPreferencesStore.readHasSeededIllustrativeProducts(),
+    ).thenAnswer((_) async => false);
+    when(
+      () => mockAppPreferencesStore.writeHasSeededIllustrativeProducts(),
+    ).thenAnswer((_) async {});
     when(() => mockCurrencyHelperService.validate(any())).thenAnswer((
       invocation,
     ) {
@@ -49,6 +60,7 @@ void main() {
       db,
       mockCurrencyHelperService,
       mockLoggerService,
+      mockAppPreferencesStore,
     );
   });
 
@@ -56,6 +68,7 @@ void main() {
     await db.close();
     reset(mockLoggerService);
     reset(mockCurrencyHelperService);
+    reset(mockAppPreferencesStore);
   });
 
   group('Method loadProducts() returns the correct value', () {
@@ -72,7 +85,29 @@ void main() {
         expect(products.length, 2);
         expect(rows.length, isA<int>());
         expect(rows.length, 2);
+        verify(
+          () => mockAppPreferencesStore.writeHasSeededIllustrativeProducts(),
+        ).called(1);
         verifyZeroInteractions(mockLoggerService);
+      },
+    );
+
+    test(
+      'does not reseed illustrative products when the table is empty and hasSeeded == true',
+      () async {
+        when(
+          () => mockAppPreferencesStore.readHasSeededIllustrativeProducts(),
+        ).thenAnswer((_) async => true);
+
+        final Either<Failure, List<ProductModel>> result = await datasource
+            .loadProducts();
+        final List<ProductModel> products =
+            result.getRight().toNullable() ?? [];
+
+        expect(products, isEmpty);
+        verifyNever(
+          () => mockAppPreferencesStore.writeHasSeededIllustrativeProducts(),
+        );
       },
     );
 
@@ -111,6 +146,9 @@ void main() {
       }
       expect(rows.length, 2);
       expect(priceRows.length, 7);
+      verify(
+        () => mockAppPreferencesStore.writeHasSeededIllustrativeProducts(),
+      ).called(2);
       verifyZeroInteractions(mockLoggerService);
     });
 
@@ -136,6 +174,37 @@ void main() {
         expect(products.length, 1);
         expect(products.single.id, isA<String>());
         expect(products.single.id, 'custom-product');
+        verify(
+          () => mockAppPreferencesStore.writeHasSeededIllustrativeProducts(),
+        ).called(1);
+      },
+    );
+
+    test(
+      'does not write hasSeeded when the table is non-empty and hasSeeded == true',
+      () async {
+        when(
+          () => mockAppPreferencesStore.readHasSeededIllustrativeProducts(),
+        ).thenAnswer((_) async => true);
+        await db
+            .into(db.productTable)
+            .insert(
+              ProductTableCompanion.insert(
+                id: 'custom-product',
+                name: 'Custom Product',
+                lastUpdatedAt: DateTime(2026, 1, 1, 12),
+              ),
+            );
+
+        final Either<Failure, List<ProductModel>> result = await datasource
+            .loadProducts();
+        final List<ProductModel> products =
+            result.getRight().toNullable() ?? [];
+
+        expect(products.length, 1);
+        verifyNever(
+          () => mockAppPreferencesStore.writeHasSeededIllustrativeProducts(),
+        );
       },
     );
 

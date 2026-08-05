@@ -28,6 +28,8 @@ class AppPreferencesStore {
   static const String _spacingDensityKey = 'spacingDensity';
   static const String _fontIdKey = 'fontId';
   static const String _localeKey = 'locale';
+  static const String _hasSeededIllustrativeProductsKey =
+      'hasSeededIllustrativeProducts';
 
   /// Reads the persisted zoom level, or `null` if none has been saved yet.
   Future<double?> readZoomLevel() async {
@@ -166,6 +168,20 @@ class AppPreferencesStore {
   Future<void> writeLocale(AppLocale locale) async {
     final Map<String, dynamic> data = await _readAll();
     data[_localeKey] = locale.name;
+    await _writeAll(data);
+  }
+
+  /// Reads whether illustrative products have ever been seeded, defaulting
+  /// to `false` when unset.
+  Future<bool> readHasSeededIllustrativeProducts() async {
+    final Map<String, dynamic> data = await _readAll();
+    return data[_hasSeededIllustrativeProductsKey] == true;
+  }
+
+  /// Marks illustrative products as seeded, leaving other keys untouched.
+  Future<void> writeHasSeededIllustrativeProducts() async {
+    final Map<String, dynamic> data = await _readAll();
+    data[_hasSeededIllustrativeProductsKey] = true;
     await _writeAll(data);
   }
 
