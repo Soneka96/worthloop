@@ -6,12 +6,14 @@ import 'package:flutter_redux/flutter_redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/home/presentation/state/viewmodels/home_screen.viewmodel.dart';
+import 'package:worth_loop/features/home/presentation/widgets/add_product.section.dart';
 import 'package:worth_loop/features/home/presentation/widgets/home_header.widget.dart';
 import 'package:worth_loop/features/home/presentation/widgets/home_products_header.widget.dart';
+import 'package:worth_loop/features/home/presentation/widgets/tracked_product.widget.dart';
 import 'package:worth_loop/features/home/presentation/widgets/tracked_products_empty.widget.dart';
-import 'package:worth_loop/features/home/presentation/widgets/tracked_products_list.widget.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/widgets/illustrative_price_notice.widget.dart';
+import 'package:worth_loop/features/products/presentation/widgets/product_refresh_status_notice.widget.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/theme/app_spacing_theme_extension.dart';
@@ -28,33 +30,61 @@ class HomeScreen extends StatelessWidget {
       converter: (store) => sl<HomeScreenViewModel>(param1: store),
       builder: (context, viewmodel) {
         return SafeArea(
-          child: Padding(
-            padding: EdgeInsets.all(context.spacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                HomeHeader(onOpenSettings: viewmodel.onOpenSettings),
-                const IllustrativePriceNotice(),
-                SizedBox(height: context.spacing.lg),
-                HomeProductsHeader(
-                  productCount: viewmodel.products.length,
-                  isRefreshingAll: viewmodel.isRefreshingAll,
-                  isLoading: viewmodel.isLoading,
-                  onRefreshAll: viewmodel.onRefreshAll,
+          child: CustomScrollView(
+            slivers: [
+              SliverPadding(
+                padding: EdgeInsets.all(context.spacing.md),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    HomeHeader(onOpenSettings: viewmodel.onOpenSettings),
+                    const IllustrativePriceNotice(),
+                    ProductRefreshStatusNotice(status: viewmodel.refreshStatus),
+                    SizedBox(height: context.spacing.md),
+                    AddProductSection(
+                      isSubmitting: viewmodel.isCreatingProduct,
+                      errorMessage: viewmodel.productCreationError,
+                      createdProductId: viewmodel.createdProductId,
+                      onSubmit: viewmodel.onCreateProduct,
+                    ),
+                    SizedBox(height: context.spacing.lg),
+                    HomeProductsHeader(
+                      productCount: viewmodel.products.length,
+                      isRefreshingAll: viewmodel.isRefreshingAll,
+                      isLoading: viewmodel.isLoading,
+                      onRefreshAll: viewmodel.onRefreshAll,
+                    ),
+                  ]),
                 ),
-                SizedBox(height: context.spacing.md),
-                Expanded(
-                  child: viewmodel.isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : viewmodel.products.isEmpty
-                      ? const TrackedProductsEmptyWidget()
-                      : TrackedProductsListWidget(
-                          products: viewmodel.products,
-                          onProductTap: viewmodel.onOpenProduct,
+              ),
+              if (viewmodel.isLoading)
+                const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (viewmodel.products.isEmpty)
+                const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: TrackedProductsEmptyWidget(),
+                )
+              else
+                SliverPadding(
+                  padding: EdgeInsets.symmetric(horizontal: context.spacing.md),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => Padding(
+                        padding: EdgeInsets.only(bottom: context.spacing.sm),
+                        child: TrackedProductWidget(
+                          product: viewmodel.products[index],
+                          onTap: () => viewmodel.onOpenProduct(
+                            viewmodel.products[index].id,
+                          ),
                         ),
+                      ),
+                      childCount: viewmodel.products.length,
+                    ),
+                  ),
                 ),
-              ],
-            ),
+            ],
           ),
         );
       },

@@ -2,10 +2,9 @@
 
 A production-grade Flutter **Android** application — Redux state management, layered clean
 architecture, drift local persistence, dio-backed remote datasources, a 20-theme system, and full
-test coverage. Includes one worked example feature,
-GitHub Explorer (`lib/features/github_explorer/`), demonstrating the full
-remote+local-datasource → repository → usecase → Redux → screen chain — copy its shape when
-adding your own feature.
+test coverage. Product sources demonstrate the full
+remote+local-datasource → repository → usecase → Redux → screen chain. Follow the existing
+products feature when adding related behavior.
 
 ## Never do
 

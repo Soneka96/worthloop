@@ -13,6 +13,16 @@ home:
   updatedAt: Updated $time
   emptyTitle: No tracked products
   emptyDescription: Products you track will appear here with their best available offer.
+  addProductTitle: Add a product
+  addProductDescription: Paste a product link to start tracking it.
+  productNameLabel: Product name
+  productUrlLabel: Product website link
+  productUrlHint: https://example.com/product
+  productNameRequired: Enter a product name.
+  productUrlInvalid: Enter a valid HTTPS website link.
+  addProductButton: Add product
+  addProductSaving: Saving
+  productSourceSupportDescription: Links can be saved now. Automatic price updates are available only for supported websites.
 
 productDetails:
   title: Product details
@@ -30,6 +40,10 @@ productDetails:
   checkedAt: Checked at $time
   productNotFound: Product not found
   productNotFoundDescription: Return to your tracked products and choose an item again.
+  refreshBlocked: This website blocked the refresh attempt. Try again later.
+  refreshUnsupported: This website does not provide a readable price yet.
+  refreshNetworkError: The website could not be reached. Your last price is still shown.
+  refreshInvalidData: The website returned an unreadable price. Your last price is still shown.
 
 settings:
   title: Settings

@@ -26,7 +26,8 @@ Users primarily scan a compact Android home screen, open an item to compare merc
 
 - Clean Architecture with small domain, data, and presentation classes.
 - Local fake data in the first release, persisted on device.
-- Repository and data-source boundaries must allow future remote price collection without implementing scraping now.
+- Repository and datasource boundaries support generic remote price collection without promising that every website is readable.
+- A product may have multiple merchant source URLs, and each source can produce refreshed offers.
 - Track item identity, optional image, merchant offers, availability, prices, URLs, and checked timestamps.
 - Compare available offers and sort them from lowest to highest.
 - Manual refresh for one item and for all items.
@@ -46,7 +47,7 @@ Users primarily scan a compact Android home screen, open an item to compare merc
 
 ## Evidence on Hand
 
-No production price feed, customer claims, benchmarks, product photography, or brand assets exist yet. Initial products and prices are illustrative local data and must not be presented as live market information.
+No confirmed production merchant integration, customer claims, benchmarks, product photography, or brand assets exist yet. Initial products and prices are illustrative local data and must not be presented as live market information. Generic JSON-LD extraction is an integration foundation, not proof that a website permits or supports automated access.
 
 ## Product Principles
 

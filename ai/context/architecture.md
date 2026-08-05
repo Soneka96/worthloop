@@ -142,6 +142,11 @@ level, where instances are already being resolved for other reasons.
   `(store) => sl<XxxViewModel>(param1: store)` — never `XxxViewModel.fromStore` directly. This is
   what makes the viewmodel mockable in screen tests (see `ai/context/testing.md`'s Screens section)
   without needing real selectors/state.
+- **ViewModels are thin connectors, not logic owners.** `fromStore()` reads already-computed values
+  via selectors and builds callbacks around `store.dispatch` — it doesn't re-derive, filter, or
+  branch on state itself. A callback that conditionally dispatches is the one exception, since that
+  decision only exists inside the closure the viewmodel builds; any other branching belongs in a
+  selector, reducer, or middleware instead.
 - **Reducers**: `combineReducers` + `TypedReducer` per action, never an `if (action is X)` chain.
   Unhandled actions pass through unchanged automatically. Doc-comment format for `TypedReducer`
   handlers: see `dart-style.md`'s "TypedReducer handlers" section.

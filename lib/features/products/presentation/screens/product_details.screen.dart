@@ -13,6 +13,7 @@ import 'package:worth_loop/features/products/presentation/widgets/product_best_p
 import 'package:worth_loop/features/products/presentation/widgets/product_offers_header.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_offers.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_not_found.widget.dart';
+import 'package:worth_loop/features/products/presentation/widgets/product_refresh_status_notice.widget.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
@@ -58,6 +59,10 @@ class ProductDetailsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       ProductBestPriceCard(bestPrice: bestPrice),
+                      SizedBox(height: context.spacing.sm),
+                      ProductRefreshStatusNotice(
+                        status: viewmodel.refreshStatus,
+                      ),
                       SizedBox(height: context.spacing.sm),
                       const IllustrativePriceNotice(),
                       SizedBox(height: context.spacing.md),

@@ -8,6 +8,7 @@ import 'package:worth_loop/features/products/presentation/screens/product_detail
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/products.selectors.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 
 /// ViewModel representing the data required by [ProductDetailsScreen].
 class ProductDetailsViewModel extends Equatable {
@@ -16,6 +17,9 @@ class ProductDetailsViewModel extends Equatable {
 
   /// Whether this product is being refreshed.
   final bool isRefreshing;
+
+  /// Classified reason for the latest refresh failure, or `null`.
+  final PriceFetchStatus? refreshStatus;
 
   /// Dispatches [RefreshProductAction].
   final void Function() onRefresh;
@@ -26,6 +30,7 @@ class ProductDetailsViewModel extends Equatable {
   const ProductDetailsViewModel({
     required this.product,
     required this.isRefreshing,
+    this.refreshStatus,
     required this.onRefresh,
     required this.onGoBack,
   });
@@ -40,10 +45,14 @@ class ProductDetailsViewModel extends Equatable {
       store.state,
       productId,
     ),
+    refreshStatus: ProductsSelectors.refreshStatusForProductSelector(
+      store.state,
+      productId,
+    ),
     onRefresh: () => store.dispatch(RefreshProductAction(productId)),
     onGoBack: () => store.dispatch(const GoBackFromProductDetailsAction()),
   );
 
   @override
-  List<Object?> get props => [product, isRefreshing];
+  List<Object?> get props => [product, isRefreshing, refreshStatus];
 }

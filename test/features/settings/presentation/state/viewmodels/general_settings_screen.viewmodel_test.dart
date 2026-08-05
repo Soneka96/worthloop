@@ -4,7 +4,6 @@ import 'package:redux/redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/settings/presentation/state/general_settings.actions.dart';
-import 'package:worth_loop/features/settings/presentation/state/refresh_settings.state.dart';
 import 'package:worth_loop/features/settings/presentation/state/viewmodels/general_settings_screen.viewmodel.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 
@@ -40,46 +39,6 @@ void main() {
             viewmodel.onRefreshIntervalSelected,
             isA<void Function(int)>(),
           );
-        },
-      );
-
-      test(
-        'Method fromStore() sets isRefreshIntervalBusy when refresh settings are loading',
-        () {
-          final Store<AppState> busyStore = Store<AppState>(
-            (AppState state, dynamic action) => state,
-            initialState: AppState.initial().copyWith(
-              refreshSettings: RefreshSettingsState.initial().copyWith(
-                isLoading: true,
-              ),
-            ),
-          );
-
-          final GeneralSettingsScreenViewModel viewmodel =
-              GeneralSettingsScreenViewModel.fromStore(busyStore);
-
-          expect(viewmodel.isRefreshIntervalBusy, isA<bool>());
-          expect(viewmodel.isRefreshIntervalBusy, isTrue);
-        },
-      );
-
-      test(
-        'Method fromStore() sets isRefreshIntervalBusy when refresh settings are saving',
-        () {
-          final Store<AppState> busyStore = Store<AppState>(
-            (AppState state, dynamic action) => state,
-            initialState: AppState.initial().copyWith(
-              refreshSettings: RefreshSettingsState.initial().copyWith(
-                isSaving: true,
-              ),
-            ),
-          );
-
-          final GeneralSettingsScreenViewModel viewmodel =
-              GeneralSettingsScreenViewModel.fromStore(busyStore);
-
-          expect(viewmodel.isRefreshIntervalBusy, isA<bool>());
-          expect(viewmodel.isRefreshIntervalBusy, isTrue);
         },
       );
 

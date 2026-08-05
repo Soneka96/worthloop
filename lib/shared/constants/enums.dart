@@ -327,6 +327,27 @@ enum WidgetLocation {
   bottomRight,
 }
 
+/// Describes the result of attempting to read a product price.
+enum PriceFetchStatus {
+  /// No price request has completed.
+  none,
+
+  /// A usable price was extracted.
+  success,
+
+  /// The page does not expose supported product price data.
+  unsupported,
+
+  /// The website rejected or challenged the request.
+  blocked,
+
+  /// The request failed before usable response data was received.
+  networkError,
+
+  /// The response contained price data that could not be used.
+  invalidData,
+}
+
 /// Display helpers for [WidgetLocation] — kept off the enum itself so the
 /// enum stays a plain set of values.
 extension WidgetLocationX on WidgetLocation {

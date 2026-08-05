@@ -5,6 +5,7 @@ import 'package:fpdart/fpdart.dart';
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/presentation/state/products.state.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import '../../fixtures/product.fixture.dart';
 
 void main() {
@@ -19,6 +20,10 @@ void main() {
       expect(state.isRefreshingAll, isFalse);
       expect(state.refreshingProductIds, isEmpty);
       expect(state.error, isNull);
+      expect(state.productRefreshStatuses, isEmpty);
+      expect(state.isCreatingProduct, isFalse);
+      expect(state.creationError, isNull);
+      expect(state.createdProductId, isNull);
     });
   });
 
@@ -32,6 +37,10 @@ void main() {
         isRefreshingAll: true,
         refreshingProductIds: {'product-1'},
         error: const Some('failed'),
+        productRefreshStatuses: {'product-1': PriceFetchStatus.networkError},
+        isCreatingProduct: true,
+        creationError: const Some('creation failed'),
+        createdProductId: const Some('product-1'),
       );
 
       expect(state.products, [product]);
@@ -42,6 +51,12 @@ void main() {
       expect(state.refreshingProductIds, {'product-1'});
       expect(state.error, isA<String>());
       expect(state.error, 'failed');
+      expect(state.productRefreshStatuses, {
+        'product-1': PriceFetchStatus.networkError,
+      });
+      expect(state.isCreatingProduct, isTrue);
+      expect(state.creationError, 'creation failed');
+      expect(state.createdProductId, 'product-1');
     });
 
     test('ProductsState copyWith clears error when passed None', () {
@@ -61,6 +76,7 @@ void main() {
         isRefreshingAll: true,
         refreshingProductIds: {'product-1'},
         error: const Some('failed'),
+        productRefreshStatuses: {'product-1': PriceFetchStatus.networkError},
       );
 
       expect(state.copyWith(), state);

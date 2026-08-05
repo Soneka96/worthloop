@@ -6,6 +6,10 @@ import 'package:sqlite3/sqlite3.dart';
 // Project imports:
 import 'package:worth_loop/features/products/data/datasources/fake_products.dart';
 import 'package:worth_loop/features/products/data/models/product.model.dart';
+import 'package:worth_loop/features/products/data/models/product_source.model.dart';
+import 'package:worth_loop/features/products/data/models/store_price.model.dart';
+import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/store_price.entity.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
@@ -24,6 +28,55 @@ class ProductsLocalDatasource {
     this._currencyHelperService,
     this._loggerService,
   );
+
+  /// Creates a product and source in one transaction.
+  Future<Either<Failure, ProductModel>> createProduct(
+    Product product,
+    ProductSource source,
+  ) async {
+    try {
+      final ProductSource validatedSource = ProductSource.fromUrl(
+        id: source.id,
+        productId: source.productId,
+        url: source.url,
+        createdAt: source.createdAt,
+      );
+      if (product.id != validatedSource.productId) {
+        return const Left(
+          ValidationFailure('Product and source identifiers do not match'),
+        );
+      }
+      if (product.storePrices.isNotEmpty) {
+        return const Left(
+          ValidationFailure(
+            'Product creation does not accept pre-populated store prices',
+          ),
+        );
+      }
+      final ProductModel model = ProductModel(
+        id: product.id,
+        name: product.name,
+        imageUrl: product.imageUrl,
+        storePrices: product.storePrices,
+        lastUpdatedAt: product.lastUpdatedAt,
+      );
+      final ProductSourceModel sourceModel = ProductSourceModel.fromEntity(
+        validatedSource,
+      );
+      await _db.transaction(() async {
+        await _db.into(_db.productTable).insert(model.toCompanion());
+        await _db
+            .into(_db.productSourceTable)
+            .insert(sourceModel.toCompanion());
+      });
+      return Right(model);
+    } on ArgumentError catch (error) {
+      return Left(ValidationFailure(error.message.toString()));
+    } on SqliteException catch (error) {
+      _loggerService.e(error.toString());
+      return Left(DatabaseFailure(error.toString()));
+    }
+  }
 
   /// Loads every product, inserting illustrative data on the first run.
   Future<Either<Failure, List<ProductModel>>> loadProducts() async {
@@ -76,6 +129,103 @@ class ProductsLocalDatasource {
             .write(StorePriceTableCompanion(lastCheckedAt: Value(checkedAt)));
       });
       return Right(await _readProducts());
+    } on SqliteException catch (error) {
+      _loggerService.e(error.toString());
+      return Left(DatabaseFailure(error.toString()));
+    } on StateError catch (error) {
+      _loggerService.e(error.toString());
+      return Left(CurrencyFailure(error.toString()));
+    }
+  }
+
+  /// Saves a product website link and returns its persisted representation.
+  Future<Either<Failure, ProductSourceModel>> saveProductSource(
+    ProductSource source,
+  ) async {
+    try {
+      final ProductSource validatedSource = ProductSource.fromUrl(
+        id: source.id,
+        productId: source.productId,
+        url: source.url,
+        createdAt: source.createdAt,
+      );
+      final ProductSourceModel model = ProductSourceModel.fromEntity(
+        validatedSource,
+      );
+      await _db.into(_db.productSourceTable).insert(model.toCompanion());
+      return Right(model);
+    } on ArgumentError catch (error) {
+      return Left(ValidationFailure(error.message.toString()));
+    } on SqliteException catch (error) {
+      _loggerService.e(error.toString());
+      return Left(DatabaseFailure(error.toString()));
+    }
+  }
+
+  /// Loads every saved product website link.
+  Future<Either<Failure, List<ProductSourceModel>>> loadProductSources() async {
+    try {
+      final List<ProductSourceRow> rows = await _db
+          .select(_db.productSourceTable)
+          .get();
+      return Right(
+        rows.map(ProductSourceModel.fromRow).toList(growable: false),
+      );
+    } on SqliteException catch (error) {
+      _loggerService.e(error.toString());
+      return Left(DatabaseFailure(error.toString()));
+    }
+  }
+
+  /// Loads every saved website link for [productId].
+  Future<Either<Failure, List<ProductSourceModel>>>
+  loadProductSourcesForProduct(String productId) async {
+    try {
+      final List<ProductSourceRow> rows = await (_db.select(
+        _db.productSourceTable,
+      )..where((table) => table.productId.equals(productId))).get();
+      return Right(
+        rows.map(ProductSourceModel.fromRow).toList(growable: false),
+      );
+    } on SqliteException catch (error) {
+      _loggerService.e(error.toString());
+      return Left(DatabaseFailure(error.toString()));
+    }
+  }
+
+  /// Replaces the saved offers for [productId] and returns the updated product.
+  Future<Either<Failure, ProductModel>> replaceProductPrices(
+    String productId,
+    List<StorePriceModel> prices,
+  ) async {
+    try {
+      _currencyHelperService.validate(
+        prices.map((StorePriceModel price) => price.currentPrice),
+      );
+      final ProductModel? product = await _db.transaction(() async {
+        final ProductRow? row = await (_db.select(
+          _db.productTable,
+        )..where((table) => table.id.equals(productId))).getSingleOrNull();
+        if (row == null) {
+          return null;
+        }
+        await (_db.delete(
+          _db.storePriceTable,
+        )..where((table) => table.productId.equals(productId))).go();
+        for (final StorePriceModel price in prices) {
+          await _db
+              .into(_db.storePriceTable)
+              .insert(price.toCompanion(productId));
+        }
+        await (_db.update(_db.productTable)
+              ..where((table) => table.id.equals(productId)))
+            .write(ProductTableCompanion(lastUpdatedAt: Value(DateTime.now())));
+        final List<ProductModel> products = await _readProducts();
+        return products.firstWhere((ProductModel item) => item.id == productId);
+      });
+      return product == null
+          ? const Left(NotFoundFailure('Product not found'))
+          : Right(product);
     } on SqliteException catch (error) {
       _loggerService.e(error.toString());
       return Left(DatabaseFailure(error.toString()));

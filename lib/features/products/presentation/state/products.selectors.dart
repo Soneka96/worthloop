@@ -1,5 +1,6 @@
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 
 /// Static product selectors over [AppState].
@@ -31,4 +32,26 @@ abstract final class ProductsSelectors {
 
   /// Returns the latest product-operation failure, or `null`.
   static String? errorSelector(AppState state) => state.products.error;
+
+  /// Returns the classified refresh-all failure, or `null`.
+  static PriceFetchStatus? refreshStatusSelector(AppState state) =>
+      state.products.refreshStatus;
+
+  /// Returns the classified refresh failure for [productId], or `null`.
+  static PriceFetchStatus? refreshStatusForProductSelector(
+    AppState state,
+    String productId,
+  ) => state.products.productRefreshStatuses[productId];
+
+  /// Returns whether a product is being created.
+  static bool isCreatingProductSelector(AppState state) =>
+      state.products.isCreatingProduct;
+
+  /// Returns the latest product-creation failure, or `null`.
+  static String? productCreationErrorSelector(AppState state) =>
+      state.products.creationError;
+
+  /// Returns the identifier of the latest created product, or `null`.
+  static String? createdProductIdSelector(AppState state) =>
+      state.products.createdProductId;
 }

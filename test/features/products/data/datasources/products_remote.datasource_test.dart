@@ -5,10 +5,9 @@ import 'package:mocktail/mocktail.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/data/datasources/products_remote.datasource.dart';
-import 'package:worth_loop/features/products/data/models/product.model.dart';
 import 'package:worth_loop/features/products/data/models/store_price.model.dart';
+import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
-import '../../fixtures/product_model.fixture.dart';
 import '../../fixtures/store_price_model.fixture.dart';
 
 class MockProductsRemoteDatasource extends Mock
@@ -17,9 +16,11 @@ class MockProductsRemoteDatasource extends Mock
 void main() {
   group('Method fetchPrices() returns the correct value', () {
     test('fetchPrices() returns the remote offers', () async {
-      final StorePriceModel existingOffer = buildStorePriceModel();
-      final ProductModel product = buildProductModel(
-        storePrices: [existingOffer],
+      final ProductSource source = ProductSource.fromUrl(
+        id: 'source-1',
+        productId: 'product-1',
+        url: 'https://example.com/product-1',
+        createdAt: DateTime(2026),
       );
       final List<StorePriceModel> remoteOffers = [
         buildStorePriceModel(isAvailable: false),
@@ -27,31 +28,36 @@ void main() {
       final ProductsRemoteDatasource datasource =
           MockProductsRemoteDatasource();
       when(
-        () => datasource.fetchPrices(product),
+        () => datasource.fetchPrices(source),
       ).thenAnswer((_) async => Right(remoteOffers));
 
       final Either<Failure, List<StorePriceModel>> result = await datasource
-          .fetchPrices(product);
+          .fetchPrices(source);
 
       expect(result, Right(remoteOffers));
-      verify(() => datasource.fetchPrices(product)).called(1);
+      verify(() => datasource.fetchPrices(source)).called(1);
       verifyNoMoreInteractions(datasource);
     });
 
     test('fetchPrices() returns the remote failure', () async {
       const NetworkFailure failure = NetworkFailure('failed');
-      final ProductModel product = buildProductModel();
+      final ProductSource source = ProductSource.fromUrl(
+        id: 'source-1',
+        productId: 'product-1',
+        url: 'https://example.com/product-1',
+        createdAt: DateTime(2026),
+      );
       final ProductsRemoteDatasource datasource =
           MockProductsRemoteDatasource();
       when(
-        () => datasource.fetchPrices(product),
+        () => datasource.fetchPrices(source),
       ).thenAnswer((_) async => const Left(failure));
 
       final Either<Failure, List<StorePriceModel>> result = await datasource
-          .fetchPrices(product);
+          .fetchPrices(source);
 
       expect(result, const Left(failure));
-      verify(() => datasource.fetchPrices(product)).called(1);
+      verify(() => datasource.fetchPrices(source)).called(1);
       verifyNoMoreInteractions(datasource);
     });
   });

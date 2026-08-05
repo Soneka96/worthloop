@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/data/models/drift_schemas/product.table.dart';
+import 'package:worth_loop/features/products/data/models/drift_schemas/product_source.table.dart';
 import 'package:worth_loop/features/products/data/models/drift_schemas/store_price.table.dart';
 import 'package:worth_loop/features/settings/data/models/drift_schemas/refresh_settings.table.dart';
 
@@ -20,6 +21,7 @@ part 'app_database.g.dart';
 @DriftDatabase(
   tables: [
     ProductTable,
+    ProductSourceTable,
     StorePriceTable,
     RefreshSettingsTable,
   ],
@@ -35,7 +37,7 @@ class AppDatabase extends _$AppDatabase {
   static const String fileName = 'app.sqlite';
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -44,6 +46,9 @@ class AppDatabase extends _$AppDatabase {
         await migrator.createTable(productTable);
         await migrator.createTable(storePriceTable);
         await migrator.createTable(refreshSettingsTable);
+      }
+      if (from < 3) {
+        await migrator.createTable(productSourceTable);
       }
     },
     beforeOpen: (OpeningDetails details) async {

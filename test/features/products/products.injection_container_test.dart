@@ -1,4 +1,5 @@
 // Package imports:
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:redux/redux.dart';
@@ -7,6 +8,7 @@ import 'package:redux/redux.dart';
 import 'package:worth_loop/features/products/data/datasources/products_local.datasource.dart';
 import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
 import 'package:worth_loop/features/products/domain/usecases/compare_prices.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/create_product.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/load_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_all_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_product.usecase.dart';
@@ -20,11 +22,14 @@ import 'package:worth_loop/shared/utils/logger_service.dart';
 
 class MockAppDatabase extends Mock implements AppDatabase {}
 
+class MockDio extends Mock implements Dio {}
+
 class MockLoggerService extends Mock implements LoggerService {}
 
 void main() {
   setUp(() {
     sl.registerSingleton<AppDatabase>(MockAppDatabase());
+    sl.registerSingleton<Dio>(MockDio());
     sl.registerSingleton<CurrencyHelperService>(const CurrencyHelperService());
     sl.registerSingleton<LoggerService>(MockLoggerService());
     initProductsDependencies();
@@ -48,6 +53,8 @@ void main() {
     test('usecases are registered', () {
       expect(sl.isRegistered<LoadProductsUseCase>(), isA<bool>());
       expect(sl.isRegistered<LoadProductsUseCase>(), isTrue);
+      expect(sl.isRegistered<CreateProductUseCase>(), isA<bool>());
+      expect(sl.isRegistered<CreateProductUseCase>(), isTrue);
       expect(sl.isRegistered<RefreshProductUseCase>(), isA<bool>());
       expect(sl.isRegistered<RefreshProductUseCase>(), isTrue);
       expect(sl.isRegistered<RefreshAllProductsUseCase>(), isA<bool>());
@@ -55,6 +62,7 @@ void main() {
       expect(sl.isRegistered<ComparePricesUseCase>(), isA<bool>());
       expect(sl.isRegistered<ComparePricesUseCase>(), isTrue);
       expect(sl<LoadProductsUseCase>(), isA<LoadProductsUseCase>());
+      expect(sl<CreateProductUseCase>(), isA<CreateProductUseCase>());
       expect(sl<RefreshProductUseCase>(), isA<RefreshProductUseCase>());
       expect(sl<RefreshAllProductsUseCase>(), isA<RefreshAllProductsUseCase>());
       expect(sl<ComparePricesUseCase>(), isA<ComparePricesUseCase>());

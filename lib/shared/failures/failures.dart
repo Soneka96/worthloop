@@ -4,6 +4,9 @@ import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 import 'package:sqlite3/sqlite3.dart';
 
+// Project imports:
+import 'package:worth_loop/shared/constants/enums.dart';
+
 /// Base type for typed, recoverable errors translated from infrastructure exceptions.
 /// Datasources catch source-specific exceptions and wrap them in a concrete [Failure]
 /// before they reach a repository or use case.
@@ -44,4 +47,21 @@ class NotFoundFailure extends Failure {
 /// Represents offers that cannot be compared because their currencies differ.
 class CurrencyFailure extends Failure {
   const CurrencyFailure(super.message);
+}
+
+/// Represents user input that cannot create a valid record.
+class ValidationFailure extends Failure {
+  const ValidationFailure(super.message);
+}
+
+/// Describes a classified remote price-fetch failure.
+class PriceFetchFailure extends Failure {
+  /// The classified reason for the failed fetch.
+  final PriceFetchStatus status;
+
+  const PriceFetchFailure({required this.status, required String message})
+    : super(message);
+
+  @override
+  List<Object?> get props => [status, message];
 }

@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 126 (63 per locale)
+/// Strings: 154 (77 per locale)
 ///
-/// Built on 2026-08-04 at 11:15 UTC
+/// Built on 2026-08-05 at 12:13 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -174,6 +174,16 @@ class _StringsHomeEn {
 	String updatedAt({required Object time}) => 'Updated ${time}';
 	String get emptyTitle => 'No tracked products';
 	String get emptyDescription => 'Products you track will appear here with their best available offer.';
+	String get addProductTitle => 'Add a product';
+	String get addProductDescription => 'Paste a product link to start tracking it.';
+	String get productNameLabel => 'Product name';
+	String get productUrlLabel => 'Product website link';
+	String get productUrlHint => 'https://example.com/product';
+	String get productNameRequired => 'Enter a product name.';
+	String get productUrlInvalid => 'Enter a valid HTTPS website link.';
+	String get addProductButton => 'Add product';
+	String get addProductSaving => 'Saving';
+	String get productSourceSupportDescription => 'Links can be saved now. Automatic price updates are available only for supported websites.';
 }
 
 // Path: productDetails
@@ -198,6 +208,10 @@ class _StringsProductDetailsEn {
 	String checkedAt({required Object time}) => 'Checked at ${time}';
 	String get productNotFound => 'Product not found';
 	String get productNotFoundDescription => 'Return to your tracked products and choose an item again.';
+	String get refreshBlocked => 'This website blocked the refresh attempt. Try again later.';
+	String get refreshUnsupported => 'This website does not provide a readable price yet.';
+	String get refreshNetworkError => 'The website could not be reached. Your last price is still shown.';
+	String get refreshInvalidData => 'The website returned an unreadable price. Your last price is still shown.';
 }
 
 // Path: settings
@@ -393,6 +407,16 @@ class _StringsHomePt implements _StringsHomeEn {
 	@override String updatedAt({required Object time}) => 'Atualizado às ${time}';
 	@override String get emptyTitle => 'Nenhum produto acompanhado';
 	@override String get emptyDescription => 'Os produtos acompanhados aparecem aqui com a melhor oferta disponível.';
+	@override String get addProductTitle => 'Adicionar produto';
+	@override String get addProductDescription => 'Cole um link de produto para começar a acompanhá-lo.';
+	@override String get productNameLabel => 'Nome do produto';
+	@override String get productUrlLabel => 'Link do produto';
+	@override String get productUrlHint => 'https://exemplo.com/produto';
+	@override String get productNameRequired => 'Introduza o nome do produto.';
+	@override String get productUrlInvalid => 'Introduza um link HTTPS válido.';
+	@override String get addProductButton => 'Adicionar produto';
+	@override String get addProductSaving => 'A guardar';
+	@override String get productSourceSupportDescription => 'Os links podem ser guardados agora. A atualização automática só está disponível para sites suportados.';
 }
 
 // Path: productDetails
@@ -417,6 +441,10 @@ class _StringsProductDetailsPt implements _StringsProductDetailsEn {
 	@override String checkedAt({required Object time}) => 'Verificado às ${time}';
 	@override String get productNotFound => 'Produto não encontrado';
 	@override String get productNotFoundDescription => 'Volte aos produtos acompanhados e escolha novamente um artigo.';
+	@override String get refreshBlocked => 'Este site bloqueou a tentativa de atualização. Tente novamente mais tarde.';
+	@override String get refreshUnsupported => 'Este site ainda não fornece um preço legível.';
+	@override String get refreshNetworkError => 'Não foi possível contactar o site. O último preço continua visível.';
+	@override String get refreshInvalidData => 'O site devolveu um preço ilegível. O último preço continua visível.';
 }
 
 // Path: settings
@@ -581,6 +609,16 @@ extension on Translations {
 			case 'home.updatedAt': return ({required Object time}) => 'Updated ${time}';
 			case 'home.emptyTitle': return 'No tracked products';
 			case 'home.emptyDescription': return 'Products you track will appear here with their best available offer.';
+			case 'home.addProductTitle': return 'Add a product';
+			case 'home.addProductDescription': return 'Paste a product link to start tracking it.';
+			case 'home.productNameLabel': return 'Product name';
+			case 'home.productUrlLabel': return 'Product website link';
+			case 'home.productUrlHint': return 'https://example.com/product';
+			case 'home.productNameRequired': return 'Enter a product name.';
+			case 'home.productUrlInvalid': return 'Enter a valid HTTPS website link.';
+			case 'home.addProductButton': return 'Add product';
+			case 'home.addProductSaving': return 'Saving';
+			case 'home.productSourceSupportDescription': return 'Links can be saved now. Automatic price updates are available only for supported websites.';
 			case 'productDetails.title': return 'Product details';
 			case 'productDetails.backTooltip': return 'Back';
 			case 'productDetails.refresh': return 'Refresh';
@@ -596,6 +634,10 @@ extension on Translations {
 			case 'productDetails.checkedAt': return ({required Object time}) => 'Checked at ${time}';
 			case 'productDetails.productNotFound': return 'Product not found';
 			case 'productDetails.productNotFoundDescription': return 'Return to your tracked products and choose an item again.';
+			case 'productDetails.refreshBlocked': return 'This website blocked the refresh attempt. Try again later.';
+			case 'productDetails.refreshUnsupported': return 'This website does not provide a readable price yet.';
+			case 'productDetails.refreshNetworkError': return 'The website could not be reached. Your last price is still shown.';
+			case 'productDetails.refreshInvalidData': return 'The website returned an unreadable price. Your last price is still shown.';
 			case 'settings.title': return 'Settings';
 			case 'settings.appearance.title': return 'Appearance';
 			case 'settings.appearance.theme': return 'Theme';
@@ -652,6 +694,16 @@ extension on _StringsPt {
 			case 'home.updatedAt': return ({required Object time}) => 'Atualizado às ${time}';
 			case 'home.emptyTitle': return 'Nenhum produto acompanhado';
 			case 'home.emptyDescription': return 'Os produtos acompanhados aparecem aqui com a melhor oferta disponível.';
+			case 'home.addProductTitle': return 'Adicionar produto';
+			case 'home.addProductDescription': return 'Cole um link de produto para começar a acompanhá-lo.';
+			case 'home.productNameLabel': return 'Nome do produto';
+			case 'home.productUrlLabel': return 'Link do produto';
+			case 'home.productUrlHint': return 'https://exemplo.com/produto';
+			case 'home.productNameRequired': return 'Introduza o nome do produto.';
+			case 'home.productUrlInvalid': return 'Introduza um link HTTPS válido.';
+			case 'home.addProductButton': return 'Adicionar produto';
+			case 'home.addProductSaving': return 'A guardar';
+			case 'home.productSourceSupportDescription': return 'Os links podem ser guardados agora. A atualização automática só está disponível para sites suportados.';
 			case 'productDetails.title': return 'Detalhes do produto';
 			case 'productDetails.backTooltip': return 'Voltar';
 			case 'productDetails.refresh': return 'Atualizar';
@@ -667,6 +719,10 @@ extension on _StringsPt {
 			case 'productDetails.checkedAt': return ({required Object time}) => 'Verificado às ${time}';
 			case 'productDetails.productNotFound': return 'Produto não encontrado';
 			case 'productDetails.productNotFoundDescription': return 'Volte aos produtos acompanhados e escolha novamente um artigo.';
+			case 'productDetails.refreshBlocked': return 'Este site bloqueou a tentativa de atualização. Tente novamente mais tarde.';
+			case 'productDetails.refreshUnsupported': return 'Este site ainda não fornece um preço legível.';
+			case 'productDetails.refreshNetworkError': return 'Não foi possível contactar o site. O último preço continua visível.';
+			case 'productDetails.refreshInvalidData': return 'O site devolveu um preço ilegível. O último preço continua visível.';
 			case 'settings.title': return 'Definições';
 			case 'settings.appearance.title': return 'Aparência';
 			case 'settings.appearance.theme': return 'Tema';

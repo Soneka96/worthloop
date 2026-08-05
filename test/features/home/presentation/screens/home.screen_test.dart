@@ -36,9 +36,13 @@ void main() {
     ]);
     when(() => mockViewModel.isLoading).thenReturn(false);
     when(() => mockViewModel.isRefreshingAll).thenReturn(false);
+    when(() => mockViewModel.isCreatingProduct).thenReturn(false);
+    when(() => mockViewModel.productCreationError).thenReturn(null);
+    when(() => mockViewModel.createdProductId).thenReturn(null);
     when(() => mockViewModel.onRefreshAll).thenReturn(() {});
     when(() => mockViewModel.onOpenSettings).thenReturn(() {});
     when(() => mockViewModel.onOpenProduct).thenReturn((_) {});
+    when(() => mockViewModel.onCreateProduct).thenReturn((_, _) {});
 
     sl.registerFactoryParam<HomeScreenViewModel, Store<AppState>, void>(
       (store, _) => mockViewModel,
@@ -141,9 +145,9 @@ void main() {
     ) async {
       await tester.pumpWidget(buildWidget());
 
-      final ListView listView = tester.widget(find.byType(ListView));
+      final SliverList listView = tester.widget(find.byType(SliverList).last);
 
-      expect(listView.childrenDelegate, isA<SliverChildBuilderDelegate>());
+      expect(listView.delegate, isA<SliverChildBuilderDelegate>());
     });
 
     testWidgets(
@@ -350,6 +354,13 @@ void main() {
 
       await tester.sendKeyEvent(LogicalKeyboardKey.tab);
       await tester.pump();
+      final bool addProductFocused = hasPrimaryFocusWithin(
+        tester,
+        find.byKey(const Key('add-product-section')),
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
       final bool refreshFocused = hasPrimaryFocusWithin(
         tester,
         find.byKey(refreshKey),
@@ -366,6 +377,8 @@ void main() {
       expect(settingsFocused, isTrue);
       expect(refreshFocused, isA<bool>());
       expect(refreshFocused, isTrue);
+      expect(addProductFocused, isA<bool>());
+      expect(addProductFocused, isTrue);
       expect(productFocused, isA<bool>());
       expect(productFocused, isTrue);
     });

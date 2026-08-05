@@ -5,6 +5,7 @@ import 'package:meta/meta.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 
 /// Redux state for tracked products.
 @immutable
@@ -24,12 +25,33 @@ class ProductsState extends Equatable {
   /// The most recent operation failure, or `null`.
   final String? error;
 
+  /// Classified reason for the latest refresh-all failure, or `null`.
+  final PriceFetchStatus? refreshStatus;
+
+  /// Classified reason for each product's latest refresh failure, keyed by
+  /// product identifier.
+  final Map<String, PriceFetchStatus> productRefreshStatuses;
+
+  /// Whether a product is being created.
+  final bool isCreatingProduct;
+
+  /// The most recent product-creation failure, or `null`.
+  final String? creationError;
+
+  /// Identifier of the most recently created product, or `null`.
+  final String? createdProductId;
+
   const ProductsState({
     required this.products,
     required this.isLoading,
     required this.isRefreshingAll,
     required this.refreshingProductIds,
     required this.error,
+    this.refreshStatus,
+    required this.productRefreshStatuses,
+    required this.isCreatingProduct,
+    required this.creationError,
+    required this.createdProductId,
   });
 
   /// Returns the state used before products are loaded.
@@ -39,6 +61,10 @@ class ProductsState extends Equatable {
     isRefreshingAll: false,
     refreshingProductIds: {},
     error: null,
+    productRefreshStatuses: {},
+    isCreatingProduct: false,
+    creationError: null,
+    createdProductId: null,
   );
 
   /// Returns a copy with the supplied fields replaced.
@@ -48,12 +74,29 @@ class ProductsState extends Equatable {
     bool? isRefreshingAll,
     Set<String>? refreshingProductIds,
     Option<String>? error,
+    Option<PriceFetchStatus>? refreshStatus,
+    Map<String, PriceFetchStatus>? productRefreshStatuses,
+    bool? isCreatingProduct,
+    Option<String>? creationError,
+    Option<String>? createdProductId,
   }) => ProductsState(
     products: products ?? this.products,
     isLoading: isLoading ?? this.isLoading,
     isRefreshingAll: isRefreshingAll ?? this.isRefreshingAll,
     refreshingProductIds: refreshingProductIds ?? this.refreshingProductIds,
     error: error == null ? this.error : error.toNullable(),
+    refreshStatus: refreshStatus == null
+        ? this.refreshStatus
+        : refreshStatus.toNullable(),
+    productRefreshStatuses:
+        productRefreshStatuses ?? this.productRefreshStatuses,
+    isCreatingProduct: isCreatingProduct ?? this.isCreatingProduct,
+    creationError: creationError == null
+        ? this.creationError
+        : creationError.toNullable(),
+    createdProductId: createdProductId == null
+        ? this.createdProductId
+        : createdProductId.toNullable(),
   );
 
   @override
@@ -63,5 +106,10 @@ class ProductsState extends Equatable {
     isRefreshingAll,
     refreshingProductIds,
     error,
+    refreshStatus,
+    productRefreshStatuses,
+    isCreatingProduct,
+    creationError,
+    createdProductId,
   ];
 }
