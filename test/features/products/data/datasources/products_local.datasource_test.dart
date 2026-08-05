@@ -19,6 +19,7 @@ import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
 import 'package:worth_loop/shared/utils/currency_helper_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
+import '../../fixtures/product_source.fixture.dart';
 
 class MockLoggerService extends Mock implements LoggerService {}
 
@@ -507,6 +508,129 @@ void main() {
       expect(failure, isA<DatabaseFailure>());
       verify(() => mockLoggerService.e(failure.message)).called(1);
     });
+  });
+
+  group('Method updateProductSource() returns the correct value', () {
+    test('updates the source URL and merchant domain', () async {
+      await db
+          .into(db.productTable)
+          .insert(
+            ProductTableCompanion.insert(
+              id: 'product-1',
+              name: 'Example Product',
+              lastUpdatedAt: DateTime(2026, 1, 1),
+            ),
+          );
+      await db
+          .into(db.productSourceTable)
+          .insert(
+            ProductSourceModel.fromEntity(buildProductSource()).toCompanion(),
+          );
+
+      final Either<Failure, ProductSourceModel> result = await datasource
+          .updateProductSource('source-1', 'https://updated.example.com/1');
+      final ProductSourceModel? updated = result.getRight().toNullable();
+      final ProductSourceRow row = await (db.select(
+        db.productSourceTable,
+      )..where((table) => table.id.equals('source-1'))).getSingle();
+
+      expect(updated, isA<ProductSourceModel>());
+      expect(updated?.url, 'https://updated.example.com/1');
+      expect(updated?.merchantDomain, 'updated.example.com');
+      expect(row.url, 'https://updated.example.com/1');
+      expect(row.merchantDomain, 'updated.example.com');
+      expect(row.productId, 'product-1');
+      expect(row.createdAt, buildProductSource().createdAt);
+      verifyZeroInteractions(mockLoggerService);
+    });
+
+    test('leaves other sources untouched', () async {
+      await db
+          .into(db.productTable)
+          .insert(
+            ProductTableCompanion.insert(
+              id: 'product-1',
+              name: 'Example Product',
+              lastUpdatedAt: DateTime(2026, 1, 1),
+            ),
+          );
+      await db
+          .into(db.productSourceTable)
+          .insert(
+            ProductSourceModel.fromEntity(buildProductSource()).toCompanion(),
+          );
+      await db
+          .into(db.productSourceTable)
+          .insert(
+            ProductSourceModel.fromEntity(
+              buildProductSource(
+                id: 'source-2',
+                url: 'https://other.example.com/1',
+              ),
+            ).toCompanion(),
+          );
+
+      await datasource.updateProductSource(
+        'source-1',
+        'https://updated.example.com/1',
+      );
+      final ProductSourceRow otherRow = await (db.select(
+        db.productSourceTable,
+      )..where((table) => table.id.equals('source-2'))).getSingle();
+
+      expect(otherRow.url, 'https://other.example.com/1');
+      expect(otherRow.merchantDomain, 'other.example.com');
+    });
+
+    test(
+      'returns Left(NotFoundFailure) when the source does not exist',
+      () async {
+        final Either<Failure, ProductSourceModel> result = await datasource
+            .updateProductSource('missing-source', 'https://example.com/1');
+
+        expect(result, const Left(NotFoundFailure('Source not found')));
+        verifyZeroInteractions(mockLoggerService);
+      },
+    );
+
+    test('returns ValidationFailure for an invalid URL', () async {
+      await db
+          .into(db.productTable)
+          .insert(
+            ProductTableCompanion.insert(
+              id: 'product-1',
+              name: 'Example Product',
+              lastUpdatedAt: DateTime(2026, 1, 1),
+            ),
+          );
+      await db
+          .into(db.productSourceTable)
+          .insert(
+            ProductSourceModel.fromEntity(buildProductSource()).toCompanion(),
+          );
+
+      final Either<Failure, ProductSourceModel> result = await datasource
+          .updateProductSource('source-1', 'http://example.com/1');
+
+      expect(result.getLeft().toNullable(), isA<ValidationFailure>());
+      verifyZeroInteractions(mockLoggerService);
+    });
+
+    test(
+      'returns Left(DatabaseFailure) when the source table is missing',
+      () async {
+        await db.customStatement('DROP TABLE product_source_table');
+
+        final Either<Failure, ProductSourceModel> result = await datasource
+            .updateProductSource('source-1', 'https://example.com/1');
+        final Failure failure =
+            result.getLeft().toNullable() ??
+            const DatabaseFailure('Expected a failure');
+
+        expect(failure, isA<DatabaseFailure>());
+        verify(() => mockLoggerService.e(failure.message)).called(1);
+      },
+    );
   });
 
   group('Method createProduct() returns the correct value', () {

@@ -174,6 +174,42 @@ class ProductsLocalDatasource {
     }
   }
 
+  /// Updates an existing source's URL and returns its persisted
+  /// representation.
+  Future<Either<Failure, ProductSourceModel>> updateProductSource(
+    String sourceId,
+    String url,
+  ) async {
+    try {
+      final ProductSourceRow? row = await (_db.select(
+        _db.productSourceTable,
+      )..where((table) => table.id.equals(sourceId))).getSingleOrNull();
+      if (row == null) {
+        return const Left(NotFoundFailure('Source not found'));
+      }
+      final ProductSource updated = ProductSource.fromUrl(
+        id: row.id,
+        productId: row.productId,
+        url: url,
+        createdAt: row.createdAt,
+      );
+      await (_db.update(
+        _db.productSourceTable,
+      )..where((table) => table.id.equals(sourceId))).write(
+        ProductSourceTableCompanion(
+          url: Value(updated.url),
+          merchantDomain: Value(updated.merchantDomain),
+        ),
+      );
+      return Right(ProductSourceModel.fromEntity(updated));
+    } on ArgumentError catch (error) {
+      return Left(ValidationFailure(error.message.toString()));
+    } on SqliteException catch (error) {
+      _loggerService.e(error.toString());
+      return Left(DatabaseFailure(error.toString()));
+    }
+  }
+
   /// Loads every saved product website link.
   Future<Either<Failure, List<ProductSourceModel>>> loadProductSources() async {
     try {

@@ -221,6 +221,57 @@ void main() {
     );
   });
 
+  group('ProductsRepository implements updateSource() correctly', () {
+    test('Method updateSource() returns the datasource result', () async {
+      final ProductSourceModel source = ProductSourceModel.fromEntity(
+        buildProductSource(url: 'https://example.com/updated'),
+      );
+      when(
+        () => mockDatasource.updateProductSource(
+          'source-1',
+          'https://example.com/updated',
+        ),
+      ).thenAnswer((_) async => Right(source));
+
+      final Either<Failure, ProductSource> result = await repository
+          .updateSource('source-1', 'https://example.com/updated');
+
+      expect(result, Right(source));
+      verify(
+        () => mockDatasource.updateProductSource(
+          'source-1',
+          'https://example.com/updated',
+        ),
+      ).called(1);
+      verifyNoMoreInteractions(mockDatasource);
+    });
+
+    test(
+      'Method updateSource() forwards datasource failures unchanged',
+      () async {
+        const DatabaseFailure failure = DatabaseFailure('database failed');
+        when(
+          () => mockDatasource.updateProductSource(
+            'source-1',
+            'https://example.com/updated',
+          ),
+        ).thenAnswer((_) async => const Left(failure));
+
+        final Either<Failure, ProductSource> result = await repository
+            .updateSource('source-1', 'https://example.com/updated');
+
+        expect(result, const Left(failure));
+        verify(
+          () => mockDatasource.updateProductSource(
+            'source-1',
+            'https://example.com/updated',
+          ),
+        ).called(1);
+        verifyNoMoreInteractions(mockDatasource);
+      },
+    );
+  });
+
   group('ProductsRepository implements refreshProduct() correctly', () {
     test('refreshes a product source through the remote datasource', () async {
       final ProductModel product = buildProductModel();

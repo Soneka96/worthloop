@@ -100,4 +100,12 @@ class ProductsRepository implements IProductsRepository {
   ) {
     return _localDatasource.loadProductSourcesForProduct(productId);
   }
+
+  @override
+  Future<Either<Failure, ProductSource>> updateSource(
+    String sourceId,
+    String url,
+  ) {
+    return _localDatasource.updateProductSource(sourceId, url);
+  }
 }

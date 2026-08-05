@@ -31,4 +31,10 @@ abstract class IProductsRepository {
   Future<Either<Failure, List<ProductSource>>> loadSourcesForProduct(
     String productId,
   );
+
+  /// Updates an existing source's URL.
+  Future<Either<Failure, ProductSource>> updateSource(
+    String sourceId,
+    String url,
+  );
 }
