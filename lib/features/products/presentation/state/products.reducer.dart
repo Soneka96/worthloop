@@ -126,6 +126,34 @@ Reducer<ProductsState> productsReducer = combineReducers<ProductsState>([
   TypedReducer<ProductsState, SourceDeleteFailedAction>(
     sourceDeleteFailedReducer,
   ).call,
+
+  /// Handles [RenameProductAction].
+  /// Updates [ProductsState.isRenamingProduct], [ProductsState.renameProductError].
+  TypedReducer<ProductsState, RenameProductAction>(renameProductReducer).call,
+
+  /// Handles [ProductRenamedAction].
+  /// Updates [ProductsState.products], [ProductsState.isRenamingProduct], [ProductsState.renameProductError].
+  TypedReducer<ProductsState, ProductRenamedAction>(productRenamedReducer).call,
+
+  /// Handles [ProductRenameFailedAction].
+  /// Updates [ProductsState.isRenamingProduct], [ProductsState.renameProductError].
+  TypedReducer<ProductsState, ProductRenameFailedAction>(
+    productRenameFailedReducer,
+  ).call,
+
+  /// Handles [DeleteProductAction].
+  /// Updates [ProductsState.deletingProductIds], [ProductsState.deleteProductError].
+  TypedReducer<ProductsState, DeleteProductAction>(deleteProductReducer).call,
+
+  /// Handles [ProductDeletedAction].
+  /// Updates [ProductsState.products], [ProductsState.deletingProductIds].
+  TypedReducer<ProductsState, ProductDeletedAction>(productDeletedReducer).call,
+
+  /// Handles [ProductDeleteFailedAction].
+  /// Updates [ProductsState.deletingProductIds], [ProductsState.deleteProductError].
+  TypedReducer<ProductsState, ProductDeleteFailedAction>(
+    productDeleteFailedReducer,
+  ).call,
 ]);
 
 /// Handles [LoadProductsAction].
@@ -444,5 +472,82 @@ ProductsState sourceDeleteFailedReducer(
   return state.copyWith(
     deletingSourceIds: deletingSourceIds,
     deleteSourceError: Some(action.message),
+  );
+}
+
+/// Handles [RenameProductAction].
+/// Updates [ProductsState.isRenamingProduct], [ProductsState.renameProductError].
+ProductsState renameProductReducer(
+  ProductsState state,
+  RenameProductAction action,
+) => state.copyWith(isRenamingProduct: true, renameProductError: const None());
+
+/// Handles [ProductRenamedAction].
+/// Updates [ProductsState.products], [ProductsState.isRenamingProduct], [ProductsState.renameProductError].
+ProductsState productRenamedReducer(
+  ProductsState state,
+  ProductRenamedAction action,
+) {
+  final List<Product> products = state.products
+      .map(
+        (Product product) =>
+            product.id == action.product.id ? action.product : product,
+      )
+      .toList(growable: false);
+  return state.copyWith(
+    products: products,
+    isRenamingProduct: false,
+    renameProductError: const None(),
+  );
+}
+
+/// Handles [ProductRenameFailedAction].
+/// Updates [ProductsState.isRenamingProduct], [ProductsState.renameProductError].
+ProductsState productRenameFailedReducer(
+  ProductsState state,
+  ProductRenameFailedAction action,
+) => state.copyWith(
+  isRenamingProduct: false,
+  renameProductError: Some(action.message),
+);
+
+/// Handles [DeleteProductAction].
+/// Updates [ProductsState.deletingProductIds], [ProductsState.deleteProductError].
+ProductsState deleteProductReducer(
+  ProductsState state,
+  DeleteProductAction action,
+) => state.copyWith(
+  deletingProductIds: {...state.deletingProductIds, action.productId},
+  deleteProductError: const None(),
+);
+
+/// Handles [ProductDeletedAction].
+/// Updates [ProductsState.products], [ProductsState.deletingProductIds].
+ProductsState productDeletedReducer(
+  ProductsState state,
+  ProductDeletedAction action,
+) {
+  final List<Product> products = state.products
+      .where((Product product) => product.id != action.productId)
+      .toList(growable: false);
+  final Set<String> deletingProductIds = {...state.deletingProductIds}
+    ..remove(action.productId);
+  return state.copyWith(
+    products: products,
+    deletingProductIds: deletingProductIds,
+  );
+}
+
+/// Handles [ProductDeleteFailedAction].
+/// Updates [ProductsState.deletingProductIds], [ProductsState.deleteProductError].
+ProductsState productDeleteFailedReducer(
+  ProductsState state,
+  ProductDeleteFailedAction action,
+) {
+  final Set<String> deletingProductIds = {...state.deletingProductIds}
+    ..remove(action.productId);
+  return state.copyWith(
+    deletingProductIds: deletingProductIds,
+    deleteProductError: Some(action.message),
   );
 }

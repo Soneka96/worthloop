@@ -66,6 +66,18 @@ class ProductsState extends Equatable {
   /// The most recent source-delete failure, or `null`.
   final String? deleteSourceError;
 
+  /// Whether a product is being renamed.
+  final bool isRenamingProduct;
+
+  /// The most recent product-rename failure, or `null`.
+  final String? renameProductError;
+
+  /// Product identifiers currently being deleted.
+  final Set<String> deletingProductIds;
+
+  /// The most recent product-delete failure, or `null`.
+  final String? deleteProductError;
+
   const ProductsState({
     required this.products,
     required this.isLoading,
@@ -85,6 +97,10 @@ class ProductsState extends Equatable {
     required this.editSourceError,
     required this.deletingSourceIds,
     required this.deleteSourceError,
+    required this.isRenamingProduct,
+    required this.renameProductError,
+    required this.deletingProductIds,
+    required this.deleteProductError,
   });
 
   /// Returns the state used before products are loaded.
@@ -106,6 +122,10 @@ class ProductsState extends Equatable {
     editSourceError: null,
     deletingSourceIds: {},
     deleteSourceError: null,
+    isRenamingProduct: false,
+    renameProductError: null,
+    deletingProductIds: {},
+    deleteProductError: null,
   );
 
   /// Returns a copy with the supplied fields replaced.
@@ -128,6 +148,10 @@ class ProductsState extends Equatable {
     Option<String>? editSourceError,
     Set<String>? deletingSourceIds,
     Option<String>? deleteSourceError,
+    bool? isRenamingProduct,
+    Option<String>? renameProductError,
+    Set<String>? deletingProductIds,
+    Option<String>? deleteProductError,
   }) => ProductsState(
     products: products ?? this.products,
     isLoading: isLoading ?? this.isLoading,
@@ -163,6 +187,14 @@ class ProductsState extends Equatable {
     deleteSourceError: deleteSourceError == null
         ? this.deleteSourceError
         : deleteSourceError.toNullable(),
+    isRenamingProduct: isRenamingProduct ?? this.isRenamingProduct,
+    renameProductError: renameProductError == null
+        ? this.renameProductError
+        : renameProductError.toNullable(),
+    deletingProductIds: deletingProductIds ?? this.deletingProductIds,
+    deleteProductError: deleteProductError == null
+        ? this.deleteProductError
+        : deleteProductError.toNullable(),
   );
 
   @override
@@ -185,5 +217,9 @@ class ProductsState extends Equatable {
     editSourceError,
     deletingSourceIds,
     deleteSourceError,
+    isRenamingProduct,
+    renameProductError,
+    deletingProductIds,
+    deleteProductError,
   ];
 }

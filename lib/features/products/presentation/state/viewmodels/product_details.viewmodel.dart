@@ -24,9 +24,11 @@ class ProductDetailsViewModel extends Equatable {
 
   // TODO: sources, isLoadingSources, isAddingSource, addSourceError,
   // editingSourceId, editSourceError, deletingSourceIds, deleteSourceError,
-  // onAddSource, onEditSource, and onDeleteSource are not yet read by
-  // ProductDetailsScreen — the Sources section UI that consumes them lands
-  // in a later phase-3 step.
+  // isRenamingProduct, renameProductError, isDeletingProduct,
+  // deleteProductError, onAddSource, onEditSource, onDeleteSource,
+  // onRenameProduct, and onDeleteProduct are not yet read by
+  // ProductDetailsScreen — the Sources section and rename/delete-product UI
+  // that consume them land in later phase-3 steps.
   /// Saved website sources for this product.
   final List<ProductSource> sources;
 
@@ -51,6 +53,18 @@ class ProductDetailsViewModel extends Equatable {
   /// The most recent source-delete failure, or `null`.
   final String? deleteSourceError;
 
+  /// Whether this product is being renamed.
+  final bool isRenamingProduct;
+
+  /// The most recent product-rename failure, or `null`.
+  final String? renameProductError;
+
+  /// Whether this product is being deleted.
+  final bool isDeletingProduct;
+
+  /// The most recent product-delete failure, or `null`.
+  final String? deleteProductError;
+
   /// Dispatches [RefreshProductAction].
   final void Function() onRefresh;
 
@@ -66,6 +80,12 @@ class ProductDetailsViewModel extends Equatable {
   /// Dispatches [DeleteSourceAction] for this product.
   final void Function(String sourceId) onDeleteSource;
 
+  /// Dispatches [RenameProductAction] for this product.
+  final void Function(String name) onRenameProduct;
+
+  /// Dispatches [DeleteProductAction] for this product.
+  final void Function() onDeleteProduct;
+
   const ProductDetailsViewModel({
     required this.product,
     required this.isRefreshing,
@@ -78,11 +98,17 @@ class ProductDetailsViewModel extends Equatable {
     required this.editSourceError,
     required this.deletingSourceIds,
     required this.deleteSourceError,
+    required this.isRenamingProduct,
+    required this.renameProductError,
+    required this.isDeletingProduct,
+    required this.deleteProductError,
     required this.onRefresh,
     required this.onGoBack,
     required this.onAddSource,
     required this.onEditSource,
     required this.onDeleteSource,
+    required this.onRenameProduct,
+    required this.onDeleteProduct,
   });
 
   /// Creates the details state for [productId].
@@ -113,6 +139,17 @@ class ProductDetailsViewModel extends Equatable {
     editSourceError: ProductsSelectors.editSourceErrorSelector(store.state),
     deletingSourceIds: ProductsSelectors.deletingSourceIdsSelector(store.state),
     deleteSourceError: ProductsSelectors.deleteSourceErrorSelector(store.state),
+    isRenamingProduct: ProductsSelectors.isRenamingProductSelector(store.state),
+    renameProductError: ProductsSelectors.renameProductErrorSelector(
+      store.state,
+    ),
+    isDeletingProduct: ProductsSelectors.isDeletingProductSelector(
+      store.state,
+      productId,
+    ),
+    deleteProductError: ProductsSelectors.deleteProductErrorSelector(
+      store.state,
+    ),
     onRefresh: () => store.dispatch(RefreshProductAction(productId)),
     onGoBack: () => store.dispatch(const GoBackFromProductDetailsAction()),
     onAddSource: (String url) =>
@@ -122,6 +159,9 @@ class ProductDetailsViewModel extends Equatable {
     onDeleteSource: (String sourceId) => store.dispatch(
       DeleteSourceAction(productId: productId, sourceId: sourceId),
     ),
+    onRenameProduct: (String name) =>
+        store.dispatch(RenameProductAction(productId: productId, name: name)),
+    onDeleteProduct: () => store.dispatch(DeleteProductAction(productId)),
   );
 
   @override
@@ -137,5 +177,9 @@ class ProductDetailsViewModel extends Equatable {
     editSourceError,
     deletingSourceIds,
     deleteSourceError,
+    isRenamingProduct,
+    renameProductError,
+    isDeletingProduct,
+    deleteProductError,
   ];
 }

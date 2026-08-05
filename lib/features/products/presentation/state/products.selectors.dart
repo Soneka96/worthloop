@@ -89,4 +89,20 @@ abstract final class ProductsSelectors {
   /// Returns the latest source-delete failure, or `null`.
   static String? deleteSourceErrorSelector(AppState state) =>
       state.products.deleteSourceError;
+
+  /// Returns whether a product is being renamed.
+  static bool isRenamingProductSelector(AppState state) =>
+      state.products.isRenamingProduct;
+
+  /// Returns the latest product-rename failure, or `null`.
+  static String? renameProductErrorSelector(AppState state) =>
+      state.products.renameProductError;
+
+  /// Returns whether [productId] is being deleted.
+  static bool isDeletingProductSelector(AppState state, String productId) =>
+      state.products.deletingProductIds.contains(productId);
+
+  /// Returns the latest product-delete failure, or `null`.
+  static String? deleteProductErrorSelector(AppState state) =>
+      state.products.deleteProductError;
 }

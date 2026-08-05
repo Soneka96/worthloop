@@ -821,6 +821,207 @@ void main() {
     });
   });
 
+  group('productsReducer processes RenameProductAction correctly', () {
+    test('RenameProductAction starts renaming and clears the error', () {
+      final ProductsState state = ProductsState.initial().copyWith(
+        renameProductError: const Some('old failure'),
+      );
+
+      final ProductsState reducedState = productsReducer(
+        state,
+        const RenameProductAction(
+          productId: 'product-1',
+          name: 'Renamed Product',
+        ),
+      );
+
+      expect(state.isRenamingProduct, isA<bool>());
+      expect(state.isRenamingProduct, isFalse, reason: 'renaming starts idle');
+      expect(reducedState.isRenamingProduct, isA<bool>());
+      expect(reducedState.isRenamingProduct, isTrue, reason: 'renaming starts');
+      expect(
+        reducedState.renameProductError,
+        isNull,
+        reason: 'old rename error is cleared',
+      );
+    });
+  });
+
+  group('productsReducer processes ProductRenamedAction correctly', () {
+    test(
+      'ProductRenamedAction modifies only the matching product and completes renaming',
+      () {
+        final Product first = buildProduct();
+        final Product second = buildProduct(id: 'product-2', name: 'Second');
+        final Product renamed = buildProduct(name: 'Renamed Product');
+        final ProductsState state = ProductsState.initial().copyWith(
+          products: [first, second],
+          isRenamingProduct: true,
+          renameProductError: const Some('old failure'),
+        );
+
+        final ProductsState reducedState = productsReducer(
+          state,
+          ProductRenamedAction(renamed),
+        );
+
+        expect(
+          state.products.first,
+          first,
+          reason: 'original state is unchanged',
+        );
+        expect(
+          reducedState.products,
+          [renamed, second],
+          reason: 'matching product is replaced, other product is untouched',
+        );
+        expect(state.isRenamingProduct, isTrue, reason: 'renaming was active');
+        expect(
+          reducedState.isRenamingProduct,
+          isFalse,
+          reason: 'renaming completes',
+        );
+        expect(
+          reducedState.renameProductError,
+          isNull,
+          reason: 'old rename error is cleared',
+        );
+      },
+    );
+  });
+
+  group('productsReducer processes ProductRenameFailedAction correctly', () {
+    test('ProductRenameFailedAction completes renaming with an error', () {
+      final ProductsState state = ProductsState.initial().copyWith(
+        isRenamingProduct: true,
+      );
+
+      final ProductsState reducedState = productsReducer(
+        state,
+        const ProductRenameFailedAction('failed'),
+      );
+
+      expect(state.isRenamingProduct, isA<bool>());
+      expect(state.isRenamingProduct, isTrue, reason: 'renaming was active');
+      expect(reducedState.isRenamingProduct, isA<bool>());
+      expect(
+        reducedState.isRenamingProduct,
+        isFalse,
+        reason: 'renaming completes',
+      );
+      expect(reducedState.renameProductError, isA<String>());
+      expect(
+        reducedState.renameProductError,
+        'failed',
+        reason: 'failure is stored',
+      );
+    });
+  });
+
+  group('productsReducer processes DeleteProductAction correctly', () {
+    test(
+      'DeleteProductAction modifies deletingProductIds and clears the error',
+      () {
+        final ProductsState state = ProductsState.initial().copyWith(
+          deleteProductError: const Some('old failure'),
+        );
+
+        final ProductsState reducedState = productsReducer(
+          state,
+          const DeleteProductAction('product-1'),
+        );
+
+        expect(
+          state.deletingProductIds,
+          isEmpty,
+          reason: 'no product starts deleting',
+        );
+        expect(
+          reducedState.deletingProductIds,
+          {'product-1'},
+          reason: 'requested product starts deleting',
+        );
+        expect(
+          reducedState.deleteProductError,
+          isNull,
+          reason: 'old delete error is cleared',
+        );
+      },
+    );
+  });
+
+  group('productsReducer processes ProductDeletedAction correctly', () {
+    test(
+      'ProductDeletedAction removes only the matching product and completes deleting',
+      () {
+        final Product deleted = buildProduct();
+        final Product sibling = buildProduct(id: 'product-2', name: 'Second');
+        final ProductsState state = ProductsState.initial().copyWith(
+          products: [deleted, sibling],
+          deletingProductIds: {'product-1', 'product-2'},
+        );
+
+        final ProductsState reducedState = productsReducer(
+          state,
+          const ProductDeletedAction('product-1'),
+        );
+
+        expect(state.products, [
+          deleted,
+          sibling,
+        ], reason: 'both products were present before the delete');
+        expect(
+          reducedState.products,
+          [sibling],
+          reason: 'matching product is removed, sibling product is untouched',
+        );
+        expect(state.deletingProductIds, {
+          'product-1',
+          'product-2',
+        }, reason: 'both products were deleting');
+        expect(
+          reducedState.deletingProductIds,
+          {'product-2'},
+          reason:
+              "the deleted product's delete completes, the other product's is untouched",
+        );
+      },
+    );
+  });
+
+  group('productsReducer processes ProductDeleteFailedAction correctly', () {
+    test('ProductDeleteFailedAction completes deleting with an error', () {
+      final ProductsState state = ProductsState.initial().copyWith(
+        deletingProductIds: {'product-1', 'product-2'},
+      );
+
+      final ProductsState reducedState = productsReducer(
+        state,
+        const ProductDeleteFailedAction(
+          productId: 'product-1',
+          message: 'failed',
+        ),
+      );
+
+      expect(state.deletingProductIds, {
+        'product-1',
+        'product-2',
+      }, reason: 'both products were deleting');
+      expect(
+        reducedState.deletingProductIds,
+        {'product-2'},
+        reason:
+            "the failed product's delete completes, the other product's is untouched",
+      );
+      expect(reducedState.deleteProductError, isA<String>());
+      expect(
+        reducedState.deleteProductError,
+        'failed',
+        reason: 'failure is stored',
+      );
+    });
+  });
+
   group('productsReducer processes unhandled actions correctly', () {
     test('Object modifies nothing', () {
       final ProductsState state = ProductsState.initial();

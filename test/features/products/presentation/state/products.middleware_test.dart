@@ -8,6 +8,7 @@ import 'package:redux/redux.dart';
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/domain/usecases/add_source.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/delete_product.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/delete_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/edit_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/load_product_sources.usecase.dart';
@@ -15,12 +16,15 @@ import 'package:worth_loop/features/products/domain/usecases/load_products.useca
 import 'package:worth_loop/features/products/domain/usecases/create_product.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/add_source.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/create_product.params.dart';
+import 'package:worth_loop/features/products/domain/usecases/params/delete_product.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/delete_source.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/edit_source.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/load_product_sources.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/refresh_product.params.dart';
+import 'package:worth_loop/features/products/domain/usecases/params/rename_product.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_all_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_product.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/rename_product.usecase.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/products.middleware.dart';
 import 'package:worth_loop/injection_container.dart';
@@ -53,6 +57,10 @@ class MockEditSourceUseCase extends Mock implements EditSourceUseCase {}
 
 class MockDeleteSourceUseCase extends Mock implements DeleteSourceUseCase {}
 
+class MockRenameProductUseCase extends Mock implements RenameProductUseCase {}
+
+class MockDeleteProductUseCase extends Mock implements DeleteProductUseCase {}
+
 class MockLoggerService extends Mock implements LoggerService {}
 
 class MockNavigatorService extends Mock implements NavigatorService {}
@@ -70,6 +78,10 @@ class FakeEditSourceParams extends Fake implements EditSourceParams {}
 
 class FakeDeleteSourceParams extends Fake implements DeleteSourceParams {}
 
+class FakeRenameProductParams extends Fake implements RenameProductParams {}
+
+class FakeDeleteProductParams extends Fake implements DeleteProductParams {}
+
 void main() {
   late ProductsMiddleware middleware;
   late MockStore store;
@@ -81,6 +93,8 @@ void main() {
   late MockAddSourceUseCase mockAddSourceUseCase;
   late MockEditSourceUseCase mockEditSourceUseCase;
   late MockDeleteSourceUseCase mockDeleteSourceUseCase;
+  late MockRenameProductUseCase mockRenameProductUseCase;
+  late MockDeleteProductUseCase mockDeleteProductUseCase;
   late MockLoggerService mockLoggerService;
   late MockNavigatorService mockNavigatorService;
   late List<dynamic> actionLog;
@@ -95,6 +109,8 @@ void main() {
     registerFallbackValue(FakeAddSourceParams());
     registerFallbackValue(FakeEditSourceParams());
     registerFallbackValue(FakeDeleteSourceParams());
+    registerFallbackValue(FakeRenameProductParams());
+    registerFallbackValue(FakeDeleteProductParams());
   });
 
   setUp(() {
@@ -108,6 +124,8 @@ void main() {
     mockAddSourceUseCase = MockAddSourceUseCase();
     mockEditSourceUseCase = MockEditSourceUseCase();
     mockDeleteSourceUseCase = MockDeleteSourceUseCase();
+    mockRenameProductUseCase = MockRenameProductUseCase();
+    mockDeleteProductUseCase = MockDeleteProductUseCase();
     mockLoggerService = MockLoggerService();
     mockNavigatorService = MockNavigatorService();
     actionLog = [];
@@ -128,6 +146,8 @@ void main() {
     sl.registerSingleton<AddSourceUseCase>(mockAddSourceUseCase);
     sl.registerSingleton<EditSourceUseCase>(mockEditSourceUseCase);
     sl.registerSingleton<DeleteSourceUseCase>(mockDeleteSourceUseCase);
+    sl.registerSingleton<RenameProductUseCase>(mockRenameProductUseCase);
+    sl.registerSingleton<DeleteProductUseCase>(mockDeleteProductUseCase);
     sl.registerSingleton<LoggerService>(mockLoggerService);
     sl.registerSingleton<NavigatorService>(mockNavigatorService);
   });
@@ -655,6 +675,141 @@ void main() {
         verifyNoMoreInteractions(mockDeleteSourceUseCase);
         verify(
           () => mockLoggerService.e('Source not found', showPopup: true),
+        ).called(1);
+        verifyNoMoreInteractions(mockLoggerService);
+      },
+    );
+  });
+
+  group('ProductsMiddleware processes RenameProductAction', () {
+    test(
+      'RenameProductAction dispatches ProductRenamedAction when successful',
+      () async {
+        final Product product = buildProduct(name: 'Renamed Product');
+        when(
+          () => mockRenameProductUseCase(any()),
+        ).thenAnswer((_) async => Right(product));
+
+        middleware.call(
+          store,
+          const RenameProductAction(
+            productId: 'product-1',
+            name: 'Renamed Product',
+          ),
+          next,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(actionLog[0], isA<RenameProductAction>());
+        expect(actionLog[1], isA<ProductRenamedAction>());
+        expect((actionLog[1] as ProductRenamedAction).product, product);
+        verify(
+          () => mockRenameProductUseCase(
+            const RenameProductParams(
+              productId: 'product-1',
+              name: 'Renamed Product',
+            ),
+          ),
+        ).called(1);
+        verifyNoMoreInteractions(mockRenameProductUseCase);
+        verifyZeroInteractions(mockLoggerService);
+      },
+    );
+
+    test(
+      'RenameProductAction dispatches ProductRenameFailedAction when failed',
+      () async {
+        const ValidationFailure failure = ValidationFailure(
+          'Product name is required',
+        );
+        when(
+          () => mockRenameProductUseCase(any()),
+        ).thenAnswer((_) async => const Left(failure));
+
+        middleware.call(
+          store,
+          const RenameProductAction(productId: 'product-1', name: '  '),
+          next,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(actionLog[1], isA<ProductRenameFailedAction>());
+        expect(
+          (actionLog[1] as ProductRenameFailedAction).message,
+          isA<String>(),
+        );
+        expect(
+          (actionLog[1] as ProductRenameFailedAction).message,
+          'Product name is required',
+        );
+        verify(
+          () => mockRenameProductUseCase(
+            const RenameProductParams(productId: 'product-1', name: '  '),
+          ),
+        ).called(1);
+        verifyNoMoreInteractions(mockRenameProductUseCase);
+        verify(
+          () =>
+              mockLoggerService.e('Product name is required', showPopup: true),
+        ).called(1);
+        verifyNoMoreInteractions(mockLoggerService);
+      },
+    );
+  });
+
+  group('ProductsMiddleware processes DeleteProductAction', () {
+    test(
+      'DeleteProductAction dispatches ProductDeletedAction and pops when successful',
+      () async {
+        when(
+          () => mockDeleteProductUseCase(any()),
+        ).thenAnswer((_) async => const Right(unit));
+
+        middleware.call(store, const DeleteProductAction('product-1'), next);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(actionLog[0], isA<DeleteProductAction>());
+        expect(actionLog[1], const ProductDeletedAction('product-1'));
+        verify(
+          () => mockDeleteProductUseCase(
+            const DeleteProductParams(productId: 'product-1'),
+          ),
+        ).called(1);
+        verifyNoMoreInteractions(mockDeleteProductUseCase);
+        verify(mockNavigatorService.pop).called(1);
+        verifyNoMoreInteractions(mockNavigatorService);
+        verifyZeroInteractions(mockLoggerService);
+      },
+    );
+
+    test(
+      'DeleteProductAction dispatches ProductDeleteFailedAction and does not pop when failed',
+      () async {
+        const NotFoundFailure failure = NotFoundFailure('Product not found');
+        when(
+          () => mockDeleteProductUseCase(any()),
+        ).thenAnswer((_) async => const Left(failure));
+
+        middleware.call(store, const DeleteProductAction('product-1'), next);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(
+          actionLog[1],
+          const ProductDeleteFailedAction(
+            productId: 'product-1',
+            message: 'Product not found',
+          ),
+        );
+        verify(
+          () => mockDeleteProductUseCase(
+            const DeleteProductParams(productId: 'product-1'),
+          ),
+        ).called(1);
+        verifyNoMoreInteractions(mockDeleteProductUseCase);
+        verifyNever(mockNavigatorService.pop);
+        verifyNoMoreInteractions(mockNavigatorService);
+        verify(
+          () => mockLoggerService.e('Product not found', showPopup: true),
         ).called(1);
         verifyNoMoreInteractions(mockLoggerService);
       },

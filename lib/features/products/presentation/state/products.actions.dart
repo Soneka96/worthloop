@@ -345,3 +345,84 @@ class SourceDeleteFailedAction extends Equatable {
   @override
   List<Object?> get props => [sourceId, message];
 }
+
+/// Requests renaming a product.
+@immutable
+class RenameProductAction extends Equatable {
+  /// Identifier of the product to rename.
+  final String productId;
+
+  /// New display name entered for the product.
+  final String name;
+
+  const RenameProductAction({required this.productId, required this.name});
+
+  @override
+  List<Object?> get props => [productId, name];
+}
+
+/// Carries a renamed product.
+@immutable
+class ProductRenamedAction extends Equatable {
+  /// The renamed product.
+  final Product product;
+
+  const ProductRenamedAction(this.product);
+
+  @override
+  List<Object?> get props => [product];
+}
+
+/// Carries a product-rename failure.
+@immutable
+class ProductRenameFailedAction extends Equatable {
+  /// The failure message.
+  final String message;
+
+  const ProductRenameFailedAction(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+/// Requests deleting a product.
+@immutable
+class DeleteProductAction extends Equatable {
+  /// Identifier of the product to delete.
+  final String productId;
+
+  const DeleteProductAction(this.productId);
+
+  @override
+  List<Object?> get props => [productId];
+}
+
+/// Carries a deleted product.
+@immutable
+class ProductDeletedAction extends Equatable {
+  /// Identifier of the deleted product.
+  final String productId;
+
+  const ProductDeletedAction(this.productId);
+
+  @override
+  List<Object?> get props => [productId];
+}
+
+/// Carries a product-delete failure.
+@immutable
+class ProductDeleteFailedAction extends Equatable {
+  /// Identifier of the product that failed to delete.
+  final String productId;
+
+  /// The failure message.
+  final String message;
+
+  const ProductDeleteFailedAction({
+    required this.productId,
+    required this.message,
+  });
+
+  @override
+  List<Object?> get props => [productId, message];
+}

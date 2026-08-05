@@ -6,18 +6,22 @@ import 'package:worth_loop/features/products/domain/entities/product.entity.dart
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/domain/usecases/add_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/create_product.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/delete_product.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/delete_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/edit_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/load_product_sources.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/load_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/add_source.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/create_product.params.dart';
+import 'package:worth_loop/features/products/domain/usecases/params/delete_product.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/delete_source.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/edit_source.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/load_product_sources.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/refresh_product.params.dart';
+import 'package:worth_loop/features/products/domain/usecases/params/rename_product.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_all_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_product.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/rename_product.usecase.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/navigation/app_routes.dart';
@@ -54,6 +58,10 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
         _editSource(store, action);
       case DeleteSourceAction _:
         _deleteSource(store, action);
+      case RenameProductAction _:
+        _renameProduct(store, action);
+      case DeleteProductAction _:
+        _deleteProduct(store, action);
     }
   }
 
@@ -239,6 +247,48 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
             sourceId: action.sourceId,
           ),
         );
+      },
+    );
+  }
+
+  /// Handles [RenameProductAction].
+  Future<void> _renameProduct(
+    Store<AppState> store,
+    RenameProductAction action,
+  ) async {
+    (await sl<RenameProductUseCase>()(
+      RenameProductParams(productId: action.productId, name: action.name),
+    )).fold(
+      (failure) {
+        sl<LoggerService>().e(failure.message, showPopup: true);
+        store.dispatch(ProductRenameFailedAction(failure.message));
+      },
+      (Product product) {
+        store.dispatch(ProductRenamedAction(product));
+      },
+    );
+  }
+
+  /// Handles [DeleteProductAction].
+  Future<void> _deleteProduct(
+    Store<AppState> store,
+    DeleteProductAction action,
+  ) async {
+    (await sl<DeleteProductUseCase>()(
+      DeleteProductParams(productId: action.productId),
+    )).fold(
+      (failure) {
+        sl<LoggerService>().e(failure.message, showPopup: true);
+        store.dispatch(
+          ProductDeleteFailedAction(
+            productId: action.productId,
+            message: failure.message,
+          ),
+        );
+      },
+      (_) {
+        store.dispatch(ProductDeletedAction(action.productId));
+        sl<NavigatorService>().pop();
       },
     );
   }

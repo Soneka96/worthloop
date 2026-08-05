@@ -396,6 +396,114 @@ void main() {
       },
     );
   });
+
+  group('Method isRenamingProductSelector() returns a bool instance', () {
+    test('isRenamingProductSelector() returns isRenamingProduct', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(isRenamingProduct: true),
+      );
+
+      expect(ProductsSelectors.isRenamingProductSelector(state), isA<bool>());
+      expect(ProductsSelectors.isRenamingProductSelector(state), isTrue);
+    });
+
+    test(
+      'isRenamingProductSelector() returns false when isRenamingProduct == false',
+      () {
+        expect(
+          ProductsSelectors.isRenamingProductSelector(AppState.initial()),
+          isFalse,
+        );
+      },
+    );
+  });
+
+  group('Method renameProductErrorSelector() returns a String instance', () {
+    test('renameProductErrorSelector() returns renameProductError', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          renameProductError: const Some('rename failed'),
+        ),
+      );
+
+      expect(
+        ProductsSelectors.renameProductErrorSelector(state),
+        isA<String>(),
+      );
+      expect(
+        ProductsSelectors.renameProductErrorSelector(state),
+        'rename failed',
+      );
+    });
+
+    test(
+      'renameProductErrorSelector() returns null when renameProductError == null',
+      () {
+        expect(
+          ProductsSelectors.renameProductErrorSelector(AppState.initial()),
+          isNull,
+        );
+      },
+    );
+  });
+
+  group('Method isDeletingProductSelector() returns a bool instance', () {
+    test('isDeletingProductSelector() returns true when id is deleting', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          deletingProductIds: {'product-1', 'product-2'},
+        ),
+      );
+
+      expect(
+        ProductsSelectors.isDeletingProductSelector(state, 'product-1'),
+        isA<bool>(),
+      );
+      expect(
+        ProductsSelectors.isDeletingProductSelector(state, 'product-1'),
+        isTrue,
+      );
+    });
+
+    test('isDeletingProductSelector() returns false when id is idle', () {
+      expect(
+        ProductsSelectors.isDeletingProductSelector(
+          AppState.initial(),
+          'product-1',
+        ),
+        isFalse,
+      );
+    });
+  });
+
+  group('Method deleteProductErrorSelector() returns a String instance', () {
+    test('deleteProductErrorSelector() returns deleteProductError', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          deleteProductError: const Some('product delete failed'),
+        ),
+      );
+
+      expect(
+        ProductsSelectors.deleteProductErrorSelector(state),
+        isA<String>(),
+      );
+      expect(
+        ProductsSelectors.deleteProductErrorSelector(state),
+        'product delete failed',
+      );
+    });
+
+    test(
+      'deleteProductErrorSelector() returns null when deleteProductError == null',
+      () {
+        expect(
+          ProductsSelectors.deleteProductErrorSelector(AppState.initial()),
+          isNull,
+        );
+      },
+    );
+  });
 }
 
 AppState _productsStateWithError() => AppState.initial().copyWith(

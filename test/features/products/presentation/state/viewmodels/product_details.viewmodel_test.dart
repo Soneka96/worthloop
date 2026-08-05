@@ -50,6 +50,10 @@ void main() {
               editSourceError: const Some('edit failed'),
               deletingSourceIds: {'source-1'},
               deleteSourceError: const Some('delete failed'),
+              isRenamingProduct: true,
+              renameProductError: const Some('rename failed'),
+              deletingProductIds: {product.id},
+              deleteProductError: const Some('product delete failed'),
             ),
           );
 
@@ -71,11 +75,19 @@ void main() {
           expect(viewmodel.editSourceError, 'edit failed');
           expect(viewmodel.deletingSourceIds, {'source-1'});
           expect(viewmodel.deleteSourceError, 'delete failed');
+          expect(viewmodel.isRenamingProduct, isA<bool>());
+          expect(viewmodel.isRenamingProduct, isTrue);
+          expect(viewmodel.renameProductError, 'rename failed');
+          expect(viewmodel.isDeletingProduct, isA<bool>());
+          expect(viewmodel.isDeletingProduct, isTrue);
+          expect(viewmodel.deleteProductError, 'product delete failed');
           expect(viewmodel.onRefresh, isA<Function()>());
           expect(viewmodel.onGoBack, isA<Function()>());
           expect(viewmodel.onAddSource, isA<Function(String)>());
           expect(viewmodel.onEditSource, isA<Function(String, String)>());
           expect(viewmodel.onDeleteSource, isA<Function(String)>());
+          expect(viewmodel.onRenameProduct, isA<Function(String)>());
+          expect(viewmodel.onDeleteProduct, isA<Function()>());
         },
       );
 
@@ -157,6 +169,41 @@ void main() {
               sourceId: 'source-1',
             ),
           ]);
+        },
+      );
+
+      test(
+        'Method onRenameProduct dispatches RenameProductAction when called',
+        () {
+          final ProductDetailsViewModel viewmodel =
+              ProductDetailsViewModel.fromStore(
+                buildStore(AppState.initial()),
+                'product-1',
+              );
+
+          viewmodel.onRenameProduct('Renamed Product');
+
+          expect(dispatchedActions, [
+            const RenameProductAction(
+              productId: 'product-1',
+              name: 'Renamed Product',
+            ),
+          ]);
+        },
+      );
+
+      test(
+        'Method onDeleteProduct dispatches DeleteProductAction when called',
+        () {
+          final ProductDetailsViewModel viewmodel =
+              ProductDetailsViewModel.fromStore(
+                buildStore(AppState.initial()),
+                'product-1',
+              );
+
+          viewmodel.onDeleteProduct();
+
+          expect(dispatchedActions, [const DeleteProductAction('product-1')]);
         },
       );
     },
