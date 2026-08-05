@@ -65,6 +65,16 @@ productDetails:
   deleteSourceTitle: Eliminar esta fonte?
   deleteSourceMessage: Isto remove $merchant e a sua oferta deste produto.
   deleteSourceConfirmLabel: Eliminar
+  renameProductTooltip: Renomear produto
+  renameProductTitle: Renomear produto
+  productNameLabel: Nome do produto
+  renameProductRequired: Introduza o nome do produto.
+  renameProductButton: Guardar
+  renameProductSaving: A guardar
+  deleteProductTooltip: Eliminar produto
+  deleteProductTitle: Eliminar este produto?
+  deleteProductMessage: Isto remove $name e todas as suas fontes e ofertas guardadas.
+  deleteProductConfirmLabel: Eliminar
 
 settings:
   title: Definições

@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 190 (95 per locale)
+/// Strings: 210 (105 per locale)
 ///
-/// Built on 2026-08-05 at 16:13 UTC
+/// Built on 2026-08-05 at 16:35 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -240,6 +240,16 @@ class _StringsProductDetailsEn {
 	String get deleteSourceTitle => 'Delete this source?';
 	String deleteSourceMessage({required Object merchant}) => 'This will remove ${merchant} and its offer from this product.';
 	String get deleteSourceConfirmLabel => 'Delete';
+	String get renameProductTooltip => 'Rename product';
+	String get renameProductTitle => 'Rename product';
+	String get productNameLabel => 'Product name';
+	String get renameProductRequired => 'Enter a product name.';
+	String get renameProductButton => 'Save';
+	String get renameProductSaving => 'Saving';
+	String get deleteProductTooltip => 'Delete product';
+	String get deleteProductTitle => 'Delete this product?';
+	String deleteProductMessage({required Object name}) => 'This removes ${name} and all its saved sources and offers.';
+	String get deleteProductConfirmLabel => 'Delete';
 }
 
 // Path: settings
@@ -501,6 +511,16 @@ class _StringsProductDetailsPt implements _StringsProductDetailsEn {
 	@override String get deleteSourceTitle => 'Eliminar esta fonte?';
 	@override String deleteSourceMessage({required Object merchant}) => 'Isto remove ${merchant} e a sua oferta deste produto.';
 	@override String get deleteSourceConfirmLabel => 'Eliminar';
+	@override String get renameProductTooltip => 'Renomear produto';
+	@override String get renameProductTitle => 'Renomear produto';
+	@override String get productNameLabel => 'Nome do produto';
+	@override String get renameProductRequired => 'Introduza o nome do produto.';
+	@override String get renameProductButton => 'Guardar';
+	@override String get renameProductSaving => 'A guardar';
+	@override String get deleteProductTooltip => 'Eliminar produto';
+	@override String get deleteProductTitle => 'Eliminar este produto?';
+	@override String deleteProductMessage({required Object name}) => 'Isto remove ${name} e todas as suas fontes e ofertas guardadas.';
+	@override String get deleteProductConfirmLabel => 'Eliminar';
 }
 
 // Path: settings
@@ -712,6 +732,16 @@ extension on Translations {
 			case 'productDetails.deleteSourceTitle': return 'Delete this source?';
 			case 'productDetails.deleteSourceMessage': return ({required Object merchant}) => 'This will remove ${merchant} and its offer from this product.';
 			case 'productDetails.deleteSourceConfirmLabel': return 'Delete';
+			case 'productDetails.renameProductTooltip': return 'Rename product';
+			case 'productDetails.renameProductTitle': return 'Rename product';
+			case 'productDetails.productNameLabel': return 'Product name';
+			case 'productDetails.renameProductRequired': return 'Enter a product name.';
+			case 'productDetails.renameProductButton': return 'Save';
+			case 'productDetails.renameProductSaving': return 'Saving';
+			case 'productDetails.deleteProductTooltip': return 'Delete product';
+			case 'productDetails.deleteProductTitle': return 'Delete this product?';
+			case 'productDetails.deleteProductMessage': return ({required Object name}) => 'This removes ${name} and all its saved sources and offers.';
+			case 'productDetails.deleteProductConfirmLabel': return 'Delete';
 			case 'settings.title': return 'Settings';
 			case 'settings.appearance.title': return 'Appearance';
 			case 'settings.appearance.theme': return 'Theme';
@@ -815,6 +845,16 @@ extension on _StringsPt {
 			case 'productDetails.deleteSourceTitle': return 'Eliminar esta fonte?';
 			case 'productDetails.deleteSourceMessage': return ({required Object merchant}) => 'Isto remove ${merchant} e a sua oferta deste produto.';
 			case 'productDetails.deleteSourceConfirmLabel': return 'Eliminar';
+			case 'productDetails.renameProductTooltip': return 'Renomear produto';
+			case 'productDetails.renameProductTitle': return 'Renomear produto';
+			case 'productDetails.productNameLabel': return 'Nome do produto';
+			case 'productDetails.renameProductRequired': return 'Introduza o nome do produto.';
+			case 'productDetails.renameProductButton': return 'Guardar';
+			case 'productDetails.renameProductSaving': return 'A guardar';
+			case 'productDetails.deleteProductTooltip': return 'Eliminar produto';
+			case 'productDetails.deleteProductTitle': return 'Eliminar este produto?';
+			case 'productDetails.deleteProductMessage': return ({required Object name}) => 'Isto remove ${name} e todas as suas fontes e ofertas guardadas.';
+			case 'productDetails.deleteProductConfirmLabel': return 'Eliminar';
 			case 'settings.title': return 'Definições';
 			case 'settings.appearance.title': return 'Aparência';
 			case 'settings.appearance.theme': return 'Tema';

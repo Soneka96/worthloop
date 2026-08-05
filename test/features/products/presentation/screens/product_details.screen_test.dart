@@ -14,10 +14,12 @@ import 'package:worth_loop/features/products/presentation/state/products.actions
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
 import 'package:worth_loop/features/products/presentation/widgets/illustrative_price_notice.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_sources_empty.widget.dart';
+import 'package:worth_loop/features/products/presentation/widgets/rename_product_dialog.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/source_form_dialog.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/store_price.widget.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
+import 'package:worth_loop/shared/features/confirm_dialog.widget.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import '../../fixtures/money.fixture.dart';
 import '../../fixtures/product.fixture.dart';
@@ -254,6 +256,59 @@ void main() {
         );
       },
     );
+
+    testWidgets(
+      'ProductDetailsScreen contains a "product-details-rename-button" IconButton and a "product-details-delete-button" IconButton with the correct parameters',
+      (WidgetTester tester) async {
+        await pumpScreen(tester);
+
+        expect(
+          find.byKey(const Key('product-details-rename-button')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('product-details-delete-button')),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'ProductDetailsScreen does not contain rename or delete buttons when product == null',
+      (WidgetTester tester) async {
+        when(() => mockViewModel.product).thenReturn(null);
+
+        await pumpScreen(tester);
+
+        expect(
+          find.byKey(const Key('product-details-rename-button')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const Key('product-details-delete-button')),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets(
+      'ProductDetailsScreen contains a CircularProgressIndicator instead of the delete button with the correct parameters when isDeletingProduct = true',
+      (WidgetTester tester) async {
+        when(() => mockViewModel.isDeletingProduct).thenReturn(true);
+
+        await pumpScreen(tester);
+
+        expect(find.byType(CircularProgressIndicator), findsOneWidget);
+        expect(
+          find.byKey(const Key('product-details-delete-button')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const Key('product-details-rename-button')),
+          findsOneWidget,
+        );
+      },
+    );
   });
 
   group("ProductDetailsScreen's elements behavior", () {
@@ -341,6 +396,91 @@ void main() {
         );
         expect(dialog.productId, isA<String>());
         expect(dialog.productId, 'product-1');
+      },
+    );
+
+    testWidgets(
+      'ProductDetailsScreen contains a "product-details-rename-button" IconButton with the correct behavior',
+      (WidgetTester tester) async {
+        await pumpScreen(tester);
+
+        await tester.tap(
+          find.byKey(const Key('product-details-rename-button')),
+        );
+        await tester.pumpAndSettle();
+
+        final RenameProductDialog dialog = tester.widget(
+          find.byType(RenameProductDialog),
+        );
+        expect(dialog.productId, isA<String>());
+        expect(dialog.productId, 'product-1');
+        expect(dialog.currentName, 'Example Product');
+      },
+    );
+
+    testWidgets(
+      'ProductDetailsScreen contains a "product-details-delete-button" IconButton with the correct behavior',
+      (WidgetTester tester) async {
+        await pumpScreen(tester);
+
+        await tester.tap(
+          find.byKey(const Key('product-details-delete-button')),
+        );
+        await tester.pumpAndSettle();
+
+        final ConfirmDialog dialog = tester.widget(find.byType(ConfirmDialog));
+        expect(dialog.title, t.productDetails.deleteProductTitle);
+        expect(
+          dialog.message,
+          t.productDetails.deleteProductMessage(name: 'Example Product'),
+        );
+        expect(dialog.confirmLabel, t.productDetails.deleteProductConfirmLabel);
+      },
+    );
+
+    testWidgets(
+      'ProductDetailsScreen calls onDeleteProduct when the delete confirmation is confirmed',
+      (WidgetTester tester) async {
+        bool called = false;
+        when(
+          () => mockViewModel.onDeleteProduct,
+        ).thenReturn(() => called = true);
+
+        await pumpScreen(tester);
+
+        await tester.tap(
+          find.byKey(const Key('product-details-delete-button')),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const Key('confirm-dialog-confirm-button')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(called, isA<bool>());
+        expect(called, isTrue);
+      },
+    );
+
+    testWidgets(
+      'ProductDetailsScreen does not call onDeleteProduct when the delete confirmation is cancelled',
+      (WidgetTester tester) async {
+        bool called = false;
+        when(
+          () => mockViewModel.onDeleteProduct,
+        ).thenReturn(() => called = true);
+
+        await pumpScreen(tester);
+
+        await tester.tap(
+          find.byKey(const Key('product-details-delete-button')),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('confirm-dialog-cancel-button')));
+        await tester.pumpAndSettle();
+
+        expect(called, isA<bool>());
+        expect(called, isFalse);
       },
     );
   });
@@ -462,6 +602,8 @@ void main() {
           await pumpScreen(tester);
 
           const Key backKey = Key('product-details-back-button');
+          const Key renameKey = Key('product-details-rename-button');
+          const Key deleteKey = Key('product-details-delete-button');
           const Key refreshKey = Key('product-details-refresh-button');
           const Key addSourceKey = Key('product-details-add-source-button');
 
@@ -470,6 +612,20 @@ void main() {
           final bool backFocused = hasPrimaryFocusWithin(
             tester,
             find.byKey(backKey),
+          );
+
+          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+          await tester.pump();
+          final bool renameFocused = hasPrimaryFocusWithin(
+            tester,
+            find.byKey(renameKey),
+          );
+
+          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+          await tester.pump();
+          final bool deleteFocused = hasPrimaryFocusWithin(
+            tester,
+            find.byKey(deleteKey),
           );
 
           await tester.sendKeyEvent(LogicalKeyboardKey.tab);
@@ -488,6 +644,10 @@ void main() {
 
           expect(backFocused, isA<bool>());
           expect(backFocused, isTrue);
+          expect(renameFocused, isA<bool>());
+          expect(renameFocused, isTrue);
+          expect(deleteFocused, isA<bool>());
+          expect(deleteFocused, isTrue);
           expect(refreshFocused, isA<bool>());
           expect(refreshFocused, isTrue);
           expect(addSourceFocused, isA<bool>());
