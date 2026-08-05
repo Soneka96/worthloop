@@ -40,4 +40,7 @@ abstract class IProductsRepository {
 
   /// Deletes a saved source.
   Future<Either<Failure, Unit>> deleteSource(String sourceId);
+
+  /// Renames an existing product.
+  Future<Either<Failure, Product>> renameProduct(String productId, String name);
 }

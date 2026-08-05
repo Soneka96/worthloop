@@ -451,6 +451,143 @@ void main() {
     );
   });
 
+  group('Method renameProduct() returns the correct value', () {
+    test('renames the product and preserves everything else', () async {
+      await db
+          .into(db.productTable)
+          .insert(
+            ProductTableCompanion.insert(
+              id: 'product-1',
+              name: 'Original Name',
+              imageUrl: const Value('https://example.com/product.png'),
+              lastUpdatedAt: DateTime(2026, 1, 1),
+            ),
+          );
+      await db
+          .into(db.storePriceTable)
+          .insert(
+            StorePriceTableCompanion.insert(
+              productId: 'product-1',
+              storeName: 'Example Store',
+              productUrl: 'https://example.com/products/1',
+              minorUnits: 999,
+              currencyCode: 'USD',
+              isAvailable: true,
+              lastCheckedAt: DateTime(2026, 1, 1),
+            ),
+          );
+
+      final Either<Failure, ProductModel> result = await datasource
+          .renameProduct('product-1', 'Renamed Product');
+      final ProductModel? product = result.getRight().toNullable();
+
+      expect(product, isA<ProductModel>());
+      expect(product?.id, 'product-1');
+      expect(product?.name, 'Renamed Product');
+      expect(product?.imageUrl, 'https://example.com/product.png');
+      expect(product?.lastUpdatedAt, DateTime(2026, 1, 1));
+      expect(product?.storePrices, hasLength(1));
+      expect(product?.storePrices.single.storeName, 'Example Store');
+      verifyZeroInteractions(mockLoggerService);
+    });
+
+    test('leaves other products untouched', () async {
+      await db
+          .into(db.productTable)
+          .insert(
+            ProductTableCompanion.insert(
+              id: 'product-1',
+              name: 'Original Name',
+              lastUpdatedAt: DateTime(2026, 1, 1),
+            ),
+          );
+      await db
+          .into(db.productTable)
+          .insert(
+            ProductTableCompanion.insert(
+              id: 'product-2',
+              name: 'Other Product',
+              lastUpdatedAt: DateTime(2026, 1, 1),
+            ),
+          );
+
+      await datasource.renameProduct('product-1', 'Renamed Product');
+      final ProductRow otherRow = await (db.select(
+        db.productTable,
+      )..where((table) => table.id.equals('product-2'))).getSingle();
+
+      expect(otherRow.name, 'Other Product');
+    });
+
+    test(
+      'returns Left(NotFoundFailure) when the product does not exist',
+      () async {
+        final Either<Failure, ProductModel> result = await datasource
+            .renameProduct('missing-product', 'Renamed Product');
+
+        expect(result, const Left(NotFoundFailure('Product not found')));
+        verifyZeroInteractions(mockLoggerService);
+      },
+    );
+
+    test(
+      'returns Left(DatabaseFailure) when the product table is missing',
+      () async {
+        await db.customStatement('DROP TABLE product_table');
+
+        final Either<Failure, ProductModel> result = await datasource
+            .renameProduct('product-1', 'Renamed Product');
+        final Failure failure =
+            result.getLeft().toNullable() ??
+            const DatabaseFailure('Expected a failure');
+
+        expect(failure, isA<DatabaseFailure>());
+        verify(() => mockLoggerService.e(failure.message)).called(1);
+        verifyNoMoreInteractions(mockLoggerService);
+      },
+    );
+
+    test(
+      'returns Left(CurrencyFailure) for mixed-currency stored offers',
+      () async {
+        await db
+            .into(db.productTable)
+            .insert(
+              ProductTableCompanion.insert(
+                id: 'product-1',
+                name: 'Original Name',
+                lastUpdatedAt: DateTime(2026, 1, 1),
+              ),
+            );
+        for (final String currencyCode in ['USD', 'EUR']) {
+          await db
+              .into(db.storePriceTable)
+              .insert(
+                StorePriceTableCompanion.insert(
+                  productId: 'product-1',
+                  storeName: currencyCode,
+                  productUrl: 'https://example.com/$currencyCode',
+                  minorUnits: 100,
+                  currencyCode: currencyCode,
+                  isAvailable: true,
+                  lastCheckedAt: DateTime(2026, 1, 1),
+                ),
+              );
+        }
+
+        final Either<Failure, ProductModel> result = await datasource
+            .renameProduct('product-1', 'Renamed Product');
+        final Failure failure =
+            result.getLeft().toNullable() ??
+            const DatabaseFailure('Expected a failure');
+
+        expect(failure, isA<CurrencyFailure>());
+        verify(() => mockLoggerService.e(failure.message)).called(1);
+        verifyNoMoreInteractions(mockLoggerService);
+      },
+    );
+  });
+
   group('Method saveProductSource() returns the correct value', () {
     test('saves and returns a product source', () async {
       await db

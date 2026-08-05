@@ -306,6 +306,47 @@ void main() {
     );
   });
 
+  group('ProductsRepository implements renameProduct() correctly', () {
+    test('Method renameProduct() returns the datasource result', () async {
+      final ProductModel product = buildProductModel(name: 'Renamed Product');
+      when(
+        () => mockDatasource.renameProduct('product-1', 'Renamed Product'),
+      ).thenAnswer((_) async => Right(product));
+
+      final Either<Failure, Product> result = await repository.renameProduct(
+        'product-1',
+        'Renamed Product',
+      );
+
+      expect(result, Right(product));
+      verify(
+        () => mockDatasource.renameProduct('product-1', 'Renamed Product'),
+      ).called(1);
+      verifyNoMoreInteractions(mockDatasource);
+    });
+
+    test(
+      'Method renameProduct() forwards datasource failures unchanged',
+      () async {
+        const NotFoundFailure failure = NotFoundFailure('Product not found');
+        when(
+          () => mockDatasource.renameProduct('product-1', 'Renamed Product'),
+        ).thenAnswer((_) async => const Left(failure));
+
+        final Either<Failure, Product> result = await repository.renameProduct(
+          'product-1',
+          'Renamed Product',
+        );
+
+        expect(result, const Left(failure));
+        verify(
+          () => mockDatasource.renameProduct('product-1', 'Renamed Product'),
+        ).called(1);
+        verifyNoMoreInteractions(mockDatasource);
+      },
+    );
+  });
+
   group('ProductsRepository implements refreshProduct() correctly', () {
     test('refreshes a product source through the remote datasource', () async {
       final ProductModel product = buildProductModel();

@@ -150,6 +150,37 @@ class ProductsLocalDatasource {
     }
   }
 
+  /// Renames an existing product and returns its persisted representation.
+  Future<Either<Failure, ProductModel>> renameProduct(
+    String productId,
+    String name,
+  ) async {
+    try {
+      final ProductModel? product = await _db.transaction(() async {
+        final ProductRow? row = await (_db.select(
+          _db.productTable,
+        )..where((table) => table.id.equals(productId))).getSingleOrNull();
+        if (row == null) {
+          return null;
+        }
+        await (_db.update(_db.productTable)
+              ..where((table) => table.id.equals(productId)))
+            .write(ProductTableCompanion(name: Value(name)));
+        final List<ProductModel> products = await _readProducts();
+        return products.firstWhere((ProductModel item) => item.id == productId);
+      });
+      return product == null
+          ? const Left(NotFoundFailure('Product not found'))
+          : Right(product);
+    } on SqliteException catch (error) {
+      _loggerService.e(error.toString());
+      return Left(DatabaseFailure(error.toString()));
+    } on StateError catch (error) {
+      _loggerService.e(error.toString());
+      return Left(CurrencyFailure(error.toString()));
+    }
+  }
+
   /// Saves a product website link and returns its persisted representation.
   Future<Either<Failure, ProductSourceModel>> saveProductSource(
     ProductSource source,
