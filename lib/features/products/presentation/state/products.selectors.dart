@@ -65,4 +65,28 @@ abstract final class ProductsSelectors {
   /// Returns whether sources for [productId] are being loaded.
   static bool isLoadingSourcesSelector(AppState state, String productId) =>
       state.products.loadingSourcesProductIds.contains(productId);
+
+  /// Returns whether a source is being added.
+  static bool isAddingSourceSelector(AppState state) =>
+      state.products.isAddingSource;
+
+  /// Returns the latest source-add failure, or `null`.
+  static String? addSourceErrorSelector(AppState state) =>
+      state.products.addSourceError;
+
+  /// Returns the identifier of the source currently being edited, or `null`.
+  static String? editingSourceIdSelector(AppState state) =>
+      state.products.editingSourceId;
+
+  /// Returns the latest source-edit failure, or `null`.
+  static String? editSourceErrorSelector(AppState state) =>
+      state.products.editSourceError;
+
+  /// Returns the source identifiers currently being deleted.
+  static Set<String> deletingSourceIdsSelector(AppState state) =>
+      state.products.deletingSourceIds;
+
+  /// Returns the latest source-delete failure, or `null`.
+  static String? deleteSourceErrorSelector(AppState state) =>
+      state.products.deleteSourceError;
 }

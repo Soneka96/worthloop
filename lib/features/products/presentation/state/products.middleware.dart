@@ -4,10 +4,16 @@ import 'package:redux/redux.dart';
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
+import 'package:worth_loop/features/products/domain/usecases/add_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/create_product.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/delete_source.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/edit_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/load_product_sources.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/load_products.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/params/add_source.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/create_product.params.dart';
+import 'package:worth_loop/features/products/domain/usecases/params/delete_source.params.dart';
+import 'package:worth_loop/features/products/domain/usecases/params/edit_source.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/load_product_sources.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/refresh_product.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_all_products.usecase.dart';
@@ -42,6 +48,12 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
         _goBackFromProductDetails(store, action);
       case LoadProductSourcesAction _:
         _loadProductSources(store, action);
+      case AddSourceAction _:
+        _addSource(store, action);
+      case EditSourceAction _:
+        _editSource(store, action);
+      case DeleteSourceAction _:
+        _deleteSource(store, action);
     }
   }
 
@@ -164,6 +176,67 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
           ProductSourcesLoadedAction(
             productId: action.productId,
             sources: sources,
+          ),
+        );
+      },
+    );
+  }
+
+  /// Handles [AddSourceAction].
+  Future<void> _addSource(Store<AppState> store, AddSourceAction action) async {
+    (await sl<AddSourceUseCase>()(
+      AddSourceParams(productId: action.productId, url: action.url),
+    )).fold(
+      (failure) {
+        sl<LoggerService>().e(failure.message, showPopup: true);
+        store.dispatch(SourceAddFailedAction(failure.message));
+      },
+      (ProductSource source) {
+        store.dispatch(SourceAddedAction(source));
+      },
+    );
+  }
+
+  /// Handles [EditSourceAction].
+  Future<void> _editSource(
+    Store<AppState> store,
+    EditSourceAction action,
+  ) async {
+    (await sl<EditSourceUseCase>()(
+      EditSourceParams(sourceId: action.sourceId, url: action.url),
+    )).fold(
+      (failure) {
+        sl<LoggerService>().e(failure.message, showPopup: true);
+        store.dispatch(SourceEditFailedAction(failure.message));
+      },
+      (ProductSource source) {
+        store.dispatch(SourceEditedAction(source));
+      },
+    );
+  }
+
+  /// Handles [DeleteSourceAction].
+  Future<void> _deleteSource(
+    Store<AppState> store,
+    DeleteSourceAction action,
+  ) async {
+    (await sl<DeleteSourceUseCase>()(
+      DeleteSourceParams(sourceId: action.sourceId),
+    )).fold(
+      (failure) {
+        sl<LoggerService>().e(failure.message, showPopup: true);
+        store.dispatch(
+          SourceDeleteFailedAction(
+            sourceId: action.sourceId,
+            message: failure.message,
+          ),
+        );
+      },
+      (_) {
+        store.dispatch(
+          SourceDeletedAction(
+            productId: action.productId,
+            sourceId: action.sourceId,
           ),
         );
       },

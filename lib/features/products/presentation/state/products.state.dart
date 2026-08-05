@@ -48,6 +48,24 @@ class ProductsState extends Equatable {
   /// Product identifiers whose sources are currently loading.
   final Set<String> loadingSourcesProductIds;
 
+  /// Whether a source is being added.
+  final bool isAddingSource;
+
+  /// The most recent source-add failure, or `null`.
+  final String? addSourceError;
+
+  /// Identifier of the source currently being edited, or `null`.
+  final String? editingSourceId;
+
+  /// The most recent source-edit failure, or `null`.
+  final String? editSourceError;
+
+  /// Source identifiers currently being deleted.
+  final Set<String> deletingSourceIds;
+
+  /// The most recent source-delete failure, or `null`.
+  final String? deleteSourceError;
+
   const ProductsState({
     required this.products,
     required this.isLoading,
@@ -61,6 +79,12 @@ class ProductsState extends Equatable {
     required this.createdProductId,
     required this.sourcesByProduct,
     required this.loadingSourcesProductIds,
+    required this.isAddingSource,
+    required this.addSourceError,
+    required this.editingSourceId,
+    required this.editSourceError,
+    required this.deletingSourceIds,
+    required this.deleteSourceError,
   });
 
   /// Returns the state used before products are loaded.
@@ -76,6 +100,12 @@ class ProductsState extends Equatable {
     createdProductId: null,
     sourcesByProduct: {},
     loadingSourcesProductIds: {},
+    isAddingSource: false,
+    addSourceError: null,
+    editingSourceId: null,
+    editSourceError: null,
+    deletingSourceIds: {},
+    deleteSourceError: null,
   );
 
   /// Returns a copy with the supplied fields replaced.
@@ -92,6 +122,12 @@ class ProductsState extends Equatable {
     Option<String>? createdProductId,
     Map<String, List<ProductSource>>? sourcesByProduct,
     Set<String>? loadingSourcesProductIds,
+    bool? isAddingSource,
+    Option<String>? addSourceError,
+    Option<String>? editingSourceId,
+    Option<String>? editSourceError,
+    Set<String>? deletingSourceIds,
+    Option<String>? deleteSourceError,
   }) => ProductsState(
     products: products ?? this.products,
     isLoading: isLoading ?? this.isLoading,
@@ -113,6 +149,20 @@ class ProductsState extends Equatable {
     sourcesByProduct: sourcesByProduct ?? this.sourcesByProduct,
     loadingSourcesProductIds:
         loadingSourcesProductIds ?? this.loadingSourcesProductIds,
+    isAddingSource: isAddingSource ?? this.isAddingSource,
+    addSourceError: addSourceError == null
+        ? this.addSourceError
+        : addSourceError.toNullable(),
+    editingSourceId: editingSourceId == null
+        ? this.editingSourceId
+        : editingSourceId.toNullable(),
+    editSourceError: editSourceError == null
+        ? this.editSourceError
+        : editSourceError.toNullable(),
+    deletingSourceIds: deletingSourceIds ?? this.deletingSourceIds,
+    deleteSourceError: deleteSourceError == null
+        ? this.deleteSourceError
+        : deleteSourceError.toNullable(),
   );
 
   @override
@@ -129,5 +179,11 @@ class ProductsState extends Equatable {
     createdProductId,
     sourcesByProduct,
     loadingSourcesProductIds,
+    isAddingSource,
+    addSourceError,
+    editingSourceId,
+    editSourceError,
+    deletingSourceIds,
+    deleteSourceError,
   ];
 }

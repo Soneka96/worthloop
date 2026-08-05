@@ -7,10 +7,16 @@ import 'package:redux/redux.dart';
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
+import 'package:worth_loop/features/products/domain/usecases/add_source.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/delete_source.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/edit_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/load_product_sources.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/load_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/create_product.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/params/add_source.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/create_product.params.dart';
+import 'package:worth_loop/features/products/domain/usecases/params/delete_source.params.dart';
+import 'package:worth_loop/features/products/domain/usecases/params/edit_source.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/load_product_sources.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/refresh_product.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_all_products.usecase.dart';
@@ -41,6 +47,12 @@ class MockRefreshAllProductsUseCase extends Mock
 class MockLoadProductSourcesUseCase extends Mock
     implements LoadProductSourcesUseCase {}
 
+class MockAddSourceUseCase extends Mock implements AddSourceUseCase {}
+
+class MockEditSourceUseCase extends Mock implements EditSourceUseCase {}
+
+class MockDeleteSourceUseCase extends Mock implements DeleteSourceUseCase {}
+
 class MockLoggerService extends Mock implements LoggerService {}
 
 class MockNavigatorService extends Mock implements NavigatorService {}
@@ -52,6 +64,12 @@ class FakeCreateProductParams extends Fake implements CreateProductParams {}
 class FakeLoadProductSourcesParams extends Fake
     implements LoadProductSourcesParams {}
 
+class FakeAddSourceParams extends Fake implements AddSourceParams {}
+
+class FakeEditSourceParams extends Fake implements EditSourceParams {}
+
+class FakeDeleteSourceParams extends Fake implements DeleteSourceParams {}
+
 void main() {
   late ProductsMiddleware middleware;
   late MockStore store;
@@ -60,6 +78,9 @@ void main() {
   late MockRefreshProductUseCase mockRefreshProductUseCase;
   late MockRefreshAllProductsUseCase mockRefreshAllProductsUseCase;
   late MockLoadProductSourcesUseCase mockLoadProductSourcesUseCase;
+  late MockAddSourceUseCase mockAddSourceUseCase;
+  late MockEditSourceUseCase mockEditSourceUseCase;
+  late MockDeleteSourceUseCase mockDeleteSourceUseCase;
   late MockLoggerService mockLoggerService;
   late MockNavigatorService mockNavigatorService;
   late List<dynamic> actionLog;
@@ -71,6 +92,9 @@ void main() {
     registerFallbackValue(FakeRefreshProductParams());
     registerFallbackValue(FakeCreateProductParams());
     registerFallbackValue(FakeLoadProductSourcesParams());
+    registerFallbackValue(FakeAddSourceParams());
+    registerFallbackValue(FakeEditSourceParams());
+    registerFallbackValue(FakeDeleteSourceParams());
   });
 
   setUp(() {
@@ -81,6 +105,9 @@ void main() {
     mockRefreshProductUseCase = MockRefreshProductUseCase();
     mockRefreshAllProductsUseCase = MockRefreshAllProductsUseCase();
     mockLoadProductSourcesUseCase = MockLoadProductSourcesUseCase();
+    mockAddSourceUseCase = MockAddSourceUseCase();
+    mockEditSourceUseCase = MockEditSourceUseCase();
+    mockDeleteSourceUseCase = MockDeleteSourceUseCase();
     mockLoggerService = MockLoggerService();
     mockNavigatorService = MockNavigatorService();
     actionLog = [];
@@ -98,6 +125,9 @@ void main() {
     sl.registerSingleton<LoadProductSourcesUseCase>(
       mockLoadProductSourcesUseCase,
     );
+    sl.registerSingleton<AddSourceUseCase>(mockAddSourceUseCase);
+    sl.registerSingleton<EditSourceUseCase>(mockEditSourceUseCase);
+    sl.registerSingleton<DeleteSourceUseCase>(mockDeleteSourceUseCase);
     sl.registerSingleton<LoggerService>(mockLoggerService);
     sl.registerSingleton<NavigatorService>(mockNavigatorService);
   });
@@ -417,6 +447,215 @@ void main() {
         ).called(1);
         verifyNoMoreInteractions(mockLoadProductSourcesUseCase);
         verify(() => mockLoggerService.e('failed', showPopup: true)).called(1);
+        verifyNoMoreInteractions(mockLoggerService);
+      },
+    );
+  });
+
+  group('ProductsMiddleware processes AddSourceAction', () {
+    test(
+      'AddSourceAction dispatches SourceAddedAction when successful',
+      () async {
+        final ProductSource source = buildProductSource();
+        when(
+          () => mockAddSourceUseCase(any()),
+        ).thenAnswer((_) async => Right(source));
+
+        middleware.call(
+          store,
+          const AddSourceAction(
+            productId: 'product-1',
+            url: 'https://example.com/products/1',
+          ),
+          next,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(actionLog[0], isA<AddSourceAction>());
+        expect(actionLog[1], isA<SourceAddedAction>());
+        expect((actionLog[1] as SourceAddedAction).source, source);
+        verify(
+          () => mockAddSourceUseCase(
+            const AddSourceParams(
+              productId: 'product-1',
+              url: 'https://example.com/products/1',
+            ),
+          ),
+        ).called(1);
+        verifyNoMoreInteractions(mockAddSourceUseCase);
+        verifyZeroInteractions(mockLoggerService);
+      },
+    );
+
+    test(
+      'AddSourceAction dispatches SourceAddFailedAction when failed',
+      () async {
+        const ValidationFailure failure = ValidationFailure('invalid url');
+        when(
+          () => mockAddSourceUseCase(any()),
+        ).thenAnswer((_) async => const Left(failure));
+
+        middleware.call(
+          store,
+          const AddSourceAction(productId: 'product-1', url: 'not-a-url'),
+          next,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(actionLog[1], isA<SourceAddFailedAction>());
+        expect((actionLog[1] as SourceAddFailedAction).message, isA<String>());
+        expect((actionLog[1] as SourceAddFailedAction).message, 'invalid url');
+        verify(
+          () => mockAddSourceUseCase(
+            const AddSourceParams(productId: 'product-1', url: 'not-a-url'),
+          ),
+        ).called(1);
+        verifyNoMoreInteractions(mockAddSourceUseCase);
+        verify(
+          () => mockLoggerService.e('invalid url', showPopup: true),
+        ).called(1);
+        verifyNoMoreInteractions(mockLoggerService);
+      },
+    );
+  });
+
+  group('ProductsMiddleware processes EditSourceAction', () {
+    test(
+      'EditSourceAction dispatches SourceEditedAction when successful',
+      () async {
+        final ProductSource source = buildProductSource();
+        when(
+          () => mockEditSourceUseCase(any()),
+        ).thenAnswer((_) async => Right(source));
+
+        middleware.call(
+          store,
+          const EditSourceAction(
+            sourceId: 'source-1',
+            url: 'https://example.com/updated',
+          ),
+          next,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(actionLog[0], isA<EditSourceAction>());
+        expect(actionLog[1], isA<SourceEditedAction>());
+        expect((actionLog[1] as SourceEditedAction).source, source);
+        verify(
+          () => mockEditSourceUseCase(
+            const EditSourceParams(
+              sourceId: 'source-1',
+              url: 'https://example.com/updated',
+            ),
+          ),
+        ).called(1);
+        verifyNoMoreInteractions(mockEditSourceUseCase);
+        verifyZeroInteractions(mockLoggerService);
+      },
+    );
+
+    test(
+      'EditSourceAction dispatches SourceEditFailedAction when failed',
+      () async {
+        const ValidationFailure failure = ValidationFailure('invalid url');
+        when(
+          () => mockEditSourceUseCase(any()),
+        ).thenAnswer((_) async => const Left(failure));
+
+        middleware.call(
+          store,
+          const EditSourceAction(sourceId: 'source-1', url: 'not-a-url'),
+          next,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(actionLog[1], isA<SourceEditFailedAction>());
+        expect((actionLog[1] as SourceEditFailedAction).message, isA<String>());
+        expect((actionLog[1] as SourceEditFailedAction).message, 'invalid url');
+        verify(
+          () => mockEditSourceUseCase(
+            const EditSourceParams(sourceId: 'source-1', url: 'not-a-url'),
+          ),
+        ).called(1);
+        verifyNoMoreInteractions(mockEditSourceUseCase);
+        verify(
+          () => mockLoggerService.e('invalid url', showPopup: true),
+        ).called(1);
+        verifyNoMoreInteractions(mockLoggerService);
+      },
+    );
+  });
+
+  group('ProductsMiddleware processes DeleteSourceAction', () {
+    test(
+      'DeleteSourceAction dispatches SourceDeletedAction when successful',
+      () async {
+        when(
+          () => mockDeleteSourceUseCase(any()),
+        ).thenAnswer((_) async => const Right(unit));
+
+        middleware.call(
+          store,
+          const DeleteSourceAction(
+            productId: 'product-1',
+            sourceId: 'source-1',
+          ),
+          next,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(actionLog[0], isA<DeleteSourceAction>());
+        expect(
+          actionLog[1],
+          const SourceDeletedAction(
+            productId: 'product-1',
+            sourceId: 'source-1',
+          ),
+        );
+        verify(
+          () => mockDeleteSourceUseCase(
+            const DeleteSourceParams(sourceId: 'source-1'),
+          ),
+        ).called(1);
+        verifyNoMoreInteractions(mockDeleteSourceUseCase);
+        verifyZeroInteractions(mockLoggerService);
+      },
+    );
+
+    test(
+      'DeleteSourceAction dispatches SourceDeleteFailedAction when failed',
+      () async {
+        const NotFoundFailure failure = NotFoundFailure('Source not found');
+        when(
+          () => mockDeleteSourceUseCase(any()),
+        ).thenAnswer((_) async => const Left(failure));
+
+        middleware.call(
+          store,
+          const DeleteSourceAction(
+            productId: 'product-1',
+            sourceId: 'source-1',
+          ),
+          next,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(
+          actionLog[1],
+          const SourceDeleteFailedAction(
+            sourceId: 'source-1',
+            message: 'Source not found',
+          ),
+        );
+        verify(
+          () => mockDeleteSourceUseCase(
+            const DeleteSourceParams(sourceId: 'source-1'),
+          ),
+        ).called(1);
+        verifyNoMoreInteractions(mockDeleteSourceUseCase);
+        verify(
+          () => mockLoggerService.e('Source not found', showPopup: true),
+        ).called(1);
         verifyNoMoreInteractions(mockLoggerService);
       },
     );

@@ -219,3 +219,129 @@ class ProductSourcesLoadFailedAction extends Equatable {
   @override
   List<Object?> get props => [productId, message];
 }
+
+/// Requests adding a website source to a product.
+@immutable
+class AddSourceAction extends Equatable {
+  /// Identifier of the product to attach this source to.
+  final String productId;
+
+  /// HTTPS website link entered for the source.
+  final String url;
+
+  const AddSourceAction({required this.productId, required this.url});
+
+  @override
+  List<Object?> get props => [productId, url];
+}
+
+/// Carries a newly added source.
+@immutable
+class SourceAddedAction extends Equatable {
+  /// The newly added source.
+  final ProductSource source;
+
+  const SourceAddedAction(this.source);
+
+  @override
+  List<Object?> get props => [source];
+}
+
+/// Carries a source-add failure.
+@immutable
+class SourceAddFailedAction extends Equatable {
+  /// The failure message.
+  final String message;
+
+  const SourceAddFailedAction(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+/// Requests editing a saved source's URL.
+@immutable
+class EditSourceAction extends Equatable {
+  /// Identifier of the source to update.
+  final String sourceId;
+
+  /// New HTTPS website link for the source.
+  final String url;
+
+  const EditSourceAction({required this.sourceId, required this.url});
+
+  @override
+  List<Object?> get props => [sourceId, url];
+}
+
+/// Carries an edited source.
+@immutable
+class SourceEditedAction extends Equatable {
+  /// The updated source.
+  final ProductSource source;
+
+  const SourceEditedAction(this.source);
+
+  @override
+  List<Object?> get props => [source];
+}
+
+/// Carries a source-edit failure.
+@immutable
+class SourceEditFailedAction extends Equatable {
+  /// The failure message.
+  final String message;
+
+  const SourceEditFailedAction(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+/// Requests deleting a saved source.
+@immutable
+class DeleteSourceAction extends Equatable {
+  /// Identifier of the product this source belongs to.
+  final String productId;
+
+  /// Identifier of the source to delete.
+  final String sourceId;
+
+  const DeleteSourceAction({required this.productId, required this.sourceId});
+
+  @override
+  List<Object?> get props => [productId, sourceId];
+}
+
+/// Carries a deleted source.
+@immutable
+class SourceDeletedAction extends Equatable {
+  /// Identifier of the product this source belonged to.
+  final String productId;
+
+  /// Identifier of the deleted source.
+  final String sourceId;
+
+  const SourceDeletedAction({required this.productId, required this.sourceId});
+
+  @override
+  List<Object?> get props => [productId, sourceId];
+}
+
+/// Carries a source-delete failure.
+@immutable
+class SourceDeleteFailedAction extends Equatable {
+  /// Identifier of the source that failed to delete.
+  final String sourceId;
+
+  /// The failure message.
+  final String message;
+
+  const SourceDeleteFailedAction({
+    required this.sourceId,
+    required this.message,
+  });
+
+  @override
+  List<Object?> get props => [sourceId, message];
+}

@@ -490,6 +490,337 @@ void main() {
     );
   });
 
+  group('productsReducer processes AddSourceAction correctly', () {
+    test('AddSourceAction starts adding and clears the error', () {
+      final ProductsState state = ProductsState.initial().copyWith(
+        addSourceError: const Some('old failure'),
+      );
+
+      final ProductsState reducedState = productsReducer(
+        state,
+        const AddSourceAction(productId: 'product-1', url: 'https://x.com'),
+      );
+
+      expect(state.isAddingSource, isA<bool>());
+      expect(state.isAddingSource, isFalse, reason: 'adding starts idle');
+      expect(reducedState.isAddingSource, isA<bool>());
+      expect(reducedState.isAddingSource, isTrue, reason: 'adding starts');
+      expect(
+        reducedState.addSourceError,
+        isNull,
+        reason: 'old add error is cleared',
+      );
+    });
+  });
+
+  group('productsReducer processes SourceAddedAction correctly', () {
+    test('SourceAddedAction appends the source and completes adding', () {
+      final ProductSource existing = buildProductSource(
+        id: 'source-1',
+        productId: 'product-1',
+      );
+      final ProductSource added = buildProductSource(
+        id: 'source-2',
+        productId: 'product-1',
+      );
+      final ProductSource otherProductSource = buildProductSource(
+        id: 'source-3',
+        productId: 'product-2',
+      );
+      final ProductsState state = ProductsState.initial().copyWith(
+        isAddingSource: true,
+        addSourceError: const Some('old failure'),
+        sourcesByProduct: {
+          'product-1': [existing],
+          'product-2': [otherProductSource],
+        },
+      );
+
+      final ProductsState reducedState = productsReducer(
+        state,
+        SourceAddedAction(added),
+      );
+
+      expect(
+        reducedState.sourcesByProduct,
+        {
+          'product-1': [existing, added],
+          'product-2': [otherProductSource],
+        },
+        reason:
+            "the new source is appended to its product, the other product's sources are untouched",
+      );
+      expect(reducedState.isAddingSource, isFalse, reason: 'adding completes');
+      expect(
+        reducedState.addSourceError,
+        isNull,
+        reason: 'old add error is cleared',
+      );
+    });
+
+    test(
+      'SourceAddedAction creates the entry when the product has no sources yet',
+      () {
+        final ProductSource added = buildProductSource();
+        final ProductsState state = ProductsState.initial().copyWith(
+          isAddingSource: true,
+        );
+
+        final ProductsState reducedState = productsReducer(
+          state,
+          SourceAddedAction(added),
+        );
+
+        expect(
+          state.sourcesByProduct,
+          isEmpty,
+          reason: 'the product had no sources yet',
+        );
+        expect(
+          reducedState.sourcesByProduct,
+          {
+            'product-1': [added],
+          },
+          reason: "the product's first source creates its entry",
+        );
+      },
+    );
+  });
+
+  group('productsReducer processes SourceAddFailedAction correctly', () {
+    test('SourceAddFailedAction completes adding with an error', () {
+      final ProductsState state = ProductsState.initial().copyWith(
+        isAddingSource: true,
+      );
+
+      final ProductsState reducedState = productsReducer(
+        state,
+        const SourceAddFailedAction('failed'),
+      );
+
+      expect(state.isAddingSource, isA<bool>());
+      expect(state.isAddingSource, isTrue, reason: 'adding was active');
+      expect(reducedState.isAddingSource, isA<bool>());
+      expect(reducedState.isAddingSource, isFalse, reason: 'adding completes');
+      expect(reducedState.addSourceError, isA<String>());
+      expect(
+        reducedState.addSourceError,
+        'failed',
+        reason: 'failure is stored',
+      );
+    });
+  });
+
+  group('productsReducer processes EditSourceAction correctly', () {
+    test('EditSourceAction starts editing and clears the error', () {
+      final ProductsState state = ProductsState.initial().copyWith(
+        editSourceError: const Some('old failure'),
+      );
+
+      final ProductsState reducedState = productsReducer(
+        state,
+        const EditSourceAction(sourceId: 'source-1', url: 'https://x.com'),
+      );
+
+      expect(state.editingSourceId, isNull, reason: 'editing starts idle');
+      expect(reducedState.editingSourceId, isA<String>());
+      expect(
+        reducedState.editingSourceId,
+        'source-1',
+        reason: 'requested source starts editing',
+      );
+      expect(
+        reducedState.editSourceError,
+        isNull,
+        reason: 'old edit error is cleared',
+      );
+    });
+  });
+
+  group('productsReducer processes SourceEditedAction correctly', () {
+    test(
+      'SourceEditedAction replaces only the matching source and completes editing',
+      () {
+        final ProductSource original = buildProductSource(
+          id: 'source-1',
+          productId: 'product-1',
+          url: 'https://original.example.com',
+        );
+        final ProductSource sibling = buildProductSource(
+          id: 'source-2',
+          productId: 'product-1',
+        );
+        final ProductSource edited = buildProductSource(
+          id: 'source-1',
+          productId: 'product-1',
+          url: 'https://updated.example.com',
+        );
+        final ProductsState state = ProductsState.initial().copyWith(
+          editingSourceId: const Some('source-1'),
+          editSourceError: const Some('old failure'),
+          sourcesByProduct: {
+            'product-1': [original, sibling],
+          },
+        );
+
+        final ProductsState reducedState = productsReducer(
+          state,
+          SourceEditedAction(edited),
+        );
+
+        expect(
+          reducedState.sourcesByProduct,
+          {
+            'product-1': [edited, sibling],
+          },
+          reason: 'matching source is replaced, sibling source is untouched',
+        );
+        expect(
+          reducedState.editingSourceId,
+          isNull,
+          reason: 'editing completes',
+        );
+        expect(
+          reducedState.editSourceError,
+          isNull,
+          reason: 'old edit error is cleared',
+        );
+      },
+    );
+  });
+
+  group('productsReducer processes SourceEditFailedAction correctly', () {
+    test('SourceEditFailedAction completes editing with an error', () {
+      final ProductsState state = ProductsState.initial().copyWith(
+        editingSourceId: const Some('source-1'),
+      );
+
+      final ProductsState reducedState = productsReducer(
+        state,
+        const SourceEditFailedAction('failed'),
+      );
+
+      expect(state.editingSourceId, isA<String>());
+      expect(state.editingSourceId, 'source-1', reason: 'editing was active');
+      expect(reducedState.editingSourceId, isNull, reason: 'editing completes');
+      expect(reducedState.editSourceError, isA<String>());
+      expect(
+        reducedState.editSourceError,
+        'failed',
+        reason: 'failure is stored',
+      );
+    });
+  });
+
+  group('productsReducer processes DeleteSourceAction correctly', () {
+    test(
+      'DeleteSourceAction modifies deletingSourceIds and clears the error',
+      () {
+        final ProductsState state = ProductsState.initial().copyWith(
+          deleteSourceError: const Some('old failure'),
+        );
+
+        final ProductsState reducedState = productsReducer(
+          state,
+          const DeleteSourceAction(
+            productId: 'product-1',
+            sourceId: 'source-1',
+          ),
+        );
+
+        expect(
+          state.deletingSourceIds,
+          isEmpty,
+          reason: 'no source starts deleting',
+        );
+        expect(
+          reducedState.deletingSourceIds,
+          {'source-1'},
+          reason: 'requested source starts deleting',
+        );
+        expect(
+          reducedState.deleteSourceError,
+          isNull,
+          reason: 'old delete error is cleared',
+        );
+      },
+    );
+  });
+
+  group('productsReducer processes SourceDeletedAction correctly', () {
+    test(
+      'SourceDeletedAction removes only the matching source and completes deleting',
+      () {
+        final ProductSource deleted = buildProductSource(
+          id: 'source-1',
+          productId: 'product-1',
+        );
+        final ProductSource sibling = buildProductSource(
+          id: 'source-2',
+          productId: 'product-1',
+        );
+        final ProductsState state = ProductsState.initial().copyWith(
+          deletingSourceIds: {'source-1', 'source-2'},
+          sourcesByProduct: {
+            'product-1': [deleted, sibling],
+          },
+        );
+
+        final ProductsState reducedState = productsReducer(
+          state,
+          const SourceDeletedAction(
+            productId: 'product-1',
+            sourceId: 'source-1',
+          ),
+        );
+
+        expect(
+          reducedState.sourcesByProduct,
+          {
+            'product-1': [sibling],
+          },
+          reason: 'matching source is removed, sibling source is untouched',
+        );
+        expect(
+          reducedState.deletingSourceIds,
+          {'source-2'},
+          reason:
+              "the deleted source's delete completes, the other source's is untouched",
+        );
+      },
+    );
+  });
+
+  group('productsReducer processes SourceDeleteFailedAction correctly', () {
+    test('SourceDeleteFailedAction completes deleting with an error', () {
+      final ProductsState state = ProductsState.initial().copyWith(
+        deletingSourceIds: {'source-1', 'source-2'},
+      );
+
+      final ProductsState reducedState = productsReducer(
+        state,
+        const SourceDeleteFailedAction(sourceId: 'source-1', message: 'failed'),
+      );
+
+      expect(state.deletingSourceIds, {
+        'source-1',
+        'source-2',
+      }, reason: 'both sources were deleting');
+      expect(
+        reducedState.deletingSourceIds,
+        {'source-2'},
+        reason:
+            "the failed source's delete completes, the other source's is untouched",
+      );
+      expect(reducedState.deleteSourceError, isA<String>());
+      expect(
+        reducedState.deleteSourceError,
+        'failed',
+        reason: 'failure is stored',
+      );
+    });
+  });
+
   group('productsReducer processes unhandled actions correctly', () {
     test('Object modifies nothing', () {
       final ProductsState state = ProductsState.initial();

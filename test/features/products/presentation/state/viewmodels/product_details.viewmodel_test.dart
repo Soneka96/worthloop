@@ -1,5 +1,6 @@
 // Package imports:
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:redux/redux.dart';
 
 // Project imports:
@@ -43,6 +44,12 @@ void main() {
                 product.id: [source],
               },
               loadingSourcesProductIds: {product.id},
+              isAddingSource: true,
+              addSourceError: const Some('add failed'),
+              editingSourceId: const Some('source-1'),
+              editSourceError: const Some('edit failed'),
+              deletingSourceIds: {'source-1'},
+              deleteSourceError: const Some('delete failed'),
             ),
           );
 
@@ -57,8 +64,18 @@ void main() {
           expect(viewmodel.sources, [source]);
           expect(viewmodel.isLoadingSources, isA<bool>());
           expect(viewmodel.isLoadingSources, isTrue);
+          expect(viewmodel.isAddingSource, isA<bool>());
+          expect(viewmodel.isAddingSource, isTrue);
+          expect(viewmodel.addSourceError, 'add failed');
+          expect(viewmodel.editingSourceId, 'source-1');
+          expect(viewmodel.editSourceError, 'edit failed');
+          expect(viewmodel.deletingSourceIds, {'source-1'});
+          expect(viewmodel.deleteSourceError, 'delete failed');
           expect(viewmodel.onRefresh, isA<Function()>());
           expect(viewmodel.onGoBack, isA<Function()>());
+          expect(viewmodel.onAddSource, isA<Function(String)>());
+          expect(viewmodel.onEditSource, isA<Function(String, String)>());
+          expect(viewmodel.onDeleteSource, isA<Function(String)>());
         },
       );
 
@@ -86,6 +103,60 @@ void main() {
           viewmodel.onGoBack();
 
           expect(dispatchedActions, [const GoBackFromProductDetailsAction()]);
+        },
+      );
+
+      test('Method onAddSource dispatches AddSourceAction when called', () {
+        final ProductDetailsViewModel viewmodel =
+            ProductDetailsViewModel.fromStore(
+              buildStore(AppState.initial()),
+              'product-1',
+            );
+
+        viewmodel.onAddSource('https://example.com/products/1');
+
+        expect(dispatchedActions, [
+          const AddSourceAction(
+            productId: 'product-1',
+            url: 'https://example.com/products/1',
+          ),
+        ]);
+      });
+
+      test('Method onEditSource dispatches EditSourceAction when called', () {
+        final ProductDetailsViewModel viewmodel =
+            ProductDetailsViewModel.fromStore(
+              buildStore(AppState.initial()),
+              'product-1',
+            );
+
+        viewmodel.onEditSource('source-1', 'https://example.com/updated');
+
+        expect(dispatchedActions, [
+          const EditSourceAction(
+            sourceId: 'source-1',
+            url: 'https://example.com/updated',
+          ),
+        ]);
+      });
+
+      test(
+        'Method onDeleteSource dispatches DeleteSourceAction when called',
+        () {
+          final ProductDetailsViewModel viewmodel =
+              ProductDetailsViewModel.fromStore(
+                buildStore(AppState.initial()),
+                'product-1',
+              );
+
+          viewmodel.onDeleteSource('source-1');
+
+          expect(dispatchedActions, [
+            const DeleteSourceAction(
+              productId: 'product-1',
+              sourceId: 'source-1',
+            ),
+          ]);
         },
       );
     },

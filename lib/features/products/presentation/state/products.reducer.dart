@@ -84,6 +84,48 @@ Reducer<ProductsState> productsReducer = combineReducers<ProductsState>([
   TypedReducer<ProductsState, ProductSourcesLoadFailedAction>(
     productSourcesLoadFailedReducer,
   ).call,
+
+  /// Handles [AddSourceAction].
+  /// Updates [ProductsState.isAddingSource], [ProductsState.addSourceError].
+  TypedReducer<ProductsState, AddSourceAction>(addSourceReducer).call,
+
+  /// Handles [SourceAddedAction].
+  /// Updates [ProductsState.sourcesByProduct], [ProductsState.isAddingSource], [ProductsState.addSourceError].
+  TypedReducer<ProductsState, SourceAddedAction>(sourceAddedReducer).call,
+
+  /// Handles [SourceAddFailedAction].
+  /// Updates [ProductsState.isAddingSource], [ProductsState.addSourceError].
+  TypedReducer<ProductsState, SourceAddFailedAction>(
+    sourceAddFailedReducer,
+  ).call,
+
+  /// Handles [EditSourceAction].
+  /// Updates [ProductsState.editingSourceId], [ProductsState.editSourceError].
+  TypedReducer<ProductsState, EditSourceAction>(editSourceReducer).call,
+
+  /// Handles [SourceEditedAction].
+  /// Updates [ProductsState.sourcesByProduct], [ProductsState.editingSourceId], [ProductsState.editSourceError].
+  TypedReducer<ProductsState, SourceEditedAction>(sourceEditedReducer).call,
+
+  /// Handles [SourceEditFailedAction].
+  /// Updates [ProductsState.editingSourceId], [ProductsState.editSourceError].
+  TypedReducer<ProductsState, SourceEditFailedAction>(
+    sourceEditFailedReducer,
+  ).call,
+
+  /// Handles [DeleteSourceAction].
+  /// Updates [ProductsState.deletingSourceIds], [ProductsState.deleteSourceError].
+  TypedReducer<ProductsState, DeleteSourceAction>(deleteSourceReducer).call,
+
+  /// Handles [SourceDeletedAction].
+  /// Updates [ProductsState.sourcesByProduct], [ProductsState.deletingSourceIds].
+  TypedReducer<ProductsState, SourceDeletedAction>(sourceDeletedReducer).call,
+
+  /// Handles [SourceDeleteFailedAction].
+  /// Updates [ProductsState.deletingSourceIds], [ProductsState.deleteSourceError].
+  TypedReducer<ProductsState, SourceDeleteFailedAction>(
+    sourceDeleteFailedReducer,
+  ).call,
 ]);
 
 /// Handles [LoadProductsAction].
@@ -283,5 +325,124 @@ ProductsState productSourcesLoadFailedReducer(
   return state.copyWith(
     loadingSourcesProductIds: loadingSourcesProductIds,
     error: Some(action.message),
+  );
+}
+
+/// Handles [AddSourceAction].
+/// Updates [ProductsState.isAddingSource], [ProductsState.addSourceError].
+ProductsState addSourceReducer(ProductsState state, AddSourceAction action) =>
+    state.copyWith(isAddingSource: true, addSourceError: const None());
+
+/// Handles [SourceAddedAction].
+/// Updates [ProductsState.sourcesByProduct], [ProductsState.isAddingSource], [ProductsState.addSourceError].
+ProductsState sourceAddedReducer(
+  ProductsState state,
+  SourceAddedAction action,
+) {
+  final List<ProductSource> existing =
+      state.sourcesByProduct[action.source.productId] ?? const [];
+  final Map<String, List<ProductSource>> sourcesByProduct = {
+    ...state.sourcesByProduct,
+  }..[action.source.productId] = [...existing, action.source];
+  return state.copyWith(
+    isAddingSource: false,
+    addSourceError: const None(),
+    sourcesByProduct: sourcesByProduct,
+  );
+}
+
+/// Handles [SourceAddFailedAction].
+/// Updates [ProductsState.isAddingSource], [ProductsState.addSourceError].
+ProductsState sourceAddFailedReducer(
+  ProductsState state,
+  SourceAddFailedAction action,
+) =>
+    state.copyWith(isAddingSource: false, addSourceError: Some(action.message));
+
+/// Handles [EditSourceAction].
+/// Updates [ProductsState.editingSourceId], [ProductsState.editSourceError].
+ProductsState editSourceReducer(ProductsState state, EditSourceAction action) =>
+    state.copyWith(
+      editingSourceId: Some(action.sourceId),
+      editSourceError: const None(),
+    );
+
+/// Handles [SourceEditedAction].
+/// Updates [ProductsState.sourcesByProduct], [ProductsState.editingSourceId], [ProductsState.editSourceError].
+ProductsState sourceEditedReducer(
+  ProductsState state,
+  SourceEditedAction action,
+) {
+  final List<ProductSource> existing =
+      state.sourcesByProduct[action.source.productId] ?? const [];
+  final List<ProductSource> updated = existing
+      .map(
+        (ProductSource source) =>
+            source.id == action.source.id ? action.source : source,
+      )
+      .toList(growable: false);
+  final Map<String, List<ProductSource>> sourcesByProduct = {
+    ...state.sourcesByProduct,
+  }..[action.source.productId] = updated;
+  return state.copyWith(
+    editingSourceId: const None(),
+    editSourceError: const None(),
+    sourcesByProduct: sourcesByProduct,
+  );
+}
+
+/// Handles [SourceEditFailedAction].
+/// Updates [ProductsState.editingSourceId], [ProductsState.editSourceError].
+ProductsState sourceEditFailedReducer(
+  ProductsState state,
+  SourceEditFailedAction action,
+) => state.copyWith(
+  editingSourceId: const None(),
+  editSourceError: Some(action.message),
+);
+
+/// Handles [DeleteSourceAction].
+/// Updates [ProductsState.deletingSourceIds], [ProductsState.deleteSourceError].
+ProductsState deleteSourceReducer(
+  ProductsState state,
+  DeleteSourceAction action,
+) => state.copyWith(
+  deletingSourceIds: {...state.deletingSourceIds, action.sourceId},
+  deleteSourceError: const None(),
+);
+
+/// Handles [SourceDeletedAction].
+/// Updates [ProductsState.sourcesByProduct], [ProductsState.deletingSourceIds].
+ProductsState sourceDeletedReducer(
+  ProductsState state,
+  SourceDeletedAction action,
+) {
+  final List<ProductSource> existing =
+      state.sourcesByProduct[action.productId] ?? const [];
+  final List<ProductSource> remaining = existing
+      .where((ProductSource source) => source.id != action.sourceId)
+      .toList(growable: false);
+  final Map<String, List<ProductSource>> sourcesByProduct = {
+    ...state.sourcesByProduct,
+  }..[action.productId] = remaining;
+  final Set<String> deletingSourceIds = {...state.deletingSourceIds}
+    ..remove(action.sourceId);
+  return state.copyWith(
+    sourcesByProduct: sourcesByProduct,
+    deletingSourceIds: deletingSourceIds,
+  );
+}
+
+/// Handles [SourceDeleteFailedAction].
+/// Updates [ProductsState.deletingSourceIds], [ProductsState.deleteSourceError].
+ProductsState sourceDeleteFailedReducer(
+  ProductsState state,
+  SourceDeleteFailedAction action,
+) {
+  final Set<String> deletingSourceIds = {...state.deletingSourceIds}
+    ..remove(action.sourceId);
+  return state.copyWith(
+    deletingSourceIds: deletingSourceIds,
+    deleteSourceError: Some(action.message),
   );
 }

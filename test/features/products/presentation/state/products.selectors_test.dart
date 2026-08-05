@@ -258,6 +258,144 @@ void main() {
       );
     });
   });
+
+  group('Method isAddingSourceSelector() returns a bool instance', () {
+    test('isAddingSourceSelector() returns isAddingSource', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(isAddingSource: true),
+      );
+
+      expect(ProductsSelectors.isAddingSourceSelector(state), isA<bool>());
+      expect(ProductsSelectors.isAddingSourceSelector(state), isTrue);
+    });
+
+    test(
+      'isAddingSourceSelector() returns false when isAddingSource == false',
+      () {
+        expect(
+          ProductsSelectors.isAddingSourceSelector(AppState.initial()),
+          isFalse,
+        );
+      },
+    );
+  });
+
+  group('Method addSourceErrorSelector() returns a String instance', () {
+    test('addSourceErrorSelector() returns addSourceError', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          addSourceError: const Some('add failed'),
+        ),
+      );
+
+      expect(ProductsSelectors.addSourceErrorSelector(state), isA<String>());
+      expect(ProductsSelectors.addSourceErrorSelector(state), 'add failed');
+    });
+
+    test(
+      'addSourceErrorSelector() returns null when addSourceError == null',
+      () {
+        expect(
+          ProductsSelectors.addSourceErrorSelector(AppState.initial()),
+          isNull,
+        );
+      },
+    );
+  });
+
+  group('Method editingSourceIdSelector() returns a String instance', () {
+    test('editingSourceIdSelector() returns editingSourceId', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          editingSourceId: const Some('source-1'),
+        ),
+      );
+
+      expect(ProductsSelectors.editingSourceIdSelector(state), isA<String>());
+      expect(ProductsSelectors.editingSourceIdSelector(state), 'source-1');
+    });
+
+    test(
+      'editingSourceIdSelector() returns null when editingSourceId == null',
+      () {
+        expect(
+          ProductsSelectors.editingSourceIdSelector(AppState.initial()),
+          isNull,
+        );
+      },
+    );
+  });
+
+  group('Method editSourceErrorSelector() returns a String instance', () {
+    test('editSourceErrorSelector() returns editSourceError', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          editSourceError: const Some('edit failed'),
+        ),
+      );
+
+      expect(ProductsSelectors.editSourceErrorSelector(state), isA<String>());
+      expect(ProductsSelectors.editSourceErrorSelector(state), 'edit failed');
+    });
+
+    test(
+      'editSourceErrorSelector() returns null when editSourceError == null',
+      () {
+        expect(
+          ProductsSelectors.editSourceErrorSelector(AppState.initial()),
+          isNull,
+        );
+      },
+    );
+  });
+
+  group('Method deletingSourceIdsSelector() returns a Set<String> instance', () {
+    test('deletingSourceIdsSelector() returns deletingSourceIds', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          deletingSourceIds: {'source-1'},
+        ),
+      );
+
+      expect(ProductsSelectors.deletingSourceIdsSelector(state), {'source-1'});
+    });
+
+    test(
+      'deletingSourceIdsSelector() returns an empty set when nothing is deleting',
+      () {
+        expect(
+          ProductsSelectors.deletingSourceIdsSelector(AppState.initial()),
+          isEmpty,
+        );
+      },
+    );
+  });
+
+  group('Method deleteSourceErrorSelector() returns a String instance', () {
+    test('deleteSourceErrorSelector() returns deleteSourceError', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          deleteSourceError: const Some('delete failed'),
+        ),
+      );
+
+      expect(ProductsSelectors.deleteSourceErrorSelector(state), isA<String>());
+      expect(
+        ProductsSelectors.deleteSourceErrorSelector(state),
+        'delete failed',
+      );
+    });
+
+    test(
+      'deleteSourceErrorSelector() returns null when deleteSourceError == null',
+      () {
+        expect(
+          ProductsSelectors.deleteSourceErrorSelector(AppState.initial()),
+          isNull,
+        );
+      },
+    );
+  });
 }
 
 AppState _productsStateWithError() => AppState.initial().copyWith(

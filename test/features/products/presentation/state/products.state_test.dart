@@ -28,6 +28,12 @@ void main() {
       expect(state.createdProductId, isNull);
       expect(state.sourcesByProduct, isEmpty);
       expect(state.loadingSourcesProductIds, isEmpty);
+      expect(state.isAddingSource, isFalse);
+      expect(state.addSourceError, isNull);
+      expect(state.editingSourceId, isNull);
+      expect(state.editSourceError, isNull);
+      expect(state.deletingSourceIds, isEmpty);
+      expect(state.deleteSourceError, isNull);
     });
   });
 
@@ -50,6 +56,12 @@ void main() {
           'product-1': [source],
         },
         loadingSourcesProductIds: {'product-1'},
+        isAddingSource: true,
+        addSourceError: const Some('add failed'),
+        editingSourceId: const Some('source-1'),
+        editSourceError: const Some('edit failed'),
+        deletingSourceIds: {'source-1'},
+        deleteSourceError: const Some('delete failed'),
       );
 
       expect(state.products, [product]);
@@ -70,6 +82,12 @@ void main() {
         'product-1': [source],
       });
       expect(state.loadingSourcesProductIds, {'product-1'});
+      expect(state.isAddingSource, isTrue);
+      expect(state.addSourceError, 'add failed');
+      expect(state.editingSourceId, 'source-1');
+      expect(state.editSourceError, 'edit failed');
+      expect(state.deletingSourceIds, {'source-1'});
+      expect(state.deleteSourceError, 'delete failed');
     });
 
     test('ProductsState copyWith clears error when passed None', () {
@@ -94,6 +112,12 @@ void main() {
           'product-1': [buildProductSource()],
         },
         loadingSourcesProductIds: {'product-1'},
+        isAddingSource: true,
+        addSourceError: const Some('add failed'),
+        editingSourceId: const Some('source-1'),
+        editSourceError: const Some('edit failed'),
+        deletingSourceIds: {'source-1'},
+        deleteSourceError: const Some('delete failed'),
       );
 
       expect(state.copyWith(), state);
