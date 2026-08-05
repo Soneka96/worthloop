@@ -33,9 +33,15 @@ abstract final class ProductsSelectors {
   /// Returns the latest product-operation failure, or `null`.
   static String? errorSelector(AppState state) => state.products.error;
 
-  /// Returns the classified refresh failure, or `null`.
+  /// Returns the classified refresh-all failure, or `null`.
   static PriceFetchStatus? refreshStatusSelector(AppState state) =>
       state.products.refreshStatus;
+
+  /// Returns the classified refresh failure for [productId], or `null`.
+  static PriceFetchStatus? refreshStatusForProductSelector(
+    AppState state,
+    String productId,
+  ) => state.products.productRefreshStatuses[productId];
 
   /// Returns whether a product is being created.
   static bool isCreatingProductSelector(AppState state) =>

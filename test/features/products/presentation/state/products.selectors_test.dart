@@ -6,6 +6,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/presentation/state/products.selectors.dart';
 import 'package:worth_loop/features/products/presentation/state/products.state.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import '../../fixtures/product.fixture.dart';
 
@@ -92,6 +93,53 @@ void main() {
       );
     });
   });
+
+  group(
+    'Method refreshStatusForProductSelector() returns a PriceFetchStatus instance',
+    () {
+      test(
+        'refreshStatusForProductSelector() returns the status for the matching product',
+        () {
+          final AppState state = AppState.initial().copyWith(
+            products: ProductsState.initial().copyWith(
+              productRefreshStatuses: {
+                'product-1': PriceFetchStatus.networkError,
+                'product-2': PriceFetchStatus.blocked,
+              },
+            ),
+          );
+
+          expect(
+            ProductsSelectors.refreshStatusForProductSelector(
+              state,
+              'product-1',
+            ),
+            isA<PriceFetchStatus>(),
+          );
+          expect(
+            ProductsSelectors.refreshStatusForProductSelector(
+              state,
+              'product-1',
+            ),
+            PriceFetchStatus.networkError,
+          );
+        },
+      );
+
+      test(
+        'refreshStatusForProductSelector() returns null when productId has no status',
+        () {
+          expect(
+            ProductsSelectors.refreshStatusForProductSelector(
+              AppState.initial(),
+              'product-1',
+            ),
+            isNull,
+          );
+        },
+      );
+    },
+  );
 
   group('Method errorSelector() returns a String instance', () {
     test('errorSelector() returns error', () {
