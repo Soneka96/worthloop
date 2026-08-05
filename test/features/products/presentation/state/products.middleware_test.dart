@@ -6,9 +6,12 @@ import 'package:redux/redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
+import 'package:worth_loop/features/products/domain/usecases/load_product_sources.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/load_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/create_product.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/create_product.params.dart';
+import 'package:worth_loop/features/products/domain/usecases/params/load_product_sources.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/refresh_product.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_all_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_product.usecase.dart';
@@ -22,6 +25,7 @@ import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/usecase/no_params.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import '../../fixtures/product.fixture.dart';
+import '../../fixtures/product_source.fixture.dart';
 
 class MockStore extends Mock implements Store<AppState> {}
 
@@ -34,6 +38,9 @@ class MockRefreshProductUseCase extends Mock implements RefreshProductUseCase {}
 class MockRefreshAllProductsUseCase extends Mock
     implements RefreshAllProductsUseCase {}
 
+class MockLoadProductSourcesUseCase extends Mock
+    implements LoadProductSourcesUseCase {}
+
 class MockLoggerService extends Mock implements LoggerService {}
 
 class MockNavigatorService extends Mock implements NavigatorService {}
@@ -42,6 +49,9 @@ class FakeRefreshProductParams extends Fake implements RefreshProductParams {}
 
 class FakeCreateProductParams extends Fake implements CreateProductParams {}
 
+class FakeLoadProductSourcesParams extends Fake
+    implements LoadProductSourcesParams {}
+
 void main() {
   late ProductsMiddleware middleware;
   late MockStore store;
@@ -49,6 +59,7 @@ void main() {
   late MockCreateProductUseCase mockCreateProductUseCase;
   late MockRefreshProductUseCase mockRefreshProductUseCase;
   late MockRefreshAllProductsUseCase mockRefreshAllProductsUseCase;
+  late MockLoadProductSourcesUseCase mockLoadProductSourcesUseCase;
   late MockLoggerService mockLoggerService;
   late MockNavigatorService mockNavigatorService;
   late List<dynamic> actionLog;
@@ -59,6 +70,7 @@ void main() {
     registerFallbackValue(NoParams());
     registerFallbackValue(FakeRefreshProductParams());
     registerFallbackValue(FakeCreateProductParams());
+    registerFallbackValue(FakeLoadProductSourcesParams());
   });
 
   setUp(() {
@@ -68,6 +80,7 @@ void main() {
     mockCreateProductUseCase = MockCreateProductUseCase();
     mockRefreshProductUseCase = MockRefreshProductUseCase();
     mockRefreshAllProductsUseCase = MockRefreshAllProductsUseCase();
+    mockLoadProductSourcesUseCase = MockLoadProductSourcesUseCase();
     mockLoggerService = MockLoggerService();
     mockNavigatorService = MockNavigatorService();
     actionLog = [];
@@ -81,6 +94,9 @@ void main() {
     sl.registerSingleton<RefreshProductUseCase>(mockRefreshProductUseCase);
     sl.registerSingleton<RefreshAllProductsUseCase>(
       mockRefreshAllProductsUseCase,
+    );
+    sl.registerSingleton<LoadProductSourcesUseCase>(
+      mockLoadProductSourcesUseCase,
     );
     sl.registerSingleton<LoggerService>(mockLoggerService);
     sl.registerSingleton<NavigatorService>(mockNavigatorService);
@@ -338,5 +354,71 @@ void main() {
       verifyNoMoreInteractions(mockNavigatorService);
       verifyZeroInteractions(mockLoggerService);
     });
+  });
+
+  group('ProductsMiddleware processes LoadProductSourcesAction', () {
+    test(
+      'LoadProductSourcesAction dispatches ProductSourcesLoadedAction when successful',
+      () async {
+        final ProductSource source = buildProductSource();
+        when(
+          () => mockLoadProductSourcesUseCase(any()),
+        ).thenAnswer((_) async => Right([source]));
+
+        middleware.call(
+          store,
+          const LoadProductSourcesAction('product-1'),
+          next,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(actionLog[0], isA<LoadProductSourcesAction>());
+        expect(actionLog[1], isA<ProductSourcesLoadedAction>());
+        expect(
+          (actionLog[1] as ProductSourcesLoadedAction).productId,
+          'product-1',
+        );
+        expect((actionLog[1] as ProductSourcesLoadedAction).sources, [source]);
+        verify(
+          () => mockLoadProductSourcesUseCase(
+            const LoadProductSourcesParams(productId: 'product-1'),
+          ),
+        ).called(1);
+        verifyNoMoreInteractions(mockLoadProductSourcesUseCase);
+        verifyZeroInteractions(mockLoggerService);
+      },
+    );
+
+    test(
+      'LoadProductSourcesAction dispatches ProductSourcesLoadFailedAction when failed',
+      () async {
+        const DatabaseFailure failure = DatabaseFailure('failed');
+        when(
+          () => mockLoadProductSourcesUseCase(any()),
+        ).thenAnswer((_) async => const Left(failure));
+
+        middleware.call(
+          store,
+          const LoadProductSourcesAction('product-1'),
+          next,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        final ProductSourcesLoadFailedAction action =
+            actionLog[1] as ProductSourcesLoadFailedAction;
+        expect(action.productId, isA<String>());
+        expect(action.productId, 'product-1');
+        expect(action.message, isA<String>());
+        expect(action.message, 'failed');
+        verify(
+          () => mockLoadProductSourcesUseCase(
+            const LoadProductSourcesParams(productId: 'product-1'),
+          ),
+        ).called(1);
+        verifyNoMoreInteractions(mockLoadProductSourcesUseCase);
+        verify(() => mockLoggerService.e('failed', showPopup: true)).called(1);
+        verifyNoMoreInteractions(mockLoggerService);
+      },
+    );
   });
 }

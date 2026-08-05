@@ -4,11 +4,13 @@ import 'package:fpdart/fpdart.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/presentation/state/products.selectors.dart';
 import 'package:worth_loop/features/products/presentation/state/products.state.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import '../../fixtures/product.fixture.dart';
+import '../../fixtures/product_source.fixture.dart';
 
 void main() {
   group('Method productsSelector() returns a List<Product> instance', () {
@@ -184,6 +186,77 @@ void main() {
         expect(ProductsSelectors.createdProductIdSelector(state), 'product-1');
       },
     );
+  });
+
+  group(
+    'Method sourcesForProductSelector() returns a List<ProductSource> instance',
+    () {
+      test('sourcesForProductSelector() returns the matching sources', () {
+        final ProductSource source = buildProductSource();
+        final ProductSource otherSource = buildProductSource(
+          id: 'source-2',
+          productId: 'product-2',
+        );
+        final AppState state = AppState.initial().copyWith(
+          products: ProductsState.initial().copyWith(
+            sourcesByProduct: {
+              'product-1': [source],
+              'product-2': [otherSource],
+            },
+          ),
+        );
+
+        expect(
+          ProductsSelectors.sourcesForProductSelector(state, 'product-1'),
+          [source],
+        );
+      });
+
+      test(
+        'sourcesForProductSelector() returns an empty list when productId has no sources',
+        () {
+          expect(
+            ProductsSelectors.sourcesForProductSelector(
+              AppState.initial(),
+              'product-1',
+            ),
+            isEmpty,
+          );
+        },
+      );
+    },
+  );
+
+  group('Method isLoadingSourcesSelector() returns a bool instance', () {
+    test(
+      'isLoadingSourcesSelector() returns true when productId is loading',
+      () {
+        final AppState state = AppState.initial().copyWith(
+          products: ProductsState.initial().copyWith(
+            loadingSourcesProductIds: {'product-1', 'product-2'},
+          ),
+        );
+
+        expect(
+          ProductsSelectors.isLoadingSourcesSelector(state, 'product-1'),
+          isA<bool>(),
+        );
+        expect(
+          ProductsSelectors.isLoadingSourcesSelector(state, 'product-1'),
+          isTrue,
+        );
+      },
+    );
+
+    test('isLoadingSourcesSelector() returns false when productId is idle', () {
+      expect(
+        ProductsSelectors.isLoadingSourcesSelector(
+          AppState.initial(),
+          'product-1',
+        ),
+        isFalse,
+      );
+    });
   });
 }
 

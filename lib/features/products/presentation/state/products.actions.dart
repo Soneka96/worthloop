@@ -4,6 +4,7 @@ import 'package:meta/meta.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
 
 /// Requests loading every tracked product.
@@ -169,4 +170,52 @@ class GoBackFromProductDetailsAction extends Equatable {
 
   @override
   List<Object?> get props => [];
+}
+
+/// Requests loading every saved source for one product.
+@immutable
+class LoadProductSourcesAction extends Equatable {
+  /// Identifier of the product whose sources are loaded.
+  final String productId;
+
+  const LoadProductSourcesAction(this.productId);
+
+  @override
+  List<Object?> get props => [productId];
+}
+
+/// Carries the sources loaded for one product.
+@immutable
+class ProductSourcesLoadedAction extends Equatable {
+  /// Identifier of the product these sources belong to.
+  final String productId;
+
+  /// The loaded sources.
+  final List<ProductSource> sources;
+
+  const ProductSourcesLoadedAction({
+    required this.productId,
+    required this.sources,
+  });
+
+  @override
+  List<Object?> get props => [productId, sources];
+}
+
+/// Carries a sources-loading failure for one product.
+@immutable
+class ProductSourcesLoadFailedAction extends Equatable {
+  /// Identifier of the product whose sources failed to load.
+  final String productId;
+
+  /// The failure message.
+  final String message;
+
+  const ProductSourcesLoadFailedAction({
+    required this.productId,
+    required this.message,
+  });
+
+  @override
+  List<Object?> get props => [productId, message];
 }

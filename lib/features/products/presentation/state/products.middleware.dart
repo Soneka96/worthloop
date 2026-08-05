@@ -3,9 +3,12 @@ import 'package:redux/redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/domain/usecases/create_product.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/load_product_sources.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/load_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/create_product.params.dart';
+import 'package:worth_loop/features/products/domain/usecases/params/load_product_sources.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/refresh_product.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_all_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_product.usecase.dart';
@@ -37,6 +40,8 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
         _goToProductDetails(store, action);
       case GoBackFromProductDetailsAction _:
         _goBackFromProductDetails(store, action);
+      case LoadProductSourcesAction _:
+        _loadProductSources(store, action);
     }
   }
 
@@ -135,5 +140,33 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
   ) {
     sl<NavigatorService>().pop();
     return Future<void>.value();
+  }
+
+  /// Handles [LoadProductSourcesAction].
+  Future<void> _loadProductSources(
+    Store<AppState> store,
+    LoadProductSourcesAction action,
+  ) async {
+    (await sl<LoadProductSourcesUseCase>()(
+      LoadProductSourcesParams(productId: action.productId),
+    )).fold(
+      (failure) {
+        sl<LoggerService>().e(failure.message, showPopup: true);
+        store.dispatch(
+          ProductSourcesLoadFailedAction(
+            productId: action.productId,
+            message: failure.message,
+          ),
+        );
+      },
+      (List<ProductSource> sources) {
+        store.dispatch(
+          ProductSourcesLoadedAction(
+            productId: action.productId,
+            sources: sources,
+          ),
+        );
+      },
+    );
   }
 }

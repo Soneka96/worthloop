@@ -4,6 +4,7 @@ import 'package:redux/redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/products.state.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
@@ -64,6 +65,24 @@ Reducer<ProductsState> productsReducer = combineReducers<ProductsState>([
   /// Updates [ProductsState.isRefreshingAll], [ProductsState.error].
   TypedReducer<ProductsState, RefreshAllProductsFailedAction>(
     refreshAllProductsFailedReducer,
+  ).call,
+
+  /// Handles [LoadProductSourcesAction].
+  /// Updates [ProductsState.loadingSourcesProductIds].
+  TypedReducer<ProductsState, LoadProductSourcesAction>(
+    loadProductSourcesReducer,
+  ).call,
+
+  /// Handles [ProductSourcesLoadedAction].
+  /// Updates [ProductsState.sourcesByProduct], [ProductsState.loadingSourcesProductIds].
+  TypedReducer<ProductsState, ProductSourcesLoadedAction>(
+    productSourcesLoadedReducer,
+  ).call,
+
+  /// Handles [ProductSourcesLoadFailedAction].
+  /// Updates [ProductsState.loadingSourcesProductIds], [ProductsState.error].
+  TypedReducer<ProductsState, ProductSourcesLoadFailedAction>(
+    productSourcesLoadFailedReducer,
   ).call,
 ]);
 
@@ -221,3 +240,48 @@ ProductsState refreshAllProductsFailedReducer(
       ? const None()
       : Some(action.status ?? PriceFetchStatus.none),
 );
+
+/// Handles [LoadProductSourcesAction].
+/// Updates [ProductsState.loadingSourcesProductIds].
+ProductsState loadProductSourcesReducer(
+  ProductsState state,
+  LoadProductSourcesAction action,
+) => state.copyWith(
+  loadingSourcesProductIds: {
+    ...state.loadingSourcesProductIds,
+    action.productId,
+  },
+);
+
+/// Handles [ProductSourcesLoadedAction].
+/// Updates [ProductsState.sourcesByProduct], [ProductsState.loadingSourcesProductIds].
+ProductsState productSourcesLoadedReducer(
+  ProductsState state,
+  ProductSourcesLoadedAction action,
+) {
+  final Map<String, List<ProductSource>> sourcesByProduct = {
+    ...state.sourcesByProduct,
+  }..[action.productId] = action.sources;
+  final Set<String> loadingSourcesProductIds = {
+    ...state.loadingSourcesProductIds,
+  }..remove(action.productId);
+  return state.copyWith(
+    sourcesByProduct: sourcesByProduct,
+    loadingSourcesProductIds: loadingSourcesProductIds,
+  );
+}
+
+/// Handles [ProductSourcesLoadFailedAction].
+/// Updates [ProductsState.loadingSourcesProductIds], [ProductsState.error].
+ProductsState productSourcesLoadFailedReducer(
+  ProductsState state,
+  ProductSourcesLoadFailedAction action,
+) {
+  final Set<String> loadingSourcesProductIds = {
+    ...state.loadingSourcesProductIds,
+  }..remove(action.productId);
+  return state.copyWith(
+    loadingSourcesProductIds: loadingSourcesProductIds,
+    error: Some(action.message),
+  );
+}

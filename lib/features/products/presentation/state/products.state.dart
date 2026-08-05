@@ -5,6 +5,7 @@ import 'package:meta/meta.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
 
 /// Redux state for tracked products.
@@ -41,6 +42,12 @@ class ProductsState extends Equatable {
   /// Identifier of the most recently created product, or `null`.
   final String? createdProductId;
 
+  /// Saved website sources for each product, keyed by product identifier.
+  final Map<String, List<ProductSource>> sourcesByProduct;
+
+  /// Product identifiers whose sources are currently loading.
+  final Set<String> loadingSourcesProductIds;
+
   const ProductsState({
     required this.products,
     required this.isLoading,
@@ -52,6 +59,8 @@ class ProductsState extends Equatable {
     required this.isCreatingProduct,
     required this.creationError,
     required this.createdProductId,
+    required this.sourcesByProduct,
+    required this.loadingSourcesProductIds,
   });
 
   /// Returns the state used before products are loaded.
@@ -65,6 +74,8 @@ class ProductsState extends Equatable {
     isCreatingProduct: false,
     creationError: null,
     createdProductId: null,
+    sourcesByProduct: {},
+    loadingSourcesProductIds: {},
   );
 
   /// Returns a copy with the supplied fields replaced.
@@ -79,6 +90,8 @@ class ProductsState extends Equatable {
     bool? isCreatingProduct,
     Option<String>? creationError,
     Option<String>? createdProductId,
+    Map<String, List<ProductSource>>? sourcesByProduct,
+    Set<String>? loadingSourcesProductIds,
   }) => ProductsState(
     products: products ?? this.products,
     isLoading: isLoading ?? this.isLoading,
@@ -97,6 +110,9 @@ class ProductsState extends Equatable {
     createdProductId: createdProductId == null
         ? this.createdProductId
         : createdProductId.toNullable(),
+    sourcesByProduct: sourcesByProduct ?? this.sourcesByProduct,
+    loadingSourcesProductIds:
+        loadingSourcesProductIds ?? this.loadingSourcesProductIds,
   );
 
   @override
@@ -111,5 +127,7 @@ class ProductsState extends Equatable {
     isCreatingProduct,
     creationError,
     createdProductId,
+    sourcesByProduct,
+    loadingSourcesProductIds,
   ];
 }

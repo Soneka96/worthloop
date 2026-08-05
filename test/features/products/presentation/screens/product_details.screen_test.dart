@@ -10,6 +10,7 @@ import 'package:redux/redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/presentation/screens/product_details.screen.dart';
+import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
 import 'package:worth_loop/features/products/presentation/widgets/illustrative_price_notice.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/store_price.widget.dart';
@@ -24,10 +25,12 @@ class MockProductDetailsViewModel extends Mock
     implements ProductDetailsViewModel {}
 
 void main() {
+  late List<dynamic> dispatchedActions;
   late MockProductDetailsViewModel mockViewModel;
   late Store<AppState> store;
 
   setUp(() {
+    dispatchedActions = [];
     mockViewModel = MockProductDetailsViewModel();
     when(() => mockViewModel.product).thenReturn(
       buildProduct(
@@ -55,10 +58,10 @@ void main() {
     sl.registerFactoryParam<ProductDetailsViewModel, Store<AppState>, String>(
       (store, productId) => mockViewModel,
     );
-    store = Store<AppState>(
-      (AppState state, dynamic action) => state,
-      initialState: AppState.initial(),
-    );
+    store = Store<AppState>((AppState state, dynamic action) {
+      dispatchedActions.add(action);
+      return state;
+    }, initialState: AppState.initial());
   });
 
   tearDown(() async {
@@ -245,6 +248,23 @@ void main() {
       },
     );
   });
+
+  group(
+    "ProductDetailsScreen's StoreConnector dispatches LoadProductSourcesAction on init",
+    () {
+      testWidgets(
+        'ProductDetailsScreen dispatches LoadProductSourcesAction on init',
+        (WidgetTester tester) async {
+          await tester.pumpWidget(buildWidget());
+
+          expect(
+            dispatchedActions,
+            contains(const LoadProductSourcesAction('product-1')),
+          );
+        },
+      );
+    },
+  );
 
   group("ProductDetailsScreen's translations", () {
     testWidgets('ProductDetailsScreen displays the Portuguese translations', (

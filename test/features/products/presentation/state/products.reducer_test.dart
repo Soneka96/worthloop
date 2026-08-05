@@ -4,11 +4,13 @@ import 'package:fpdart/fpdart.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/products.reducer.dart';
 import 'package:worth_loop/features/products/presentation/state/products.state.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
 import '../../fixtures/product.fixture.dart';
+import '../../fixtures/product_source.fixture.dart';
 
 void main() {
   group('productsReducer processes LoadProductsAction correctly', () {
@@ -390,6 +392,103 @@ void main() {
       });
     },
   );
+
+  group('productsReducer processes LoadProductSourcesAction correctly', () {
+    test('LoadProductSourcesAction modifies loadingSourcesProductIds', () {
+      final ProductsState state = ProductsState.initial();
+      final ProductsState reducedState = productsReducer(
+        state,
+        const LoadProductSourcesAction('product-1'),
+      );
+
+      expect(
+        state.loadingSourcesProductIds,
+        isEmpty,
+        reason: 'no product starts loading sources',
+      );
+      expect(
+        reducedState.loadingSourcesProductIds,
+        {'product-1'},
+        reason: 'requested product starts loading sources',
+      );
+    });
+  });
+
+  group('productsReducer processes ProductSourcesLoadedAction correctly', () {
+    test(
+      'ProductSourcesLoadedAction modifies sourcesByProduct and loadingSourcesProductIds',
+      () {
+        final ProductSource source = buildProductSource();
+        final ProductSource otherSource = buildProductSource(
+          id: 'source-2',
+          productId: 'product-2',
+        );
+        final ProductsState state = ProductsState.initial().copyWith(
+          loadingSourcesProductIds: {'product-1', 'product-2'},
+          sourcesByProduct: {
+            'product-2': [otherSource],
+          },
+        );
+        final ProductsState reducedState = productsReducer(
+          state,
+          ProductSourcesLoadedAction(productId: 'product-1', sources: [source]),
+        );
+
+        expect(
+          state.sourcesByProduct,
+          {
+            'product-2': [otherSource],
+          },
+          reason: 'only the other product had sources loaded',
+        );
+        expect(
+          reducedState.sourcesByProduct,
+          {
+            'product-1': [source],
+            'product-2': [otherSource],
+          },
+          reason:
+              "the requested product's sources are stored, the other product's are untouched",
+        );
+        expect(
+          reducedState.loadingSourcesProductIds,
+          {'product-2'},
+          reason: "the requested product's loading completes",
+        );
+      },
+    );
+  });
+
+  group('productsReducer processes ProductSourcesLoadFailedAction correctly', () {
+    test(
+      'ProductSourcesLoadFailedAction modifies loadingSourcesProductIds and error',
+      () {
+        final ProductsState state = ProductsState.initial().copyWith(
+          loadingSourcesProductIds: {'product-1', 'product-2'},
+        );
+        final ProductsState reducedState = productsReducer(
+          state,
+          const ProductSourcesLoadFailedAction(
+            productId: 'product-1',
+            message: 'failed',
+          ),
+        );
+
+        expect(state.loadingSourcesProductIds, {
+          'product-1',
+          'product-2',
+        }, reason: 'both products were loading');
+        expect(
+          reducedState.loadingSourcesProductIds,
+          {'product-2'},
+          reason:
+              "the failed product's loading completes, the other product's is untouched",
+        );
+        expect(reducedState.error, isA<String>());
+        expect(reducedState.error, 'failed', reason: 'failure is stored');
+      },
+    );
+  });
 
   group('productsReducer processes unhandled actions correctly', () {
     test('Object modifies nothing', () {

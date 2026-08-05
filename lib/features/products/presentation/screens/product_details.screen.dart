@@ -7,6 +7,7 @@ import 'package:flutter_redux/flutter_redux.dart';
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/store_price.entity.dart';
+import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
 import 'package:worth_loop/features/products/presentation/widgets/illustrative_price_notice.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_best_price_card.widget.dart';
@@ -30,6 +31,7 @@ class ProductDetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return StoreConnector<AppState, ProductDetailsViewModel>(
       distinct: true,
+      onInit: (store) => store.dispatch(LoadProductSourcesAction(productId)),
       converter: (store) =>
           sl<ProductDetailsViewModel>(param1: store, param2: productId),
       builder: (context, viewmodel) {

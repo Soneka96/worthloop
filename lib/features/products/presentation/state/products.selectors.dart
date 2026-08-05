@@ -1,5 +1,6 @@
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 
@@ -54,4 +55,14 @@ abstract final class ProductsSelectors {
   /// Returns the identifier of the latest created product, or `null`.
   static String? createdProductIdSelector(AppState state) =>
       state.products.createdProductId;
+
+  /// Returns the saved sources for [productId].
+  static List<ProductSource> sourcesForProductSelector(
+    AppState state,
+    String productId,
+  ) => state.products.sourcesByProduct[productId] ?? const [];
+
+  /// Returns whether sources for [productId] are being loaded.
+  static bool isLoadingSourcesSelector(AppState state, String productId) =>
+      state.products.loadingSourcesProductIds.contains(productId);
 }

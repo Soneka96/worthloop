@@ -4,12 +4,14 @@ import 'package:redux/redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/products.state.dart';
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import '../../../fixtures/product.fixture.dart';
+import '../../../fixtures/product_source.fixture.dart';
 
 void main() {
   late List<dynamic> dispatchedActions;
@@ -31,11 +33,16 @@ void main() {
         'Method fromStore() constructs ProductDetailsViewModel correctly',
         () {
           final Product product = buildProduct();
+          final ProductSource source = buildProductSource();
           final AppState state = AppState.initial().copyWith(
             products: ProductsState.initial().copyWith(
               products: [product],
               refreshingProductIds: {product.id},
               productRefreshStatuses: {product.id: PriceFetchStatus.blocked},
+              sourcesByProduct: {
+                product.id: [source],
+              },
+              loadingSourcesProductIds: {product.id},
             ),
           );
 
@@ -47,6 +54,9 @@ void main() {
           expect(viewmodel.isRefreshing, isTrue);
           expect(viewmodel.refreshStatus, isA<PriceFetchStatus>());
           expect(viewmodel.refreshStatus, PriceFetchStatus.blocked);
+          expect(viewmodel.sources, [source]);
+          expect(viewmodel.isLoadingSources, isA<bool>());
+          expect(viewmodel.isLoadingSources, isTrue);
           expect(viewmodel.onRefresh, isA<Function()>());
           expect(viewmodel.onGoBack, isA<Function()>());
         },
