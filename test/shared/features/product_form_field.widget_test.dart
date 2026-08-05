@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 // Project imports:
-import 'package:worth_loop/features/home/presentation/widgets/product_form_field.widget.dart';
+import 'package:worth_loop/shared/features/product_form_field.widget.dart';
 
 void main() {
   group('ProductFormField contains widgets', () {

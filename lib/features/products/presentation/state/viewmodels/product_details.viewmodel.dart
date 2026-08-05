@@ -22,13 +22,13 @@ class ProductDetailsViewModel extends Equatable {
   /// Classified reason for the latest refresh failure, or `null`.
   final PriceFetchStatus? refreshStatus;
 
-  // TODO: sources, isLoadingSources, isAddingSource, addSourceError,
-  // editingSourceId, editSourceError, deletingSourceIds, deleteSourceError,
-  // isRenamingProduct, renameProductError, isDeletingProduct,
-  // deleteProductError, onAddSource, onEditSource, onDeleteSource,
-  // onRenameProduct, and onDeleteProduct are not yet read by
-  // ProductDetailsScreen — the Sources section and rename/delete-product UI
-  // that consume them land in later phase-3 steps.
+  // TODO: isRenamingProduct, renameProductError, isDeletingProduct,
+  // deleteProductError, onRenameProduct, and onDeleteProduct are not yet read
+  // anywhere — the rename/delete-product UI that consumes them lands in a
+  // later phase-3 step. deleteSourceError is intentionally never read in the
+  // UI: a delete-source failure is a background action failure outside a
+  // form submission, so the popup LoggerService already dispatches on
+  // failure is the correct (and only) surface per error-handling.md.
   /// Saved website sources for this product.
   final List<ProductSource> sources;
 

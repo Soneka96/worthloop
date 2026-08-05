@@ -1,5 +1,7 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
 
+// Project imports:
 import 'package:worth_loop/features/products/domain/entities/store_price.entity.dart';
 import 'package:worth_loop/features/products/presentation/widgets/store_price.widget.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
@@ -27,9 +29,8 @@ class ProductOffersWidget extends StatelessWidget {
         : (availablePrices.isEmpty ? 0 : availablePrices.length + 1) +
               (unavailablePrices.isEmpty ? 0 : unavailablePrices.length + 2);
 
-    return ListView.builder(
-      itemCount: itemCount,
-      itemBuilder: (context, index) {
+    return SliverList(
+      delegate: SliverChildBuilderDelegate((context, index) {
         if (availablePrices.isEmpty && unavailablePrices.isEmpty) {
           return Padding(
             padding: EdgeInsets.only(bottom: context.spacing.sm),
@@ -83,7 +84,7 @@ class ProductOffersWidget extends StatelessWidget {
             storePrice: unavailablePrices[unavailableIndex - 2],
           ),
         );
-      },
+      }, childCount: itemCount),
     );
   }
 }

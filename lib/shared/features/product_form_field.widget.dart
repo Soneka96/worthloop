@@ -1,7 +1,7 @@
 // Flutter imports:
 import 'package:flutter/material.dart';
 
-/// Reusable labeled input for the add-product form.
+/// Reusable labeled text input for a product-related form (name, source URL).
 class ProductFormField extends StatelessWidget {
   /// Controller for the field's text.
   final TextEditingController controller;

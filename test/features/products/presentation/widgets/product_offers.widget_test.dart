@@ -16,9 +16,13 @@ void main() {
   }) => TranslationProvider(
     child: MaterialApp(
       home: Scaffold(
-        body: ProductOffersWidget(
-          availablePrices: availablePrices,
-          unavailablePrices: unavailablePrices,
+        body: CustomScrollView(
+          slivers: [
+            ProductOffersWidget(
+              availablePrices: availablePrices,
+              unavailablePrices: unavailablePrices,
+            ),
+          ],
         ),
       ),
     ),
@@ -91,15 +95,17 @@ void main() {
         expect(find.byType(StorePriceWidget), findsOneWidget);
       },
     );
-  });
 
-  testWidgets('ProductOffersWidget uses a lazy offer list', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(buildWidget(availablePrices: [buildStorePrice()]));
+    testWidgets('ProductOffersWidget uses a lazy offer list', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildWidget(availablePrices: [buildStorePrice()]),
+      );
 
-    final ListView listView = tester.widget(find.byType(ListView));
+      final SliverList sliverList = tester.widget(find.byType(SliverList));
 
-    expect(listView.childrenDelegate, isA<SliverChildBuilderDelegate>());
+      expect(sliverList.delegate, isA<SliverChildBuilderDelegate>());
+    });
   });
 }

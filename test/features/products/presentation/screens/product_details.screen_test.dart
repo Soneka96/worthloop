@@ -13,12 +13,15 @@ import 'package:worth_loop/features/products/presentation/screens/product_detail
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
 import 'package:worth_loop/features/products/presentation/widgets/illustrative_price_notice.widget.dart';
+import 'package:worth_loop/features/products/presentation/widgets/product_sources_empty.widget.dart';
+import 'package:worth_loop/features/products/presentation/widgets/source_form_dialog.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/store_price.widget.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import '../../fixtures/money.fixture.dart';
 import '../../fixtures/product.fixture.dart';
+import '../../fixtures/product_source.fixture.dart';
 import '../../fixtures/store_price.fixture.dart';
 
 class MockProductDetailsViewModel extends Mock
@@ -52,8 +55,25 @@ void main() {
       ),
     );
     when(() => mockViewModel.isRefreshing).thenReturn(false);
+    when(() => mockViewModel.sources).thenReturn([]);
+    when(() => mockViewModel.isLoadingSources).thenReturn(false);
+    when(() => mockViewModel.isAddingSource).thenReturn(false);
+    when(() => mockViewModel.addSourceError).thenReturn(null);
+    when(() => mockViewModel.editingSourceId).thenReturn(null);
+    when(() => mockViewModel.editSourceError).thenReturn(null);
+    when(() => mockViewModel.deletingSourceIds).thenReturn(const {});
+    when(() => mockViewModel.deleteSourceError).thenReturn(null);
+    when(() => mockViewModel.isRenamingProduct).thenReturn(false);
+    when(() => mockViewModel.renameProductError).thenReturn(null);
+    when(() => mockViewModel.isDeletingProduct).thenReturn(false);
+    when(() => mockViewModel.deleteProductError).thenReturn(null);
     when(() => mockViewModel.onRefresh).thenReturn(() {});
     when(() => mockViewModel.onGoBack).thenReturn(() {});
+    when(() => mockViewModel.onAddSource).thenReturn((_) {});
+    when(() => mockViewModel.onEditSource).thenReturn((_, _) {});
+    when(() => mockViewModel.onDeleteSource).thenReturn((_) {});
+    when(() => mockViewModel.onRenameProduct).thenReturn((_) {});
+    when(() => mockViewModel.onDeleteProduct).thenReturn(() {});
 
     sl.registerFactoryParam<ProductDetailsViewModel, Store<AppState>, String>(
       (store, productId) => mockViewModel,
@@ -88,6 +108,22 @@ void main() {
     ),
   );
 
+  /// Pumps [ProductDetailsScreen] with an enlarged surface so the
+  /// Sources section — the last sliver in the page — is actually built and
+  /// findable instead of staying off-screen at the default test viewport
+  /// size.
+  Future<void> pumpScreen(
+    WidgetTester tester, {
+    ThemeMode themeMode = ThemeMode.light,
+    TextScaler textScaler = TextScaler.noScaling,
+  }) async {
+    await tester.binding.setSurfaceSize(const Size(800, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      buildWidget(themeMode: themeMode, textScaler: textScaler),
+    );
+  }
+
   bool hasPrimaryFocusWithin(WidgetTester tester, Finder finder) {
     final BuildContext? focusContext =
         FocusManager.instance.primaryFocus?.context;
@@ -110,7 +146,7 @@ void main() {
     testWidgets(
       'ProductDetailsScreen contains product and offer data with the correct parameters',
       (WidgetTester tester) async {
-        await tester.pumpWidget(buildWidget());
+        await pumpScreen(tester);
 
         expect(find.text('Example Product'), findsOneWidget);
         expect(find.text('399.99 €'), findsWidgets);
@@ -129,17 +165,17 @@ void main() {
     testWidgets('ProductDetailsScreen uses a lazy offer list', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(buildWidget());
+      await pumpScreen(tester);
 
-      final ListView listView = tester.widget(find.byType(ListView));
+      final SliverList sliverList = tester.widget(find.byType(SliverList).last);
 
-      expect(listView.childrenDelegate, isA<SliverChildBuilderDelegate>());
+      expect(sliverList.delegate, isA<SliverChildBuilderDelegate>());
     });
 
     testWidgets(
       'ProductDetailsScreen contains offers sorted with available prices first',
       (WidgetTester tester) async {
-        await tester.pumpWidget(buildWidget());
+        await pumpScreen(tester);
 
         final List<StorePriceWidget> offers = tester
             .widgetList<StorePriceWidget>(find.byType(StorePriceWidget))
@@ -158,7 +194,7 @@ void main() {
       (WidgetTester tester) async {
         when(() => mockViewModel.product).thenReturn(null);
 
-        await tester.pumpWidget(buildWidget());
+        await pumpScreen(tester);
 
         expect(find.text('Product not found'), findsOneWidget);
         expect(find.byType(IllustrativePriceNotice), findsNothing);
@@ -171,11 +207,53 @@ void main() {
     ) async {
       when(() => mockViewModel.product).thenReturn(buildProduct());
 
-      await tester.pumpWidget(buildWidget());
+      await pumpScreen(tester);
 
       expect(find.text(t.productDetails.noOffers), findsOneWidget);
       expect(find.byType(StorePriceWidget), findsNothing);
     });
+
+    testWidgets(
+      'ProductDetailsScreen contains a "product-details-add-source-button" FilledButton with the correct parameters',
+      (WidgetTester tester) async {
+        await pumpScreen(tester);
+
+        expect(
+          find.byKey(const Key('product-details-add-source-button')),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'ProductDetailsScreen contains a ProductSourcesEmptyWidget with the correct parameters when sources is empty',
+      (WidgetTester tester) async {
+        await pumpScreen(tester);
+
+        expect(find.byType(ProductSourcesEmptyWidget), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'ProductDetailsScreen contains a ProductSourceRow per source with the correct parameters when sources is not empty',
+      (WidgetTester tester) async {
+        when(() => mockViewModel.sources).thenReturn([
+          buildProductSource(id: 'source-1'),
+          buildProductSource(id: 'source-2'),
+        ]);
+
+        await pumpScreen(tester);
+
+        expect(
+          find.byKey(const Key('product-source-source-1')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('product-source-source-2')),
+          findsOneWidget,
+        );
+      },
+    );
   });
 
   group("ProductDetailsScreen's elements behavior", () {
@@ -186,7 +264,7 @@ void main() {
           () => mockViewModel.onRefresh,
         ).thenReturn(() => print('refresh called'));
 
-        await tester.pumpWidget(buildWidget());
+        await pumpScreen(tester);
 
         await expectLater(
           () => tester.tap(
@@ -204,7 +282,7 @@ void main() {
           () => mockViewModel.onGoBack,
         ).thenReturn(() => print('back called'));
 
-        await tester.pumpWidget(buildWidget());
+        await pumpScreen(tester);
 
         await expectLater(
           () =>
@@ -219,7 +297,7 @@ void main() {
       (WidgetTester tester) async {
         when(() => mockViewModel.isRefreshing).thenReturn(true);
 
-        await tester.pumpWidget(buildWidget());
+        await pumpScreen(tester);
         final FilledButton button = tester.widget(
           find.byKey(const Key('product-details-refresh-button')),
         );
@@ -237,7 +315,7 @@ void main() {
           () => mockViewModel.onRefresh,
         ).thenReturn(() => print('refresh called'));
 
-        await tester.pumpWidget(buildWidget());
+        await pumpScreen(tester);
 
         await expectLater(
           () => tester.tap(
@@ -245,6 +323,24 @@ void main() {
           ),
           prints(isEmpty),
         );
+      },
+    );
+
+    testWidgets(
+      'ProductDetailsScreen contains a "product-details-add-source-button" FilledButton with the correct behavior',
+      (WidgetTester tester) async {
+        await pumpScreen(tester);
+
+        await tester.tap(
+          find.byKey(const Key('product-details-add-source-button')),
+        );
+        await tester.pumpAndSettle();
+
+        final SourceFormDialog dialog = tester.widget(
+          find.byType(SourceFormDialog),
+        );
+        expect(dialog.productId, isA<String>());
+        expect(dialog.productId, 'product-1');
       },
     );
   });
@@ -255,7 +351,7 @@ void main() {
       testWidgets(
         'ProductDetailsScreen dispatches LoadProductSourcesAction on init',
         (WidgetTester tester) async {
-          await tester.pumpWidget(buildWidget());
+          await pumpScreen(tester);
 
           expect(
             dispatchedActions,
@@ -273,7 +369,7 @@ void main() {
       LocaleSettings.setLocale(AppLocale.pt);
 
       try {
-        await tester.pumpWidget(buildWidget());
+        await pumpScreen(tester);
 
         expect(find.text(t.productDetails.bestPrice), findsOneWidget);
         expect(find.text(t.home.sampleDataNotice), findsOneWidget);
@@ -285,6 +381,7 @@ void main() {
           find.text(t.productDetails.unavailableDescription),
           findsOneWidget,
         );
+        expect(find.text(t.productDetails.sourcesTitle), findsOneWidget);
       } finally {
         LocaleSettings.setLocale(AppLocale.en);
       }
@@ -299,10 +396,10 @@ void main() {
       ) async {
         final SemanticsHandle handle = tester.ensureSemantics();
         try {
-          await tester.pumpWidget(buildWidget());
+          await pumpScreen(tester);
           await expectLater(tester, meetsGuideline(textContrastGuideline));
 
-          await tester.pumpWidget(buildWidget(themeMode: ThemeMode.dark));
+          await pumpScreen(tester, themeMode: ThemeMode.dark);
           await expectLater(tester, meetsGuideline(textContrastGuideline));
         } finally {
           handle.dispose();
@@ -313,7 +410,7 @@ void main() {
         'ProductDetailsScreen all tap targets meet minimum 48dp size',
         (WidgetTester tester) async {
           final SemanticsHandle handle = tester.ensureSemantics();
-          await tester.pumpWidget(buildWidget());
+          await pumpScreen(tester);
 
           await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
           handle.dispose();
@@ -324,7 +421,7 @@ void main() {
         'ProductDetailsScreen all interactive elements have semantic labels',
         (WidgetTester tester) async {
           final SemanticsHandle handle = tester.ensureSemantics();
-          await tester.pumpWidget(buildWidget());
+          await pumpScreen(tester);
 
           await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
           handle.dispose();
@@ -334,9 +431,7 @@ void main() {
       testWidgets(
         'ProductDetailsScreen renders without overflow at 150% text scale',
         (WidgetTester tester) async {
-          await tester.pumpWidget(
-            buildWidget(textScaler: const TextScaler.linear(1.5)),
-          );
+          await pumpScreen(tester, textScaler: const TextScaler.linear(1.5));
 
           final double scaledValue = MediaQuery.textScalerOf(
             tester.element(find.byType(ProductDetailsScreen)),
@@ -350,9 +445,7 @@ void main() {
       testWidgets(
         'ProductDetailsScreen renders without overflow at 200% text scale',
         (WidgetTester tester) async {
-          await tester.pumpWidget(
-            buildWidget(textScaler: const TextScaler.linear(2.0)),
-          );
+          await pumpScreen(tester, textScaler: const TextScaler.linear(2.0));
 
           final double scaledValue = MediaQuery.textScalerOf(
             tester.element(find.byType(ProductDetailsScreen)),
@@ -366,10 +459,11 @@ void main() {
       testWidgets(
         'ProductDetailsScreen Tab key traverses all focusable elements',
         (WidgetTester tester) async {
-          await tester.pumpWidget(buildWidget());
+          await pumpScreen(tester);
 
           const Key backKey = Key('product-details-back-button');
           const Key refreshKey = Key('product-details-refresh-button');
+          const Key addSourceKey = Key('product-details-add-source-button');
 
           await tester.sendKeyEvent(LogicalKeyboardKey.tab);
           await tester.pump();
@@ -385,10 +479,19 @@ void main() {
             find.byKey(refreshKey),
           );
 
+          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+          await tester.pump();
+          final bool addSourceFocused = hasPrimaryFocusWithin(
+            tester,
+            find.byKey(addSourceKey),
+          );
+
           expect(backFocused, isA<bool>());
           expect(backFocused, isTrue);
           expect(refreshFocused, isA<bool>());
           expect(refreshFocused, isTrue);
+          expect(addSourceFocused, isA<bool>());
+          expect(addSourceFocused, isTrue);
         },
       );
     },

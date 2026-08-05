@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 164 (82 per locale)
+/// Strings: 190 (95 per locale)
 ///
-/// Built on 2026-08-05 at 15:27 UTC
+/// Built on 2026-08-05 at 16:13 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -188,13 +188,9 @@ class _StringsHomeEn {
 	String get addProductTitle => 'Add a product';
 	String get addProductDescription => 'Paste a product link to start tracking it.';
 	String get productNameLabel => 'Product name';
-	String get productUrlLabel => 'Product website link';
-	String get productUrlHint => 'https://example.com/product';
 	String get productNameRequired => 'Enter a product name.';
-	String get productUrlInvalid => 'Enter a valid HTTPS website link.';
 	String get addProductButton => 'Add product';
 	String get addProductSaving => 'Saving';
-	String get productSourceSupportDescription => 'Links can be saved now. Automatic price updates are available only for supported websites.';
 	String get searchHint => 'Search your tracked items';
 	String get searchClearTooltip => 'Clear search';
 	String get noSearchResultsTitle => 'No matches';
@@ -227,6 +223,23 @@ class _StringsProductDetailsEn {
 	String get refreshUnsupported => 'This website does not provide a readable price yet.';
 	String get refreshNetworkError => 'The website could not be reached. Your last price is still shown.';
 	String get refreshInvalidData => 'The website returned an unreadable price. Your last price is still shown.';
+	String get sourcesTitle => 'Sources';
+	String get addSourceTooltip => 'Add source';
+	String get addSourceTitle => 'Add a source';
+	String get editSourceTitle => 'Edit source';
+	String get sourceUrlLabel => 'Website link';
+	String get sourceUrlHint => 'https://example.com/product';
+	String get sourceUrlRequired => 'Enter a website link.';
+	String get savingSource => 'Saving';
+	String get addSourceButton => 'Add source';
+	String get saveSourceButton => 'Save';
+	String get noSourcesTitle => 'No sources yet';
+	String get noSourcesDescription => 'Add a merchant link to start comparing prices for this product.';
+	String get editSourceTooltip => 'Edit source';
+	String get deleteSourceTooltip => 'Delete source';
+	String get deleteSourceTitle => 'Delete this source?';
+	String deleteSourceMessage({required Object merchant}) => 'This will remove ${merchant} and its offer from this product.';
+	String get deleteSourceConfirmLabel => 'Delete';
 }
 
 // Path: settings
@@ -436,13 +449,9 @@ class _StringsHomePt implements _StringsHomeEn {
 	@override String get addProductTitle => 'Adicionar produto';
 	@override String get addProductDescription => 'Cole um link de produto para começar a acompanhá-lo.';
 	@override String get productNameLabel => 'Nome do produto';
-	@override String get productUrlLabel => 'Link do produto';
-	@override String get productUrlHint => 'https://exemplo.com/produto';
 	@override String get productNameRequired => 'Introduza o nome do produto.';
-	@override String get productUrlInvalid => 'Introduza um link HTTPS válido.';
 	@override String get addProductButton => 'Adicionar produto';
 	@override String get addProductSaving => 'A guardar';
-	@override String get productSourceSupportDescription => 'Os links podem ser guardados agora. A atualização automática só está disponível para sites suportados.';
 	@override String get searchHint => 'Pesquisar nos seus produtos acompanhados';
 	@override String get searchClearTooltip => 'Limpar pesquisa';
 	@override String get noSearchResultsTitle => 'Sem resultados';
@@ -475,6 +484,23 @@ class _StringsProductDetailsPt implements _StringsProductDetailsEn {
 	@override String get refreshUnsupported => 'Este site ainda não fornece um preço legível.';
 	@override String get refreshNetworkError => 'Não foi possível contactar o site. O último preço continua visível.';
 	@override String get refreshInvalidData => 'O site devolveu um preço ilegível. O último preço continua visível.';
+	@override String get sourcesTitle => 'Fontes';
+	@override String get addSourceTooltip => 'Adicionar fonte';
+	@override String get addSourceTitle => 'Adicionar uma fonte';
+	@override String get editSourceTitle => 'Editar fonte';
+	@override String get sourceUrlLabel => 'Link do site';
+	@override String get sourceUrlHint => 'https://exemplo.com/produto';
+	@override String get sourceUrlRequired => 'Introduza um link do site.';
+	@override String get savingSource => 'A guardar';
+	@override String get addSourceButton => 'Adicionar fonte';
+	@override String get saveSourceButton => 'Guardar';
+	@override String get noSourcesTitle => 'Ainda sem fontes';
+	@override String get noSourcesDescription => 'Adicione o link de uma loja para começar a comparar preços deste produto.';
+	@override String get editSourceTooltip => 'Editar fonte';
+	@override String get deleteSourceTooltip => 'Eliminar fonte';
+	@override String get deleteSourceTitle => 'Eliminar esta fonte?';
+	@override String deleteSourceMessage({required Object merchant}) => 'Isto remove ${merchant} e a sua oferta deste produto.';
+	@override String get deleteSourceConfirmLabel => 'Eliminar';
 }
 
 // Path: settings
@@ -643,13 +669,9 @@ extension on Translations {
 			case 'home.addProductTitle': return 'Add a product';
 			case 'home.addProductDescription': return 'Paste a product link to start tracking it.';
 			case 'home.productNameLabel': return 'Product name';
-			case 'home.productUrlLabel': return 'Product website link';
-			case 'home.productUrlHint': return 'https://example.com/product';
 			case 'home.productNameRequired': return 'Enter a product name.';
-			case 'home.productUrlInvalid': return 'Enter a valid HTTPS website link.';
 			case 'home.addProductButton': return 'Add product';
 			case 'home.addProductSaving': return 'Saving';
-			case 'home.productSourceSupportDescription': return 'Links can be saved now. Automatic price updates are available only for supported websites.';
 			case 'home.searchHint': return 'Search your tracked items';
 			case 'home.searchClearTooltip': return 'Clear search';
 			case 'home.noSearchResultsTitle': return 'No matches';
@@ -673,6 +695,23 @@ extension on Translations {
 			case 'productDetails.refreshUnsupported': return 'This website does not provide a readable price yet.';
 			case 'productDetails.refreshNetworkError': return 'The website could not be reached. Your last price is still shown.';
 			case 'productDetails.refreshInvalidData': return 'The website returned an unreadable price. Your last price is still shown.';
+			case 'productDetails.sourcesTitle': return 'Sources';
+			case 'productDetails.addSourceTooltip': return 'Add source';
+			case 'productDetails.addSourceTitle': return 'Add a source';
+			case 'productDetails.editSourceTitle': return 'Edit source';
+			case 'productDetails.sourceUrlLabel': return 'Website link';
+			case 'productDetails.sourceUrlHint': return 'https://example.com/product';
+			case 'productDetails.sourceUrlRequired': return 'Enter a website link.';
+			case 'productDetails.savingSource': return 'Saving';
+			case 'productDetails.addSourceButton': return 'Add source';
+			case 'productDetails.saveSourceButton': return 'Save';
+			case 'productDetails.noSourcesTitle': return 'No sources yet';
+			case 'productDetails.noSourcesDescription': return 'Add a merchant link to start comparing prices for this product.';
+			case 'productDetails.editSourceTooltip': return 'Edit source';
+			case 'productDetails.deleteSourceTooltip': return 'Delete source';
+			case 'productDetails.deleteSourceTitle': return 'Delete this source?';
+			case 'productDetails.deleteSourceMessage': return ({required Object merchant}) => 'This will remove ${merchant} and its offer from this product.';
+			case 'productDetails.deleteSourceConfirmLabel': return 'Delete';
 			case 'settings.title': return 'Settings';
 			case 'settings.appearance.title': return 'Appearance';
 			case 'settings.appearance.theme': return 'Theme';
@@ -733,13 +772,9 @@ extension on _StringsPt {
 			case 'home.addProductTitle': return 'Adicionar produto';
 			case 'home.addProductDescription': return 'Cole um link de produto para começar a acompanhá-lo.';
 			case 'home.productNameLabel': return 'Nome do produto';
-			case 'home.productUrlLabel': return 'Link do produto';
-			case 'home.productUrlHint': return 'https://exemplo.com/produto';
 			case 'home.productNameRequired': return 'Introduza o nome do produto.';
-			case 'home.productUrlInvalid': return 'Introduza um link HTTPS válido.';
 			case 'home.addProductButton': return 'Adicionar produto';
 			case 'home.addProductSaving': return 'A guardar';
-			case 'home.productSourceSupportDescription': return 'Os links podem ser guardados agora. A atualização automática só está disponível para sites suportados.';
 			case 'home.searchHint': return 'Pesquisar nos seus produtos acompanhados';
 			case 'home.searchClearTooltip': return 'Limpar pesquisa';
 			case 'home.noSearchResultsTitle': return 'Sem resultados';
@@ -763,6 +798,23 @@ extension on _StringsPt {
 			case 'productDetails.refreshUnsupported': return 'Este site ainda não fornece um preço legível.';
 			case 'productDetails.refreshNetworkError': return 'Não foi possível contactar o site. O último preço continua visível.';
 			case 'productDetails.refreshInvalidData': return 'O site devolveu um preço ilegível. O último preço continua visível.';
+			case 'productDetails.sourcesTitle': return 'Fontes';
+			case 'productDetails.addSourceTooltip': return 'Adicionar fonte';
+			case 'productDetails.addSourceTitle': return 'Adicionar uma fonte';
+			case 'productDetails.editSourceTitle': return 'Editar fonte';
+			case 'productDetails.sourceUrlLabel': return 'Link do site';
+			case 'productDetails.sourceUrlHint': return 'https://exemplo.com/produto';
+			case 'productDetails.sourceUrlRequired': return 'Introduza um link do site.';
+			case 'productDetails.savingSource': return 'A guardar';
+			case 'productDetails.addSourceButton': return 'Adicionar fonte';
+			case 'productDetails.saveSourceButton': return 'Guardar';
+			case 'productDetails.noSourcesTitle': return 'Ainda sem fontes';
+			case 'productDetails.noSourcesDescription': return 'Adicione o link de uma loja para começar a comparar preços deste produto.';
+			case 'productDetails.editSourceTooltip': return 'Editar fonte';
+			case 'productDetails.deleteSourceTooltip': return 'Eliminar fonte';
+			case 'productDetails.deleteSourceTitle': return 'Eliminar esta fonte?';
+			case 'productDetails.deleteSourceMessage': return ({required Object merchant}) => 'Isto remove ${merchant} e a sua oferta deste produto.';
+			case 'productDetails.deleteSourceConfirmLabel': return 'Eliminar';
 			case 'settings.title': return 'Definições';
 			case 'settings.appearance.title': return 'Aparência';
 			case 'settings.appearance.theme': return 'Tema';

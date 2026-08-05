@@ -15,6 +15,7 @@ import 'package:worth_loop/features/products/presentation/widgets/product_offers
 import 'package:worth_loop/features/products/presentation/widgets/product_offers.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_not_found.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_refresh_status_notice.widget.dart';
+import 'package:worth_loop/features/products/presentation/widgets/product_sources.section.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
@@ -55,33 +56,46 @@ class ProductDetailsScreen extends StatelessWidget {
           ),
           body: product == null
               ? const ProductNotFoundWidget()
-              : Padding(
-                  padding: EdgeInsets.all(context.spacing.md),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      ProductBestPriceCard(bestPrice: bestPrice),
-                      SizedBox(height: context.spacing.sm),
-                      ProductRefreshStatusNotice(
-                        status: viewmodel.refreshStatus,
+              : CustomScrollView(
+                  slivers: [
+                    SliverPadding(
+                      padding: EdgeInsets.all(context.spacing.md),
+                      sliver: SliverList(
+                        delegate: SliverChildListDelegate([
+                          ProductBestPriceCard(bestPrice: bestPrice),
+                          SizedBox(height: context.spacing.sm),
+                          ProductRefreshStatusNotice(
+                            status: viewmodel.refreshStatus,
+                          ),
+                          SizedBox(height: context.spacing.sm),
+                          const IllustrativePriceNotice(),
+                          SizedBox(height: context.spacing.md),
+                          ProductOffersHeader(
+                            offerCount: product.storePrices.length,
+                            isRefreshing: viewmodel.isRefreshing,
+                            onRefresh: viewmodel.onRefresh,
+                          ),
+                          SizedBox(height: context.spacing.sm),
+                        ]),
                       ),
-                      SizedBox(height: context.spacing.sm),
-                      const IllustrativePriceNotice(),
-                      SizedBox(height: context.spacing.md),
-                      ProductOffersHeader(
-                        offerCount: product.storePrices.length,
-                        isRefreshing: viewmodel.isRefreshing,
-                        onRefresh: viewmodel.onRefresh,
+                    ),
+                    SliverPadding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: context.spacing.md,
                       ),
-                      SizedBox(height: context.spacing.sm),
-                      Expanded(
-                        child: ProductOffersWidget(
-                          availablePrices: availablePrices,
-                          unavailablePrices: unavailablePrices,
-                        ),
+                      sliver: ProductOffersWidget(
+                        availablePrices: availablePrices,
+                        unavailablePrices: unavailablePrices,
                       ),
-                    ],
-                  ),
+                    ),
+                    ProductSourcesSection(
+                      productId: productId,
+                      sources: viewmodel.sources,
+                      isLoadingSources: viewmodel.isLoadingSources,
+                      deletingSourceIds: viewmodel.deletingSourceIds,
+                      onDeleteSource: viewmodel.onDeleteSource,
+                    ),
+                  ],
                 ),
         );
       },

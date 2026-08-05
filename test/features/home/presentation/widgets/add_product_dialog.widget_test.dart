@@ -10,9 +10,9 @@ import 'package:redux/redux.dart';
 // Project imports:
 import 'package:worth_loop/features/home/presentation/state/viewmodels/home_screen.viewmodel.dart';
 import 'package:worth_loop/features/home/presentation/widgets/add_product_dialog.widget.dart';
-import 'package:worth_loop/features/home/presentation/widgets/product_form_field.widget.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
+import 'package:worth_loop/shared/features/product_form_field.widget.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 
 class MockHomeScreenViewModel extends Mock implements HomeScreenViewModel {}

@@ -19,13 +19,9 @@ home:
   addProductTitle: Add a product
   addProductDescription: Paste a product link to start tracking it.
   productNameLabel: Product name
-  productUrlLabel: Product website link
-  productUrlHint: https://example.com/product
   productNameRequired: Enter a product name.
-  productUrlInvalid: Enter a valid HTTPS website link.
   addProductButton: Add product
   addProductSaving: Saving
-  productSourceSupportDescription: Links can be saved now. Automatic price updates are available only for supported websites.
   searchHint: Search your tracked items
   searchClearTooltip: Clear search
   noSearchResultsTitle: No matches
@@ -51,6 +47,23 @@ productDetails:
   refreshUnsupported: This website does not provide a readable price yet.
   refreshNetworkError: The website could not be reached. Your last price is still shown.
   refreshInvalidData: The website returned an unreadable price. Your last price is still shown.
+  sourcesTitle: Sources
+  addSourceTooltip: Add source
+  addSourceTitle: Add a source
+  editSourceTitle: Edit source
+  sourceUrlLabel: Website link
+  sourceUrlHint: https://example.com/product
+  sourceUrlRequired: Enter a website link.
+  savingSource: Saving
+  addSourceButton: Add source
+  saveSourceButton: Save
+  noSourcesTitle: No sources yet
+  noSourcesDescription: Add a merchant link to start comparing prices for this product.
+  editSourceTooltip: Edit source
+  deleteSourceTooltip: Delete source
+  deleteSourceTitle: Delete this source?
+  deleteSourceMessage: This will remove $merchant and its offer from this product.
+  deleteSourceConfirmLabel: Delete
 
 settings:
   title: Settings

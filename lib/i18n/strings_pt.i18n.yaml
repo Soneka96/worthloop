@@ -20,13 +20,9 @@ home:
   addProductTitle: Adicionar produto
   addProductDescription: Cole um link de produto para começar a acompanhá-lo.
   productNameLabel: Nome do produto
-  productUrlLabel: Link do produto
-  productUrlHint: https://exemplo.com/produto
   productNameRequired: Introduza o nome do produto.
-  productUrlInvalid: Introduza um link HTTPS válido.
   addProductButton: Adicionar produto
   addProductSaving: A guardar
-  productSourceSupportDescription: Os links podem ser guardados agora. A atualização automática só está disponível para sites suportados.
   searchHint: Pesquisar nos seus produtos acompanhados
   searchClearTooltip: Limpar pesquisa
   noSearchResultsTitle: Sem resultados
@@ -52,6 +48,23 @@ productDetails:
   refreshUnsupported: Este site ainda não fornece um preço legível.
   refreshNetworkError: Não foi possível contactar o site. O último preço continua visível.
   refreshInvalidData: O site devolveu um preço ilegível. O último preço continua visível.
+  sourcesTitle: Fontes
+  addSourceTooltip: Adicionar fonte
+  addSourceTitle: Adicionar uma fonte
+  editSourceTitle: Editar fonte
+  sourceUrlLabel: Link do site
+  sourceUrlHint: https://exemplo.com/produto
+  sourceUrlRequired: Introduza um link do site.
+  savingSource: A guardar
+  addSourceButton: Adicionar fonte
+  saveSourceButton: Guardar
+  noSourcesTitle: Ainda sem fontes
+  noSourcesDescription: Adicione o link de uma loja para começar a comparar preços deste produto.
+  editSourceTooltip: Editar fonte
+  deleteSourceTooltip: Eliminar fonte
+  deleteSourceTitle: Eliminar esta fonte?
+  deleteSourceMessage: Isto remove $merchant e a sua oferta deste produto.
+  deleteSourceConfirmLabel: Eliminar
 
 settings:
   title: Definições
