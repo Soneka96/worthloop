@@ -12,6 +12,7 @@ import 'package:worth_loop/features/products/data/models/store_price.model.dart'
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
+import 'package:worth_loop/shared/constants/price_fetch_constants.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 
@@ -57,7 +58,9 @@ class GenericProductsRemoteDatasource implements ProductsRemoteDatasource {
       if (status != PriceFetchStatus.success || offer == null) {
         final Failure failure = _failureFor(status);
         if (status == PriceFetchStatus.blocked) {
-          _blockedUntilByUrl[source.url] = _now().add(const Duration(hours: 1));
+          _blockedUntilByUrl[source.url] = _now().add(
+            PriceFetchConstants.blockedRetryAfter,
+          );
         }
         _loggerService.e(failure.message);
         return Left(failure);
@@ -81,7 +84,9 @@ class GenericProductsRemoteDatasource implements ProductsRemoteDatasource {
         hasUsablePrice: false,
       );
       if (status == PriceFetchStatus.blocked) {
-        _blockedUntilByUrl[source.url] = _now().add(const Duration(hours: 1));
+        _blockedUntilByUrl[source.url] = _now().add(
+          PriceFetchConstants.blockedRetryAfter,
+        );
       }
       _loggerService.e(error.toString());
       return Left(_failureFor(status));
