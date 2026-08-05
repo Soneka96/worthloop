@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 // Project imports:
 import 'package:worth_loop/features/home/presentation/widgets/add_product.section.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
+import '../../../../support/test_helper.dart';
 
 void main() {
   Widget buildWidget({
@@ -43,6 +44,12 @@ void main() {
 
       expect(find.byKey(const Key('add-product-name-field')), findsOneWidget);
       expect(find.byKey(const Key('add-product-url-field')), findsOneWidget);
+      expect(
+        find.text(
+          'Links can be saved now. Automatic price updates are available only for supported websites.',
+        ),
+        findsOneWidget,
+      );
       expect(
         find.byKey(const Key('add-product-submit-button')),
         findsOneWidget,
@@ -143,6 +150,26 @@ void main() {
       await tester.testTextInput.receiveAction(TextInputAction.done);
 
       expect(submitted, isTrue);
+    });
+  });
+
+  group("AddProductSection's translations", () {
+    testWidgets('displays the Portuguese source support explanation', (
+      WidgetTester tester,
+    ) async {
+      await TestHelper.pumpEachLocale(tester, buildWidget, () async {
+        if (LocaleSettings.currentLocale == AppLocale.pt) {
+          await tester.tap(find.byKey(const Key('add-product-section')));
+          await tester.pumpAndSettle();
+
+          expect(
+            find.text(
+              'Os links podem ser guardados agora. A atualização automática só está disponível para sites suportados.',
+            ),
+            findsOneWidget,
+          );
+        }
+      });
     });
   });
 }

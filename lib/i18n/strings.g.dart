@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 144 (72 per locale)
+/// Strings: 146 (73 per locale)
 ///
-/// Built on 2026-08-04 at 17:20 UTC
+/// Built on 2026-08-04 at 17:32 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -183,6 +183,7 @@ class _StringsHomeEn {
 	String get productUrlInvalid => 'Enter a valid HTTPS website link.';
 	String get addProductButton => 'Add product';
 	String get addProductSaving => 'Saving';
+	String get productSourceSupportDescription => 'Links can be saved now. Automatic price updates are available only for supported websites.';
 }
 
 // Path: productDetails
@@ -411,6 +412,7 @@ class _StringsHomePt implements _StringsHomeEn {
 	@override String get productUrlInvalid => 'Introduza um link HTTPS vÃ¡lido.';
 	@override String get addProductButton => 'Adicionar produto';
 	@override String get addProductSaving => 'A guardar';
+	@override String get productSourceSupportDescription => 'Os links podem ser guardados agora. A atualização automática só está disponível para sites suportados.';
 }
 
 // Path: productDetails
@@ -608,6 +610,7 @@ extension on Translations {
 			case 'home.productUrlInvalid': return 'Enter a valid HTTPS website link.';
 			case 'home.addProductButton': return 'Add product';
 			case 'home.addProductSaving': return 'Saving';
+			case 'home.productSourceSupportDescription': return 'Links can be saved now. Automatic price updates are available only for supported websites.';
 			case 'productDetails.title': return 'Product details';
 			case 'productDetails.backTooltip': return 'Back';
 			case 'productDetails.refresh': return 'Refresh';
@@ -688,6 +691,7 @@ extension on _StringsPt {
 			case 'home.productUrlInvalid': return 'Introduza um link HTTPS vÃ¡lido.';
 			case 'home.addProductButton': return 'Adicionar produto';
 			case 'home.addProductSaving': return 'A guardar';
+			case 'home.productSourceSupportDescription': return 'Os links podem ser guardados agora. A atualização automática só está disponível para sites suportados.';
 			case 'productDetails.title': return 'Detalhes do produto';
 			case 'productDetails.backTooltip': return 'Voltar';
 			case 'productDetails.refresh': return 'Atualizar';

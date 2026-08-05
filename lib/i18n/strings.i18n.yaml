@@ -22,6 +22,7 @@ home:
   productUrlInvalid: Enter a valid HTTPS website link.
   addProductButton: Add product
   addProductSaving: Saving
+  productSourceSupportDescription: Links can be saved now. Automatic price updates are available only for supported websites.
 
 productDetails:
   title: Product details

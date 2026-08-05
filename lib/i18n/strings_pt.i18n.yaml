@@ -23,6 +23,7 @@ home:
   productUrlInvalid: Introduza um link HTTPS vÃ¡lido.
   addProductButton: Adicionar produto
   addProductSaving: A guardar
+  productSourceSupportDescription: Os links podem ser guardados agora. A atualização automática só está disponível para sites suportados.
 
 productDetails:
   title: Detalhes do produto

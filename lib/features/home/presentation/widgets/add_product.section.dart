@@ -105,6 +105,11 @@ class _AddProductSectionState extends State<AddProductSection> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    Text(
+                      t.home.productSourceSupportDescription,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    SizedBox(height: context.spacing.sm),
                     ProductFormField(
                       key: const Key('add-product-name-field'),
                       controller: _nameController,
