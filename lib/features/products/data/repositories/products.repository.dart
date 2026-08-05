@@ -93,4 +93,11 @@ class ProductsRepository implements IProductsRepository {
   Future<Either<Failure, ProductSource>> addSource(ProductSource source) {
     return _localDatasource.saveProductSource(source);
   }
+
+  @override
+  Future<Either<Failure, List<ProductSource>>> loadSourcesForProduct(
+    String productId,
+  ) {
+    return _localDatasource.loadProductSourcesForProduct(productId);
+  }
 }

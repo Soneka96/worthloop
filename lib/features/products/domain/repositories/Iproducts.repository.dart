@@ -26,4 +26,9 @@ abstract class IProductsRepository {
 
   /// Adds a website source to an existing product.
   Future<Either<Failure, ProductSource>> addSource(ProductSource source);
+
+  /// Loads every saved website source for [productId].
+  Future<Either<Failure, List<ProductSource>>> loadSourcesForProduct(
+    String productId,
+  );
 }

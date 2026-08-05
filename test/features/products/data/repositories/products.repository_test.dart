@@ -15,6 +15,7 @@ import 'package:worth_loop/features/products/domain/entities/product_source.enti
 import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 import '../../fixtures/product_model.fixture.dart';
+import '../../fixtures/product_source.fixture.dart';
 import '../../fixtures/store_price_model.fixture.dart';
 
 class MockProductsLocalDatasource extends Mock
@@ -176,6 +177,48 @@ void main() {
       verify(() => mockDatasource.saveProductSource(source)).called(1);
       verifyNoMoreInteractions(mockDatasource);
     });
+  });
+
+  group('ProductsRepository implements loadSourcesForProduct() correctly', () {
+    test(
+      'Method loadSourcesForProduct() returns the datasource result',
+      () async {
+        final List<ProductSourceModel> sources = [
+          ProductSourceModel.fromEntity(buildProductSource()),
+        ];
+        when(
+          () => mockDatasource.loadProductSourcesForProduct('product-1'),
+        ).thenAnswer((_) async => Right(sources));
+
+        final Either<Failure, List<ProductSource>> result = await repository
+            .loadSourcesForProduct('product-1');
+
+        expect(result, Right(sources));
+        verify(
+          () => mockDatasource.loadProductSourcesForProduct('product-1'),
+        ).called(1);
+        verifyNoMoreInteractions(mockDatasource);
+      },
+    );
+
+    test(
+      'Method loadSourcesForProduct() forwards datasource failures unchanged',
+      () async {
+        const DatabaseFailure failure = DatabaseFailure('database failed');
+        when(
+          () => mockDatasource.loadProductSourcesForProduct('product-1'),
+        ).thenAnswer((_) async => const Left(failure));
+
+        final Either<Failure, List<ProductSource>> result = await repository
+            .loadSourcesForProduct('product-1');
+
+        expect(result, const Left(failure));
+        verify(
+          () => mockDatasource.loadProductSourcesForProduct('product-1'),
+        ).called(1);
+        verifyNoMoreInteractions(mockDatasource);
+      },
+    );
   });
 
   group('ProductsRepository implements refreshProduct() correctly', () {
