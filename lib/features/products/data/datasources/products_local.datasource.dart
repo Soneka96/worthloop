@@ -181,6 +181,22 @@ class ProductsLocalDatasource {
     }
   }
 
+  /// Deletes a product, cascading to its sources and offers via schema
+  /// foreign keys.
+  Future<Either<Failure, Unit>> deleteProduct(String productId) async {
+    try {
+      final int rowsDeleted = await (_db.delete(
+        _db.productTable,
+      )..where((table) => table.id.equals(productId))).go();
+      return rowsDeleted == 0
+          ? const Left(NotFoundFailure('Product not found'))
+          : const Right(unit);
+    } on SqliteException catch (error) {
+      _loggerService.e(error.toString());
+      return Left(DatabaseFailure(error.toString()));
+    }
+  }
+
   /// Saves a product website link and returns its persisted representation.
   Future<Either<Failure, ProductSourceModel>> saveProductSource(
     ProductSource source,

@@ -588,6 +588,143 @@ void main() {
     );
   });
 
+  group('Method deleteProduct() returns the correct value', () {
+    test('deletes the product and returns Right(unit)', () async {
+      await db
+          .into(db.productTable)
+          .insert(
+            ProductTableCompanion.insert(
+              id: 'product-1',
+              name: 'Example Product',
+              lastUpdatedAt: DateTime(2026, 1, 1),
+            ),
+          );
+
+      final Either<Failure, Unit> result = await datasource.deleteProduct(
+        'product-1',
+      );
+      final List<ProductRow> rows = await db.select(db.productTable).get();
+
+      expect(result, const Right(unit));
+      expect(rows, isEmpty);
+      verifyZeroInteractions(mockLoggerService);
+    });
+
+    test(
+      'cascades to the product sources and offers, leaving other products untouched',
+      () async {
+        await db
+            .into(db.productTable)
+            .insert(
+              ProductTableCompanion.insert(
+                id: 'product-1',
+                name: 'Example Product',
+                lastUpdatedAt: DateTime(2026, 1, 1),
+              ),
+            );
+        await db
+            .into(db.productSourceTable)
+            .insert(
+              ProductSourceModel.fromEntity(buildProductSource()).toCompanion(),
+            );
+        await db
+            .into(db.storePriceTable)
+            .insert(
+              StorePriceTableCompanion.insert(
+                productId: 'product-1',
+                storeName: 'Example Store',
+                productUrl: 'https://example.com/products/1',
+                minorUnits: 999,
+                currencyCode: 'USD',
+                isAvailable: true,
+                lastCheckedAt: DateTime(2026, 1, 1),
+              ),
+            );
+        await db
+            .into(db.productTable)
+            .insert(
+              ProductTableCompanion.insert(
+                id: 'product-2',
+                name: 'Other Product',
+                lastUpdatedAt: DateTime(2026, 1, 1),
+              ),
+            );
+        await db
+            .into(db.productSourceTable)
+            .insert(
+              ProductSourceModel.fromEntity(
+                buildProductSource(id: 'source-2', productId: 'product-2'),
+              ).toCompanion(),
+            );
+        await db
+            .into(db.storePriceTable)
+            .insert(
+              StorePriceTableCompanion.insert(
+                productId: 'product-2',
+                storeName: 'Other Store',
+                productUrl: 'https://example.com/products/2',
+                minorUnits: 500,
+                currencyCode: 'USD',
+                isAvailable: true,
+                lastCheckedAt: DateTime(2026, 1, 1),
+              ),
+            );
+
+        final Either<Failure, Unit> result = await datasource.deleteProduct(
+          'product-1',
+        );
+        final List<ProductRow> remainingProducts = await db
+            .select(db.productTable)
+            .get();
+        final List<ProductSourceRow> remainingSources = await db
+            .select(db.productSourceTable)
+            .get();
+        final List<StorePriceRow> remainingPrices = await db
+            .select(db.storePriceTable)
+            .get();
+
+        expect(result, const Right(unit));
+        expect(remainingProducts, hasLength(1));
+        expect(remainingProducts.single.id, 'product-2');
+        expect(remainingSources, hasLength(1));
+        expect(remainingSources.single.productId, 'product-2');
+        expect(remainingPrices, hasLength(1));
+        expect(remainingPrices.single.productId, 'product-2');
+        verifyZeroInteractions(mockLoggerService);
+      },
+    );
+
+    test(
+      'returns Left(NotFoundFailure) when the product does not exist',
+      () async {
+        final Either<Failure, Unit> result = await datasource.deleteProduct(
+          'missing-product',
+        );
+
+        expect(result, const Left(NotFoundFailure('Product not found')));
+        verifyZeroInteractions(mockLoggerService);
+      },
+    );
+
+    test(
+      'returns Left(DatabaseFailure) when the product table is missing',
+      () async {
+        await db.customStatement('DROP TABLE product_table');
+
+        final Either<Failure, Unit> result = await datasource.deleteProduct(
+          'product-1',
+        );
+        final Failure failure =
+            result.getLeft().toNullable() ??
+            const DatabaseFailure('Expected a failure');
+
+        expect(failure, isA<DatabaseFailure>());
+        verify(() => mockLoggerService.e(failure.message)).called(1);
+        verifyNoMoreInteractions(mockLoggerService);
+      },
+    );
+  });
+
   group('Method saveProductSource() returns the correct value', () {
     test('saves and returns a product source', () async {
       await db

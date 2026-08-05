@@ -11,6 +11,7 @@ import 'package:worth_loop/features/products/domain/repositories/Iproducts.repos
 import 'package:worth_loop/features/products/domain/usecases/add_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/compare_prices.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/create_product.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/delete_product.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/delete_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/edit_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/load_product_sources.usecase.dart';
@@ -72,6 +73,9 @@ void initProductsDependencies() {
   );
   sl.registerLazySingleton<RenameProductUseCase>(
     () => RenameProductUseCase(sl<IProductsRepository>()),
+  );
+  sl.registerLazySingleton<DeleteProductUseCase>(
+    () => DeleteProductUseCase(sl<IProductsRepository>()),
   );
   sl.registerLazySingleton<ComparePricesUseCase>(ComparePricesUseCase.new);
   sl.registerFactoryParam<ProductDetailsViewModel, Store<AppState>, String>(

@@ -43,4 +43,7 @@ abstract class IProductsRepository {
 
   /// Renames an existing product.
   Future<Either<Failure, Product>> renameProduct(String productId, String name);
+
+  /// Deletes a product and its sources and offers.
+  Future<Either<Failure, Unit>> deleteProduct(String productId);
 }

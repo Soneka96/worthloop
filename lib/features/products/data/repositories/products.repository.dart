@@ -121,4 +121,9 @@ class ProductsRepository implements IProductsRepository {
   ) {
     return _localDatasource.renameProduct(productId, name);
   }
+
+  @override
+  Future<Either<Failure, Unit>> deleteProduct(String productId) {
+    return _localDatasource.deleteProduct(productId);
+  }
 }
