@@ -45,6 +45,8 @@ class CreateProductAction extends Equatable {
   /// Product display name entered by the user.
   final String name;
 
+  // TODO: url is unused by ProductsMiddleware pending a dedicated add-source
+  // flow — CreateProductUseCase no longer accepts a source at creation time.
   /// Product website link entered by the user.
   final String url;
 

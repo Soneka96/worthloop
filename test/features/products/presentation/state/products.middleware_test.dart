@@ -168,10 +168,7 @@ void main() {
         expect((actionLog[1] as ProductCreatedAction).product, product);
         verify(
           () => mockCreateProductUseCase(
-            const CreateProductParams(
-              name: 'Example Product',
-              url: 'https://example.com/products/1',
-            ),
+            const CreateProductParams(name: 'Example Product'),
           ),
         ).called(1);
         verifyNoMoreInteractions(mockCreateProductUseCase);

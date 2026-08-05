@@ -29,22 +29,26 @@ class ProductsLocalDatasource {
     this._loggerService,
   );
 
-  /// Creates a product and source in one transaction.
+  /// Creates a product, and its source when one is given, in one transaction.
   Future<Either<Failure, ProductModel>> createProduct(
     Product product,
-    ProductSource source,
+    ProductSource? source,
   ) async {
     try {
-      final ProductSource validatedSource = ProductSource.fromUrl(
-        id: source.id,
-        productId: source.productId,
-        url: source.url,
-        createdAt: source.createdAt,
-      );
-      if (product.id != validatedSource.productId) {
-        return const Left(
-          ValidationFailure('Product and source identifiers do not match'),
+      ProductSourceModel? sourceModel;
+      if (source != null) {
+        final ProductSource validatedSource = ProductSource.fromUrl(
+          id: source.id,
+          productId: source.productId,
+          url: source.url,
+          createdAt: source.createdAt,
         );
+        if (product.id != validatedSource.productId) {
+          return const Left(
+            ValidationFailure('Product and source identifiers do not match'),
+          );
+        }
+        sourceModel = ProductSourceModel.fromEntity(validatedSource);
       }
       if (product.storePrices.isNotEmpty) {
         return const Left(
@@ -60,14 +64,13 @@ class ProductsLocalDatasource {
         storePrices: product.storePrices,
         lastUpdatedAt: product.lastUpdatedAt,
       );
-      final ProductSourceModel sourceModel = ProductSourceModel.fromEntity(
-        validatedSource,
-      );
       await _db.transaction(() async {
         await _db.into(_db.productTable).insert(model.toCompanion());
-        await _db
-            .into(_db.productSourceTable)
-            .insert(sourceModel.toCompanion());
+        if (sourceModel != null) {
+          await _db
+              .into(_db.productSourceTable)
+              .insert(sourceModel.toCompanion());
+        }
       });
       return Right(model);
     } on ArgumentError catch (error) {

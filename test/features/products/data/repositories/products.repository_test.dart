@@ -110,6 +110,25 @@ void main() {
         verifyNoMoreInteractions(mockDatasource);
       },
     );
+
+    test(
+      'Method createProduct() calls ProductsLocalDatasource.createProduct() when source == null',
+      () async {
+        final ProductModel product = buildProductModel();
+        when(
+          () => mockDatasource.createProduct(product, null),
+        ).thenAnswer((_) async => Right(product));
+
+        final Either<Failure, Product> result = await repository.createProduct(
+          product,
+          null,
+        );
+
+        expect(result, Right(product));
+        verify(() => mockDatasource.createProduct(product, null)).called(1);
+        verifyNoMoreInteractions(mockDatasource);
+      },
+    );
   });
 
   group('ProductsRepository implements refreshProduct() correctly', () {

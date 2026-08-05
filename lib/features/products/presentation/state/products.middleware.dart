@@ -46,7 +46,7 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
     CreateProductAction action,
   ) async {
     (await sl<CreateProductUseCase>()(
-      CreateProductParams(name: action.name, url: action.url),
+      CreateProductParams(name: action.name),
     )).fold(
       (failure) {
         sl<LoggerService>().e(failure.message, showPopup: true);

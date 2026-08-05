@@ -8,10 +8,11 @@ import 'package:worth_loop/shared/failures/failures.dart';
 
 /// Coordinates persisted products and their latest merchant offers.
 abstract class IProductsRepository {
-  /// Creates and persists a tracked product with its website source.
+  /// Creates and persists a tracked product, optionally with its first
+  /// website source.
   Future<Either<Failure, Product>> createProduct(
     Product product,
-    ProductSource source,
+    ProductSource? source,
   );
 
   /// Loads every tracked product.

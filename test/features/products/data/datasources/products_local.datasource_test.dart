@@ -600,6 +600,55 @@ void main() {
         verifyZeroInteractions(mockLoggerService);
       },
     );
+
+    test('creates the product without a source when source == null', () async {
+      final Product product = Product(
+        id: 'product-1',
+        name: 'Example Product',
+        storePrices: [],
+        lastUpdatedAt: DateTime(2026),
+      );
+
+      final Either<Failure, ProductModel> result = await datasource
+          .createProduct(product, null);
+      final List<ProductRow> products = await db.select(db.productTable).get();
+      final List<ProductSourceRow> sources = await db
+          .select(db.productSourceTable)
+          .get();
+
+      expect(result.getRight().toNullable(), isA<ProductModel>());
+      expect(products.length, 1);
+      expect(sources, isEmpty);
+      verifyZeroInteractions(mockLoggerService);
+    });
+
+    test(
+      'returns DatabaseFailure when the product insert fails and source == null',
+      () async {
+        await db
+            .into(db.productTable)
+            .insert(
+              ProductTableCompanion.insert(
+                id: 'product-1',
+                name: 'Existing Product',
+                lastUpdatedAt: DateTime(2026),
+              ),
+            );
+        final Product product = Product(
+          id: 'product-1',
+          name: 'Example Product',
+          storePrices: [],
+          lastUpdatedAt: DateTime(2026),
+        );
+
+        final Either<Failure, ProductModel> result = await datasource
+            .createProduct(product, null);
+
+        expect(result.getLeft().toNullable(), isA<DatabaseFailure>());
+        expect(await db.select(db.productTable).get(), hasLength(1));
+        verify(() => mockLoggerService.e(any())).called(1);
+      },
+    );
   });
 
   group('Method loadProductSourcesForProduct() returns the correct value', () {

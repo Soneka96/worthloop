@@ -23,7 +23,7 @@ class ProductsRepository implements IProductsRepository {
   @override
   Future<Either<Failure, Product>> createProduct(
     Product product,
-    ProductSource source,
+    ProductSource? source,
   ) {
     return _localDatasource.createProduct(product, source);
   }

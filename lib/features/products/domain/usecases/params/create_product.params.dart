@@ -11,11 +11,8 @@ class CreateProductParams extends Equatable {
   /// Display name entered for the product.
   final String name;
 
-  /// HTTPS website link entered for the product.
-  final String url;
-
-  const CreateProductParams({required this.name, required this.url});
+  const CreateProductParams({required this.name});
 
   @override
-  List<Object?> get props => [name, url];
+  List<Object?> get props => [name];
 }
