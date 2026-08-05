@@ -211,6 +211,13 @@ Repositories' per-method group also gets a second test template:
   dispatches [Action]".
 - When naming a call or dispatch, use the bare method/action name (e.g. "calls `show`", "dispatches
   `CreateProjectAction`") — not the qualifying service/class name.
+- A field that's a direct selector/reducer pass-through gets exactly one assertion in the
+  constructor test, proving it's wired — not per-condition/edge-case coverage. That branching is
+  already covered in the selector's or reducer's own test group; re-testing it here is duplicate
+  coverage of logic the viewmodel doesn't own.
+- A callback/closure the viewmodel itself builds (dispatches an action, decides *whether* to
+  dispatch) is the viewmodel's own logic and keeps full coverage, including the general
+  "Assertions" section's called/not-called symmetric-test pair when the dispatch is conditional.
 
 ---
 
