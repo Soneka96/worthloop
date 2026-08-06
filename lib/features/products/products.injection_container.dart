@@ -2,7 +2,6 @@
 import 'package:redux/redux.dart';
 
 // Project imports:
-import 'package:worth_loop/features/products/data/datasources/generic_products_remote.datasource.dart';
 import 'package:worth_loop/features/products/data/datasources/products_local.datasource.dart';
 import 'package:worth_loop/features/products/data/datasources/price_response_detector.datasource.dart';
 import 'package:worth_loop/features/products/data/datasources/products_remote.datasource.dart';
@@ -26,6 +25,7 @@ import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/utils/currency_helper_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
+import 'package:worth_loop/shared/utils/product_price_fetch_orchestrator_service.dart';
 
 /// Registers tracked-product dependencies.
 void initProductsDependencies() {
@@ -38,13 +38,16 @@ void initProductsDependencies() {
     ),
   );
   sl.registerLazySingleton<PriceResponseDetector>(PriceResponseDetector.new);
-  sl.registerLazySingleton<ProductsRemoteDatasource>(
-    () => GenericProductsRemoteDatasource(sl(), sl(), sl()),
+  sl.registerLazySingleton<IProductsRemoteDatasource>(
+    () => ProductsRemoteDatasource(
+      sl<ProductPriceFetchOrchestratorService>(),
+      sl<LoggerService>(),
+    ),
   );
   sl.registerLazySingleton<IProductsRepository>(
     () => ProductsRepository(
       sl<ProductsLocalDatasource>(),
-      sl<ProductsRemoteDatasource>(),
+      sl<IProductsRemoteDatasource>(),
     ),
   );
   sl.registerLazySingleton<LoadProductsUseCase>(

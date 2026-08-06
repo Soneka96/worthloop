@@ -6,6 +6,7 @@ import 'package:redux/redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/data/datasources/products_local.datasource.dart';
+import 'package:worth_loop/features/products/data/datasources/products_remote.datasource.dart';
 import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
 import 'package:worth_loop/features/products/domain/usecases/add_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/compare_prices.usecase.dart';
@@ -26,6 +27,7 @@ import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/utils/currency_helper_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
+import 'package:worth_loop/shared/utils/product_price_fetch_orchestrator_service.dart';
 
 class MockAppDatabase extends Mock implements AppDatabase {}
 
@@ -35,6 +37,9 @@ class MockLoggerService extends Mock implements LoggerService {}
 
 class MockAppPreferencesStore extends Mock implements AppPreferencesStore {}
 
+class MockProductPriceFetchOrchestratorService extends Mock
+    implements ProductPriceFetchOrchestratorService {}
+
 void main() {
   setUp(() {
     sl.registerSingleton<AppDatabase>(MockAppDatabase());
@@ -42,16 +47,25 @@ void main() {
     sl.registerSingleton<CurrencyHelperService>(const CurrencyHelperService());
     sl.registerSingleton<LoggerService>(MockLoggerService());
     sl.registerSingleton<AppPreferencesStore>(MockAppPreferencesStore());
+    sl.registerSingleton<ProductPriceFetchOrchestratorService>(
+      MockProductPriceFetchOrchestratorService(),
+    );
     initProductsDependencies();
   });
 
   tearDown(() async => sl.reset());
 
   group('products.injection_container — product feature registrations', () {
-    test('datasource is registered', () {
+    test('local datasource is registered', () {
       expect(sl.isRegistered<ProductsLocalDatasource>(), isA<bool>());
       expect(sl.isRegistered<ProductsLocalDatasource>(), isTrue);
       expect(sl<ProductsLocalDatasource>(), isA<ProductsLocalDatasource>());
+    });
+
+    test('remote datasource is registered', () {
+      expect(sl.isRegistered<IProductsRemoteDatasource>(), isA<bool>());
+      expect(sl.isRegistered<IProductsRemoteDatasource>(), isTrue);
+      expect(sl<IProductsRemoteDatasource>(), isA<IProductsRemoteDatasource>());
     });
 
     test('repository is registered', () {

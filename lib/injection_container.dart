@@ -9,6 +9,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 // Project imports:
 import 'package:worth_loop/features/home/home.injection_container.dart';
+import 'package:worth_loop/features/products/data/datasources/price_response_detector.datasource.dart';
 import 'package:worth_loop/features/products/products.injection_container.dart';
 import 'package:worth_loop/features/settings/settings.injection_container.dart';
 import 'package:worth_loop/shared/constants/price_fetch_constants.dart';
@@ -23,11 +24,16 @@ import 'package:worth_loop/shared/theme/app_shape.dart';
 import 'package:worth_loop/shared/theme/app_spacing.dart';
 import 'package:worth_loop/shared/theme/app_theme.dart';
 import 'package:worth_loop/shared/theme/app_zoom.dart';
-import 'package:worth_loop/shared/utils/currency_helper_service.dart';
 import 'package:worth_loop/shared/utils/browser_request_headers.dart';
+import 'package:worth_loop/shared/utils/currency_helper_service.dart';
+import 'package:worth_loop/shared/utils/dio_product_fetcher_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/popup_service.dart';
+import 'package:worth_loop/shared/utils/product_offer_decoder_service.dart';
+import 'package:worth_loop/shared/utils/product_price_fetch_orchestrator_service.dart';
+import 'package:worth_loop/shared/utils/product_url_cleaner_service.dart';
 import 'package:worth_loop/shared/utils/retry_on_connection_error_interceptor.dart';
+import 'package:worth_loop/shared/utils/webview_product_fetcher_service.dart';
 
 /// Global service locator. Widgets and use cases resolve dependencies via
 /// `sl<Type>()` — never instantiate services directly.
@@ -60,6 +66,27 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<SnugToastManager>(SnugToastManager.new);
   sl.registerLazySingleton<PopupService>(PopupService.new);
   sl.registerLazySingleton<CurrencyHelperService>(CurrencyHelperService.new);
+  sl.registerLazySingleton<ProductUrlCleanerService>(
+    ProductUrlCleanerService.new,
+  );
+  sl.registerLazySingleton<DioProductFetcherService>(
+    () => DioProductFetcherService(sl<Dio>()),
+  );
+  sl.registerLazySingleton<WebViewProductFetcherService>(
+    WebViewProductFetcherService.new,
+  );
+  sl.registerLazySingleton<ProductOfferDecoderService>(
+    ProductOfferDecoderService.new,
+  );
+  sl.registerLazySingleton<ProductPriceFetchOrchestratorService>(
+    () => ProductPriceFetchOrchestratorService(
+      sl<ProductUrlCleanerService>(),
+      sl<DioProductFetcherService>(),
+      sl<WebViewProductFetcherService>(),
+      sl<ProductOfferDecoderService>(),
+      sl<PriceResponseDetector>(),
+    ),
+  );
   sl.registerSingleton<AppTheme>(
     await AppTheme.restore(sl<AppPreferencesStore>()),
   );
