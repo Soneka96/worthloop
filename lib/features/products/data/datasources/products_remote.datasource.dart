@@ -2,7 +2,7 @@
 import 'package:fpdart/fpdart.dart';
 
 // Project imports:
-import 'package:worth_loop/features/products/data/models/store_price.model.dart';
+import 'package:worth_loop/features/products/data/models/product_source.model.dart';
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
@@ -14,8 +14,9 @@ import 'package:worth_loop/shared/utils/product_price_fetch_orchestrator_service
 
 /// Remote merchant-price lookup contract.
 abstract class IProductsRemoteDatasource {
-  /// Fetches the latest merchant offer for [source].
-  Future<Either<Failure, List<StorePriceModel>>> fetchPrices(
+  /// Fetches the latest merchant offer for [source] and returns it applied
+  /// to that same source.
+  Future<Either<Failure, ProductSourceModel>> fetchPrices(
     ProductSource source,
   );
 }
@@ -23,7 +24,7 @@ abstract class IProductsRemoteDatasource {
 /// Implements [IProductsRemoteDatasource] via
 /// [ProductPriceFetchOrchestratorService] (Dio first, falling back to a
 /// headless WebView), mapping the result to this feature's
-/// [StorePriceModel]/[Failure] contract.
+/// [ProductSourceModel]/[Failure] contract.
 class ProductsRemoteDatasource implements IProductsRemoteDatasource {
   final ProductPriceFetchOrchestratorService _orchestrator;
   final LoggerService _loggerService;
@@ -32,16 +33,19 @@ class ProductsRemoteDatasource implements IProductsRemoteDatasource {
   ProductsRemoteDatasource(this._orchestrator, this._loggerService);
 
   @override
-  Future<Either<Failure, List<StorePriceModel>>> fetchPrices(
+  Future<Either<Failure, ProductSourceModel>> fetchPrices(
     ProductSource source,
   ) async {
     final PriceFetchResult result = await _orchestrator.fetch(source.url);
     final ProductOffer? offer = result.offer;
     if (result.status == PriceFetchStatus.success && offer != null) {
-      return Right([
-        StorePriceModel(
-          storeName: source.merchantDomain,
-          productUrl: source.url,
+      return Right(
+        ProductSourceModel(
+          id: source.id,
+          productId: source.productId,
+          url: source.url,
+          merchantDomain: source.merchantDomain,
+          createdAt: source.createdAt,
           currentPrice: Money(
             minorUnits: offer.minorUnits,
             currencyCode: offer.currencyCode,
@@ -49,7 +53,7 @@ class ProductsRemoteDatasource implements IProductsRemoteDatasource {
           isAvailable: offer.isAvailable,
           lastCheckedAt: DateTime.now(),
         ),
-      ]);
+      );
     }
     final Failure failure = _failureFor(result.status);
     _loggerService.e(failure.message);
