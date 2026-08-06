@@ -83,6 +83,179 @@ void main() {
       expect(result?.isAvailable, isTrue);
     });
 
+    test('decode() returns an Amazon euro price from shared offer markup', () {
+      final ProductOffer? result = service.decode('''
+        <div id="corePrice_feature_div">
+          <span class="a-price"><span class="a-offscreen">206,79€</span></span>
+        </div>
+      ''');
+
+      expect(result, isA<ProductOffer>());
+      expect(result?.minorUnits, isA<int>());
+      expect(result?.minorUnits, 20679);
+      expect(result?.currencyCode, isA<String>());
+      expect(result?.currencyCode, 'EUR');
+      expect(result?.isAvailable, isA<bool>());
+      expect(result?.isAvailable, isTrue);
+    });
+
+    test(
+      'decode() returns Amazon dollar and pound prices from shared offer markup',
+      () {
+        final ProductOffer? dollarResult = service.decode(r'''
+        <div id="corePriceDisplay_desktop_feature_div">
+          <span class="a-price"><span class="a-offscreen">$290.27</span></span>
+        </div>
+      ''');
+        final ProductOffer? poundResult = service.decode('''
+        <div id="corePriceDisplay_mobile_feature_div">
+          <span class="a-price"><span class="a-offscreen">£19.99</span></span>
+        </div>
+      ''');
+
+        expect(dollarResult?.minorUnits, 29027);
+        expect(dollarResult?.currencyCode, 'USD');
+        expect(dollarResult?.isAvailable, isTrue);
+        expect(poundResult?.minorUnits, 1999);
+        expect(poundResult?.currencyCode, 'GBP');
+        expect(poundResult?.isAvailable, isTrue);
+      },
+    );
+
+    test(
+      'decode() prefers an Amazon primary offer over an other-sellers offer',
+      () {
+        final ProductOffer? result = service.decode('''
+        <div id="corePrice_feature_div">
+          <span class="a-price"><span class="a-offscreen">249,99€</span></span>
+        </div>
+        <div id="aod-ingress-link">
+          <span class="a-price"><span class="a-offscreen">206,79€</span></span>
+        </div>
+      ''');
+
+        expect(result, isA<ProductOffer>());
+        expect(result?.minorUnits, isA<int>());
+        expect(result?.minorUnits, 24999);
+        expect(result?.currencyCode, isA<String>());
+        expect(result?.currencyCode, 'EUR');
+        expect(result?.isAvailable, isA<bool>());
+        expect(result?.isAvailable, isTrue);
+      },
+    );
+
+    test(
+      'decode() returns an Amazon other-sellers price when no primary offer exists',
+      () {
+        final ProductOffer? result = service.decode('''
+        <div id="aod-ingress-link">
+          Nueva &amp; De segunda mano (11) desde
+          <span class="a-price"><span class="a-offscreen">206,79€</span></span>
+        </div>
+      ''');
+
+        expect(result, isA<ProductOffer>());
+        expect(result?.minorUnits, isA<int>());
+        expect(result?.minorUnits, 20679);
+        expect(result?.currencyCode, isA<String>());
+        expect(result?.currencyCode, 'EUR');
+        expect(result?.isAvailable, isA<bool>());
+        expect(result?.isAvailable, isTrue);
+      },
+    );
+
+    test('decode() falls back when an Amazon primary offer has no price', () {
+      final ProductOffer? result = service.decode('''
+        <div id="corePrice_feature_div">Currently unavailable</div>
+        <div id="aod-ingress-link">
+          <span class="a-price"><span class="a-offscreen">206,79\u20AC</span></span>
+        </div>
+      ''');
+
+      expect(result, isA<ProductOffer>());
+      expect(result?.minorUnits, isA<int>());
+      expect(result?.minorUnits, 20679);
+      expect(result?.currencyCode, isA<String>());
+      expect(result?.currencyCode, 'EUR');
+    });
+
+    test(
+      'decode() parses grouped Amazon amounts and currency before amount',
+      () {
+        final ProductOffer? result = service.decode('''
+        <div id="corePrice_feature_div">
+          <span class="a-price"><span class="a-offscreen">\u20AC1.234,56</span></span>
+        </div>
+      ''');
+
+        expect(result, isA<ProductOffer>());
+        expect(result?.minorUnits, isA<int>());
+        expect(result?.minorUnits, 123456);
+        expect(result?.currencyCode, isA<String>());
+        expect(result?.currencyCode, 'EUR');
+      },
+    );
+
+    test('decode() parses an Amazon ISO currency and non-breaking space', () {
+      final ProductOffer? result = service.decode('''
+        <div id="corePrice_feature_div">
+          <span class="a-price"><span class="a-offscreen">19,99&nbsp;EUR</span></span>
+        </div>
+      ''');
+
+      expect(result, isA<ProductOffer>());
+      expect(result?.minorUnits, isA<int>());
+      expect(result?.minorUnits, 1999);
+      expect(result?.currencyCode, isA<String>());
+      expect(result?.currencyCode, 'EUR');
+    });
+
+    test('decode() returns null for an Amazon offer without an amount', () {
+      final ProductOffer? result = service.decode('''
+        <div id="corePrice_feature_div">
+          <span class="a-price"><span class="a-offscreen">Price unavailable</span></span>
+        </div>
+      ''');
+
+      expect(result, isNull);
+    });
+
+    test(
+      'decode() returns null for an Amazon offer without an offscreen price',
+      () {
+        final ProductOffer? result = service.decode('''
+        <div id="corePrice_feature_div">
+          <span class="a-price"><span class="a-price-whole">19</span></span>
+        </div>
+      ''');
+
+        expect(result, isNull);
+      },
+    );
+
+    test('decode() ignores Amazon-looking prices outside offer containers', () {
+      final ProductOffer? result = service.decode('''
+        <div class="recommendation">
+          <span class="a-price"><span class="a-offscreen">19,99€</span></span>
+        </div>
+      ''');
+
+      expect(result, isNull);
+    });
+
+    test(
+      'decode() returns null for an Amazon offer with an unsupported currency symbol',
+      () {
+        final ProductOffer? result = service.decode('''
+        <div id="corePrice_feature_div">
+          <span class="a-price"><span class="a-offscreen">19,99 kr</span></span>
+        </div>
+      ''');
+
+        expect(result, isNull);
+      },
+    );
+
     test('prefers a JSON-LD offer over microdata when both are present', () {
       final ProductOffer? result = service.decode('''
         <script type="application/ld+json">

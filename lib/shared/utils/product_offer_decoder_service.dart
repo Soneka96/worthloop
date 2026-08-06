@@ -7,10 +7,7 @@ import 'package:worth_loop/shared/utils/product_offer.value-object.dart';
 /// Extracts a merchant's price offer from an HTML product page. Tries, in
 /// order: JSON-LD `Product`/`Offer` markup, Open Graph-style
 /// `product:price:*` meta tags, then Microdata `itemprop="price"` meta tags
-/// — the first tier that finds a price wins.
-// ponytail: CSS-selector tier (.price, .woocommerce-Price-amount,
-// [data-price]) skipped — none of the 5 real sites tested needed it; add
-// when one does.
+/// or Amazon's shared offer markup — the first tier that finds a price wins.
 class ProductOfferDecoderService {
   static final RegExp _jsonLdPattern = RegExp(
     r'''<script[^>]+type=["']application/ld\+json["'][^>]*>(.*?)</script>''',
@@ -24,13 +21,82 @@ class ProductOfferDecoderService {
   static final RegExp _attrPattern = RegExp(
     r'''([a-zA-Z:-]+)\s*=\s*["']([^"']*)["']''',
   );
+  static final RegExp _amazonMainOfferPattern = RegExp(
+    r'''<[^>]*id=["'](?:corePrice_feature_div|corePriceDisplay_(?:desktop|mobile)_feature_div)["'][^>]*>(.*?)(?=<[^>]*id=["'](?:corePrice_feature_div|corePriceDisplay_(?:desktop|mobile)_feature_div|aod-ingress-link)["']|$)''',
+    caseSensitive: false,
+    dotAll: true,
+  );
+  static final RegExp _amazonSellerOfferPattern = RegExp(
+    r'''<[^>]*id=["']aod-ingress-link["'][^>]*>(.*)$''',
+    caseSensitive: false,
+    dotAll: true,
+  );
+  static final RegExp _amazonOffscreenPricePattern = RegExp(
+    r'''<span[^>]*class=["'][^"']*\ba-offscreen\b[^"']*["'][^>]*>([^<]+)</span>''',
+    caseSensitive: false,
+  );
+  static final RegExp _amazonAmountPattern = RegExp(r'[-+]?\d[\d.,]*');
+  static const Map<String, String> _amazonCurrencyCodes = {
+    '€': 'EUR',
+    '£': 'GBP',
+    r'$': 'USD',
+    r'US$': 'USD',
+    r'C$': 'CAD',
+    r'CA$': 'CAD',
+    r'A$': 'AUD',
+    r'AU$': 'AUD',
+    '₹': 'INR',
+    '¥': 'JPY',
+    '￥': 'JPY',
+    '₩': 'KRW',
+    '₺': 'TRY',
+    'zł': 'PLN',
+  };
 
   /// Decodes a price offer from [html], or `null` if none of the supported
   /// markup tiers expose one.
   ProductOffer? decode(String html) {
     return _decodeJsonLd(html) ??
         _decodeMetaTags(html) ??
-        _decodeMicrodata(html);
+        _decodeMicrodata(html) ??
+        _decodeAmazonMainOffer(html) ??
+        _decodeAmazonSellerOffer(html);
+  }
+
+  ProductOffer? _decodeAmazonMainOffer(String html) =>
+      _decodeAmazonSection(_amazonMainOfferPattern.firstMatch(html)?.group(1));
+
+  ProductOffer? _decodeAmazonSellerOffer(String html) => _decodeAmazonSection(
+    _amazonSellerOfferPattern.firstMatch(html)?.group(1),
+  );
+
+  ProductOffer? _decodeAmazonSection(String? section) {
+    if (section == null) {
+      return null;
+    }
+    final Match? priceMatch = _amazonOffscreenPricePattern.firstMatch(section);
+    final String? priceText = priceMatch?.group(1);
+    if (priceText == null) {
+      return null;
+    }
+    final Match? amountMatch = _amazonAmountPattern.firstMatch(priceText);
+    final num? amount = _parseNumber(amountMatch?.group(0));
+    final String currencyText = priceText
+        .replaceAll(amountMatch?.group(0) ?? '', '')
+        .replaceAll('&nbsp;', '')
+        .replaceAll('\u00a0', '')
+        .trim();
+    final String? currencyCode =
+        _amazonCurrencyCodes[currencyText] ??
+        (RegExp(r'^[A-Z]{3}$').hasMatch(currencyText) ? currencyText : null);
+    if (amount == null || currencyCode == null) {
+      return null;
+    }
+    return ProductOffer(
+      minorUnits: (amount.toDouble() * 100).round(),
+      currencyCode: currencyCode,
+      isAvailable: true,
+    );
   }
 
   ProductOffer? _decodeJsonLd(String html) {
