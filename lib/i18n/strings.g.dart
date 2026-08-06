@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 208 (104 per locale)
+/// Strings: 218 (109 per locale)
 ///
-/// Built on 2026-08-06 at 13:21 UTC
+/// Built on 2026-08-06 at 15:51 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -215,6 +215,9 @@ class _StringsProductDetailsEn {
 	String get noOffers => 'No offers yet.';
 	String get available => 'In stock';
 	String get unavailable => 'Out of stock';
+	String get filterAll => 'All';
+	String get filterAvailable => 'Available';
+	String get filterUnavailable => 'Unavailable';
 	String checkedAt({required Object time}) => 'Checked at ${time}';
 	String get productNotFound => 'Product not found';
 	String get productNotFoundDescription => 'Return to your tracked products and choose an item again.';
@@ -223,6 +226,8 @@ class _StringsProductDetailsEn {
 	String get refreshNetworkError => 'The website could not be reached. Your last price is still shown.';
 	String get refreshInvalidData => 'The website returned an unreadable price. Your last price is still shown.';
 	String get sourcesTitle => 'Sources';
+	String get openOfferFailed => 'Could not open the merchant page.';
+	String get openOfferHint => 'Opens in your browser';
 	String get addSourceTooltip => 'Add source';
 	String get addSourceTitle => 'Add a source';
 	String get editSourceTitle => 'Edit source';
@@ -485,6 +490,9 @@ class _StringsProductDetailsPt implements _StringsProductDetailsEn {
 	@override String get noOffers => 'Ainda não existem ofertas.';
 	@override String get available => 'Em stock';
 	@override String get unavailable => 'Sem stock';
+	@override String get filterAll => 'Todas';
+	@override String get filterAvailable => 'Disponível';
+	@override String get filterUnavailable => 'Indisponível';
 	@override String checkedAt({required Object time}) => 'Verificado às ${time}';
 	@override String get productNotFound => 'Produto não encontrado';
 	@override String get productNotFoundDescription => 'Volte aos produtos acompanhados e escolha novamente um artigo.';
@@ -493,6 +501,8 @@ class _StringsProductDetailsPt implements _StringsProductDetailsEn {
 	@override String get refreshNetworkError => 'Não foi possível contactar o site. O último preço continua visível.';
 	@override String get refreshInvalidData => 'O site devolveu um preço ilegível. O último preço continua visível.';
 	@override String get sourcesTitle => 'Fontes';
+	@override String get openOfferFailed => 'Não foi possível abrir a página da loja.';
+	@override String get openOfferHint => 'Abre no seu navegador';
 	@override String get addSourceTooltip => 'Adicionar fonte';
 	@override String get addSourceTitle => 'Adicionar uma fonte';
 	@override String get editSourceTitle => 'Editar fonte';
@@ -705,6 +715,9 @@ extension on Translations {
 			case 'productDetails.noOffers': return 'No offers yet.';
 			case 'productDetails.available': return 'In stock';
 			case 'productDetails.unavailable': return 'Out of stock';
+			case 'productDetails.filterAll': return 'All';
+			case 'productDetails.filterAvailable': return 'Available';
+			case 'productDetails.filterUnavailable': return 'Unavailable';
 			case 'productDetails.checkedAt': return ({required Object time}) => 'Checked at ${time}';
 			case 'productDetails.productNotFound': return 'Product not found';
 			case 'productDetails.productNotFoundDescription': return 'Return to your tracked products and choose an item again.';
@@ -713,6 +726,8 @@ extension on Translations {
 			case 'productDetails.refreshNetworkError': return 'The website could not be reached. Your last price is still shown.';
 			case 'productDetails.refreshInvalidData': return 'The website returned an unreadable price. Your last price is still shown.';
 			case 'productDetails.sourcesTitle': return 'Sources';
+			case 'productDetails.openOfferFailed': return 'Could not open the merchant page.';
+			case 'productDetails.openOfferHint': return 'Opens in your browser';
 			case 'productDetails.addSourceTooltip': return 'Add source';
 			case 'productDetails.addSourceTitle': return 'Add a source';
 			case 'productDetails.editSourceTitle': return 'Edit source';
@@ -817,6 +832,9 @@ extension on _StringsPt {
 			case 'productDetails.noOffers': return 'Ainda não existem ofertas.';
 			case 'productDetails.available': return 'Em stock';
 			case 'productDetails.unavailable': return 'Sem stock';
+			case 'productDetails.filterAll': return 'Todas';
+			case 'productDetails.filterAvailable': return 'Disponível';
+			case 'productDetails.filterUnavailable': return 'Indisponível';
 			case 'productDetails.checkedAt': return ({required Object time}) => 'Verificado às ${time}';
 			case 'productDetails.productNotFound': return 'Produto não encontrado';
 			case 'productDetails.productNotFoundDescription': return 'Volte aos produtos acompanhados e escolha novamente um artigo.';
@@ -825,6 +843,8 @@ extension on _StringsPt {
 			case 'productDetails.refreshNetworkError': return 'Não foi possível contactar o site. O último preço continua visível.';
 			case 'productDetails.refreshInvalidData': return 'O site devolveu um preço ilegível. O último preço continua visível.';
 			case 'productDetails.sourcesTitle': return 'Fontes';
+			case 'productDetails.openOfferFailed': return 'Não foi possível abrir a página da loja.';
+			case 'productDetails.openOfferHint': return 'Abre no seu navegador';
 			case 'productDetails.addSourceTooltip': return 'Adicionar fonte';
 			case 'productDetails.addSourceTitle': return 'Adicionar uma fonte';
 			case 'productDetails.editSourceTitle': return 'Editar fonte';

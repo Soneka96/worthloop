@@ -39,6 +39,9 @@ productDetails:
   noOffers: No offers yet.
   available: In stock
   unavailable: Out of stock
+  filterAll: All
+  filterAvailable: Available
+  filterUnavailable: Unavailable
   checkedAt: Checked at $time
   productNotFound: Product not found
   productNotFoundDescription: Return to your tracked products and choose an item again.
@@ -47,6 +50,8 @@ productDetails:
   refreshNetworkError: The website could not be reached. Your last price is still shown.
   refreshInvalidData: The website returned an unreadable price. Your last price is still shown.
   sourcesTitle: Sources
+  openOfferFailed: Could not open the merchant page.
+  openOfferHint: Opens in your browser
   addSourceTooltip: Add source
   addSourceTitle: Add a source
   editSourceTitle: Edit source

@@ -20,6 +20,7 @@ import 'package:worth_loop/features/products/domain/usecases/refresh_all_product
 import 'package:worth_loop/features/products/domain/usecases/refresh_product.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/rename_product.usecase.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
+import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/navigation/app_routes.dart';
 import 'package:worth_loop/shared/navigation/navigator_service.dart';
@@ -225,10 +226,7 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
   ) async {
     final bool opened = await sl<UrlLauncherService>().open(action.url);
     if (!opened) {
-      sl<LoggerService>().e(
-        'Could not open the merchant page',
-        showPopup: true,
-      );
+      sl<LoggerService>().e(t.productDetails.openOfferFailed, showPopup: true);
     }
   }
 

@@ -40,6 +40,9 @@ productDetails:
   noOffers: Ainda não existem ofertas.
   available: Em stock
   unavailable: Sem stock
+  filterAll: Todas
+  filterAvailable: Disponível
+  filterUnavailable: Indisponível
   checkedAt: Verificado às $time
   productNotFound: Produto não encontrado
   productNotFoundDescription: Volte aos produtos acompanhados e escolha novamente um artigo.
@@ -48,6 +51,8 @@ productDetails:
   refreshNetworkError: Não foi possível contactar o site. O último preço continua visível.
   refreshInvalidData: O site devolveu um preço ilegível. O último preço continua visível.
   sourcesTitle: Fontes
+  openOfferFailed: Não foi possível abrir a página da loja.
+  openOfferHint: Abre no seu navegador
   addSourceTooltip: Adicionar fonte
   addSourceTitle: Adicionar uma fonte
   editSourceTitle: Editar fonte

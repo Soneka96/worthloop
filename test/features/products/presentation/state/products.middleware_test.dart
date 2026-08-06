@@ -24,6 +24,7 @@ import 'package:worth_loop/features/products/domain/usecases/refresh_product.use
 import 'package:worth_loop/features/products/domain/usecases/rename_product.usecase.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/products.middleware.dart';
+import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/navigation/app_routes.dart';
@@ -644,7 +645,7 @@ void main() {
       ).called(1);
       verify(
         () => mockLoggerService.e(
-          'Could not open the merchant page',
+          t.productDetails.openOfferFailed,
           showPopup: true,
         ),
       ).called(1);
