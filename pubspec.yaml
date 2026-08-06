@@ -54,6 +54,7 @@ dependencies:
   meta: ^1.18.0
   fpdart: ^1.2.0
   sqlite3: ^2.9.4
+  flutter_inappwebview: ^6.1.5
 
 dev_dependencies:
   flutter_test:
