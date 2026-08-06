@@ -124,44 +124,44 @@ void main() {
       expect(product.availablePricesSorted, isEmpty);
     });
 
-    test('rejects available offers with different currencies', () {
+    test('sorts available offers by converted currency value', () {
       final Product product = buildProduct(
         sources: [
           buildProductSource(
             id: 'source-usd',
-            currentPrice: buildMoney(currencyCode: 'USD'),
+            currentPrice: buildMoney(minorUnits: 10000, currencyCode: 'USD'),
             isAvailable: true,
           ),
           buildProductSource(
             id: 'source-eur',
-            currentPrice: buildMoney(currencyCode: 'EUR'),
+            currentPrice: buildMoney(minorUnits: 9500, currencyCode: 'EUR'),
             isAvailable: true,
           ),
         ],
       );
 
-      expect(() => product.availablePricesSorted, throwsStateError);
+      expect(product.availablePricesSorted.map((source) => source.id), [
+        'source-usd',
+        'source-eur',
+      ]);
     });
 
     test(
-      'rejects mismatched currencies between an available and an unavailable offer',
+      'places an unsupported available currency after convertible offers',
       () {
-        final Product product = buildProduct(
-          sources: [
-            buildProductSource(
-              id: 'source-usd',
-              currentPrice: buildMoney(currencyCode: 'USD'),
-              isAvailable: true,
-            ),
-            buildProductSource(
-              id: 'source-eur',
-              currentPrice: buildMoney(currencyCode: 'EUR'),
-              isAvailable: false,
-            ),
-          ],
+        final ProductSource supported = buildProductSource(
+          id: 'source-eur',
+          currentPrice: buildMoney(minorUnits: 10000, currencyCode: 'EUR'),
+          isAvailable: true,
         );
+        final ProductSource unsupported = buildProductSource(
+          id: 'source-xyz',
+          currentPrice: buildMoney(minorUnits: 1, currencyCode: 'XYZ'),
+          isAvailable: true,
+        );
+        final Product product = buildProduct(sources: [unsupported, supported]);
 
-        expect(() => product.availablePricesSorted, throwsStateError);
+        expect(product.availablePricesSorted, [supported, unsupported]);
       },
     );
   });
@@ -205,46 +205,53 @@ void main() {
       expect(product.bestAvailablePrice, isNull);
     });
 
-    test('rejects available offers with different currencies', () {
+    test('returns the lowest available offer after currency conversion', () {
       final Product product = buildProduct(
         sources: [
           buildProductSource(
             id: 'source-usd',
-            currentPrice: buildMoney(currencyCode: 'USD'),
+            currentPrice: buildMoney(minorUnits: 10000, currencyCode: 'USD'),
             isAvailable: true,
           ),
           buildProductSource(
             id: 'source-eur',
-            currentPrice: buildMoney(currencyCode: 'EUR'),
+            currentPrice: buildMoney(minorUnits: 9500, currencyCode: 'EUR'),
             isAvailable: true,
           ),
         ],
       );
 
-      expect(() => product.bestAvailablePrice, throwsStateError);
+      expect(product.bestAvailablePrice?.id, 'source-usd');
     });
 
-    test(
-      'rejects mismatched currencies between an available and an unavailable offer',
-      () {
-        final Product product = buildProduct(
-          sources: [
-            buildProductSource(
-              id: 'source-usd',
-              currentPrice: buildMoney(currencyCode: 'USD'),
-              isAvailable: true,
-            ),
-            buildProductSource(
-              id: 'source-eur',
-              currentPrice: buildMoney(currencyCode: 'EUR'),
-              isAvailable: false,
-            ),
-          ],
-        );
+    test('prefers a convertible offer over an unsupported available offer', () {
+      final ProductSource supported = buildProductSource(
+        id: 'source-eur',
+        currentPrice: buildMoney(currencyCode: 'EUR'),
+        isAvailable: true,
+      );
+      final ProductSource unsupported = buildProductSource(
+        id: 'source-xyz',
+        currentPrice: buildMoney(currencyCode: 'XYZ'),
+        isAvailable: true,
+      );
+      final Product product = buildProduct(sources: [unsupported, supported]);
 
-        expect(() => product.bestAvailablePrice, throwsStateError);
-      },
-    );
+      expect(product.bestAvailablePrice, supported);
+    });
+
+    test('returns null when the only available offer is not convertible', () {
+      final Product product = buildProduct(
+        sources: [
+          buildProductSource(
+            currentPrice: buildMoney(currencyCode: 'XYZ'),
+            isAvailable: true,
+          ),
+        ],
+      );
+
+      expect(product.bestAvailablePrice, isNull);
+    });
   });
 
   group('Getter pricesForDisplay returns the correct value', () {
@@ -318,6 +325,27 @@ void main() {
       ]);
     });
 
+    test(
+      'sorts mixed currencies inside the unavailable bucket by conversion',
+      () {
+        final ProductSource euroUnavailable = buildProductSource(
+          id: 'source-eur-unavailable',
+          currentPrice: buildMoney(minorUnits: 9500, currencyCode: 'EUR'),
+          isAvailable: false,
+        );
+        final ProductSource usdUnavailable = buildProductSource(
+          id: 'source-usd-unavailable',
+          currentPrice: buildMoney(minorUnits: 10000, currencyCode: 'USD'),
+          isAvailable: false,
+        );
+        final Product product = buildProduct(
+          sources: [euroUnavailable, usdUnavailable],
+        );
+
+        expect(product.pricesForDisplay, [usdUnavailable, euroUnavailable]);
+      },
+    );
+
     test('sorts equal-priced offers by merchant domain and source id', () {
       final ProductSource zeta = buildProductSource(
         id: 'source-zeta',
@@ -352,23 +380,42 @@ void main() {
       expect(product.pricesForDisplay, [earlierId, laterId]);
     });
 
-    test('rejects offers with different currencies', () {
+    test('keeps mixed currencies in the display ordering', () {
       final Product product = buildProduct(
         sources: [
           buildProductSource(
             id: 'source-usd',
-            currentPrice: buildMoney(currencyCode: 'USD'),
+            currentPrice: buildMoney(minorUnits: 10000, currencyCode: 'USD'),
             isAvailable: true,
           ),
           buildProductSource(
             id: 'source-eur',
-            currentPrice: buildMoney(currencyCode: 'EUR'),
+            currentPrice: buildMoney(minorUnits: 9500, currencyCode: 'EUR'),
             isAvailable: false,
           ),
         ],
       );
 
-      expect(() => product.pricesForDisplay, throwsStateError);
+      expect(product.pricesForDisplay, [
+        product.sources.first,
+        product.sources.last,
+      ]);
+    });
+
+    test('places an unsupported currency after convertible display prices', () {
+      final ProductSource supported = buildProductSource(
+        id: 'source-eur',
+        currentPrice: buildMoney(currencyCode: 'EUR'),
+        isAvailable: true,
+      );
+      final ProductSource unsupported = buildProductSource(
+        id: 'source-xyz',
+        currentPrice: buildMoney(currencyCode: 'XYZ'),
+        isAvailable: true,
+      );
+      final Product product = buildProduct(sources: [unsupported, supported]);
+
+      expect(product.pricesForDisplay, [supported, unsupported]);
     });
   });
 }

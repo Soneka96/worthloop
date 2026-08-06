@@ -4,6 +4,8 @@ import 'package:meta/meta.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
+import 'package:worth_loop/features/products/domain/value_objects/currency_converter.value-object.dart';
+import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 
 /// An item whose merchant offers are tracked.
 @immutable
@@ -31,9 +33,11 @@ class Product extends Equatable {
     this.imageUrl,
   });
 
-  /// Priced, in-stock sources ordered from lowest to highest price.
+  /// Converts prices with the default display currency for comparison.
+  static const CurrencyConverter _currencyConverter = CurrencyConverter();
+
+  /// Priced, in-stock sources ordered from lowest to highest converted price.
   List<ProductSource> get availablePricesSorted {
-    _ensureSingleCurrency();
     final List<ProductSource> available = sources
         .where(
           (ProductSource source) =>
@@ -47,12 +51,14 @@ class Product extends Equatable {
   /// Lowest-priced in-stock source, or `null` when none is available.
   ProductSource? get bestAvailablePrice {
     final List<ProductSource> prices = availablePricesSorted;
-    return prices.isEmpty ? null : prices.first;
+    if (prices.isEmpty) {
+      return null;
+    }
+    return _comparablePrice(prices.first) == null ? null : prices.first;
   }
 
-  /// Sources ordered by availability, price, and merchant identity.
+  /// Sources ordered by availability, converted price, and merchant identity.
   List<ProductSource> get pricesForDisplay {
-    _ensureSingleCurrency();
     final List<ProductSource> unavailable = sources
         .where(
           (ProductSource source) =>
@@ -68,10 +74,22 @@ class Product extends Equatable {
 
   void _sortByPrice(List<ProductSource> entries) {
     entries.sort((ProductSource first, ProductSource second) {
-      final int priceComparison = (first.currentPrice?.minorUnits ?? 0)
-          .compareTo(second.currentPrice?.minorUnits ?? 0);
-      if (priceComparison != 0) {
-        return priceComparison;
+      final Money? firstPrice = _comparablePrice(first);
+      final Money? secondPrice = _comparablePrice(second);
+      if (firstPrice == null || secondPrice == null) {
+        if (firstPrice != null) {
+          return -1;
+        }
+        if (secondPrice != null) {
+          return 1;
+        }
+      } else {
+        final int priceComparison = firstPrice.minorUnits.compareTo(
+          secondPrice.minorUnits,
+        );
+        if (priceComparison != 0) {
+          return priceComparison;
+        }
       }
       final int merchantComparison = first.merchantDomain.compareTo(
         second.merchantDomain,
@@ -82,14 +100,9 @@ class Product extends Equatable {
     });
   }
 
-  void _ensureSingleCurrency() {
-    final Set<String> currencyCodes = sources
-        .map((ProductSource source) => source.currentPrice?.currencyCode)
-        .whereType<String>()
-        .toSet();
-    if (currencyCodes.length > 1) {
-      throw StateError('Product offers must use one currency');
-    }
+  Money? _comparablePrice(ProductSource source) {
+    final Money? price = source.currentPrice;
+    return price == null ? null : _currencyConverter.convert(price);
   }
 
   @override
