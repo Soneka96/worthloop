@@ -12,6 +12,18 @@ void main() {
       expect(CurrencyConverter.defaultCurrencyCode, 'EUR');
     });
 
+    test('returns the configured minor-unit scale case-insensitively', () {
+      const CurrencyConverter converter = CurrencyConverter();
+
+      expect(converter.minorUnitScaleFor(' jpy '), 1);
+    });
+
+    test('returns null for an unknown minor-unit scale', () {
+      const CurrencyConverter converter = CurrencyConverter();
+
+      expect(converter.minorUnitScaleFor('XYZ'), isNull);
+    });
+
     test('converts USD to EUR using the built-in rate', () {
       const CurrencyConverter converter = CurrencyConverter();
 

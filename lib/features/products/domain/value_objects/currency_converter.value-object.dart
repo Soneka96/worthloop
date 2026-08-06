@@ -53,6 +53,10 @@ class CurrencyConverter extends Equatable {
     this.minorUnitsPerUnit = defaultMinorUnitsPerUnit,
   });
 
+  /// Returns the minor-unit scale for [currencyCode], or `null` when unknown.
+  int? minorUnitScaleFor(String currencyCode) =>
+      minorUnitsPerUnit[currencyCode.trim().toUpperCase()];
+
   /// Converts [money] to [targetCurrency], or returns `null` when either
   /// currency is not supported by this converter.
   Money? convert(Money money, {String targetCurrency = defaultCurrencyCode}) {
