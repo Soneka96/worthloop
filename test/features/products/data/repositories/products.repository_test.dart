@@ -21,17 +21,17 @@ import '../../fixtures/store_price_model.fixture.dart';
 class MockProductsLocalDatasource extends Mock
     implements ProductsLocalDatasource {}
 
-class MockProductsRemoteDatasource extends Mock
-    implements ProductsRemoteDatasource {}
+class MockIProductsRemoteDatasource extends Mock
+    implements IProductsRemoteDatasource {}
 
 void main() {
   late MockProductsLocalDatasource mockDatasource;
-  late MockProductsRemoteDatasource mockRemoteDatasource;
+  late MockIProductsRemoteDatasource mockRemoteDatasource;
   late ProductsRepository repository;
 
   setUp(() {
     mockDatasource = MockProductsLocalDatasource();
-    mockRemoteDatasource = MockProductsRemoteDatasource();
+    mockRemoteDatasource = MockIProductsRemoteDatasource();
     repository = ProductsRepository(mockDatasource, mockRemoteDatasource);
   });
 

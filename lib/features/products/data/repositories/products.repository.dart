@@ -15,7 +15,7 @@ import 'package:worth_loop/shared/failures/failures.dart';
 /// Implements [IProductsRepository] with local and remote product data.
 class ProductsRepository implements IProductsRepository {
   final ProductsLocalDatasource _localDatasource;
-  final ProductsRemoteDatasource _remoteDatasource;
+  final IProductsRemoteDatasource _remoteDatasource;
 
   /// Creates a repository backed by local and remote datasources.
   ProductsRepository(this._localDatasource, this._remoteDatasource);
