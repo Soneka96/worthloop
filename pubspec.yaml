@@ -55,6 +55,7 @@ dependencies:
   fpdart: ^1.2.0
   sqlite3: ^2.9.4
   flutter_inappwebview: ^6.1.5
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
@@ -82,6 +83,7 @@ dev_dependencies:
 
   # Test/command runner with completion notifications — run `dart run taskflare`
   taskflare: ^0.2.1
+  url_launcher_platform_interface: ^2.3.2
 
 flutter_launcher_icons:
   image_path: "assets/icon,png.png"
