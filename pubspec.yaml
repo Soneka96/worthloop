@@ -89,6 +89,9 @@ flutter_launcher_icons:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icon,png.png
+    - assets/launch_icon_alpha.png
   fonts:
     - family: Inter
       fonts:

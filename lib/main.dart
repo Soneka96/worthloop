@@ -25,6 +25,7 @@ import 'shared/theme/app_spacing_theme_extension.dart';
 import 'shared/theme/app_theme.dart';
 import 'shared/theme/app_theme_data.dart';
 import 'shared/theme/app_zoom.dart';
+import 'shared/widgets/app_launch_splash.widget.dart';
 
 Future<void> main() async {
   // marionette_flutter's binding replaces WidgetsFlutterBinding in debug
@@ -49,6 +50,7 @@ class App extends StatefulWidget {
 class _AppState extends State<App> {
   late final Store<AppState> _store;
   late final GoRouter _router;
+  bool _showLaunchSplash = true;
 
   @override
   void initState() {
@@ -59,6 +61,12 @@ class _AppState extends State<App> {
 
   @override
   Widget build(BuildContext context) {
+    if (_showLaunchSplash) {
+      return AppLaunchSplash(
+        onFinished: () => setState(() => _showLaunchSplash = false),
+      );
+    }
+
     return StoreProvider<AppState>(
       store: _store,
       child: SnugToastWrapper(
