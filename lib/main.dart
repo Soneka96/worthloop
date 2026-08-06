@@ -117,7 +117,11 @@ class _AppState extends State<App> {
                       (zoomLevel / 100) * fontAndBaselineScale,
                     ),
                   ),
-                  child: child ?? const SizedBox.shrink(),
+                  child: SafeArea(
+                    key: const Key('app-bottom-safe-area'),
+                    top: false,
+                    child: child ?? const SizedBox.shrink(),
+                  ),
                 ),
               );
             },
