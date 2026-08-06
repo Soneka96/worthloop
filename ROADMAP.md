@@ -13,7 +13,7 @@ on an Android device.
 - [x] Phase 1 foundation PR completed on `phase-1-price-tracking-foundation`
 - [x] Local product storage and migrations
 - [x] Product and merchant-offer domain model
-- [x] Available-price comparison and currency consistency
+- [x] Currency-aware available-price comparison with EUR-default conversion
 - [x] Manual refresh flow in the current fake-data loop
 - [x] English and Portuguese UI
 - [x] Light and dark themes
@@ -75,7 +75,20 @@ code or seeded data.
 - [x] Define the generic refresh contract: price, currency, availability, URL, merchant,
       and checked time.
 - [x] Map generic JSON-LD responses into `StorePrice` safely.
-- [ ] Handle currency, unavailable offers, stale data, rate limits, and malformed responses.
+- [x] Preserve each offer's original amount and currency, including mixed-currency products.
+- [x] Compare supported currencies using the built-in EUR-default conversion.
+- [x] Display converted EUR prices while keeping unsupported original prices visible;
+      exclude unconvertible offers from currency comparison and best-price selection.
+- [ ] Handle unavailable offers, stale data, rate limits, malformed responses, and conversion failures.
+- [ ] Replace embedded exchange rates with a live exchange-rate provider and a cached
+      rate table that includes the fetched-at timestamp.
+- [ ] Define stale-rate behavior: show the rate age, avoid silently treating stale rates
+      as current, and provide a safe fallback when rates cannot be refreshed.
+- [ ] Add a selectable target currency in Settings, defaulting to EUR for existing users.
+- [ ] Show the original amount/currency beside the converted amount in product and offer
+      views, including clear copy when the conversion is unavailable.
+- [ ] Model shipping, taxes, and other merchant costs separately from item price, then
+      display and compare a configurable total cost.
 - [ ] Refresh one product and the full watchlist using real data.
 - [ ] Show the last successful refresh separately from a failed attempt.
 - [ ] Keep old trustworthy data when a refresh fails.
