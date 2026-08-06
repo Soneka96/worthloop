@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
-import 'package:worth_loop/features/products/domain/entities/store_price.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
+import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 import 'package:worth_loop/features/products/presentation/utils/price_formatter.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/shared/theme/app_shape_theme_extension.dart';
@@ -27,7 +28,8 @@ class TrackedProductWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
-    final StorePrice? bestPrice = product.bestAvailablePrice;
+    final ProductSource? bestPrice = product.bestAvailablePrice;
+    final Money? currentPrice = bestPrice?.currentPrice;
 
     return InkWell(
       key: Key('tracked-product-${product.id}'),
@@ -49,9 +51,9 @@ class TrackedProductWidget extends StatelessWidget {
               Text(t.home.bestPrice, style: textTheme.labelSmall),
               SizedBox(height: context.spacing.xs),
               Text(
-                bestPrice == null
+                currentPrice == null
                     ? t.home.noAvailablePrice
-                    : formatPrice(bestPrice.currentPrice),
+                    : formatPrice(currentPrice),
                 key: Key('tracked-product-price-${product.id}'),
                 style: textTheme.headlineSmall,
               ),
@@ -61,11 +63,11 @@ class TrackedProductWidget extends StatelessWidget {
                 runSpacing: context.spacing.xs,
                 children: [
                   Text(
-                    bestPrice?.storeName ?? t.home.noStore,
+                    bestPrice?.merchantDomain ?? t.home.noStore,
                     style: textTheme.bodyMedium,
                   ),
                   Text(
-                    t.home.storeOffers(count: product.storePrices.length),
+                    t.home.storeOffers(count: product.sources.length),
                     style: textTheme.bodySmall,
                   ),
                   Text(
