@@ -2,6 +2,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 // Project imports:
+import 'package:worth_loop/shared/utils/product_offer.value-object.dart';
 import 'package:worth_loop/shared/utils/product_offer_decoder_service.dart';
 
 void main() {
@@ -13,25 +14,20 @@ void main() {
     });
 
     test('extracts a JSON-LD offer with its currency', () {
-      final ({int minorUnits, String currencyCode, bool isAvailable})? result =
-          service.decode('''
+      final ProductOffer? result = service.decode('''
         <script type="application/ld+json">
           {"@type":"Product","offers":{"price":"19.99","priceCurrency":"USD"}}
         </script>
       ''');
 
-      expect(
-        result,
-        isA<({int minorUnits, String currencyCode, bool isAvailable})>(),
-      );
+      expect(result, isA<ProductOffer>());
       expect(result?.minorUnits, 1999);
       expect(result?.currencyCode, 'USD');
       expect(result?.isAvailable, isTrue);
     });
 
     test('returns null for a JSON-LD offer without currency metadata', () {
-      final ({int minorUnits, String currencyCode, bool isAvailable})? result =
-          service.decode('''
+      final ProductOffer? result = service.decode('''
         <script type="application/ld+json">
           {"@type":"Product","offers":{"price":"19.99"}}
         </script>
@@ -43,8 +39,7 @@ void main() {
     test(
       'skips malformed JSON-LD offers and parses formatted aggregate prices',
       () {
-        final ({int minorUnits, String currencyCode, bool isAvailable})?
-        result = service.decode('''
+        final ProductOffer? result = service.decode('''
           <script type="application/ld+json">
             {"@type":"Product","offers":[
               {"price":"not-a-number","priceCurrency":"EUR"},
@@ -59,15 +54,15 @@ void main() {
     );
 
     test('returns null when html has no supported price markup', () {
-      final ({int minorUnits, String currencyCode, bool isAvailable})? result =
-          service.decode('<html><title>Product</title></html>');
+      final ProductOffer? result = service.decode(
+        '<html><title>Product</title></html>',
+      );
 
       expect(result, isNull);
     });
 
     test('extracts a price from Open Graph product:price meta tags', () {
-      final ({int minorUnits, String currencyCode, bool isAvailable})? result =
-          service.decode('''
+      final ProductOffer? result = service.decode('''
         <meta property="product:price:amount" content="199.99">
         <meta property="product:price:currency" content="EUR">
       ''');
@@ -78,8 +73,7 @@ void main() {
     });
 
     test('extracts a price from microdata itemprop meta tags', () {
-      final ({int minorUnits, String currencyCode, bool isAvailable})? result =
-          service.decode('''
+      final ProductOffer? result = service.decode('''
         <meta itemprop="price" content="159.99">
         <meta itemprop="priceCurrency" content="EUR">
       ''');
@@ -90,8 +84,7 @@ void main() {
     });
 
     test('prefers a JSON-LD offer over microdata when both are present', () {
-      final ({int minorUnits, String currencyCode, bool isAvailable})? result =
-          service.decode('''
+      final ProductOffer? result = service.decode('''
         <script type="application/ld+json">
           {"@type":"Product","offers":{"price":"19.99","priceCurrency":"USD"}}
         </script>
@@ -106,8 +99,7 @@ void main() {
     test(
       'prefers Open Graph meta tags over microdata when both are present',
       () {
-        final ({int minorUnits, String currencyCode, bool isAvailable})?
-        result = service.decode('''
+        final ProductOffer? result = service.decode('''
         <meta property="product:price:amount" content="199.99">
         <meta property="product:price:currency" content="EUR">
         <meta itemprop="price" content="159.99">
@@ -120,8 +112,7 @@ void main() {
     );
 
     test('reports isAvailable false for a JSON-LD out-of-stock offer', () {
-      final ({int minorUnits, String currencyCode, bool isAvailable})? result =
-          service.decode('''
+      final ProductOffer? result = service.decode('''
         <script type="application/ld+json">
           {"@type":"Product","offers":{"price":"19.99","priceCurrency":"USD","availability":"https://schema.org/OutOfStock"}}
         </script>
@@ -133,8 +124,7 @@ void main() {
     test(
       'falls through a malformed JSON-LD script tag to a later valid one',
       () {
-        final ({int minorUnits, String currencyCode, bool isAvailable})?
-        result = service.decode('''
+        final ProductOffer? result = service.decode('''
         <script type="application/ld+json">{not valid json</script>
         <script type="application/ld+json">
           {"@type":"Product","offers":{"price":"19.99","priceCurrency":"USD"}}
@@ -147,8 +137,7 @@ void main() {
     );
 
     test('finds a JSON-LD offer nested under @graph', () {
-      final ({int minorUnits, String currencyCode, bool isAvailable})? result =
-          service.decode('''
+      final ProductOffer? result = service.decode('''
         <script type="application/ld+json">
           {"@graph":[{"@type":"Product","offers":{"price":"19.99","priceCurrency":"USD"}}]}
         </script>
@@ -161,8 +150,7 @@ void main() {
     test(
       'skips a JSON-LD offer with a missing currency and parses the next one',
       () {
-        final ({int minorUnits, String currencyCode, bool isAvailable})?
-        result = service.decode('''
+        final ProductOffer? result = service.decode('''
         <script type="application/ld+json">
           {"@type":"Product","offers":[
             {"price":"19.99"},
@@ -177,10 +165,9 @@ void main() {
     );
 
     test('returns null when a meta price tag has no matching currency tag', () {
-      final ({int minorUnits, String currencyCode, bool isAvailable})? result =
-          service.decode(
-            '<meta property="product:price:amount" content="199.99">',
-          );
+      final ProductOffer? result = service.decode(
+        '<meta property="product:price:amount" content="199.99">',
+      );
 
       expect(result, isNull);
     });
@@ -188,16 +175,16 @@ void main() {
     test(
       'returns null when a microdata price tag has no matching currency tag',
       () {
-        final ({int minorUnits, String currencyCode, bool isAvailable})?
-        result = service.decode('<meta itemprop="price" content="159.99">');
+        final ProductOffer? result = service.decode(
+          '<meta itemprop="price" content="159.99">',
+        );
 
         expect(result, isNull);
       },
     );
 
     test('extracts an Open Graph meta tag regardless of attribute order', () {
-      final ({int minorUnits, String currencyCode, bool isAvailable})? result =
-          service.decode('''
+      final ProductOffer? result = service.decode('''
         <meta content="199.99" property="product:price:amount">
         <meta content="EUR" property="product:price:currency">
       ''');
@@ -207,8 +194,7 @@ void main() {
     });
 
     test('extracts a microdata meta tag regardless of attribute order', () {
-      final ({int minorUnits, String currencyCode, bool isAvailable})? result =
-          service.decode('''
+      final ProductOffer? result = service.decode('''
         <meta content="159.99" itemprop="price">
         <meta content="EUR" itemprop="priceCurrency">
       ''');
@@ -220,8 +206,7 @@ void main() {
     test(
       'extracts an Open Graph meta tag using "name" instead of "property"',
       () {
-        final ({int minorUnits, String currencyCode, bool isAvailable})?
-        result = service.decode('''
+        final ProductOffer? result = service.decode('''
         <meta name="product:price:amount" content="199.99">
         <meta name="product:price:currency" content="EUR">
       ''');
@@ -232,8 +217,7 @@ void main() {
     );
 
     test('parses a decimal-comma price with no thousands separator', () {
-      final ({int minorUnits, String currencyCode, bool isAvailable})? result =
-          service.decode('''
+      final ProductOffer? result = service.decode('''
         <script type="application/ld+json">
           {"@type":"Product","offers":{"price":"19,99","priceCurrency":"EUR"}}
         </script>

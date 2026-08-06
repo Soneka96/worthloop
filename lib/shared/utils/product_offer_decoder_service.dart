@@ -1,6 +1,9 @@
 // Dart imports:
 import 'dart:convert';
 
+// Project imports:
+import 'package:worth_loop/shared/utils/product_offer.value-object.dart';
+
 /// Extracts a merchant's price offer from an HTML product page. Tries, in
 /// order: JSON-LD `Product`/`Offer` markup, Open Graph-style
 /// `product:price:*` meta tags, then Microdata `itemprop="price"` meta tags
@@ -24,17 +27,13 @@ class ProductOfferDecoderService {
 
   /// Decodes a price offer from [html], or `null` if none of the supported
   /// markup tiers expose one.
-  ({int minorUnits, String currencyCode, bool isAvailable})? decode(
-    String html,
-  ) {
+  ProductOffer? decode(String html) {
     return _decodeJsonLd(html) ??
         _decodeMetaTags(html) ??
         _decodeMicrodata(html);
   }
 
-  ({int minorUnits, String currencyCode, bool isAvailable})? _decodeJsonLd(
-    String html,
-  ) {
+  ProductOffer? _decodeJsonLd(String html) {
     for (final Match match in _jsonLdPattern.allMatches(html)) {
       final String json = match.group(1)?.trim() ?? '';
       if (json.isEmpty) {
@@ -52,7 +51,7 @@ class ProductOfferDecoderService {
           }
           final String availability =
               offer['availability']?.toString().toLowerCase() ?? '';
-          return (
+          return ProductOffer(
             minorUnits: (amount.toDouble() * 100).round(),
             currencyCode: currencyValue.trim().toUpperCase(),
             isAvailable:
@@ -88,9 +87,7 @@ class ProductOfferDecoderService {
 
   /// No site tested exposes an availability signal in `product:price:*`
   /// meta tags, so this tier always reports `isAvailable: true`.
-  ({int minorUnits, String currencyCode, bool isAvailable})? _decodeMetaTags(
-    String html,
-  ) {
+  ProductOffer? _decodeMetaTags(String html) {
     final num? amount = _parseNumber(
       _metaContent(html, property: 'product:price:amount'),
     );
@@ -101,7 +98,7 @@ class ProductOfferDecoderService {
     if (amount == null || currencyText == null || currencyText.trim().isEmpty) {
       return null;
     }
-    return (
+    return ProductOffer(
       minorUnits: (amount.toDouble() * 100).round(),
       currencyCode: currencyText.trim().toUpperCase(),
       isAvailable: true,
@@ -110,15 +107,13 @@ class ProductOfferDecoderService {
 
   /// No site tested exposes an availability signal via `itemprop`, so this
   /// tier always reports `isAvailable: true`.
-  ({int minorUnits, String currencyCode, bool isAvailable})? _decodeMicrodata(
-    String html,
-  ) {
+  ProductOffer? _decodeMicrodata(String html) {
     final num? amount = _parseNumber(_metaItemprop(html, 'price'));
     final String? currencyText = _metaItemprop(html, 'priceCurrency');
     if (amount == null || currencyText == null || currencyText.trim().isEmpty) {
       return null;
     }
-    return (
+    return ProductOffer(
       minorUnits: (amount.toDouble() * 100).round(),
       currencyCode: currencyText.trim().toUpperCase(),
       isAvailable: true,
