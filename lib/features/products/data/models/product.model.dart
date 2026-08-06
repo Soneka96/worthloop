@@ -2,7 +2,7 @@
 import 'package:drift/drift.dart';
 
 // Project imports:
-import 'package:worth_loop/features/products/data/models/store_price.model.dart';
+import 'package:worth_loop/features/products/data/models/product_source.model.dart';
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 
@@ -12,20 +12,20 @@ class ProductModel extends Product {
   const ProductModel({
     required super.id,
     required super.name,
-    required super.storePrices,
+    required super.sources,
     required super.lastUpdatedAt,
     super.imageUrl,
   });
 
-  /// Builds a [ProductModel] from a product row and its offer rows.
+  /// Builds a [ProductModel] from a product row and its source rows.
   factory ProductModel.fromRows(
     ProductRow product,
-    List<StorePriceRow> prices,
+    List<ProductSourceRow> sources,
   ) => ProductModel(
     id: product.id,
     name: product.name,
     imageUrl: product.imageUrl,
-    storePrices: prices.map(StorePriceModel.fromRow).toList(growable: false),
+    sources: sources.map(ProductSourceModel.fromRow).toList(growable: false),
     lastUpdatedAt: product.lastUpdatedAt,
   );
 
