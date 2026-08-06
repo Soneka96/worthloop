@@ -41,17 +41,20 @@ class ProductSourcesSection extends StatefulWidget {
 class _ProductSourcesSectionState extends State<ProductSourcesSection> {
   ProductOfferFilter _filter = ProductOfferFilter.all;
 
-  List<ProductSource> get _filteredSources => switch (_filter) {
-    ProductOfferFilter.none || ProductOfferFilter.all => widget.product.sources,
-    ProductOfferFilter.available =>
-      widget.product.sources
-          .where((ProductSource source) => source.isAvailable == true)
-          .toList(growable: false),
-    ProductOfferFilter.unavailable =>
-      widget.product.sources
-          .where((ProductSource source) => source.isAvailable != true)
-          .toList(growable: false),
-  };
+  List<ProductSource> get _filteredSources {
+    final List<ProductSource> orderedSources = widget.product.pricesForDisplay;
+    return switch (_filter) {
+      ProductOfferFilter.none || ProductOfferFilter.all => orderedSources,
+      ProductOfferFilter.available =>
+        orderedSources
+            .where((ProductSource source) => source.isAvailable == true)
+            .toList(growable: false),
+      ProductOfferFilter.unavailable =>
+        orderedSources
+            .where((ProductSource source) => source.isAvailable != true)
+            .toList(growable: false),
+    };
+  }
 
   void _openAddDialog(BuildContext context) => showDialog<void>(
     context: context,

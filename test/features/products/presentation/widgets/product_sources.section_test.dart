@@ -150,6 +150,98 @@ void main() {
     });
 
     testWidgets(
+      'ProductSourcesSection displays sources in domain order and preserves it in filters',
+      (WidgetTester tester) async {
+        final ProductSource expensiveAvailable = buildProductSource(
+          id: 'source-expensive-available',
+          merchantDomain: 'expensive.example.com',
+          currentPrice: const Money(minorUnits: 3000, currencyCode: 'EUR'),
+          isAvailable: true,
+        );
+        final ProductSource cheapAvailable = buildProductSource(
+          id: 'source-cheap-available',
+          merchantDomain: 'cheap.example.com',
+          currentPrice: const Money(minorUnits: 1000, currencyCode: 'EUR'),
+          isAvailable: true,
+        );
+        final ProductSource unavailable = buildProductSource(
+          id: 'source-unavailable',
+          merchantDomain: 'unavailable.example.com',
+          currentPrice: const Money(minorUnits: 2000, currencyCode: 'EUR'),
+          isAvailable: false,
+        );
+        final ProductSource cheaperUnavailable = buildProductSource(
+          id: 'source-cheaper-unavailable',
+          merchantDomain: 'cheaper-unavailable.example.com',
+          currentPrice: const Money(minorUnits: 1500, currencyCode: 'EUR'),
+          isAvailable: false,
+        );
+        final ProductSource unpriced = buildProductSource(
+          id: 'source-unpriced',
+          merchantDomain: 'unpriced.example.com',
+          isAvailable: null,
+        );
+        final ProductSource secondUnpriced = buildProductSource(
+          id: 'source-second-unpriced',
+          merchantDomain: 'second-unpriced.example.com',
+          isAvailable: null,
+        );
+        await tester.pumpWidget(
+          buildWidget(
+            sources: [
+              expensiveAvailable,
+              unpriced,
+              unavailable,
+              secondUnpriced,
+              cheaperUnavailable,
+              cheapAvailable,
+            ],
+          ),
+        );
+
+        List<String> visibleSourceIds() => tester
+            .widgetList<MerchantOfferRow>(find.byType(MerchantOfferRow))
+            .map((MerchantOfferRow row) => row.source.id)
+            .toList();
+
+        expect(visibleSourceIds(), [
+          cheapAvailable.id,
+          expensiveAvailable.id,
+          cheaperUnavailable.id,
+          unavailable.id,
+          unpriced.id,
+          secondUnpriced.id,
+        ]);
+        final MerchantOfferRow bestRow = tester.widget(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is MerchantOfferRow &&
+                widget.source.id == cheapAvailable.id,
+          ),
+        );
+        expect(bestRow.isBestPrice, isA<bool>());
+        expect(bestRow.isBestPrice, isTrue);
+
+        await tester.tap(
+          find.byKey(const Key('product-details-source-filter-available')),
+        );
+        await tester.pumpAndSettle();
+        expect(visibleSourceIds(), [cheapAvailable.id, expensiveAvailable.id]);
+
+        await tester.tap(
+          find.byKey(const Key('product-details-source-filter-unavailable')),
+        );
+        await tester.pumpAndSettle();
+        expect(visibleSourceIds(), [
+          cheaperUnavailable.id,
+          unavailable.id,
+          unpriced.id,
+          secondUnpriced.id,
+        ]);
+      },
+    );
+
+    testWidgets(
       'ProductSourcesSection contains a MerchantOfferRow with isDeleting = true only for the source id in deletingSourceIds',
       (WidgetTester tester) async {
         await tester.pumpWidget(
