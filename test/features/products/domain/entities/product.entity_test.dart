@@ -114,6 +114,16 @@ void main() {
       expect(product.availablePricesSorted, isEmpty);
     });
 
+    test('excludes a priced source when isAvailable == null', () {
+      final Product product = buildProduct(
+        sources: [
+          buildProductSource(currentPrice: buildMoney(), isAvailable: null),
+        ],
+      );
+
+      expect(product.availablePricesSorted, isEmpty);
+    });
+
     test('rejects available offers with different currencies', () {
       final Product product = buildProduct(
         sources: [
@@ -213,6 +223,28 @@ void main() {
 
       expect(() => product.bestAvailablePrice, throwsStateError);
     });
+
+    test(
+      'rejects mismatched currencies between an available and an unavailable offer',
+      () {
+        final Product product = buildProduct(
+          sources: [
+            buildProductSource(
+              id: 'source-usd',
+              currentPrice: buildMoney(currencyCode: 'USD'),
+              isAvailable: true,
+            ),
+            buildProductSource(
+              id: 'source-eur',
+              currentPrice: buildMoney(currencyCode: 'EUR'),
+              isAvailable: false,
+            ),
+          ],
+        );
+
+        expect(() => product.bestAvailablePrice, throwsStateError);
+      },
+    );
   });
 
   group('Getter pricesForDisplay returns the correct value', () {
@@ -240,7 +272,7 @@ void main() {
       expect(product.sources, [expensive, unavailable, cheapest]);
     });
 
-    test('excludes a source with no offer fetched yet', () {
+    test('places an unpriced source after priced offers', () {
       final ProductSource cheapest = buildProductSource(
         id: 'source-cheapest',
         currentPrice: buildMoney(minorUnits: 40000),
@@ -248,12 +280,11 @@ void main() {
       );
       final ProductSource notCheckedYet = buildProductSource(
         id: 'source-unchecked',
+        isAvailable: true,
       );
-      final Product product = buildProduct(
-        sources: [cheapest, notCheckedYet],
-      );
+      final Product product = buildProduct(sources: [cheapest, notCheckedYet]);
 
-      expect(product.pricesForDisplay, [cheapest]);
+      expect(product.pricesForDisplay, [cheapest, notCheckedYet]);
     });
 
     test('treats a priced offer with isAvailable == null as unavailable', () {
@@ -285,6 +316,40 @@ void main() {
         cheapUnavailable,
         expensiveUnavailable,
       ]);
+    });
+
+    test('sorts equal-priced offers by merchant domain and source id', () {
+      final ProductSource zeta = buildProductSource(
+        id: 'source-zeta',
+        merchantDomain: 'zeta.example.com',
+        currentPrice: buildMoney(minorUnits: 40000),
+        isAvailable: true,
+      );
+      final ProductSource alpha = buildProductSource(
+        id: 'source-alpha',
+        merchantDomain: 'alpha.example.com',
+        currentPrice: buildMoney(minorUnits: 40000),
+        isAvailable: true,
+      );
+      final Product product = buildProduct(sources: [zeta, alpha]);
+
+      expect(product.pricesForDisplay, [alpha, zeta]);
+    });
+
+    test('sorts equal-priced offers from one merchant by source id', () {
+      final ProductSource laterId = buildProductSource(
+        id: 'source-zeta',
+        currentPrice: buildMoney(minorUnits: 40000),
+        isAvailable: true,
+      );
+      final ProductSource earlierId = buildProductSource(
+        id: 'source-alpha',
+        currentPrice: buildMoney(minorUnits: 40000),
+        isAvailable: true,
+      );
+      final Product product = buildProduct(sources: [laterId, earlierId]);
+
+      expect(product.pricesForDisplay, [earlierId, laterId]);
     });
 
     test('rejects offers with different currencies', () {

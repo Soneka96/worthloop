@@ -50,7 +50,7 @@ class Product extends Equatable {
     return prices.isEmpty ? null : prices.first;
   }
 
-  /// Priced sources ordered by availability and then by ascending price.
+  /// Sources ordered by availability, price, and merchant identity.
   List<ProductSource> get pricesForDisplay {
     _ensureSingleCurrency();
     final List<ProductSource> unavailable = sources
@@ -59,17 +59,27 @@ class Product extends Equatable {
               source.isAvailable != true && source.currentPrice != null,
         )
         .toList(growable: false);
+    final List<ProductSource> unpriced = sources
+        .where((ProductSource source) => source.currentPrice == null)
+        .toList(growable: false);
     _sortByPrice(unavailable);
-    return [...availablePricesSorted, ...unavailable];
+    return [...availablePricesSorted, ...unavailable, ...unpriced];
   }
 
   void _sortByPrice(List<ProductSource> entries) {
-    entries.sort(
-      (ProductSource first, ProductSource second) =>
-          (first.currentPrice?.minorUnits ?? 0).compareTo(
-            second.currentPrice?.minorUnits ?? 0,
-          ),
-    );
+    entries.sort((ProductSource first, ProductSource second) {
+      final int priceComparison = (first.currentPrice?.minorUnits ?? 0)
+          .compareTo(second.currentPrice?.minorUnits ?? 0);
+      if (priceComparison != 0) {
+        return priceComparison;
+      }
+      final int merchantComparison = first.merchantDomain.compareTo(
+        second.merchantDomain,
+      );
+      return merchantComparison != 0
+          ? merchantComparison
+          : first.id.compareTo(second.id);
+    });
   }
 
   void _ensureSingleCurrency() {
