@@ -10,12 +10,12 @@ import 'package:redux/redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/presentation/screens/product_details.screen.dart';
-import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
+import 'package:worth_loop/features/products/presentation/widgets/merchant_offer_row.widget.dart';
+import 'package:worth_loop/features/products/presentation/widgets/product_offers_header.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_sources_empty.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/rename_product_dialog.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/source_form_dialog.widget.dart';
-import 'package:worth_loop/features/products/presentation/widgets/store_price.widget.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/features/confirm_dialog.widget.dart';
@@ -23,7 +23,6 @@ import 'package:worth_loop/shared/state/app.state.dart';
 import '../../fixtures/money.fixture.dart';
 import '../../fixtures/product.fixture.dart';
 import '../../fixtures/product_source.fixture.dart';
-import '../../fixtures/store_price.fixture.dart';
 
 class MockProductDetailsViewModel extends Mock
     implements ProductDetailsViewModel {}
@@ -38,26 +37,29 @@ void main() {
     mockViewModel = MockProductDetailsViewModel();
     when(() => mockViewModel.product).thenReturn(
       buildProduct(
-        storePrices: [
-          buildStorePrice(
-            storeName: 'Expensive',
+        sources: [
+          buildProductSource(
+            id: 'source-1',
+            merchantDomain: 'expensive.example.com',
             currentPrice: buildMoney(minorUnits: 59999),
+            isAvailable: true,
           ),
-          buildStorePrice(
-            storeName: 'Unavailable',
+          buildProductSource(
+            id: 'source-2',
+            merchantDomain: 'unavailable.example.com',
             currentPrice: buildMoney(minorUnits: 19999),
             isAvailable: false,
           ),
-          buildStorePrice(
-            storeName: 'Cheapest',
+          buildProductSource(
+            id: 'source-3',
+            merchantDomain: 'cheapest.example.com',
             currentPrice: buildMoney(minorUnits: 39999),
+            isAvailable: true,
           ),
         ],
       ),
     );
     when(() => mockViewModel.isRefreshing).thenReturn(false);
-    when(() => mockViewModel.sources).thenReturn([]);
-    when(() => mockViewModel.isLoadingSources).thenReturn(false);
     when(() => mockViewModel.isAddingSource).thenReturn(false);
     when(() => mockViewModel.addSourceError).thenReturn(null);
     when(() => mockViewModel.editingSourceId).thenReturn(null);
@@ -73,6 +75,7 @@ void main() {
     when(() => mockViewModel.onAddSource).thenReturn((_) {});
     when(() => mockViewModel.onEditSource).thenReturn((_, _) {});
     when(() => mockViewModel.onDeleteSource).thenReturn((_) {});
+    when(() => mockViewModel.onOpenOffer).thenReturn((_) {});
     when(() => mockViewModel.onRenameProduct).thenReturn((_) {});
     when(() => mockViewModel.onDeleteProduct).thenReturn(() {});
 
@@ -109,10 +112,8 @@ void main() {
     ),
   );
 
-  /// Pumps [ProductDetailsScreen] with an enlarged surface so the
-  /// Sources section — the last sliver in the page — is actually built and
-  /// findable instead of staying off-screen at the default test viewport
-  /// size.
+  /// Pumps [ProductDetailsScreen] on a large surface so the offer section is
+  /// available to the widget and accessibility checks.
   Future<void> pumpScreen(
     WidgetTester tester, {
     ThemeMode themeMode = ThemeMode.light,
@@ -145,19 +146,15 @@ void main() {
 
   group('ProductDetailsScreen contains widgets', () {
     testWidgets(
-      'ProductDetailsScreen contains product and offer data with the correct parameters',
+      'ProductDetailsScreen contains product and merchant offer data with the correct parameters',
       (WidgetTester tester) async {
         await pumpScreen(tester);
 
         expect(find.text('Example Product'), findsOneWidget);
-        expect(find.text('399.99 €'), findsWidgets);
-        expect(find.byType(StorePriceWidget), findsNWidgets(3));
-        expect(find.text(t.productDetails.availableOffers), findsOneWidget);
-        expect(find.text(t.productDetails.unavailableOffers), findsOneWidget);
-        expect(
-          find.text(t.productDetails.unavailableDescription),
-          findsOneWidget,
-        );
+        expect(find.byType(MerchantOfferRow), findsNWidgets(3));
+        expect(find.text('399.99 €'), findsOneWidget);
+        expect(find.text(t.productDetails.available), findsNWidgets(2));
+        expect(find.text(t.productDetails.unavailable), findsOneWidget);
       },
     );
 
@@ -172,19 +169,20 @@ void main() {
     });
 
     testWidgets(
-      'ProductDetailsScreen contains offers sorted with available prices first',
+      'ProductDetailsScreen marks the lowest available merchant offer as the best price',
       (WidgetTester tester) async {
         await pumpScreen(tester);
 
-        final List<StorePriceWidget> offers = tester
-            .widgetList<StorePriceWidget>(find.byType(StorePriceWidget))
-            .toList(growable: false);
-
-        expect(offers.map((offer) => offer.storePrice.storeName).toList(), [
-          'Cheapest',
-          'Expensive',
-          'Unavailable',
-        ]);
+        final MerchantOfferRow bestRow = tester.widget(
+          find.byKey(const Key('merchant-offer-source-3')),
+        );
+        final MerchantOfferRow otherRow = tester.widget(
+          find.byKey(const Key('merchant-offer-source-1')),
+        );
+        expect(bestRow.isBestPrice, isA<bool>());
+        expect(bestRow.isBestPrice, isTrue);
+        expect(otherRow.isBestPrice, isA<bool>());
+        expect(otherRow.isBestPrice, isFalse);
       },
     );
 
@@ -196,7 +194,7 @@ void main() {
         await pumpScreen(tester);
 
         expect(find.text('Product not found'), findsOneWidget);
-        expect(find.byType(StorePriceWidget), findsNothing);
+        expect(find.byType(MerchantOfferRow), findsNothing);
       },
     );
 
@@ -207,8 +205,9 @@ void main() {
 
       await pumpScreen(tester);
 
-      expect(find.text(t.productDetails.noOffers), findsOneWidget);
-      expect(find.byType(StorePriceWidget), findsNothing);
+      expect(find.text(t.productDetails.noOffers), findsNothing);
+      expect(find.byType(ProductSourcesEmptyWidget), findsOneWidget);
+      expect(find.byType(MerchantOfferRow), findsNothing);
     });
 
     testWidgets(
@@ -224,8 +223,10 @@ void main() {
     );
 
     testWidgets(
-      'ProductDetailsScreen contains a ProductSourcesEmptyWidget with the correct parameters when sources is empty',
+      'ProductDetailsScreen contains a ProductSourcesEmptyWidget with the correct parameters when product.sources is empty',
       (WidgetTester tester) async {
+        when(() => mockViewModel.product).thenReturn(buildProduct());
+
         await pumpScreen(tester);
 
         expect(find.byType(ProductSourcesEmptyWidget), findsOneWidget);
@@ -233,23 +234,33 @@ void main() {
     );
 
     testWidgets(
-      'ProductDetailsScreen contains a ProductSourceRow per source with the correct parameters when sources is not empty',
+      'ProductDetailsScreen contains a MerchantOfferRow per product source with the correct parameters when product.sources is not empty',
       (WidgetTester tester) async {
-        when(() => mockViewModel.sources).thenReturn([
-          buildProductSource(id: 'source-1'),
-          buildProductSource(id: 'source-2'),
-        ]);
-
         await pumpScreen(tester);
 
         expect(
-          find.byKey(const Key('product-source-source-1')),
+          find.byKey(const Key('merchant-offer-source-1')),
           findsOneWidget,
         );
         expect(
-          find.byKey(const Key('product-source-source-2')),
+          find.byKey(const Key('merchant-offer-source-2')),
           findsOneWidget,
         );
+      },
+    );
+
+    testWidgets(
+      'ProductDetailsScreen passes the source count to ProductOffersHeader',
+      (WidgetTester tester) async {
+        await pumpScreen(tester);
+
+        final ProductOffersHeader header = tester.widget(
+          find.byType(ProductOffersHeader),
+        );
+        expect(header.offerCount, isA<int>());
+        expect(header.offerCount, 3);
+        expect(header.isRefreshing, isA<bool>());
+        expect(header.isRefreshing, isFalse);
       },
     );
 
@@ -282,6 +293,14 @@ void main() {
         );
         expect(
           find.byKey(const Key('product-details-delete-button')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const Key('product-details-refresh-button')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const Key('product-details-add-source-button')),
           findsNothing,
         );
       },
@@ -374,6 +393,46 @@ void main() {
           ),
           prints(isEmpty),
         );
+      },
+    );
+
+    testWidgets(
+      'ProductDetailsScreen calls onOpenOffer when an offer row is tapped',
+      (WidgetTester tester) async {
+        String? openedUrl;
+        when(
+          () => mockViewModel.onOpenOffer,
+        ).thenReturn((String url) => openedUrl = url);
+
+        await pumpScreen(tester);
+
+        await tester.tap(
+          find.byKey(const Key('merchant-offer-source-1-tap-target')),
+        );
+
+        expect(openedUrl, isA<String>());
+        expect(openedUrl, 'https://example.com/products/1');
+      },
+    );
+
+    testWidgets(
+      'ProductDetailsScreen does not call onOpenOffer when an offer is deleting',
+      (WidgetTester tester) async {
+        String? openedUrl;
+        when(
+          () => mockViewModel.deletingSourceIds,
+        ).thenReturn(const {'source-1'});
+        when(
+          () => mockViewModel.onOpenOffer,
+        ).thenReturn((String url) => openedUrl = url);
+
+        await pumpScreen(tester);
+
+        await tester.tap(
+          find.byKey(const Key('merchant-offer-source-1-tap-target')),
+        );
+
+        expect(openedUrl, isNull);
       },
     );
 
@@ -482,17 +541,14 @@ void main() {
   });
 
   group(
-    "ProductDetailsScreen's StoreConnector dispatches LoadProductSourcesAction on init",
+    "ProductDetailsScreen's StoreConnector does not dispatch source loading on init",
     () {
       testWidgets(
-        'ProductDetailsScreen dispatches LoadProductSourcesAction on init',
+        'ProductDetailsScreen does not dispatch a source-loading action on init',
         (WidgetTester tester) async {
           await pumpScreen(tester);
 
-          expect(
-            dispatchedActions,
-            contains(const LoadProductSourcesAction('product-1')),
-          );
+          expect(dispatchedActions, isEmpty);
         },
       );
     },
@@ -507,16 +563,13 @@ void main() {
       try {
         await pumpScreen(tester);
 
-        expect(find.text(t.productDetails.bestPrice), findsOneWidget);
         expect(find.text(t.productDetails.refresh), findsOneWidget);
         expect(find.text(t.productDetails.available), findsNWidgets(2));
-        expect(find.text(t.productDetails.availableOffers), findsOneWidget);
-        expect(find.text(t.productDetails.unavailableOffers), findsOneWidget);
-        expect(
-          find.text(t.productDetails.unavailableDescription),
-          findsOneWidget,
-        );
+        expect(find.text(t.productDetails.unavailable), findsOneWidget);
         expect(find.text(t.productDetails.sourcesTitle), findsOneWidget);
+        expect(find.text(t.productDetails.filterAll), findsOneWidget);
+        expect(find.text(t.productDetails.filterAvailable), findsOneWidget);
+        expect(find.text(t.productDetails.filterUnavailable), findsOneWidget);
       } finally {
         LocaleSettings.setLocale(AppLocale.en);
       }
@@ -596,57 +649,24 @@ void main() {
         (WidgetTester tester) async {
           await pumpScreen(tester);
 
-          const Key backKey = Key('product-details-back-button');
-          const Key renameKey = Key('product-details-rename-button');
-          const Key deleteKey = Key('product-details-delete-button');
-          const Key refreshKey = Key('product-details-refresh-button');
-          const Key addSourceKey = Key('product-details-add-source-button');
+          final List<Key> focusableKeys = [
+            const Key('product-details-back-button'),
+            const Key('product-details-rename-button'),
+            const Key('product-details-delete-button'),
+            const Key('product-details-refresh-button'),
+            const Key('product-details-add-source-button'),
+            const Key('product-details-source-filter-all'),
+            const Key('product-details-source-filter-available'),
+            const Key('product-details-source-filter-unavailable'),
+          ];
 
-          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-          await tester.pump();
-          final bool backFocused = hasPrimaryFocusWithin(
-            tester,
-            find.byKey(backKey),
-          );
-
-          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-          await tester.pump();
-          final bool renameFocused = hasPrimaryFocusWithin(
-            tester,
-            find.byKey(renameKey),
-          );
-
-          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-          await tester.pump();
-          final bool deleteFocused = hasPrimaryFocusWithin(
-            tester,
-            find.byKey(deleteKey),
-          );
-
-          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-          await tester.pump();
-          final bool refreshFocused = hasPrimaryFocusWithin(
-            tester,
-            find.byKey(refreshKey),
-          );
-
-          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-          await tester.pump();
-          final bool addSourceFocused = hasPrimaryFocusWithin(
-            tester,
-            find.byKey(addSourceKey),
-          );
-
-          expect(backFocused, isA<bool>());
-          expect(backFocused, isTrue);
-          expect(renameFocused, isA<bool>());
-          expect(renameFocused, isTrue);
-          expect(deleteFocused, isA<bool>());
-          expect(deleteFocused, isTrue);
-          expect(refreshFocused, isA<bool>());
-          expect(refreshFocused, isTrue);
-          expect(addSourceFocused, isA<bool>());
-          expect(addSourceFocused, isTrue);
+          for (final Key key in focusableKeys) {
+            await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+            await tester.pump();
+            final bool focused = hasPrimaryFocusWithin(tester, find.byKey(key));
+            expect(focused, isA<bool>());
+            expect(focused, isTrue);
+          }
         },
       );
     },

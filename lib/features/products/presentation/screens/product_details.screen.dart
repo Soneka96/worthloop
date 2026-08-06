@@ -6,12 +6,8 @@ import 'package:flutter_redux/flutter_redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
-import 'package:worth_loop/features/products/domain/entities/store_price.entity.dart';
-import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
-import 'package:worth_loop/features/products/presentation/widgets/product_best_price_card.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_offers_header.widget.dart';
-import 'package:worth_loop/features/products/presentation/widgets/product_offers.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_not_found.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_refresh_status_notice.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_sources.section.dart';
@@ -50,18 +46,10 @@ class ProductDetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return StoreConnector<AppState, ProductDetailsViewModel>(
       distinct: true,
-      onInit: (store) => store.dispatch(LoadProductSourcesAction(productId)),
       converter: (store) =>
           sl<ProductDetailsViewModel>(param1: store, param2: productId),
       builder: (context, viewmodel) {
         final Product? product = viewmodel.product;
-        final StorePrice? bestPrice = product?.bestAvailablePrice;
-        final List<StorePrice> availablePrices =
-            product?.availablePricesSorted ?? [];
-        final List<StorePrice> displayPrices = product?.pricesForDisplay ?? [];
-        final List<StorePrice> unavailablePrices = displayPrices
-            .skip(availablePrices.length)
-            .toList(growable: false);
         return Scaffold(
           appBar: AppBar(
             leading: IconButton(
@@ -114,14 +102,12 @@ class ProductDetailsScreen extends StatelessWidget {
                       padding: EdgeInsets.all(context.spacing.md),
                       sliver: SliverList(
                         delegate: SliverChildListDelegate([
-                          ProductBestPriceCard(bestPrice: bestPrice),
-                          SizedBox(height: context.spacing.sm),
                           ProductRefreshStatusNotice(
                             status: viewmodel.refreshStatus,
                           ),
                           SizedBox(height: context.spacing.md),
                           ProductOffersHeader(
-                            offerCount: product.storePrices.length,
+                            offerCount: product.sources.length,
                             isRefreshing: viewmodel.isRefreshing,
                             onRefresh: viewmodel.onRefresh,
                           ),
@@ -129,21 +115,11 @@ class ProductDetailsScreen extends StatelessWidget {
                         ]),
                       ),
                     ),
-                    SliverPadding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: context.spacing.md,
-                      ),
-                      sliver: ProductOffersWidget(
-                        availablePrices: availablePrices,
-                        unavailablePrices: unavailablePrices,
-                      ),
-                    ),
                     ProductSourcesSection(
-                      productId: productId,
-                      sources: viewmodel.sources,
-                      isLoadingSources: viewmodel.isLoadingSources,
+                      product: product,
                       deletingSourceIds: viewmodel.deletingSourceIds,
                       onDeleteSource: viewmodel.onDeleteSource,
+                      onOpenOffer: viewmodel.onOpenOffer,
                     ),
                   ],
                 ),
