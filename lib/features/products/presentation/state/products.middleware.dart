@@ -3,20 +3,17 @@ import 'package:redux/redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
-import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/domain/usecases/add_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/create_product.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/delete_product.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/delete_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/edit_source.usecase.dart';
-import 'package:worth_loop/features/products/domain/usecases/load_product_sources.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/load_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/add_source.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/create_product.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/delete_product.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/delete_source.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/edit_source.params.dart';
-import 'package:worth_loop/features/products/domain/usecases/params/load_product_sources.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/refresh_product.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/rename_product.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_all_products.usecase.dart';
@@ -30,6 +27,7 @@ import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/usecase/no_params.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
+import 'package:worth_loop/shared/utils/url_launcher_service.dart';
 
 /// Handles tracked-product actions.
 class ProductsMiddleware extends MiddlewareClass<AppState> {
@@ -50,14 +48,14 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
         _goToProductDetails(store, action);
       case GoBackFromProductDetailsAction _:
         _goBackFromProductDetails(store, action);
-      case LoadProductSourcesAction _:
-        _loadProductSources(store, action);
       case AddSourceAction _:
         _addSource(store, action);
       case EditSourceAction _:
         _editSource(store, action);
       case DeleteSourceAction _:
         _deleteSource(store, action);
+      case OpenOfferUrlAction _:
+        _openOfferUrl(store, action);
       case RenameProductAction _:
         _renameProduct(store, action);
       case DeleteProductAction _:
@@ -162,34 +160,6 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
     return Future<void>.value();
   }
 
-  /// Handles [LoadProductSourcesAction].
-  Future<void> _loadProductSources(
-    Store<AppState> store,
-    LoadProductSourcesAction action,
-  ) async {
-    (await sl<LoadProductSourcesUseCase>()(
-      LoadProductSourcesParams(productId: action.productId),
-    )).fold(
-      (failure) {
-        sl<LoggerService>().e(failure.message, showPopup: true);
-        store.dispatch(
-          ProductSourcesLoadFailedAction(
-            productId: action.productId,
-            message: failure.message,
-          ),
-        );
-      },
-      (List<ProductSource> sources) {
-        store.dispatch(
-          ProductSourcesLoadedAction(
-            productId: action.productId,
-            sources: sources,
-          ),
-        );
-      },
-    );
-  }
-
   /// Handles [AddSourceAction].
   Future<void> _addSource(Store<AppState> store, AddSourceAction action) async {
     (await sl<AddSourceUseCase>()(
@@ -199,8 +169,8 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
         sl<LoggerService>().e(failure.message, showPopup: true);
         store.dispatch(SourceAddFailedAction(failure.message));
       },
-      (ProductSource source) {
-        store.dispatch(SourceAddedAction(source));
+      (Product product) {
+        store.dispatch(SourceAddedAction(product));
       },
     );
   }
@@ -217,8 +187,8 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
         sl<LoggerService>().e(failure.message, showPopup: true);
         store.dispatch(SourceEditFailedAction(failure.message));
       },
-      (ProductSource source) {
-        store.dispatch(SourceEditedAction(source));
+      (Product product) {
+        store.dispatch(SourceEditedAction(product));
       },
     );
   }
@@ -240,15 +210,26 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
           ),
         );
       },
-      (_) {
+      (Product product) {
         store.dispatch(
-          SourceDeletedAction(
-            productId: action.productId,
-            sourceId: action.sourceId,
-          ),
+          SourceDeletedAction(sourceId: action.sourceId, product: product),
         );
       },
     );
+  }
+
+  /// Handles [OpenOfferUrlAction].
+  Future<void> _openOfferUrl(
+    Store<AppState> store,
+    OpenOfferUrlAction action,
+  ) async {
+    final bool opened = await sl<UrlLauncherService>().open(action.url);
+    if (!opened) {
+      sl<LoggerService>().e(
+        'Could not open the merchant page',
+        showPopup: true,
+      );
+    }
   }
 
   /// Handles [RenameProductAction].

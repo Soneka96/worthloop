@@ -4,7 +4,6 @@ import 'package:redux/redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
-import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/products.state.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
@@ -67,30 +66,12 @@ Reducer<ProductsState> productsReducer = combineReducers<ProductsState>([
     refreshAllProductsFailedReducer,
   ).call,
 
-  /// Handles [LoadProductSourcesAction].
-  /// Updates [ProductsState.loadingSourcesProductIds].
-  TypedReducer<ProductsState, LoadProductSourcesAction>(
-    loadProductSourcesReducer,
-  ).call,
-
-  /// Handles [ProductSourcesLoadedAction].
-  /// Updates [ProductsState.sourcesByProduct], [ProductsState.loadingSourcesProductIds].
-  TypedReducer<ProductsState, ProductSourcesLoadedAction>(
-    productSourcesLoadedReducer,
-  ).call,
-
-  /// Handles [ProductSourcesLoadFailedAction].
-  /// Updates [ProductsState.loadingSourcesProductIds], [ProductsState.error].
-  TypedReducer<ProductsState, ProductSourcesLoadFailedAction>(
-    productSourcesLoadFailedReducer,
-  ).call,
-
   /// Handles [AddSourceAction].
   /// Updates [ProductsState.isAddingSource], [ProductsState.addSourceError].
   TypedReducer<ProductsState, AddSourceAction>(addSourceReducer).call,
 
   /// Handles [SourceAddedAction].
-  /// Updates [ProductsState.sourcesByProduct], [ProductsState.isAddingSource], [ProductsState.addSourceError].
+  /// Updates [ProductsState.products], [ProductsState.isAddingSource], [ProductsState.addSourceError].
   TypedReducer<ProductsState, SourceAddedAction>(sourceAddedReducer).call,
 
   /// Handles [SourceAddFailedAction].
@@ -104,7 +85,7 @@ Reducer<ProductsState> productsReducer = combineReducers<ProductsState>([
   TypedReducer<ProductsState, EditSourceAction>(editSourceReducer).call,
 
   /// Handles [SourceEditedAction].
-  /// Updates [ProductsState.sourcesByProduct], [ProductsState.editingSourceId], [ProductsState.editSourceError].
+  /// Updates [ProductsState.products], [ProductsState.editingSourceId], [ProductsState.editSourceError].
   TypedReducer<ProductsState, SourceEditedAction>(sourceEditedReducer).call,
 
   /// Handles [SourceEditFailedAction].
@@ -118,7 +99,7 @@ Reducer<ProductsState> productsReducer = combineReducers<ProductsState>([
   TypedReducer<ProductsState, DeleteSourceAction>(deleteSourceReducer).call,
 
   /// Handles [SourceDeletedAction].
-  /// Updates [ProductsState.sourcesByProduct], [ProductsState.deletingSourceIds].
+  /// Updates [ProductsState.products], [ProductsState.deletingSourceIds].
   TypedReducer<ProductsState, SourceDeletedAction>(sourceDeletedReducer).call,
 
   /// Handles [SourceDeleteFailedAction].
@@ -311,71 +292,27 @@ ProductsState refreshAllProductsFailedReducer(
       : Some(action.status ?? PriceFetchStatus.none),
 );
 
-/// Handles [LoadProductSourcesAction].
-/// Updates [ProductsState.loadingSourcesProductIds].
-ProductsState loadProductSourcesReducer(
-  ProductsState state,
-  LoadProductSourcesAction action,
-) => state.copyWith(
-  loadingSourcesProductIds: {
-    ...state.loadingSourcesProductIds,
-    action.productId,
-  },
-);
-
-/// Handles [ProductSourcesLoadedAction].
-/// Updates [ProductsState.sourcesByProduct], [ProductsState.loadingSourcesProductIds].
-ProductsState productSourcesLoadedReducer(
-  ProductsState state,
-  ProductSourcesLoadedAction action,
-) {
-  final Map<String, List<ProductSource>> sourcesByProduct = {
-    ...state.sourcesByProduct,
-  }..[action.productId] = action.sources;
-  final Set<String> loadingSourcesProductIds = {
-    ...state.loadingSourcesProductIds,
-  }..remove(action.productId);
-  return state.copyWith(
-    sourcesByProduct: sourcesByProduct,
-    loadingSourcesProductIds: loadingSourcesProductIds,
-  );
-}
-
-/// Handles [ProductSourcesLoadFailedAction].
-/// Updates [ProductsState.loadingSourcesProductIds], [ProductsState.error].
-ProductsState productSourcesLoadFailedReducer(
-  ProductsState state,
-  ProductSourcesLoadFailedAction action,
-) {
-  final Set<String> loadingSourcesProductIds = {
-    ...state.loadingSourcesProductIds,
-  }..remove(action.productId);
-  return state.copyWith(
-    loadingSourcesProductIds: loadingSourcesProductIds,
-    error: Some(action.message),
-  );
-}
-
 /// Handles [AddSourceAction].
 /// Updates [ProductsState.isAddingSource], [ProductsState.addSourceError].
 ProductsState addSourceReducer(ProductsState state, AddSourceAction action) =>
     state.copyWith(isAddingSource: true, addSourceError: const None());
 
 /// Handles [SourceAddedAction].
-/// Updates [ProductsState.sourcesByProduct], [ProductsState.isAddingSource], [ProductsState.addSourceError].
+/// Updates [ProductsState.products], [ProductsState.isAddingSource], [ProductsState.addSourceError].
 ProductsState sourceAddedReducer(
   ProductsState state,
   SourceAddedAction action,
 ) {
-  final List<ProductSource> existing =
-      state.sourcesByProduct[action.source.productId] ?? const [];
-  final Map<String, List<ProductSource>> sourcesByProduct = {
-    ...state.sourcesByProduct,
-  }..[action.source.productId] = [...existing, action.source];
+  final List<Product> products = state.products
+      .map(
+        (Product product) =>
+            product.id == action.product.id ? action.product : product,
+      )
+      .toList(growable: false);
   return state.copyWith(
+    products: products,
     isAddingSource: false,
     addSourceError: const None(),
-    sourcesByProduct: sourcesByProduct,
   );
 }
 
@@ -396,26 +333,21 @@ ProductsState editSourceReducer(ProductsState state, EditSourceAction action) =>
     );
 
 /// Handles [SourceEditedAction].
-/// Updates [ProductsState.sourcesByProduct], [ProductsState.editingSourceId], [ProductsState.editSourceError].
+/// Updates [ProductsState.products], [ProductsState.editingSourceId], [ProductsState.editSourceError].
 ProductsState sourceEditedReducer(
   ProductsState state,
   SourceEditedAction action,
 ) {
-  final List<ProductSource> existing =
-      state.sourcesByProduct[action.source.productId] ?? const [];
-  final List<ProductSource> updated = existing
+  final List<Product> products = state.products
       .map(
-        (ProductSource source) =>
-            source.id == action.source.id ? action.source : source,
+        (Product product) =>
+            product.id == action.product.id ? action.product : product,
       )
       .toList(growable: false);
-  final Map<String, List<ProductSource>> sourcesByProduct = {
-    ...state.sourcesByProduct,
-  }..[action.source.productId] = updated;
   return state.copyWith(
+    products: products,
     editingSourceId: const None(),
     editSourceError: const None(),
-    sourcesByProduct: sourcesByProduct,
   );
 }
 
@@ -440,23 +372,21 @@ ProductsState deleteSourceReducer(
 );
 
 /// Handles [SourceDeletedAction].
-/// Updates [ProductsState.sourcesByProduct], [ProductsState.deletingSourceIds].
+/// Updates [ProductsState.products], [ProductsState.deletingSourceIds].
 ProductsState sourceDeletedReducer(
   ProductsState state,
   SourceDeletedAction action,
 ) {
-  final List<ProductSource> existing =
-      state.sourcesByProduct[action.productId] ?? const [];
-  final List<ProductSource> remaining = existing
-      .where((ProductSource source) => source.id != action.sourceId)
+  final List<Product> products = state.products
+      .map(
+        (Product product) =>
+            product.id == action.product.id ? action.product : product,
+      )
       .toList(growable: false);
-  final Map<String, List<ProductSource>> sourcesByProduct = {
-    ...state.sourcesByProduct,
-  }..[action.productId] = remaining;
   final Set<String> deletingSourceIds = {...state.deletingSourceIds}
     ..remove(action.sourceId);
   return state.copyWith(
-    sourcesByProduct: sourcesByProduct,
+    products: products,
     deletingSourceIds: deletingSourceIds,
   );
 }
