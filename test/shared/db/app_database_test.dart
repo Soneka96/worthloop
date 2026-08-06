@@ -34,16 +34,13 @@ void main() {
       await db.close();
     });
 
-    test('AppDatabase.forTesting opens with schema version 3', () {
+    test('AppDatabase.forTesting opens with schema version 4', () {
       expect(db.schemaVersion, isA<int>());
-      expect(db.schemaVersion, 3);
+      expect(db.schemaVersion, 4);
     });
 
     test('AppDatabase.forTesting exposes the WorthLoop tables', () async {
       final List<ProductRow> products = await db.select(db.productTable).get();
-      final List<StorePriceRow> prices = await db
-          .select(db.storePriceTable)
-          .get();
       final List<ProductSourceRow> sources = await db
           .select(db.productSourceTable)
           .get();
@@ -52,7 +49,6 @@ void main() {
           .get();
 
       expect(products, isEmpty);
-      expect(prices, isEmpty);
       expect(sources, isEmpty);
       expect(settings, isEmpty);
     });
@@ -149,9 +145,6 @@ void main() {
 
     test('migrates schema version 2 and preserves existing rows', () async {
       final List<ProductRow> products = await db.select(db.productTable).get();
-      final List<StorePriceRow> prices = await db
-          .select(db.storePriceTable)
-          .get();
       final List<ProductSourceRow> sources = await db
           .select(db.productSourceTable)
           .get();
@@ -160,7 +153,6 @@ void main() {
           .get();
       expect(products.length, 1);
       expect(products.single.id, 'legacy-product');
-      expect(prices, isEmpty);
       expect(sources, isEmpty);
       expect(settings, isEmpty);
     });

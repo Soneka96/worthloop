@@ -174,10 +174,16 @@ void main() {
         await pumpScreen(tester);
 
         final MerchantOfferRow bestRow = tester.widget(
-          find.byKey(const Key('merchant-offer-source-3')),
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is MerchantOfferRow && widget.source.id == 'source-3',
+          ),
         );
         final MerchantOfferRow otherRow = tester.widget(
-          find.byKey(const Key('merchant-offer-source-1')),
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is MerchantOfferRow && widget.source.id == 'source-1',
+          ),
         );
         expect(bestRow.isBestPrice, isA<bool>());
         expect(bestRow.isBestPrice, isTrue);

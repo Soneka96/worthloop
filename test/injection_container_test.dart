@@ -26,6 +26,7 @@ import 'package:worth_loop/shared/theme/app_zoom.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/popup_service.dart';
 import 'package:worth_loop/shared/utils/retry_on_connection_error_interceptor.dart';
+import 'package:worth_loop/shared/utils/url_launcher_service.dart';
 
 class FakePathProviderPlatform extends PathProviderPlatform {
   @override
@@ -118,6 +119,11 @@ void main() {
         sl.isRegistered<LoggerService>(),
         isTrue,
         reason: 'LoggerService should be registered',
+      );
+      expect(
+        sl.isRegistered<UrlLauncherService>(),
+        isTrue,
+        reason: 'UrlLauncherService should be registered',
       );
     });
 

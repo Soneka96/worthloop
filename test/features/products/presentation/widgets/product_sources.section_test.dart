@@ -181,13 +181,22 @@ void main() {
         await tester.pumpWidget(buildWidget(sources: sources));
 
         final MerchantOfferRow bestRow = tester.widget(
-          find.byKey(const Key('merchant-offer-source-1')),
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is MerchantOfferRow && widget.source.id == 'source-1',
+          ),
         );
         final MerchantOfferRow unavailableRow = tester.widget(
-          find.byKey(const Key('merchant-offer-source-2')),
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is MerchantOfferRow && widget.source.id == 'source-2',
+          ),
         );
         final MerchantOfferRow unknownRow = tester.widget(
-          find.byKey(const Key('merchant-offer-source-3')),
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is MerchantOfferRow && widget.source.id == 'source-3',
+          ),
         );
         expect(bestRow.isBestPrice, isA<bool>());
         expect(bestRow.isBestPrice, isTrue);
@@ -209,7 +218,10 @@ void main() {
         await tester.pumpWidget(buildWidget(sources: [unavailable]));
 
         final MerchantOfferRow row = tester.widget(
-          find.byKey(const Key('merchant-offer-source-4')),
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is MerchantOfferRow && widget.source.id == 'source-4',
+          ),
         );
         expect(row.isBestPrice, isA<bool>());
         expect(row.isBestPrice, isFalse);

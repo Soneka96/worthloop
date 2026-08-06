@@ -33,6 +33,7 @@ import 'package:worth_loop/shared/utils/product_offer_decoder_service.dart';
 import 'package:worth_loop/shared/utils/product_price_fetch_orchestrator_service.dart';
 import 'package:worth_loop/shared/utils/product_url_cleaner_service.dart';
 import 'package:worth_loop/shared/utils/retry_on_connection_error_interceptor.dart';
+import 'package:worth_loop/shared/utils/url_launcher_service.dart';
 import 'package:worth_loop/shared/utils/webview_product_fetcher_service.dart';
 
 /// Global service locator. Widgets and use cases resolve dependencies via
@@ -69,6 +70,7 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<ProductUrlCleanerService>(
     ProductUrlCleanerService.new,
   );
+  sl.registerLazySingleton<UrlLauncherService>(UrlLauncherService.new);
   sl.registerLazySingleton<DioProductFetcherService>(
     () => DioProductFetcherService(sl<Dio>()),
   );

@@ -14,7 +14,6 @@ import 'package:worth_loop/features/products/domain/usecases/create_product.usec
 import 'package:worth_loop/features/products/domain/usecases/delete_product.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/delete_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/edit_source.usecase.dart';
-import 'package:worth_loop/features/products/domain/usecases/load_product_sources.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/load_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_all_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_product.usecase.dart';
@@ -28,6 +27,7 @@ import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/utils/currency_helper_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/product_price_fetch_orchestrator_service.dart';
+import 'package:worth_loop/shared/utils/product_url_cleaner_service.dart';
 
 class MockAppDatabase extends Mock implements AppDatabase {}
 
@@ -50,6 +50,7 @@ void main() {
     sl.registerSingleton<ProductPriceFetchOrchestratorService>(
       MockProductPriceFetchOrchestratorService(),
     );
+    sl.registerSingleton<ProductUrlCleanerService>(ProductUrlCleanerService());
     initProductsDependencies();
   });
 
@@ -81,8 +82,6 @@ void main() {
       expect(sl.isRegistered<CreateProductUseCase>(), isTrue);
       expect(sl.isRegistered<AddSourceUseCase>(), isA<bool>());
       expect(sl.isRegistered<AddSourceUseCase>(), isTrue);
-      expect(sl.isRegistered<LoadProductSourcesUseCase>(), isA<bool>());
-      expect(sl.isRegistered<LoadProductSourcesUseCase>(), isTrue);
       expect(sl.isRegistered<EditSourceUseCase>(), isA<bool>());
       expect(sl.isRegistered<EditSourceUseCase>(), isTrue);
       expect(sl.isRegistered<DeleteSourceUseCase>(), isA<bool>());
@@ -100,7 +99,6 @@ void main() {
       expect(sl<LoadProductsUseCase>(), isA<LoadProductsUseCase>());
       expect(sl<CreateProductUseCase>(), isA<CreateProductUseCase>());
       expect(sl<AddSourceUseCase>(), isA<AddSourceUseCase>());
-      expect(sl<LoadProductSourcesUseCase>(), isA<LoadProductSourcesUseCase>());
       expect(sl<EditSourceUseCase>(), isA<EditSourceUseCase>());
       expect(sl<DeleteSourceUseCase>(), isA<DeleteSourceUseCase>());
       expect(sl<RefreshProductUseCase>(), isA<RefreshProductUseCase>());

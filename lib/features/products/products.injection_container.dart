@@ -13,7 +13,6 @@ import 'package:worth_loop/features/products/domain/usecases/create_product.usec
 import 'package:worth_loop/features/products/domain/usecases/delete_product.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/delete_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/edit_source.usecase.dart';
-import 'package:worth_loop/features/products/domain/usecases/load_product_sources.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/load_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_all_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_product.usecase.dart';
@@ -58,9 +57,6 @@ void initProductsDependencies() {
   );
   sl.registerLazySingleton<AddSourceUseCase>(
     () => AddSourceUseCase(sl<IProductsRepository>()),
-  );
-  sl.registerLazySingleton<LoadProductSourcesUseCase>(
-    () => LoadProductSourcesUseCase(sl<IProductsRepository>()),
   );
   sl.registerLazySingleton<EditSourceUseCase>(
     () => EditSourceUseCase(sl<IProductsRepository>()),

@@ -18,8 +18,9 @@ import 'package:worth_loop/features/products/presentation/state/products.actions
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
+import '../../../products/fixtures/money.fixture.dart';
 import '../../../products/fixtures/product.fixture.dart';
-import '../../../products/fixtures/store_price.fixture.dart';
+import '../../../products/fixtures/product_source.fixture.dart';
 
 class MockHomeScreenViewModel extends Mock implements HomeScreenViewModel {}
 
@@ -32,7 +33,14 @@ void main() {
     dispatchedActions = [];
     mockViewModel = MockHomeScreenViewModel();
     when(() => mockViewModel.products).thenReturn([
-      buildProduct(storePrices: [buildStorePrice()]),
+      buildProduct(
+        sources: [
+          buildProductSource(
+            currentPrice: buildMoney(minorUnits: 49999),
+            isAvailable: true,
+          ),
+        ],
+      ),
     ]);
     when(() => mockViewModel.isLoading).thenReturn(false);
     when(() => mockViewModel.isRefreshingAll).thenReturn(false);

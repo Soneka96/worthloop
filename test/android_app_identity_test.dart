@@ -42,8 +42,12 @@ void main() {
       final String manifest = await File(
         'android/app/src/main/AndroidManifest.xml',
       ).readAsString();
+      final String strings = await File(
+        'android/app/src/main/res/values/strings.xml',
+      ).readAsString();
 
-      expect(manifest, contains('android:label="WorthLoop"'));
+      expect(manifest, contains('android:label="@string/app_name"'));
+      expect(strings, contains('<string name="app_name">WorthLoop</string>'));
     });
 
     test('Product documentation records the final application ID', () async {

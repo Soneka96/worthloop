@@ -36,9 +36,11 @@ void main() {
   late ProductsLocalDatasource datasource;
 
   Future<void> insertMixedCurrencyProduct(String productId) async {
-    await db.into(db.productTable).insert(
-      buildProductTableCompanion(id: productId, name: 'Mixed Product'),
-    );
+    await db
+        .into(db.productTable)
+        .insert(
+          buildProductTableCompanion(id: productId, name: 'Mixed Product'),
+        );
     for (final String currencyCode in ['USD', 'EUR']) {
       await db
           .into(db.productSourceTable)
@@ -73,9 +75,9 @@ void main() {
         throw StateError('Prices must use one currency');
       }
     });
-    when(() => mockUrlCleanerService.clean(any())).thenAnswer(
-      (invocation) => invocation.positionalArguments[0] as String,
-    );
+    when(
+      () => mockUrlCleanerService.clean(any()),
+    ).thenAnswer((invocation) => invocation.positionalArguments[0] as String);
     datasource = ProductsLocalDatasource(
       db,
       mockCurrencyHelperService,
@@ -95,8 +97,7 @@ void main() {
     test('returns an empty list when the product table is empty', () async {
       final Either<Failure, List<ProductModel>> result = await datasource
           .loadProducts();
-      final List<ProductModel> products =
-          result.getRight().toNullable() ?? [];
+      final List<ProductModel> products = result.getRight().toNullable() ?? [];
 
       expect(products, isEmpty);
       verifyZeroInteractions(mockLoggerService);
@@ -301,9 +302,8 @@ void main() {
         expect(refreshed.length, 2);
         expect(
           refreshed.every(
-            (ProductModel product) => product.lastUpdatedAt.isAfter(
-              oldCheckedAt,
-            ),
+            (ProductModel product) =>
+                product.lastUpdatedAt.isAfter(oldCheckedAt),
           ),
           isTrue,
         );
@@ -691,9 +691,7 @@ void main() {
       () async {
         await db
             .into(db.productTable)
-            .insert(
-              buildProductTableCompanion(name: 'Existing Product'),
-            );
+            .insert(buildProductTableCompanion(name: 'Existing Product'));
         final Product product = Product(
           id: 'product-1',
           name: 'Example Product',
@@ -794,9 +792,7 @@ void main() {
       await insertProductOne();
 
       final Either<Failure, ProductModel> result = await datasource
-          .addSourceWithPrice(
-            buildProductSource(url: 'http://example.com/1'),
-          );
+          .addSourceWithPrice(buildProductSource(url: 'http://example.com/1'));
 
       expect(result.getLeft().toNullable(), isA<ValidationFailure>());
       expect(await db.select(db.productSourceTable).get(), isEmpty);
@@ -871,7 +867,8 @@ void main() {
     test('persists the cleaned URL, not the raw one', () async {
       await insertSourceOne();
       when(
-        () => mockUrlCleanerService.clean('https://updated.example.com/1?ref=x'),
+        () =>
+            mockUrlCleanerService.clean('https://updated.example.com/1?ref=x'),
       ).thenReturn('https://updated.example.com/1');
 
       await datasource.editSourceWithPrice(
@@ -884,9 +881,8 @@ void main() {
 
       expect(row.url, 'https://updated.example.com/1');
       verify(
-        () => mockUrlCleanerService.clean(
-          'https://updated.example.com/1?ref=x',
-        ),
+        () =>
+            mockUrlCleanerService.clean('https://updated.example.com/1?ref=x'),
       ).called(1);
     });
 
@@ -899,6 +895,7 @@ void main() {
               buildProductSource(
                 id: 'source-2',
                 url: 'https://other.example.com/1',
+                merchantDomain: 'other.example.com',
               ),
             ).toCompanion(),
           );
@@ -915,52 +912,46 @@ void main() {
       expect(otherRow.merchantDomain, 'other.example.com');
     });
 
-    test(
-      'allows keeping the source at its own current URL',
-      () async {
-        await insertSourceOne();
+    test('allows keeping the source at its own current URL', () async {
+      await insertSourceOne();
 
-        final Either<Failure, ProductModel> result = await datasource
-            .editSourceWithPrice(
-              'source-1',
-              buildProductSource(currentPrice: const Money(minorUnits: 1, currencyCode: 'EUR')),
-            );
-
-        expect(result.getRight().toNullable(), isA<ProductModel>());
-      },
-    );
-
-    test(
-      'rejects a cleaned URL already tracked by another source',
-      () async {
-        await insertSourceOne();
-        await db
-            .into(db.productSourceTable)
-            .insert(
-              ProductSourceModel.fromEntity(
-                buildProductSource(
-                  id: 'source-2',
-                  url: 'https://other.example.com/1',
-                ),
-              ).toCompanion(),
-            );
-
-        final Either<Failure, ProductModel> result = await datasource
-            .editSourceWithPrice(
-              'source-2',
-              buildProductSource(url: 'https://example.com/products/1'),
-            );
-
-        expect(
-          result,
-          const Left(
-            ValidationFailure(
-              'This store is already tracked for this product',
+      final Either<Failure, ProductModel> result = await datasource
+          .editSourceWithPrice(
+            'source-1',
+            buildProductSource(
+              currentPrice: const Money(minorUnits: 1, currencyCode: 'EUR'),
             ),
-          ),
-        );
-      },
-    );
+          );
+
+      expect(result.getRight().toNullable(), isA<ProductModel>());
+    });
+
+    test('rejects a cleaned URL already tracked by another source', () async {
+      await insertSourceOne();
+      await db
+          .into(db.productSourceTable)
+          .insert(
+            ProductSourceModel.fromEntity(
+              buildProductSource(
+                id: 'source-2',
+                url: 'https://other.example.com/1',
+              ),
+            ).toCompanion(),
+          );
+
+      final Either<Failure, ProductModel> result = await datasource
+          .editSourceWithPrice(
+            'source-2',
+            buildProductSource(url: 'https://example.com/products/1'),
+          );
+
+      expect(
+        result,
+        const Left(
+          ValidationFailure('This store is already tracked for this product'),
+        ),
+      );
+    });
 
     test(
       'returns Left(NotFoundFailure) when the source does not exist',
@@ -1194,27 +1185,33 @@ void main() {
           );
     }
 
-    test('applies the offer to each updated source and returns the product', () async {
-      await insertTwoSources();
+    test(
+      'applies the offer to each updated source and returns the product',
+      () async {
+        await insertTwoSources();
 
-      final Either<Failure, ProductModel> result = await datasource
-          .updateSourcePrices('product-1', [
-            buildProductSourceModel(
-              currentPrice: const Money(minorUnits: 1999, currencyCode: 'USD'),
-              isAvailable: true,
-              lastCheckedAt: DateTime(2026, 1, 2),
-            ),
-          ]);
-      final ProductSourceRow row = await (db.select(
-        db.productSourceTable,
-      )..where((table) => table.id.equals('source-1'))).getSingle();
+        final Either<Failure, ProductModel> result = await datasource
+            .updateSourcePrices('product-1', [
+              buildProductSourceModel(
+                currentPrice: const Money(
+                  minorUnits: 1999,
+                  currencyCode: 'USD',
+                ),
+                isAvailable: true,
+                lastCheckedAt: DateTime(2026, 1, 2),
+              ),
+            ]);
+        final ProductSourceRow row = await (db.select(
+          db.productSourceTable,
+        )..where((table) => table.id.equals('source-1'))).getSingle();
 
-      expect(result.getRight().toNullable()?.id, 'product-1');
-      expect(row.minorUnits, 1999);
-      expect(row.isAvailable, isTrue);
-      expect(row.lastCheckedAt, DateTime(2026, 1, 2));
-      verifyZeroInteractions(mockLoggerService);
-    });
+        expect(result.getRight().toNullable()?.id, 'product-1');
+        expect(row.minorUnits, 1999);
+        expect(row.isAvailable, isTrue);
+        expect(row.lastCheckedAt, DateTime(2026, 1, 2));
+        verifyZeroInteractions(mockLoggerService);
+      },
+    );
 
     test('leaves sources not in the update list untouched', () async {
       await insertTwoSources();
@@ -1307,23 +1304,17 @@ void main() {
       () async {
         await insertTwoSources();
 
-        final Either<Failure, ProductModel> result = await datasource
-            .updateSourcePrices('product-1', [
-              buildProductSourceModel(
-                id: 'source-1',
-                currentPrice: const Money(
-                  minorUnits: 1999,
-                  currencyCode: 'USD',
-                ),
-              ),
-              buildProductSourceModel(
-                id: 'source-2',
-                currentPrice: const Money(
-                  minorUnits: 1999,
-                  currencyCode: 'EUR',
-                ),
-              ),
-            ]);
+        final Either<Failure, ProductModel>
+        result = await datasource.updateSourcePrices('product-1', [
+          buildProductSourceModel(
+            id: 'source-1',
+            currentPrice: const Money(minorUnits: 1999, currencyCode: 'USD'),
+          ),
+          buildProductSourceModel(
+            id: 'source-2',
+            currentPrice: const Money(minorUnits: 1999, currencyCode: 'EUR'),
+          ),
+        ]);
         final Failure failure =
             result.getLeft().toNullable() ??
             const DatabaseFailure('Expected a failure');
