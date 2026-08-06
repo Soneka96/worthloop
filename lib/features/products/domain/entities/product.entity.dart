@@ -3,7 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 
 // Project imports:
-import 'package:worth_loop/features/products/domain/entities/store_price.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 
 /// An item whose merchant offers are tracked.
 @immutable
@@ -17,8 +17,8 @@ class Product extends Equatable {
   /// Optional product image URL.
   final String? imageUrl;
 
-  /// Latest known merchant offers.
-  final List<StorePrice> storePrices;
+  /// Tracked website sources and their latest known offers.
+  final List<ProductSource> sources;
 
   /// When any offer for this product was last updated.
   final DateTime lastUpdatedAt;
@@ -26,47 +26,56 @@ class Product extends Equatable {
   const Product({
     required this.id,
     required this.name,
-    required this.storePrices,
+    required this.sources,
     required this.lastUpdatedAt,
     this.imageUrl,
   });
 
-  /// Available offers ordered from lowest to highest price.
-  List<StorePrice> get availablePricesSorted {
+  /// Priced, in-stock sources ordered from lowest to highest price.
+  List<ProductSource> get availablePricesSorted {
     _ensureSingleCurrency();
-    final List<StorePrice> available = storePrices
-        .where((StorePrice price) => price.isAvailable)
+    final List<ProductSource> available = sources
+        .where(
+          (ProductSource source) =>
+              source.isAvailable == true && source.currentPrice != null,
+        )
         .toList(growable: false);
     _sortByPrice(available);
     return available;
   }
 
-  /// Lowest available offer, or `null` when no store has stock.
-  StorePrice? get bestAvailablePrice {
-    final List<StorePrice> prices = availablePricesSorted;
+  /// Lowest-priced in-stock source, or `null` when none is available.
+  ProductSource? get bestAvailablePrice {
+    final List<ProductSource> prices = availablePricesSorted;
     return prices.isEmpty ? null : prices.first;
   }
 
-  /// Offers ordered by availability and then by ascending price.
-  List<StorePrice> get pricesForDisplay {
+  /// Priced sources ordered by availability and then by ascending price.
+  List<ProductSource> get pricesForDisplay {
     _ensureSingleCurrency();
-    final List<StorePrice> unavailable = storePrices
-        .where((StorePrice price) => !price.isAvailable)
+    final List<ProductSource> unavailable = sources
+        .where(
+          (ProductSource source) =>
+              source.isAvailable != true && source.currentPrice != null,
+        )
         .toList(growable: false);
     _sortByPrice(unavailable);
     return [...availablePricesSorted, ...unavailable];
   }
 
-  void _sortByPrice(List<StorePrice> prices) {
-    prices.sort(
-      (StorePrice first, StorePrice second) => first.currentPrice.minorUnits
-          .compareTo(second.currentPrice.minorUnits),
+  void _sortByPrice(List<ProductSource> entries) {
+    entries.sort(
+      (ProductSource first, ProductSource second) =>
+          (first.currentPrice?.minorUnits ?? 0).compareTo(
+            second.currentPrice?.minorUnits ?? 0,
+          ),
     );
   }
 
   void _ensureSingleCurrency() {
-    final Set<String> currencyCodes = storePrices
-        .map((StorePrice price) => price.currentPrice.currencyCode)
+    final Set<String> currencyCodes = sources
+        .map((ProductSource source) => source.currentPrice?.currencyCode)
+        .whereType<String>()
         .toSet();
     if (currencyCodes.length > 1) {
       throw StateError('Product offers must use one currency');
@@ -74,5 +83,5 @@ class Product extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, name, imageUrl, storePrices, lastUpdatedAt];
+  List<Object?> get props => [id, name, imageUrl, sources, lastUpdatedAt];
 }

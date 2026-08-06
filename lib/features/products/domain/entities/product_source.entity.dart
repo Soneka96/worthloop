@@ -2,7 +2,11 @@
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 
-/// A website link used to track one product.
+// Project imports:
+import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
+
+/// A website link tracked for a product, together with its latest fetched
+/// offer.
 @immutable
 class ProductSource extends Equatable {
   /// Stable source identifier.
@@ -20,15 +24,29 @@ class ProductSource extends Equatable {
   /// When the source was added.
   final DateTime createdAt;
 
+  /// Latest checked price, or `null` before the first successful fetch.
+  final Money? currentPrice;
+
+  /// Whether the merchant currently has the product available, or `null`
+  /// before the first successful fetch.
+  final bool? isAvailable;
+
+  /// When this source's offer was last checked, or `null` before the first
+  /// successful fetch.
+  final DateTime? lastCheckedAt;
+
   const ProductSource({
     required this.id,
     required this.productId,
     required this.url,
     required this.merchantDomain,
     required this.createdAt,
+    this.currentPrice,
+    this.isAvailable,
+    this.lastCheckedAt,
   });
 
-  /// Creates a source from a validated HTTPS product URL.
+  /// Creates a source from a validated HTTPS product URL, with no offer yet.
   factory ProductSource.fromUrl({
     required String id,
     required String productId,
@@ -53,5 +71,14 @@ class ProductSource extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, productId, url, merchantDomain, createdAt];
+  List<Object?> get props => [
+    id,
+    productId,
+    url,
+    merchantDomain,
+    createdAt,
+    currentPrice,
+    isAvailable,
+    lastCheckedAt,
+  ];
 }
