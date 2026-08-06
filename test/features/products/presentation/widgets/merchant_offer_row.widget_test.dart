@@ -1,0 +1,323 @@
+// Flutter imports:
+import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
+
+// Package imports:
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+// Project imports:
+import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
+import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
+import 'package:worth_loop/features/products/presentation/widgets/best_price_stamp.widget.dart';
+import 'package:worth_loop/features/products/presentation/widgets/merchant_offer_row.widget.dart';
+import 'package:worth_loop/i18n/strings.g.dart';
+import '../../fixtures/product_source.fixture.dart';
+
+void main() {
+  ProductSource buildSource() => buildProductSource(
+    id: 'source-1',
+    merchantDomain: 'example.com',
+    currentPrice: const Money(minorUnits: 49999, currencyCode: 'EUR'),
+    isAvailable: true,
+    lastCheckedAt: DateTime(2026, 1, 1, 14, 30),
+  );
+
+  Widget buildWidget({
+    ProductSource? source,
+    bool isBestPrice = false,
+    bool isDeleting = false,
+    VoidCallback? onTap,
+    VoidCallback? onEdit,
+    VoidCallback? onDelete,
+  }) => TranslationProvider(
+    child: MaterialApp(
+      home: Scaffold(
+        body: MerchantOfferRow(
+          source: source ?? buildSource(),
+          isBestPrice: isBestPrice,
+          isDeleting: isDeleting,
+          onTap: onTap ?? () {},
+          onEdit: onEdit ?? () {},
+          onDelete: onDelete ?? () {},
+        ),
+      ),
+    ),
+  );
+
+  group('MerchantOfferRow contains widgets', () {
+    testWidgets(
+      'MerchantOfferRow contains the merchant domain and price with the correct parameters',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildWidget());
+
+        expect(
+          find.byKey(const Key('merchant-offer-source-1')),
+          findsOneWidget,
+        );
+        expect(find.text('example.com'), findsOneWidget);
+        expect(find.text('499.99 €'), findsOneWidget);
+        expect(find.text(t.productDetails.available), findsOneWidget);
+        expect(find.textContaining('Checked at'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow displays the unavailable status when source.isAvailable = false',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildWidget(
+            source: buildProductSource(
+              id: 'source-1',
+              merchantDomain: 'example.com',
+              isAvailable: false,
+            ),
+          ),
+        );
+
+        expect(find.text(t.productDetails.unavailable), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow does not contain a price Text when source.currentPrice = null',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildWidget(
+            source: buildProductSource(
+              id: 'source-1',
+              merchantDomain: 'example.com',
+              isAvailable: true,
+            ),
+          ),
+        );
+
+        expect(find.text('499.99 €'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow does not contain a "Checked at" Text when source.lastCheckedAt = null',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildWidget(
+            source: buildProductSource(
+              id: 'source-1',
+              merchantDomain: 'example.com',
+              currentPrice: const Money(minorUnits: 49999, currencyCode: 'EUR'),
+              isAvailable: true,
+            ),
+          ),
+        );
+
+        expect(find.textContaining('Checked at'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow contains a swipe-hint dot Icon with the correct parameters when isDeleting = false',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildWidget());
+
+        expect(find.byIcon(Icons.circle), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow does not contain a swipe-hint dot Icon when isDeleting = true',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildWidget(isDeleting: true));
+
+        expect(find.byIcon(Icons.circle), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow contains a Slidable with the correct parameters when isDeleting = true',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildWidget(isDeleting: true));
+
+        final Slidable slidable = tester.widget(find.byType(Slidable));
+
+        expect(slidable.enabled, isA<bool>());
+        expect(slidable.enabled, isFalse);
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow contains a Slidable with the correct parameters when isDeleting = false',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildWidget());
+
+        final Slidable slidable = tester.widget(find.byType(Slidable));
+
+        expect(slidable.enabled, isA<bool>());
+        expect(slidable.enabled, isTrue);
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow contains a BestPriceStamp with the correct parameters when isBestPrice = true',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildWidget(isBestPrice: true));
+
+        expect(find.byType(BestPriceStamp), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow does not contain a BestPriceStamp when isBestPrice = false',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildWidget());
+
+        expect(find.byType(BestPriceStamp), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow contains a CircularProgressIndicator with the correct parameters when isDeleting = true',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildWidget(isDeleting: true));
+
+        expect(find.byType(CircularProgressIndicator), findsOneWidget);
+        expect(find.text('499.99 €'), findsNothing);
+      },
+    );
+  });
+
+  group("MerchantOfferRow's elements behavior", () {
+    testWidgets(
+      'MerchantOfferRow contains a "merchant-offer-source-1-tap-target" InkWell with the correct behavior',
+      (WidgetTester tester) async {
+        bool tapped = false;
+        await tester.pumpWidget(buildWidget(onTap: () => tapped = true));
+
+        await tester.tap(
+          find.byKey(const Key('merchant-offer-source-1-tap-target')),
+        );
+
+        expect(tapped, isA<bool>());
+        expect(tapped, isTrue);
+      },
+    );
+
+    testWidgets('MerchantOfferRow does not call onTap when isDeleting = true', (
+      WidgetTester tester,
+    ) async {
+      bool tapped = false;
+      await tester.pumpWidget(
+        buildWidget(isDeleting: true, onTap: () => tapped = true),
+      );
+
+      await tester.tap(
+        find.byKey(const Key('merchant-offer-source-1-tap-target')),
+      );
+
+      expect(tapped, isA<bool>());
+      expect(tapped, isFalse);
+    });
+
+    testWidgets(
+      'MerchantOfferRow contains a "merchant-offer-source-1-edit-action" SlidableAction with the correct behavior',
+      (WidgetTester tester) async {
+        bool edited = false;
+        await tester.pumpWidget(buildWidget(onEdit: () => edited = true));
+
+        await tester.drag(
+          find.byKey(const Key('merchant-offer-source-1')),
+          const Offset(-400, 0),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const Key('merchant-offer-source-1-edit-action')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(edited, isA<bool>());
+        expect(edited, isTrue);
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow contains a "merchant-offer-source-1-delete-action" SlidableAction with the correct behavior',
+      (WidgetTester tester) async {
+        bool deleted = false;
+        await tester.pumpWidget(buildWidget(onDelete: () => deleted = true));
+
+        await tester.drag(
+          find.byKey(const Key('merchant-offer-source-1')),
+          const Offset(-400, 0),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const Key('merchant-offer-source-1-delete-action')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(deleted, isA<bool>());
+        expect(deleted, isTrue);
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow contains a Semantics with the correct behavior for its edit and delete custom actions',
+      (WidgetTester tester) async {
+        bool edited = false;
+        bool deleted = false;
+        await tester.pumpWidget(
+          buildWidget(
+            onEdit: () => edited = true,
+            onDelete: () => deleted = true,
+          ),
+        );
+
+        final Semantics semantics = tester.widget(
+          find.byWidgetPredicate(
+            (Widget widget) =>
+                widget is Semantics &&
+                widget.properties.hint == t.productDetails.openOfferHint,
+          ),
+        );
+        final Map<CustomSemanticsAction, VoidCallback> actions =
+            semantics.properties.customSemanticsActions ?? {};
+
+        actions.entries
+            .firstWhere(
+              (entry) => entry.key.label == t.productDetails.editSourceTooltip,
+            )
+            .value();
+        actions.entries
+            .firstWhere(
+              (entry) =>
+                  entry.key.label == t.productDetails.deleteSourceTooltip,
+            )
+            .value();
+
+        expect(edited, isA<bool>());
+        expect(edited, isTrue);
+        expect(deleted, isA<bool>());
+        expect(deleted, isTrue);
+      },
+    );
+  });
+
+  group("MerchantOfferRow's translations", () {
+    testWidgets('MerchantOfferRow displays the Portuguese translations', (
+      WidgetTester tester,
+    ) async {
+      LocaleSettings.setLocale(AppLocale.pt);
+
+      try {
+        await tester.pumpWidget(buildWidget());
+
+        expect(find.text(t.productDetails.available), findsOneWidget);
+        expect(
+          find.textContaining(t.productDetails.checkedAt(time: '').trim()),
+          findsOneWidget,
+        );
+      } finally {
+        LocaleSettings.setLocale(AppLocale.en);
+      }
+    });
+  });
+}

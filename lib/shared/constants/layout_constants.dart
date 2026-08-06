@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 
 // Project imports:
+import 'package:worth_loop/features/products/presentation/widgets/merchant_offer_row.widget.dart';
 import 'package:worth_loop/features/settings/presentation/widgets/density_preview_rows.widget.dart';
 import 'package:worth_loop/features/settings/presentation/widgets/settings_option_preview_card.widget.dart';
 import 'package:worth_loop/features/settings/presentation/widgets/theme_card.widget.dart';
@@ -86,6 +87,12 @@ abstract final class SelectableCardBorders {
 
   /// Width when the selected/active option.
   static const double selected = 2;
+}
+
+/// Sizes for [MerchantOfferRow]'s quiet swipe-hint dot.
+abstract final class MerchantOfferRowSizes {
+  /// Diameter of the dot hinting the row can be swiped for edit/delete.
+  static const double swipeHintDotSize = 6;
 }
 
 /// Sizes for [ZoomControl]'s track — the draggable thumb, the dot ticks, and
