@@ -83,6 +83,57 @@ void main() {
       expect(result?.isAvailable, isTrue);
     });
 
+    test('prefers Amazon markup when sourceUrl is an Amazon domain', () {
+      const String html = '''
+        <script type="application/ld+json">
+          {"@type":"Product","offers":{"price":"19.99","priceCurrency":"USD"}}
+        </script>
+        <div id="corePrice_feature_div">
+          <span class="a-price"><span class="a-offscreen">206,79€</span></span>
+        </div>
+      ''';
+
+      for (final String sourceUrl in [
+        'https://amazon.es/dp/B0F1D74SCX',
+        'https://www.amazon.co.uk/dp/B0F1D74SCX',
+        'https://amzn.eu/d/0dHHIil3',
+        'https://amzn.to/example',
+      ]) {
+        final ProductOffer? result = service.decode(html, sourceUrl: sourceUrl);
+
+        expect(result, isA<ProductOffer>(), reason: sourceUrl);
+        expect(result?.minorUnits, 20679, reason: sourceUrl);
+        expect(result?.currencyCode, 'EUR', reason: sourceUrl);
+      }
+    });
+
+    test('falls back to generic markup when Amazon markup is absent', () {
+      final ProductOffer? result = service.decode('''
+        <script type="application/ld+json">
+          {"@type":"Product","offers":{"price":"19.99","priceCurrency":"USD"}}
+        </script>
+      ''', sourceUrl: 'https://amazon.es/dp/B0F1D74SCX');
+
+      expect(result, isA<ProductOffer>());
+      expect(result?.minorUnits, 1999);
+      expect(result?.currencyCode, 'USD');
+    });
+
+    test('keeps generic priority when sourceUrl is not an Amazon domain', () {
+      final ProductOffer? result = service.decode('''
+        <script type="application/ld+json">
+          {"@type":"Product","offers":{"price":"19.99","priceCurrency":"USD"}}
+        </script>
+        <div id="corePrice_feature_div">
+          <span class="a-price"><span class="a-offscreen">206,79€</span></span>
+        </div>
+      ''', sourceUrl: 'https://amazon.example.com/product');
+
+      expect(result, isA<ProductOffer>());
+      expect(result?.minorUnits, 1999);
+      expect(result?.currencyCode, 'USD');
+    });
+
     test('decode() returns an Amazon euro price from shared offer markup', () {
       final ProductOffer? result = service.decode('''
         <div id="corePrice_feature_div">

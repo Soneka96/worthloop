@@ -36,6 +36,34 @@ class ProductOfferDecoderService {
     caseSensitive: false,
   );
   static final RegExp _amazonAmountPattern = RegExp(r'[-+]?\d[\d.,]*');
+  static const Set<String> _amazonMarketplaceDomains = {
+    'amazon.ae',
+    'amazon.be',
+    'amazon.ca',
+    'amazon.cn',
+    'amazon.co.jp',
+    'amazon.co.uk',
+    'amazon.co.za',
+    'amazon.com',
+    'amazon.com.au',
+    'amazon.com.be',
+    'amazon.com.br',
+    'amazon.com.mx',
+    'amazon.de',
+    'amazon.eg',
+    'amazon.es',
+    'amazon.fr',
+    'amazon.ie',
+    'amazon.in',
+    'amazon.it',
+    'amazon.nl',
+    'amazon.pl',
+    'amazon.sa',
+    'amazon.se',
+    'amazon.sg',
+    'amazon.tr',
+  };
+  static const Set<String> _amazonShortLinkDomains = {'amzn.eu', 'amzn.to'};
   static const Map<String, String> _amazonCurrencyCodes = {
     '€': 'EUR',
     '£': 'GBP',
@@ -54,13 +82,35 @@ class ProductOfferDecoderService {
   };
 
   /// Decodes a price offer from [html], or `null` if none of the supported
-  /// markup tiers expose one.
-  ProductOffer? decode(String html) {
-    return _decodeJsonLd(html) ??
+  /// markup tiers expose one. Uses [sourceUrl] to prioritize source-specific
+  /// markup when the host is Amazon.
+  ProductOffer? decode(String html, {String? sourceUrl}) {
+    final ProductOffer? amazonOffer = _isAmazonUrl(sourceUrl)
+        ? _decodeAmazonOffer(html)
+        : null;
+    return amazonOffer ??
+        _decodeJsonLd(html) ??
         _decodeMetaTags(html) ??
         _decodeMicrodata(html) ??
         _decodeAmazonMainOffer(html) ??
         _decodeAmazonSellerOffer(html);
+  }
+
+  ProductOffer? _decodeAmazonOffer(String html) =>
+      _decodeAmazonMainOffer(html) ?? _decodeAmazonSellerOffer(html);
+
+  bool _isAmazonUrl(String? sourceUrl) {
+    if (sourceUrl == null) {
+      return false;
+    }
+    final Uri? uri = Uri.tryParse(sourceUrl);
+    final String host = uri?.host.toLowerCase() ?? '';
+    return _amazonMarketplaceDomains.any(
+          (String domain) => host == domain || host.endsWith('.$domain'),
+        ) ||
+        _amazonShortLinkDomains.any(
+          (String domain) => host == domain || host.endsWith('.$domain'),
+        );
   }
 
   ProductOffer? _decodeAmazonMainOffer(String html) =>

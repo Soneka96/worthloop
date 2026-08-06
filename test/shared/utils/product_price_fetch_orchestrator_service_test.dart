@@ -69,7 +69,9 @@ void main() {
         when(
           () => dioFetcher.fetch(cleanedUrl),
         ).thenAnswer((_) async => dioResult);
-        when(() => offerDecoder.decode(dioResult.body)).thenReturn(offer);
+        when(
+          () => offerDecoder.decode(dioResult.body, sourceUrl: cleanedUrl),
+        ).thenReturn(offer);
         when(
           () => detector.detect(
             statusCode: dioResult.statusCode,
@@ -83,6 +85,9 @@ void main() {
         expect(result, isA<PriceFetchResult>());
         expect(result.status, PriceFetchStatus.success);
         expect(result.offer, offer);
+        verify(
+          () => offerDecoder.decode(dioResult.body, sourceUrl: cleanedUrl),
+        ).called(1);
         verifyNever(() => webViewFetcher.fetch(any()));
       },
     );
@@ -104,7 +109,9 @@ void main() {
           when(
             () => dioFetcher.fetch(cleanedUrl),
           ).thenAnswer((_) async => dioResult);
-          when(() => offerDecoder.decode(dioResult.body)).thenReturn(null);
+          when(
+            () => offerDecoder.decode(dioResult.body, sourceUrl: cleanedUrl),
+          ).thenReturn(null);
           when(
             () => detector.detect(
               statusCode: dioResult.statusCode,
@@ -115,7 +122,9 @@ void main() {
           when(
             () => webViewFetcher.fetch(cleanedUrl),
           ).thenAnswer((_) async => webResult);
-          when(() => offerDecoder.decode(webResult.body)).thenReturn(offer);
+          when(
+            () => offerDecoder.decode(webResult.body, sourceUrl: cleanedUrl),
+          ).thenReturn(offer);
           when(
             () => detector.detect(
               statusCode: webResult.statusCode,
@@ -129,6 +138,9 @@ void main() {
           expect(result.status, PriceFetchStatus.success);
           expect(result.offer, offer);
           verify(() => webViewFetcher.fetch(cleanedUrl)).called(1);
+          verify(
+            () => offerDecoder.decode(webResult.body, sourceUrl: cleanedUrl),
+          ).called(1);
         },
       );
     }
@@ -141,7 +153,9 @@ void main() {
         when(
           () => dioFetcher.fetch(cleanedUrl),
         ).thenAnswer((_) async => dioResult);
-        when(() => offerDecoder.decode(dioResult.body)).thenReturn(offer);
+        when(
+          () => offerDecoder.decode(dioResult.body, sourceUrl: cleanedUrl),
+        ).thenReturn(offer);
         when(
           () => detector.detect(
             statusCode: dioResult.statusCode,
@@ -177,7 +191,9 @@ void main() {
         when(
           () => dioFetcher.fetch(cleanedUrl),
         ).thenAnswer((_) async => dioResult);
-        when(() => offerDecoder.decode(dioResult.body)).thenReturn(null);
+        when(
+          () => offerDecoder.decode(dioResult.body, sourceUrl: cleanedUrl),
+        ).thenReturn(null);
         when(
           () => detector.detect(
             statusCode: dioResult.statusCode,
@@ -205,7 +221,9 @@ void main() {
         when(
           () => dioFetcher.fetch(cleanedUrl),
         ).thenAnswer((_) async => dioResult);
-        when(() => offerDecoder.decode(dioResult.body)).thenReturn(null);
+        when(
+          () => offerDecoder.decode(dioResult.body, sourceUrl: cleanedUrl),
+        ).thenReturn(null);
         when(
           () => detector.detect(
             statusCode: dioResult.statusCode,
@@ -216,7 +234,9 @@ void main() {
         when(
           () => webViewFetcher.fetch(cleanedUrl),
         ).thenAnswer((_) async => webResult);
-        when(() => offerDecoder.decode(webResult.body)).thenReturn(null);
+        when(
+          () => offerDecoder.decode(webResult.body, sourceUrl: cleanedUrl),
+        ).thenReturn(null);
         when(
           () => detector.detect(
             statusCode: webResult.statusCode,
@@ -238,7 +258,9 @@ void main() {
       when(
         () => dioFetcher.fetch(cleanedUrl),
       ).thenAnswer((_) async => dioResult);
-      when(() => offerDecoder.decode(any())).thenReturn(null);
+      when(
+        () => offerDecoder.decode(any(), sourceUrl: any(named: 'sourceUrl')),
+      ).thenReturn(null);
       when(
         () => detector.detect(
           statusCode: dioResult.statusCode,
@@ -272,7 +294,9 @@ void main() {
         when(
           () => dioFetcher.fetch(cleanedUrl),
         ).thenAnswer((_) async => dioResult);
-        when(() => offerDecoder.decode(any())).thenReturn(null);
+        when(
+          () => offerDecoder.decode(any(), sourceUrl: any(named: 'sourceUrl')),
+        ).thenReturn(null);
         when(
           () => detector.detect(
             statusCode: dioResult.statusCode,
@@ -303,7 +327,9 @@ void main() {
       when(
         () => dioFetcher.fetch(cleanedUrl),
       ).thenAnswer((_) async => dioResult);
-      when(() => offerDecoder.decode(any())).thenReturn(null);
+      when(
+        () => offerDecoder.decode(any(), sourceUrl: any(named: 'sourceUrl')),
+      ).thenReturn(null);
       when(
         () => detector.detect(
           statusCode: dioResult.statusCode,
@@ -331,7 +357,9 @@ void main() {
       verify(() => webViewFetcher.fetch(cleanedUrl)).called(1);
       verifyNoMoreInteractions(dioFetcher);
       verifyNoMoreInteractions(webViewFetcher);
-      verify(() => offerDecoder.decode(any())).called(2);
+      verify(
+        () => offerDecoder.decode(any(), sourceUrl: any(named: 'sourceUrl')),
+      ).called(2);
       verify(
         () => detector.detect(
           statusCode: any(named: 'statusCode'),
@@ -346,7 +374,9 @@ void main() {
       when(
         () => dioFetcher.fetch(cleanedUrl),
       ).thenAnswer((_) async => blockedResult);
-      when(() => offerDecoder.decode(any())).thenReturn(null);
+      when(
+        () => offerDecoder.decode(any(), sourceUrl: any(named: 'sourceUrl')),
+      ).thenReturn(null);
       when(
         () => detector.detect(
           statusCode: blockedResult.statusCode,
@@ -378,7 +408,9 @@ void main() {
       when(
         () => dioFetcher.fetch(cleanedUrl),
       ).thenAnswer((_) async => blockedResult);
-      when(() => offerDecoder.decode(blockedResult.body)).thenReturn(null);
+      when(
+        () => offerDecoder.decode(blockedResult.body, sourceUrl: cleanedUrl),
+      ).thenReturn(null);
       when(
         () => detector.detect(
           statusCode: blockedResult.statusCode,
@@ -390,7 +422,9 @@ void main() {
         () => webViewFetcher.fetch(cleanedUrl),
       ).thenAnswer((_) async => blockedResult);
       when(() => dioFetcher.fetch(otherUrl)).thenAnswer((_) async => okResult);
-      when(() => offerDecoder.decode(okResult.body)).thenReturn(offer);
+      when(
+        () => offerDecoder.decode(okResult.body, sourceUrl: otherUrl),
+      ).thenReturn(offer);
       when(
         () => detector.detect(
           statusCode: okResult.statusCode,
@@ -416,7 +450,9 @@ void main() {
       when(
         () => dioFetcher.fetch(cleanedUrl),
       ).thenAnswer((_) async => dioResult);
-      when(() => offerDecoder.decode(any())).thenReturn(null);
+      when(
+        () => offerDecoder.decode(any(), sourceUrl: any(named: 'sourceUrl')),
+      ).thenReturn(null);
       when(
         () => detector.detect(
           statusCode: dioResult.statusCode,

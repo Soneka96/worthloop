@@ -1,3 +1,6 @@
+// Dart imports:
+import 'dart:developer' as developer;
+
 // Project imports:
 import 'package:worth_loop/features/products/data/datasources/price_response_detector.datasource.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
@@ -55,9 +58,17 @@ class ProductPriceFetchOrchestratorService {
       );
     }
 
-    PriceFetchResult result = _classify(await _dioFetcher.fetch(cleanedUrl));
+    PriceFetchResult result = _classify(
+      await _dioFetcher.fetch(cleanedUrl),
+      source: 'dio',
+      url: cleanedUrl,
+    );
     if (_fallbackTriggers.contains(result.status)) {
-      result = _classify(await _webViewFetcher.fetch(cleanedUrl));
+      result = _classify(
+        await _webViewFetcher.fetch(cleanedUrl),
+        source: 'webview',
+        url: cleanedUrl,
+      );
     }
     if (result.status == PriceFetchStatus.blocked) {
       _blockedUntilByUrl[cleanedUrl] = _now().add(
@@ -67,8 +78,21 @@ class ProductPriceFetchOrchestratorService {
     return result;
   }
 
-  PriceFetchResult _classify(FetchResult fetchResult) {
-    final ProductOffer? offer = _offerDecoder.decode(fetchResult.body);
+  PriceFetchResult _classify(
+    FetchResult fetchResult, {
+    required String source,
+    required String url,
+  }) {
+    final ProductOffer? offer = _offerDecoder.decode(
+      fetchResult.body,
+      sourceUrl: url,
+    );
+    developer.log(
+      'source=$source url=$url status=${fetchResult.statusCode} '
+      'length=${fetchResult.body.length} ${_markerSummary(fetchResult.body)} '
+      'decoded=${_offerSummary(offer)}',
+      name: 'worth_loop.price_fetch',
+    );
     final PriceFetchStatus status = _detector.detect(
       statusCode: fetchResult.statusCode,
       responseBody: fetchResult.body,
@@ -78,5 +102,20 @@ class ProductPriceFetchOrchestratorService {
       status: status,
       offer: status == PriceFetchStatus.success ? offer : null,
     );
+  }
+
+  String _offerSummary(ProductOffer? offer) => offer == null
+      ? 'null'
+      : '${offer.minorUnits}${offer.currencyCode},available=${offer.isAvailable}';
+
+  String _markerSummary(String body) {
+    final String lowerBody = body.toLowerCase();
+    return 'jsonLd=${lowerBody.contains('application/ld+json')} '
+        'offscreen=${lowerBody.contains('a-offscreen')} '
+        'aPrice=${lowerBody.contains('a-price')} '
+        'corePrice=${lowerBody.contains('coreprice')} '
+        'aod=${lowerBody.contains('aod-ingress-link')} '
+        'captcha=${lowerBody.contains('captcha')} '
+        'unavailable=${lowerBody.contains('unavailable')}';
   }
 }
