@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 210 (105 per locale)
+/// Strings: 208 (104 per locale)
 ///
-/// Built on 2026-08-05 at 16:35 UTC
+/// Built on 2026-08-06 at 13:21 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -174,7 +174,6 @@ class _StringsHomeEn {
 
 	// Translations
 	String get subtitle => 'Your watchlist, with the best current offer first.';
-	String get sampleDataNotice => 'Demo prices — local sample data, not live offers.';
 	String trackedProducts({required Object count}) => '${count} tracked';
 	String get refreshAll => 'Refresh all';
 	String get refreshing => 'Refreshing';
@@ -445,7 +444,6 @@ class _StringsHomePt implements _StringsHomeEn {
 
 	// Translations
 	@override String get subtitle => 'A sua lista, com a melhor oferta atual em primeiro lugar.';
-	@override String get sampleDataNotice => 'Preços de demonstração — dados de exemplo locais, não são ofertas em tempo real.';
 	@override String trackedProducts({required Object count}) => '${count} acompanhados';
 	@override String get refreshAll => 'Atualizar todos';
 	@override String get refreshing => 'A atualizar';
@@ -675,7 +673,6 @@ extension on Translations {
 			case 'appTitle': return 'WorthLoop';
 			case 'common.cancel': return 'Cancel';
 			case 'home.subtitle': return 'Your watchlist, with the best current offer first.';
-			case 'home.sampleDataNotice': return 'Demo prices — local sample data, not live offers.';
 			case 'home.trackedProducts': return ({required Object count}) => '${count} tracked';
 			case 'home.refreshAll': return 'Refresh all';
 			case 'home.refreshing': return 'Refreshing';
@@ -788,7 +785,6 @@ extension on _StringsPt {
 			case 'appTitle': return 'WorthLoop';
 			case 'common.cancel': return 'Cancelar';
 			case 'home.subtitle': return 'A sua lista, com a melhor oferta atual em primeiro lugar.';
-			case 'home.sampleDataNotice': return 'Preços de demonstração — dados de exemplo locais, não são ofertas em tempo real.';
 			case 'home.trackedProducts': return ({required Object count}) => '${count} acompanhados';
 			case 'home.refreshAll': return 'Atualizar todos';
 			case 'home.refreshing': return 'A atualizar';

@@ -5,7 +5,6 @@ common:
 
 home:
   subtitle: A sua lista, com a melhor oferta atual em primeiro lugar.
-  sampleDataNotice: Preços de demonstração — dados de exemplo locais, não são ofertas em tempo real.
   trackedProducts: $count acompanhados
   refreshAll: Atualizar todos
   refreshing: A atualizar

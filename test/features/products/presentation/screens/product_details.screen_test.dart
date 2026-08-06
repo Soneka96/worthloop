@@ -12,7 +12,6 @@ import 'package:redux/redux.dart';
 import 'package:worth_loop/features/products/presentation/screens/product_details.screen.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
-import 'package:worth_loop/features/products/presentation/widgets/illustrative_price_notice.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_sources_empty.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/rename_product_dialog.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/source_form_dialog.widget.dart';
@@ -152,8 +151,6 @@ void main() {
 
         expect(find.text('Example Product'), findsOneWidget);
         expect(find.text('399.99 €'), findsWidgets);
-        expect(find.byType(IllustrativePriceNotice), findsOneWidget);
-        expect(find.text(t.home.sampleDataNotice), findsOneWidget);
         expect(find.byType(StorePriceWidget), findsNWidgets(3));
         expect(find.text(t.productDetails.availableOffers), findsOneWidget);
         expect(find.text(t.productDetails.unavailableOffers), findsOneWidget);
@@ -199,7 +196,6 @@ void main() {
         await pumpScreen(tester);
 
         expect(find.text('Product not found'), findsOneWidget);
-        expect(find.byType(IllustrativePriceNotice), findsNothing);
         expect(find.byType(StorePriceWidget), findsNothing);
       },
     );
@@ -512,7 +508,6 @@ void main() {
         await pumpScreen(tester);
 
         expect(find.text(t.productDetails.bestPrice), findsOneWidget);
-        expect(find.text(t.home.sampleDataNotice), findsOneWidget);
         expect(find.text(t.productDetails.refresh), findsOneWidget);
         expect(find.text(t.productDetails.available), findsNWidgets(2));
         expect(find.text(t.productDetails.availableOffers), findsOneWidget);
