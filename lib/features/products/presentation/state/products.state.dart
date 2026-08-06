@@ -5,7 +5,6 @@ import 'package:meta/meta.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
-import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
 
 /// Redux state for tracked products.
@@ -41,12 +40,6 @@ class ProductsState extends Equatable {
 
   /// Identifier of the most recently created product, or `null`.
   final String? createdProductId;
-
-  /// Saved website sources for each product, keyed by product identifier.
-  final Map<String, List<ProductSource>> sourcesByProduct;
-
-  /// Product identifiers whose sources are currently loading.
-  final Set<String> loadingSourcesProductIds;
 
   /// Whether a source is being added.
   final bool isAddingSource;
@@ -89,8 +82,6 @@ class ProductsState extends Equatable {
     required this.isCreatingProduct,
     required this.creationError,
     required this.createdProductId,
-    required this.sourcesByProduct,
-    required this.loadingSourcesProductIds,
     required this.isAddingSource,
     required this.addSourceError,
     required this.editingSourceId,
@@ -114,8 +105,6 @@ class ProductsState extends Equatable {
     isCreatingProduct: false,
     creationError: null,
     createdProductId: null,
-    sourcesByProduct: {},
-    loadingSourcesProductIds: {},
     isAddingSource: false,
     addSourceError: null,
     editingSourceId: null,
@@ -140,8 +129,6 @@ class ProductsState extends Equatable {
     bool? isCreatingProduct,
     Option<String>? creationError,
     Option<String>? createdProductId,
-    Map<String, List<ProductSource>>? sourcesByProduct,
-    Set<String>? loadingSourcesProductIds,
     bool? isAddingSource,
     Option<String>? addSourceError,
     Option<String>? editingSourceId,
@@ -170,9 +157,6 @@ class ProductsState extends Equatable {
     createdProductId: createdProductId == null
         ? this.createdProductId
         : createdProductId.toNullable(),
-    sourcesByProduct: sourcesByProduct ?? this.sourcesByProduct,
-    loadingSourcesProductIds:
-        loadingSourcesProductIds ?? this.loadingSourcesProductIds,
     isAddingSource: isAddingSource ?? this.isAddingSource,
     addSourceError: addSourceError == null
         ? this.addSourceError
@@ -209,8 +193,6 @@ class ProductsState extends Equatable {
     isCreatingProduct,
     creationError,
     createdProductId,
-    sourcesByProduct,
-    loadingSourcesProductIds,
     isAddingSource,
     addSourceError,
     editingSourceId,

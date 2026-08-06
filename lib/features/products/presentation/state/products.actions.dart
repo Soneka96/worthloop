@@ -4,7 +4,6 @@ import 'package:meta/meta.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
-import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
 
 /// Requests loading every tracked product.
@@ -167,54 +166,6 @@ class GoBackFromProductDetailsAction extends Equatable {
   List<Object?> get props => [];
 }
 
-/// Requests loading every saved source for one product.
-@immutable
-class LoadProductSourcesAction extends Equatable {
-  /// Identifier of the product whose sources are loaded.
-  final String productId;
-
-  const LoadProductSourcesAction(this.productId);
-
-  @override
-  List<Object?> get props => [productId];
-}
-
-/// Carries the sources loaded for one product.
-@immutable
-class ProductSourcesLoadedAction extends Equatable {
-  /// Identifier of the product these sources belong to.
-  final String productId;
-
-  /// The loaded sources.
-  final List<ProductSource> sources;
-
-  const ProductSourcesLoadedAction({
-    required this.productId,
-    required this.sources,
-  });
-
-  @override
-  List<Object?> get props => [productId, sources];
-}
-
-/// Carries a sources-loading failure for one product.
-@immutable
-class ProductSourcesLoadFailedAction extends Equatable {
-  /// Identifier of the product whose sources failed to load.
-  final String productId;
-
-  /// The failure message.
-  final String message;
-
-  const ProductSourcesLoadFailedAction({
-    required this.productId,
-    required this.message,
-  });
-
-  @override
-  List<Object?> get props => [productId, message];
-}
-
 /// Requests adding a website source to a product.
 @immutable
 class AddSourceAction extends Equatable {
@@ -230,16 +181,16 @@ class AddSourceAction extends Equatable {
   List<Object?> get props => [productId, url];
 }
 
-/// Carries a newly added source.
+/// Carries the product with a newly added source applied.
 @immutable
 class SourceAddedAction extends Equatable {
-  /// The newly added source.
-  final ProductSource source;
+  /// The product with the new source's offer applied.
+  final Product product;
 
-  const SourceAddedAction(this.source);
+  const SourceAddedAction(this.product);
 
   @override
-  List<Object?> get props => [source];
+  List<Object?> get props => [product];
 }
 
 /// Carries a source-add failure.
@@ -269,16 +220,16 @@ class EditSourceAction extends Equatable {
   List<Object?> get props => [sourceId, url];
 }
 
-/// Carries an edited source.
+/// Carries the product with an edited source applied.
 @immutable
 class SourceEditedAction extends Equatable {
-  /// The updated source.
-  final ProductSource source;
+  /// The product with the edited source's offer applied.
+  final Product product;
 
-  const SourceEditedAction(this.source);
+  const SourceEditedAction(this.product);
 
   @override
-  List<Object?> get props => [source];
+  List<Object?> get props => [product];
 }
 
 /// Carries a source-edit failure.
@@ -308,19 +259,19 @@ class DeleteSourceAction extends Equatable {
   List<Object?> get props => [productId, sourceId];
 }
 
-/// Carries a deleted source.
+/// Carries the product with a deleted source removed.
 @immutable
 class SourceDeletedAction extends Equatable {
-  /// Identifier of the product this source belonged to.
-  final String productId;
-
   /// Identifier of the deleted source.
   final String sourceId;
 
-  const SourceDeletedAction({required this.productId, required this.sourceId});
+  /// The product without the deleted source.
+  final Product product;
+
+  const SourceDeletedAction({required this.sourceId, required this.product});
 
   @override
-  List<Object?> get props => [productId, sourceId];
+  List<Object?> get props => [sourceId, product];
 }
 
 /// Carries a source-delete failure.
@@ -339,6 +290,19 @@ class SourceDeleteFailedAction extends Equatable {
 
   @override
   List<Object?> get props => [sourceId, message];
+}
+
+/// Requests opening a merchant offer's product page in the device's default
+/// browser.
+@immutable
+class OpenOfferUrlAction extends Equatable {
+  /// The merchant offer's product-page URL.
+  final String url;
+
+  const OpenOfferUrlAction(this.url);
+
+  @override
+  List<Object?> get props => [url];
 }
 
 /// Requests renaming a product.

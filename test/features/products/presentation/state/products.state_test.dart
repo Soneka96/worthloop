@@ -4,11 +4,9 @@ import 'package:fpdart/fpdart.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
-import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/presentation/state/products.state.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
 import '../../fixtures/product.fixture.dart';
-import '../../fixtures/product_source.fixture.dart';
 
 void main() {
   group('ProductsState — initial', () {
@@ -26,8 +24,6 @@ void main() {
       expect(state.isCreatingProduct, isFalse);
       expect(state.creationError, isNull);
       expect(state.createdProductId, isNull);
-      expect(state.sourcesByProduct, isEmpty);
-      expect(state.loadingSourcesProductIds, isEmpty);
       expect(state.isAddingSource, isFalse);
       expect(state.addSourceError, isNull);
       expect(state.editingSourceId, isNull);
@@ -44,7 +40,6 @@ void main() {
   group('ProductsState — copyWith', () {
     test('ProductsState copyWith replaces every supplied field', () {
       final Product product = buildProduct();
-      final ProductSource source = buildProductSource();
 
       final ProductsState state = ProductsState.initial().copyWith(
         products: [product],
@@ -56,10 +51,6 @@ void main() {
         isCreatingProduct: true,
         creationError: const Some('creation failed'),
         createdProductId: const Some('product-1'),
-        sourcesByProduct: {
-          'product-1': [source],
-        },
-        loadingSourcesProductIds: {'product-1'},
         isAddingSource: true,
         addSourceError: const Some('add failed'),
         editingSourceId: const Some('source-1'),
@@ -86,10 +77,6 @@ void main() {
       expect(state.isCreatingProduct, isTrue);
       expect(state.creationError, 'creation failed');
       expect(state.createdProductId, 'product-1');
-      expect(state.sourcesByProduct, {
-        'product-1': [source],
-      });
-      expect(state.loadingSourcesProductIds, {'product-1'});
       expect(state.isAddingSource, isTrue);
       expect(state.addSourceError, 'add failed');
       expect(state.editingSourceId, 'source-1');
@@ -138,10 +125,6 @@ void main() {
         refreshingProductIds: {'product-1'},
         error: const Some('failed'),
         productRefreshStatuses: {'product-1': PriceFetchStatus.networkError},
-        sourcesByProduct: {
-          'product-1': [buildProductSource()],
-        },
-        loadingSourcesProductIds: {'product-1'},
         isAddingSource: true,
         addSourceError: const Some('add failed'),
         editingSourceId: const Some('source-1'),
