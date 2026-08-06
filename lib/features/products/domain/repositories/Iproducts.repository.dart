@@ -24,22 +24,16 @@ abstract class IProductsRepository {
   /// Refreshes and persists every tracked product.
   Future<Either<Failure, List<Product>>> refreshAllProducts();
 
-  /// Adds a website source to an existing product.
-  Future<Either<Failure, ProductSource>> addSource(ProductSource source);
+  /// Fetches an offer for [source], and only when that succeeds, adds it to
+  /// an existing product. Returns the product with that offer applied.
+  Future<Either<Failure, Product>> addSource(ProductSource source);
 
-  /// Loads every saved website source for [productId].
-  Future<Either<Failure, List<ProductSource>>> loadSourcesForProduct(
-    String productId,
-  );
+  /// Fetches a fresh offer for [url], and only when that succeeds, updates
+  /// the saved source's URL and offer. Returns the updated product.
+  Future<Either<Failure, Product>> updateSource(String sourceId, String url);
 
-  /// Updates an existing source's URL.
-  Future<Either<Failure, ProductSource>> updateSource(
-    String sourceId,
-    String url,
-  );
-
-  /// Deletes a saved source.
-  Future<Either<Failure, Unit>> deleteSource(String sourceId);
+  /// Deletes a saved source and returns the product without it.
+  Future<Either<Failure, Product>> deleteSource(String sourceId);
 
   /// Renames an existing product.
   Future<Either<Failure, Product>> renameProduct(String productId, String name);

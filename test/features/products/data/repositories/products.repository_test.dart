@@ -8,15 +8,16 @@ import 'package:worth_loop/features/products/data/datasources/products_local.dat
 import 'package:worth_loop/features/products/data/datasources/products_remote.datasource.dart';
 import 'package:worth_loop/features/products/data/models/product.model.dart';
 import 'package:worth_loop/features/products/data/models/product_source.model.dart';
-import 'package:worth_loop/features/products/data/models/store_price.model.dart';
 import 'package:worth_loop/features/products/data/repositories/products.repository.dart';
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
+import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 import '../../fixtures/product_model.fixture.dart';
 import '../../fixtures/product_source.fixture.dart';
-import '../../fixtures/store_price_model.fixture.dart';
+import '../../fixtures/product_source_model.fixture.dart';
 
 class MockProductsLocalDatasource extends Mock
     implements ProductsLocalDatasource {}
@@ -28,6 +29,18 @@ void main() {
   late MockProductsLocalDatasource mockDatasource;
   late MockIProductsRemoteDatasource mockRemoteDatasource;
   late ProductsRepository repository;
+
+  setUpAll(() {
+    registerFallbackValue(
+      ProductSource(
+        id: 'fallback',
+        productId: 'fallback',
+        url: 'https://example.com',
+        merchantDomain: 'example.com',
+        createdAt: DateTime(2026),
+      ),
+    );
+  });
 
   setUp(() {
     mockDatasource = MockProductsLocalDatasource();
@@ -61,6 +74,23 @@ void main() {
       verify(() => mockDatasource.loadProducts()).called(1);
       verifyNoMoreInteractions(mockDatasource);
     });
+
+    test(
+      'Method loadProducts() forwards datasource failures unchanged',
+      () async {
+        const DatabaseFailure failure = DatabaseFailure('database failed');
+        when(
+          () => mockDatasource.loadProducts(),
+        ).thenAnswer((_) async => const Left(failure));
+
+        final Either<Failure, List<Product>> result = await repository
+            .loadProducts();
+
+        expect(result, const Left(failure));
+        verify(() => mockDatasource.loadProducts()).called(1);
+        verifyNoMoreInteractions(mockDatasource);
+      },
+    );
   });
 
   group('ProductsRepository implements createProduct() correctly', () {
@@ -133,174 +163,204 @@ void main() {
   });
 
   group('ProductsRepository implements addSource() correctly', () {
-    test('Method addSource() returns the datasource result', () async {
-      final ProductSourceModel source = ProductSourceModel.fromEntity(
-        ProductSource.fromUrl(
-          id: 'source-1',
-          productId: 'product-1',
-          url: 'https://example.com/products/1',
-          createdAt: DateTime(2026),
-        ),
-      );
-      when(
-        () => mockDatasource.saveProductSource(source),
-      ).thenAnswer((_) async => Right(source));
-
-      final Either<Failure, ProductSource> result = await repository.addSource(
-        source,
-      );
-
-      expect(result, Right(source));
-      verify(() => mockDatasource.saveProductSource(source)).called(1);
-      verifyNoMoreInteractions(mockDatasource);
-    });
-
-    test('Method addSource() forwards datasource failures unchanged', () async {
-      final ProductSourceModel source = ProductSourceModel.fromEntity(
-        ProductSource.fromUrl(
-          id: 'source-1',
-          productId: 'product-1',
-          url: 'https://example.com/products/1',
-          createdAt: DateTime(2026),
-        ),
-      );
-      const DatabaseFailure failure = DatabaseFailure('database failed');
-      when(
-        () => mockDatasource.saveProductSource(source),
-      ).thenAnswer((_) async => const Left(failure));
-
-      final Either<Failure, ProductSource> result = await repository.addSource(
-        source,
-      );
-
-      expect(result, const Left(failure));
-      verify(() => mockDatasource.saveProductSource(source)).called(1);
-      verifyNoMoreInteractions(mockDatasource);
-    });
-  });
-
-  group('ProductsRepository implements loadSourcesForProduct() correctly', () {
     test(
-      'Method loadSourcesForProduct() returns the datasource result',
+      'fetches an offer, then calls ProductsLocalDatasource.addSourceWithPrice()',
       () async {
-        final List<ProductSourceModel> sources = [
-          ProductSourceModel.fromEntity(buildProductSource()),
-        ];
+        final ProductSource source = buildProductSource();
+        final ProductSourceModel pricedSource = buildProductSourceModel(
+          currentPrice: const Money(minorUnits: 49999, currencyCode: 'EUR'),
+          isAvailable: true,
+          lastCheckedAt: DateTime(2026, 1, 1, 12),
+        );
+        final ProductModel product = buildProductModel(sources: [pricedSource]);
         when(
-          () => mockDatasource.loadProductSourcesForProduct('product-1'),
-        ).thenAnswer((_) async => Right(sources));
+          () => mockRemoteDatasource.fetchPrices(source),
+        ).thenAnswer((_) async => Right(pricedSource));
+        when(
+          () => mockDatasource.addSourceWithPrice(pricedSource),
+        ).thenAnswer((_) async => Right(product));
 
-        final Either<Failure, List<ProductSource>> result = await repository
-            .loadSourcesForProduct('product-1');
+        final Either<Failure, Product> result = await repository.addSource(
+          source,
+        );
 
-        expect(result, Right(sources));
-        verify(
-          () => mockDatasource.loadProductSourcesForProduct('product-1'),
-        ).called(1);
+        expect(result, Right(product));
+        verify(() => mockRemoteDatasource.fetchPrices(source)).called(1);
+        verify(() => mockDatasource.addSourceWithPrice(pricedSource)).called(1);
+        verifyNoMoreInteractions(mockRemoteDatasource);
         verifyNoMoreInteractions(mockDatasource);
       },
     );
 
     test(
-      'Method loadSourcesForProduct() forwards datasource failures unchanged',
+      'returns the fetch failure without calling ProductsLocalDatasource.addSourceWithPrice()',
       () async {
-        const DatabaseFailure failure = DatabaseFailure('database failed');
+        final ProductSource source = buildProductSource();
+        const PriceFetchFailure failure = PriceFetchFailure(
+          status: PriceFetchStatus.blocked,
+          message: 'Website blocked the price request',
+        );
         when(
-          () => mockDatasource.loadProductSourcesForProduct('product-1'),
+          () => mockRemoteDatasource.fetchPrices(source),
         ).thenAnswer((_) async => const Left(failure));
 
-        final Either<Failure, List<ProductSource>> result = await repository
-            .loadSourcesForProduct('product-1');
+        final Either<Failure, Product> result = await repository.addSource(
+          source,
+        );
 
         expect(result, const Left(failure));
-        verify(
-          () => mockDatasource.loadProductSourcesForProduct('product-1'),
-        ).called(1);
-        verifyNoMoreInteractions(mockDatasource);
+        verify(() => mockRemoteDatasource.fetchPrices(source)).called(1);
+        verifyNoMoreInteractions(mockRemoteDatasource);
+        verifyZeroInteractions(mockDatasource);
+      },
+    );
+
+    test(
+      'forwards ProductsLocalDatasource.addSourceWithPrice() failures unchanged',
+      () async {
+        final ProductSource source = buildProductSource();
+        final ProductSourceModel pricedSource = buildProductSourceModel();
+        const ValidationFailure failure = ValidationFailure(
+          'This store is already tracked for this product',
+        );
+        when(
+          () => mockRemoteDatasource.fetchPrices(source),
+        ).thenAnswer((_) async => Right(pricedSource));
+        when(
+          () => mockDatasource.addSourceWithPrice(pricedSource),
+        ).thenAnswer((_) async => const Left(failure));
+
+        final Either<Failure, Product> result = await repository.addSource(
+          source,
+        );
+
+        expect(result, const Left(failure));
+        verify(() => mockRemoteDatasource.fetchPrices(source)).called(1);
+        verify(() => mockDatasource.addSourceWithPrice(pricedSource)).called(1);
       },
     );
   });
 
   group('ProductsRepository implements updateSource() correctly', () {
-    test('Method updateSource() returns the datasource result', () async {
-      final ProductSourceModel source = ProductSourceModel.fromEntity(
-        buildProductSource(url: 'https://example.com/updated'),
-      );
-      when(
-        () => mockDatasource.updateProductSource(
+    test(
+      'fetches an offer for the given URL, then calls ProductsLocalDatasource.editSourceWithPrice()',
+      () async {
+        final ProductSourceModel pricedSource = buildProductSourceModel(
+          url: 'https://example.com/updated',
+          currentPrice: const Money(minorUnits: 29999, currencyCode: 'EUR'),
+          isAvailable: true,
+          lastCheckedAt: DateTime(2026, 1, 1, 12),
+        );
+        final ProductModel product = buildProductModel(sources: [pricedSource]);
+        when(
+          () => mockRemoteDatasource.fetchPrices(
+            any(
+              that: _isCandidateFor('source-1', 'https://example.com/updated'),
+            ),
+          ),
+        ).thenAnswer((_) async => Right(pricedSource));
+        when(
+          () => mockDatasource.editSourceWithPrice('source-1', pricedSource),
+        ).thenAnswer((_) async => Right(product));
+
+        final Either<Failure, Product> result = await repository.updateSource(
           'source-1',
           'https://example.com/updated',
-        ),
-      ).thenAnswer((_) async => Right(source));
+        );
 
-      final Either<Failure, ProductSource> result = await repository
-          .updateSource('source-1', 'https://example.com/updated');
-
-      expect(result, Right(source));
-      verify(
-        () => mockDatasource.updateProductSource(
-          'source-1',
-          'https://example.com/updated',
-        ),
-      ).called(1);
-      verifyNoMoreInteractions(mockDatasource);
-    });
+        expect(result, Right(product));
+        verify(
+          () => mockDatasource.editSourceWithPrice('source-1', pricedSource),
+        ).called(1);
+        verifyNoMoreInteractions(mockDatasource);
+      },
+    );
 
     test(
-      'Method updateSource() forwards datasource failures unchanged',
+      'returns the fetch failure without calling ProductsLocalDatasource.editSourceWithPrice()',
       () async {
-        const DatabaseFailure failure = DatabaseFailure('database failed');
+        const NetworkFailure failure = NetworkFailure(
+          'Unable to fetch the product price',
+        );
         when(
-          () => mockDatasource.updateProductSource(
-            'source-1',
-            'https://example.com/updated',
+          () => mockRemoteDatasource.fetchPrices(
+            any(
+              that: _isCandidateFor('source-1', 'https://example.com/updated'),
+            ),
           ),
         ).thenAnswer((_) async => const Left(failure));
 
-        final Either<Failure, ProductSource> result = await repository
-            .updateSource('source-1', 'https://example.com/updated');
+        final Either<Failure, Product> result = await repository.updateSource(
+          'source-1',
+          'https://example.com/updated',
+        );
+
+        expect(result, const Left(failure));
+        verifyZeroInteractions(mockDatasource);
+      },
+    );
+
+    test(
+      'forwards ProductsLocalDatasource.editSourceWithPrice() failures unchanged',
+      () async {
+        final ProductSourceModel pricedSource = buildProductSourceModel(
+          url: 'https://example.com/updated',
+        );
+        const NotFoundFailure failure = NotFoundFailure('Source not found');
+        when(
+          () => mockRemoteDatasource.fetchPrices(
+            any(
+              that: _isCandidateFor('source-1', 'https://example.com/updated'),
+            ),
+          ),
+        ).thenAnswer((_) async => Right(pricedSource));
+        when(
+          () => mockDatasource.editSourceWithPrice('source-1', pricedSource),
+        ).thenAnswer((_) async => const Left(failure));
+
+        final Either<Failure, Product> result = await repository.updateSource(
+          'source-1',
+          'https://example.com/updated',
+        );
 
         expect(result, const Left(failure));
         verify(
-          () => mockDatasource.updateProductSource(
-            'source-1',
-            'https://example.com/updated',
-          ),
+          () => mockDatasource.editSourceWithPrice('source-1', pricedSource),
         ).called(1);
-        verifyNoMoreInteractions(mockDatasource);
       },
     );
   });
 
   group('ProductsRepository implements deleteSource() correctly', () {
     test('Method deleteSource() returns the datasource result', () async {
+      final ProductModel product = buildProductModel();
       when(
-        () => mockDatasource.deleteProductSource('source-1'),
-      ).thenAnswer((_) async => const Right(unit));
+        () => mockDatasource.deleteSource('source-1'),
+      ).thenAnswer((_) async => Right(product));
 
-      final Either<Failure, Unit> result = await repository.deleteSource(
+      final Either<Failure, Product> result = await repository.deleteSource(
         'source-1',
       );
 
-      expect(result, const Right(unit));
-      verify(() => mockDatasource.deleteProductSource('source-1')).called(1);
+      expect(result, Right(product));
+      verify(() => mockDatasource.deleteSource('source-1')).called(1);
       verifyNoMoreInteractions(mockDatasource);
     });
 
     test(
       'Method deleteSource() forwards datasource failures unchanged',
       () async {
-        const DatabaseFailure failure = DatabaseFailure('database failed');
+        const NotFoundFailure failure = NotFoundFailure('Source not found');
         when(
-          () => mockDatasource.deleteProductSource('source-1'),
+          () => mockDatasource.deleteSource('source-1'),
         ).thenAnswer((_) async => const Left(failure));
 
-        final Either<Failure, Unit> result = await repository.deleteSource(
+        final Either<Failure, Product> result = await repository.deleteSource(
           'source-1',
         );
 
         expect(result, const Left(failure));
-        verify(() => mockDatasource.deleteProductSource('source-1')).called(1);
+        verify(() => mockDatasource.deleteSource('source-1')).called(1);
         verifyNoMoreInteractions(mockDatasource);
       },
     );
@@ -384,22 +444,20 @@ void main() {
   group('ProductsRepository implements refreshProduct() correctly', () {
     test('refreshes a product source through the remote datasource', () async {
       final ProductModel product = buildProductModel();
-      final ProductSourceModel source = ProductSourceModel(
-        id: 'source-1',
-        productId: product.id,
-        url: 'https://example.com/products/1',
-        merchantDomain: 'example.com',
-        createdAt: DateTime(2026),
+      final ProductSourceModel source = buildProductSourceModel();
+      final ProductSourceModel updatedSource = buildProductSourceModel(
+        currentPrice: const Money(minorUnits: 1999, currencyCode: 'USD'),
+        isAvailable: true,
+        lastCheckedAt: DateTime(2026, 1, 2),
       );
-      final List<StorePriceModel> offers = [buildStorePriceModel()];
       when(
         () => mockDatasource.loadProductSourcesForProduct(product.id),
       ).thenAnswer((_) async => Right([source]));
       when(
         () => mockRemoteDatasource.fetchPrices(source),
-      ).thenAnswer((_) async => Right(offers));
+      ).thenAnswer((_) async => Right(updatedSource));
       when(
-        () => mockDatasource.replaceProductPrices(product.id, offers),
+        () => mockDatasource.updateSourcePrices(product.id, [updatedSource]),
       ).thenAnswer((_) async => Right(product));
 
       final Either<Failure, Product> result = await repository.refreshProduct(
@@ -412,7 +470,7 @@ void main() {
       ).called(1);
       verify(() => mockRemoteDatasource.fetchPrices(source)).called(1);
       verify(
-        () => mockDatasource.replaceProductPrices(product.id, offers),
+        () => mockDatasource.updateSourcePrices(product.id, [updatedSource]),
       ).called(1);
     });
 
@@ -437,6 +495,141 @@ void main() {
       verifyNoMoreInteractions(mockDatasource);
       verifyNoMoreInteractions(mockRemoteDatasource);
     });
+
+    test(
+      'returns the fetch failure without calling updateSourcePrices()',
+      () async {
+        final ProductSourceModel source = buildProductSourceModel();
+        const PriceFetchFailure failure = PriceFetchFailure(
+          status: PriceFetchStatus.blocked,
+          message: 'Website blocked the price request',
+        );
+        when(
+          () => mockDatasource.loadProductSourcesForProduct('product-1'),
+        ).thenAnswer((_) async => Right([source]));
+        when(
+          () => mockRemoteDatasource.fetchPrices(source),
+        ).thenAnswer((_) async => const Left(failure));
+
+        final Either<Failure, Product> result = await repository.refreshProduct(
+          'product-1',
+        );
+
+        expect(result, const Left(failure));
+        verifyNever(() => mockDatasource.updateSourcePrices(any(), any()));
+      },
+    );
+
+    test(
+      'fetches every source and accumulates their offers before calling updateSourcePrices()',
+      () async {
+        final ProductModel product = buildProductModel();
+        final ProductSourceModel firstSource = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final ProductSourceModel secondSource = buildProductSourceModel(
+          id: 'source-2',
+          url: 'https://other.com/products/1',
+        );
+        final ProductSourceModel firstUpdated = buildProductSourceModel(
+          id: 'source-1',
+          currentPrice: const Money(minorUnits: 1999, currencyCode: 'USD'),
+        );
+        final ProductSourceModel secondUpdated = buildProductSourceModel(
+          id: 'source-2',
+          url: 'https://other.com/products/1',
+          currentPrice: const Money(minorUnits: 2999, currencyCode: 'USD'),
+        );
+        when(
+          () => mockDatasource.loadProductSourcesForProduct(product.id),
+        ).thenAnswer((_) async => Right([firstSource, secondSource]));
+        when(
+          () => mockRemoteDatasource.fetchPrices(firstSource),
+        ).thenAnswer((_) async => Right(firstUpdated));
+        when(
+          () => mockRemoteDatasource.fetchPrices(secondSource),
+        ).thenAnswer((_) async => Right(secondUpdated));
+        when(
+          () => mockDatasource.updateSourcePrices(product.id, [
+            firstUpdated,
+            secondUpdated,
+          ]),
+        ).thenAnswer((_) async => Right(product));
+
+        final Either<Failure, Product> result = await repository.refreshProduct(
+          product.id,
+        );
+
+        expect(result, Right(product));
+        verify(() => mockRemoteDatasource.fetchPrices(firstSource)).called(1);
+        verify(() => mockRemoteDatasource.fetchPrices(secondSource)).called(1);
+        verify(
+          () => mockDatasource.updateSourcePrices(product.id, [
+            firstUpdated,
+            secondUpdated,
+          ]),
+        ).called(1);
+      },
+    );
+
+    test(
+      'returns the datasource failure when loadProductSourcesForProduct() fails',
+      () async {
+        const DatabaseFailure failure = DatabaseFailure('database failed');
+        when(
+          () => mockDatasource.loadProductSourcesForProduct('product-1'),
+        ).thenAnswer((_) async => const Left(failure));
+
+        final Either<Failure, Product> result = await repository.refreshProduct(
+          'product-1',
+        );
+
+        expect(result, const Left(failure));
+        verifyZeroInteractions(mockRemoteDatasource);
+      },
+    );
+
+    test('forwards updateSourcePrices() failures unchanged', () async {
+      final ProductSourceModel source = buildProductSourceModel();
+      final ProductSourceModel updatedSource = buildProductSourceModel(
+        currentPrice: const Money(minorUnits: 1999, currencyCode: 'USD'),
+      );
+      const DatabaseFailure failure = DatabaseFailure('database failed');
+      when(
+        () => mockDatasource.loadProductSourcesForProduct('product-1'),
+      ).thenAnswer((_) async => Right([source]));
+      when(
+        () => mockRemoteDatasource.fetchPrices(source),
+      ).thenAnswer((_) async => Right(updatedSource));
+      when(
+        () => mockDatasource.updateSourcePrices('product-1', [updatedSource]),
+      ).thenAnswer((_) async => const Left(failure));
+
+      final Either<Failure, Product> result = await repository.refreshProduct(
+        'product-1',
+      );
+
+      expect(result, const Left(failure));
+    });
+
+    test(
+      'forwards ProductsLocalDatasource.refreshProduct() failures unchanged when there are no sources',
+      () async {
+        const NotFoundFailure failure = NotFoundFailure('Product not found');
+        when(
+          () => mockDatasource.loadProductSourcesForProduct('product-1'),
+        ).thenAnswer((_) async => const Right(<ProductSourceModel>[]));
+        when(
+          () => mockDatasource.refreshProduct('product-1'),
+        ).thenAnswer((_) async => const Left(failure));
+
+        final Either<Failure, Product> result = await repository.refreshProduct(
+          'product-1',
+        );
+
+        expect(result, const Left(failure));
+      },
+    );
   });
 
   group('ProductsRepository implements refreshAllProducts() correctly', () {
@@ -459,42 +652,80 @@ void main() {
     });
 
     test(
-      'merges offers from multiple sources of the same product before replacing prices',
+      'returns the datasource failure when loadProductSources() fails',
+      () async {
+        const DatabaseFailure failure = DatabaseFailure('database failed');
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => const Left(failure));
+
+        final Either<Failure, List<Product>> result = await repository
+            .refreshAllProducts();
+
+        expect(result, const Left(failure));
+        verifyZeroInteractions(mockRemoteDatasource);
+        verifyNever(() => mockDatasource.refreshAllProducts());
+      },
+    );
+
+    test(
+      'stops without calling ProductsLocalDatasource.refreshAllProducts() when updateSourcePrices() fails',
+      () async {
+        final ProductSourceModel source = buildProductSourceModel();
+        final ProductSourceModel updatedSource = buildProductSourceModel(
+          currentPrice: const Money(minorUnits: 1999, currencyCode: 'USD'),
+        );
+        const DatabaseFailure failure = DatabaseFailure('database failed');
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([source]));
+        when(
+          () => mockRemoteDatasource.fetchPrices(source),
+        ).thenAnswer((_) async => Right(updatedSource));
+        when(
+          () => mockDatasource.updateSourcePrices('product-1', [updatedSource]),
+        ).thenAnswer((_) async => const Left(failure));
+
+        final Either<Failure, List<Product>> result = await repository
+            .refreshAllProducts();
+
+        expect(result, const Left(failure));
+        verifyNever(() => mockDatasource.refreshAllProducts());
+      },
+    );
+
+    test(
+      'groups updated sources by product before calling updateSourcePrices()',
       () async {
         final ProductModel product = buildProductModel();
-        final ProductSourceModel firstSource = ProductSourceModel(
+        final ProductSourceModel firstSource = buildProductSourceModel(
           id: 'source-1',
-          productId: product.id,
-          url: 'https://example.com/products/1',
-          merchantDomain: 'example.com',
-          createdAt: DateTime(2026),
         );
-        final ProductSourceModel secondSource = ProductSourceModel(
+        final ProductSourceModel secondSource = buildProductSourceModel(
           id: 'source-2',
-          productId: product.id,
           url: 'https://other.com/products/1',
-          merchantDomain: 'other.com',
-          createdAt: DateTime(2026),
         );
-        final StorePriceModel firstOffer = buildStorePriceModel(
-          storeName: 'Example Store',
+        final ProductSourceModel firstUpdated = buildProductSourceModel(
+          id: 'source-1',
+          currentPrice: const Money(minorUnits: 1999, currencyCode: 'USD'),
         );
-        final StorePriceModel secondOffer = buildStorePriceModel(
-          storeName: 'Other Store',
+        final ProductSourceModel secondUpdated = buildProductSourceModel(
+          id: 'source-2',
+          currentPrice: const Money(minorUnits: 2999, currencyCode: 'USD'),
         );
         when(
           () => mockDatasource.loadProductSources(),
         ).thenAnswer((_) async => Right([firstSource, secondSource]));
         when(
           () => mockRemoteDatasource.fetchPrices(firstSource),
-        ).thenAnswer((_) async => Right([firstOffer]));
+        ).thenAnswer((_) async => Right(firstUpdated));
         when(
           () => mockRemoteDatasource.fetchPrices(secondSource),
-        ).thenAnswer((_) async => Right([secondOffer]));
+        ).thenAnswer((_) async => Right(secondUpdated));
         when(
-          () => mockDatasource.replaceProductPrices(product.id, [
-            firstOffer,
-            secondOffer,
+          () => mockDatasource.updateSourcePrices(product.id, [
+            firstUpdated,
+            secondUpdated,
           ]),
         ).thenAnswer((_) async => Right(product));
         final List<ProductModel> refreshedProducts = [product];
@@ -509,9 +740,9 @@ void main() {
         verify(() => mockRemoteDatasource.fetchPrices(firstSource)).called(1);
         verify(() => mockRemoteDatasource.fetchPrices(secondSource)).called(1);
         verify(
-          () => mockDatasource.replaceProductPrices(product.id, [
-            firstOffer,
-            secondOffer,
+          () => mockDatasource.updateSourcePrices(product.id, [
+            firstUpdated,
+            secondUpdated,
           ]),
         ).called(1);
         verifyNoMoreInteractions(mockRemoteDatasource);
@@ -521,45 +752,43 @@ void main() {
       },
     );
 
-    test('replaces prices separately for each distinct product', () async {
+    test('updates sources separately for each distinct product', () async {
       final ProductModel firstProduct = buildProductModel();
       final ProductModel secondProduct = buildProductModel(id: 'product-2');
-      final ProductSourceModel firstSource = ProductSourceModel(
-        id: 'source-1',
+      final ProductSourceModel firstSource = buildProductSourceModel(
         productId: firstProduct.id,
-        url: 'https://example.com/products/1',
-        merchantDomain: 'example.com',
-        createdAt: DateTime(2026),
       );
-      final ProductSourceModel secondSource = ProductSourceModel(
+      final ProductSourceModel secondSource = buildProductSourceModel(
         id: 'source-2',
         productId: secondProduct.id,
         url: 'https://example.com/products/2',
-        merchantDomain: 'example.com',
-        createdAt: DateTime(2026),
       );
-      final StorePriceModel firstOffer = buildStorePriceModel(
-        storeName: 'Example Store',
+      final ProductSourceModel firstUpdated = buildProductSourceModel(
+        productId: firstProduct.id,
+        currentPrice: const Money(minorUnits: 1999, currencyCode: 'USD'),
       );
-      final StorePriceModel secondOffer = buildStorePriceModel(
-        storeName: 'Other Store',
+      final ProductSourceModel secondUpdated = buildProductSourceModel(
+        id: 'source-2',
+        productId: secondProduct.id,
+        url: 'https://example.com/products/2',
+        currentPrice: const Money(minorUnits: 2999, currencyCode: 'USD'),
       );
       when(
         () => mockDatasource.loadProductSources(),
       ).thenAnswer((_) async => Right([firstSource, secondSource]));
       when(
         () => mockRemoteDatasource.fetchPrices(firstSource),
-      ).thenAnswer((_) async => Right([firstOffer]));
+      ).thenAnswer((_) async => Right(firstUpdated));
       when(
         () => mockRemoteDatasource.fetchPrices(secondSource),
-      ).thenAnswer((_) async => Right([secondOffer]));
+      ).thenAnswer((_) async => Right(secondUpdated));
       when(
         () =>
-            mockDatasource.replaceProductPrices(firstProduct.id, [firstOffer]),
+            mockDatasource.updateSourcePrices(firstProduct.id, [firstUpdated]),
       ).thenAnswer((_) async => Right(firstProduct));
       when(
-        () => mockDatasource.replaceProductPrices(secondProduct.id, [
-          secondOffer,
+        () => mockDatasource.updateSourcePrices(secondProduct.id, [
+          secondUpdated,
         ]),
       ).thenAnswer((_) async => Right(secondProduct));
       when(
@@ -570,45 +799,46 @@ void main() {
 
       verify(
         () =>
-            mockDatasource.replaceProductPrices(firstProduct.id, [firstOffer]),
+            mockDatasource.updateSourcePrices(firstProduct.id, [firstUpdated]),
       ).called(1);
       verify(
-        () => mockDatasource.replaceProductPrices(secondProduct.id, [
-          secondOffer,
+        () => mockDatasource.updateSourcePrices(secondProduct.id, [
+          secondUpdated,
         ]),
       ).called(1);
     });
 
     test(
-      'replaces prices with an empty list when a source returns no offers',
+      'returns the fetch failure without calling updateSourcePrices()',
       () async {
-        final ProductModel product = buildProductModel();
-        final ProductSourceModel source = ProductSourceModel(
-          id: 'source-1',
-          productId: product.id,
-          url: 'https://example.com/products/1',
-          merchantDomain: 'example.com',
-          createdAt: DateTime(2026),
+        final ProductSourceModel source = buildProductSourceModel();
+        const PriceFetchFailure failure = PriceFetchFailure(
+          status: PriceFetchStatus.blocked,
+          message: 'Website blocked the price request',
         );
         when(
           () => mockDatasource.loadProductSources(),
         ).thenAnswer((_) async => Right([source]));
         when(
           () => mockRemoteDatasource.fetchPrices(source),
-        ).thenAnswer((_) async => const Right(<StorePriceModel>[]));
-        when(
-          () => mockDatasource.replaceProductPrices(product.id, []),
-        ).thenAnswer((_) async => Right(product));
-        when(
-          () => mockDatasource.refreshAllProducts(),
-        ).thenAnswer((_) async => Right([product]));
+        ).thenAnswer((_) async => const Left(failure));
 
-        await repository.refreshAllProducts();
+        final Either<Failure, List<Product>> result = await repository
+            .refreshAllProducts();
 
-        verify(
-          () => mockDatasource.replaceProductPrices(product.id, []),
-        ).called(1);
+        expect(result, const Left(failure));
+        verifyNever(() => mockDatasource.updateSourcePrices(any(), any()));
+        verifyNever(() => mockDatasource.refreshAllProducts());
       },
     );
   });
 }
+
+Matcher _isCandidateFor(String sourceId, String url) =>
+    predicate<ProductSource>(
+      (ProductSource candidate) =>
+          candidate.id == sourceId &&
+          candidate.url == url &&
+          candidate.productId.isEmpty &&
+          candidate.merchantDomain.isEmpty,
+    );

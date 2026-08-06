@@ -6,7 +6,6 @@ import 'package:worth_loop/features/products/data/datasources/products_local.dat
 import 'package:worth_loop/features/products/data/datasources/products_remote.datasource.dart';
 import 'package:worth_loop/features/products/data/models/product.model.dart';
 import 'package:worth_loop/features/products/data/models/product_source.model.dart';
-import 'package:worth_loop/features/products/data/models/store_price.model.dart';
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
@@ -43,17 +42,20 @@ class ProductsRepository implements IProductsRepository {
       if (sources.isEmpty) {
         return _localDatasource.refreshProduct(productId);
       }
-      final List<StorePriceModel> offers = [];
+      final List<ProductSourceModel> updatedSources = [];
       for (final ProductSourceModel source in sources) {
-        final Either<Failure, List<StorePriceModel>> prices =
+        final Either<Failure, ProductSourceModel> priceResult =
             await _remoteDatasource.fetchPrices(source);
-        final Failure? failure = prices.getLeft().toNullable();
+        final Failure? failure = priceResult.getLeft().toNullable();
         if (failure != null) {
           return Left(failure);
         }
-        offers.addAll(prices.getRight().toNullable() ?? []);
+        final ProductSourceModel? updated = priceResult.getRight().toNullable();
+        if (updated != null) {
+          updatedSources.add(updated);
+        }
       }
-      return _localDatasource.replaceProductPrices(productId, offers);
+      return _localDatasource.updateSourcePrices(productId, updatedSources);
     });
   }
 
@@ -64,22 +66,25 @@ class ProductsRepository implements IProductsRepository {
     return sourcesResult.match((Failure failure) async => Left(failure), (
       List<ProductSourceModel> sources,
     ) async {
-      final Map<String, List<StorePriceModel>> refreshedOffersByProduct = {};
+      final Map<String, List<ProductSourceModel>> updatedSourcesByProduct = {};
       for (final ProductSourceModel source in sources) {
-        final Either<Failure, List<StorePriceModel>> prices =
+        final Either<Failure, ProductSourceModel> priceResult =
             await _remoteDatasource.fetchPrices(source);
-        final Failure? failure = prices.getLeft().toNullable();
+        final Failure? failure = priceResult.getLeft().toNullable();
         if (failure != null) {
           return Left(failure);
         }
-        refreshedOffersByProduct
-            .putIfAbsent(source.productId, () => <StorePriceModel>[])
-            .addAll(prices.getRight().toNullable() ?? []);
+        final ProductSourceModel? updated = priceResult.getRight().toNullable();
+        if (updated != null) {
+          updatedSourcesByProduct
+              .putIfAbsent(source.productId, () => <ProductSourceModel>[])
+              .add(updated);
+        }
       }
-      for (final MapEntry<String, List<StorePriceModel>> entry
-          in refreshedOffersByProduct.entries) {
+      for (final MapEntry<String, List<ProductSourceModel>> entry
+          in updatedSourcesByProduct.entries) {
         final Either<Failure, ProductModel> savedPrices = await _localDatasource
-            .replaceProductPrices(entry.key, entry.value);
+            .updateSourcePrices(entry.key, entry.value);
         final Failure? failure = savedPrices.getLeft().toNullable();
         if (failure != null) {
           return Left(failure);
@@ -90,28 +95,40 @@ class ProductsRepository implements IProductsRepository {
   }
 
   @override
-  Future<Either<Failure, ProductSource>> addSource(ProductSource source) {
-    return _localDatasource.saveProductSource(source);
+  Future<Either<Failure, Product>> addSource(ProductSource source) async {
+    final Either<Failure, ProductSourceModel> priceResult =
+        await _remoteDatasource.fetchPrices(source);
+    return priceResult.match(
+      (Failure failure) async => Left(failure),
+      (ProductSourceModel pricedSource) =>
+          _localDatasource.addSourceWithPrice(pricedSource),
+    );
   }
 
   @override
-  Future<Either<Failure, List<ProductSource>>> loadSourcesForProduct(
-    String productId,
-  ) {
-    return _localDatasource.loadProductSourcesForProduct(productId);
-  }
-
-  @override
-  Future<Either<Failure, ProductSource>> updateSource(
+  Future<Either<Failure, Product>> updateSource(
     String sourceId,
     String url,
-  ) {
-    return _localDatasource.updateProductSource(sourceId, url);
+  ) async {
+    final ProductSource candidate = ProductSource(
+      id: sourceId,
+      productId: '',
+      url: url,
+      merchantDomain: '',
+      createdAt: DateTime.now(),
+    );
+    final Either<Failure, ProductSourceModel> priceResult =
+        await _remoteDatasource.fetchPrices(candidate);
+    return priceResult.match(
+      (Failure failure) async => Left(failure),
+      (ProductSourceModel pricedSource) =>
+          _localDatasource.editSourceWithPrice(sourceId, pricedSource),
+    );
   }
 
   @override
-  Future<Either<Failure, Unit>> deleteSource(String sourceId) {
-    return _localDatasource.deleteProductSource(sourceId);
+  Future<Either<Failure, Product>> deleteSource(String sourceId) {
+    return _localDatasource.deleteSource(sourceId);
   }
 
   @override
