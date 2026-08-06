@@ -23,7 +23,7 @@ void main() {
       Product(
         id: 'fallback-product',
         name: 'Fallback Product',
-        storePrices: [],
+        sources: [],
         lastUpdatedAt: DateTime(2026),
       ),
     );
@@ -36,7 +36,7 @@ void main() {
         final Product createdProduct = Product(
           id: 'product-1',
           name: 'Example Product',
-          storePrices: [],
+          sources: [],
           lastUpdatedAt: DateTime(2026),
         );
         when(

@@ -4,10 +4,12 @@ import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 
 // Project imports:
+import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
 import 'package:worth_loop/features/products/domain/usecases/delete_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/delete_source.params.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
+import '../../fixtures/product.fixture.dart';
 
 class MockIProductsRepository extends Mock implements IProductsRepository {}
 
@@ -21,16 +23,17 @@ void main() {
   });
 
   group('Usecase DeleteSourceUseCase returns the correct value', () {
-    test('returns Right(unit) when the repository returns Right', () async {
+    test('returns Right(Product) when the repository returns Right', () async {
+      final Product product = buildProduct();
       when(
         () => mockRepository.deleteSource('source-1'),
-      ).thenAnswer((_) async => const Right(unit));
+      ).thenAnswer((_) async => Right(product));
 
-      final Either<Failure, Unit> result = await useCase(
+      final Either<Failure, Product> result = await useCase(
         const DeleteSourceParams(sourceId: 'source-1'),
       );
 
-      expect(result, const Right(unit));
+      expect(result, Right(product));
       verify(() => mockRepository.deleteSource('source-1')).called(1);
       verifyNoMoreInteractions(mockRepository);
     });
@@ -43,7 +46,7 @@ void main() {
           () => mockRepository.deleteSource('source-1'),
         ).thenAnswer((_) async => const Left(failure));
 
-        final Either<Failure, Unit> result = await useCase(
+        final Either<Failure, Product> result = await useCase(
           const DeleteSourceParams(sourceId: 'source-1'),
         );
 
@@ -61,7 +64,7 @@ void main() {
           () => mockRepository.deleteSource('source-1'),
         ).thenAnswer((_) async => const Left(failure));
 
-        final Either<Failure, Unit> result = await useCase(
+        final Either<Failure, Product> result = await useCase(
           const DeleteSourceParams(sourceId: 'source-1'),
         );
 
@@ -72,15 +75,16 @@ void main() {
     );
 
     test('forwards a different sourceId to the repository', () async {
+      final Product product = buildProduct(id: 'product-2');
       when(
         () => mockRepository.deleteSource('source-2'),
-      ).thenAnswer((_) async => const Right(unit));
+      ).thenAnswer((_) async => Right(product));
 
-      final Either<Failure, Unit> result = await useCase(
+      final Either<Failure, Product> result = await useCase(
         const DeleteSourceParams(sourceId: 'source-2'),
       );
 
-      expect(result, const Right(unit));
+      expect(result, Right(product));
       verify(() => mockRepository.deleteSource('source-2')).called(1);
       verifyNoMoreInteractions(mockRepository);
     });

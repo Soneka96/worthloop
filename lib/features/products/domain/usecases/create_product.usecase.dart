@@ -27,7 +27,7 @@ class CreateProductUseCase
     final Product product = Product(
       id: 'product-${createdAt.microsecondsSinceEpoch}',
       name: name,
-      storePrices: const [],
+      sources: const [],
       lastUpdatedAt: createdAt,
     );
     return _repository.createProduct(product, null);

@@ -4,11 +4,13 @@ import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 
 // Project imports:
+import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
 import 'package:worth_loop/features/products/domain/usecases/add_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/add_source.params.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
+import '../../fixtures/product.fixture.dart';
 
 class MockIProductsRepository extends Mock implements IProductsRepository {}
 
@@ -30,24 +32,19 @@ void main() {
 
   group('AddSourceUseCase returns the correct value', () {
     test('creates a source and delegates it to the repository', () async {
-      final ProductSource createdSource = ProductSource.fromUrl(
-        id: 'source-1',
-        productId: 'product-1',
-        url: 'https://example.com/products/1',
-        createdAt: DateTime(2026),
-      );
+      final Product product = buildProduct();
       when(
         () => mockRepository.addSource(any()),
-      ).thenAnswer((_) async => Right(createdSource));
+      ).thenAnswer((_) async => Right(product));
 
-      final Either<Failure, ProductSource> result = await useCase(
+      final Either<Failure, Product> result = await useCase(
         const AddSourceParams(
           productId: 'product-1',
           url: 'https://example.com/products/1',
         ),
       );
 
-      expect(result, Right(createdSource));
+      expect(result, Right(product));
       final VerificationResult verification = verify(
         () => mockRepository.addSource(captureAny()),
       );
@@ -59,14 +56,14 @@ void main() {
     });
 
     test('returns ValidationFailure for an invalid URL', () async {
-      final Either<Failure, ProductSource> result = await useCase(
+      final Either<Failure, Product> result = await useCase(
         const AddSourceParams(
           productId: 'product-1',
           url: 'http://example.com/products/1',
         ),
       );
 
-      expect(result, isA<Left<Failure, ProductSource>>());
+      expect(result, isA<Left<Failure, Product>>());
       final Failure? failure = result.getLeft().toNullable();
       expect(failure, isA<ValidationFailure>());
       expect(failure?.message, 'Must be a valid HTTPS URL');
@@ -79,7 +76,7 @@ void main() {
         () => mockRepository.addSource(any()),
       ).thenAnswer((_) async => const Left(failure));
 
-      final Either<Failure, ProductSource> result = await useCase(
+      final Either<Failure, Product> result = await useCase(
         const AddSourceParams(
           productId: 'product-1',
           url: 'https://example.com/products/1',
