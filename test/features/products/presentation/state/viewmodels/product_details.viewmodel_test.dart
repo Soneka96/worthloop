@@ -5,14 +5,12 @@ import 'package:redux/redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
-import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/products.state.dart';
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import '../../../fixtures/product.fixture.dart';
-import '../../../fixtures/product_source.fixture.dart';
 
 void main() {
   late List<dynamic> dispatchedActions;
@@ -34,16 +32,11 @@ void main() {
         'Method fromStore() constructs ProductDetailsViewModel correctly',
         () {
           final Product product = buildProduct();
-          final ProductSource source = buildProductSource();
           final AppState state = AppState.initial().copyWith(
             products: ProductsState.initial().copyWith(
               products: [product],
               refreshingProductIds: {product.id},
               productRefreshStatuses: {product.id: PriceFetchStatus.blocked},
-              sourcesByProduct: {
-                product.id: [source],
-              },
-              loadingSourcesProductIds: {product.id},
               isAddingSource: true,
               addSourceError: const Some('add failed'),
               editingSourceId: const Some('source-1'),
@@ -65,9 +58,6 @@ void main() {
           expect(viewmodel.isRefreshing, isTrue);
           expect(viewmodel.refreshStatus, isA<PriceFetchStatus>());
           expect(viewmodel.refreshStatus, PriceFetchStatus.blocked);
-          expect(viewmodel.sources, [source]);
-          expect(viewmodel.isLoadingSources, isA<bool>());
-          expect(viewmodel.isLoadingSources, isTrue);
           expect(viewmodel.isAddingSource, isA<bool>());
           expect(viewmodel.isAddingSource, isTrue);
           expect(viewmodel.addSourceError, 'add failed');
@@ -86,6 +76,7 @@ void main() {
           expect(viewmodel.onAddSource, isA<Function(String)>());
           expect(viewmodel.onEditSource, isA<Function(String, String)>());
           expect(viewmodel.onDeleteSource, isA<Function(String)>());
+          expect(viewmodel.onOpenOffer, isA<Function(String)>());
           expect(viewmodel.onRenameProduct, isA<Function(String)>());
           expect(viewmodel.onDeleteProduct, isA<Function()>());
         },
@@ -171,6 +162,20 @@ void main() {
           ]);
         },
       );
+
+      test('Method onOpenOffer dispatches OpenOfferUrlAction when called', () {
+        final ProductDetailsViewModel viewmodel =
+            ProductDetailsViewModel.fromStore(
+              buildStore(AppState.initial()),
+              'product-1',
+            );
+
+        viewmodel.onOpenOffer('https://example.com/products/1');
+
+        expect(dispatchedActions, [
+          const OpenOfferUrlAction('https://example.com/products/1'),
+        ]);
+      });
 
       test(
         'Method onRenameProduct dispatches RenameProductAction when called',

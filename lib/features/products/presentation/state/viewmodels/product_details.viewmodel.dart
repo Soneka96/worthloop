@@ -4,7 +4,6 @@ import 'package:redux/redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
-import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/presentation/screens/product_details.screen.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/products.selectors.dart';
@@ -21,12 +20,6 @@ class ProductDetailsViewModel extends Equatable {
 
   /// Classified reason for the latest refresh failure, or `null`.
   final PriceFetchStatus? refreshStatus;
-
-  /// Saved website sources for this product.
-  final List<ProductSource> sources;
-
-  /// Whether this product's sources are being loaded.
-  final bool isLoadingSources;
 
   /// Whether a source is being added.
   final bool isAddingSource;
@@ -73,6 +66,9 @@ class ProductDetailsViewModel extends Equatable {
   /// Dispatches [DeleteSourceAction] for this product.
   final void Function(String sourceId) onDeleteSource;
 
+  /// Dispatches [OpenOfferUrlAction] for a merchant offer's product page.
+  final void Function(String url) onOpenOffer;
+
   /// Dispatches [RenameProductAction] for this product.
   final void Function(String name) onRenameProduct;
 
@@ -83,8 +79,6 @@ class ProductDetailsViewModel extends Equatable {
     required this.product,
     required this.isRefreshing,
     this.refreshStatus,
-    required this.sources,
-    required this.isLoadingSources,
     required this.isAddingSource,
     required this.addSourceError,
     required this.editingSourceId,
@@ -100,6 +94,7 @@ class ProductDetailsViewModel extends Equatable {
     required this.onAddSource,
     required this.onEditSource,
     required this.onDeleteSource,
+    required this.onOpenOffer,
     required this.onRenameProduct,
     required this.onDeleteProduct,
   });
@@ -115,14 +110,6 @@ class ProductDetailsViewModel extends Equatable {
       productId,
     ),
     refreshStatus: ProductsSelectors.refreshStatusForProductSelector(
-      store.state,
-      productId,
-    ),
-    sources: ProductsSelectors.sourcesForProductSelector(
-      store.state,
-      productId,
-    ),
-    isLoadingSources: ProductsSelectors.isLoadingSourcesSelector(
       store.state,
       productId,
     ),
@@ -152,6 +139,7 @@ class ProductDetailsViewModel extends Equatable {
     onDeleteSource: (String sourceId) => store.dispatch(
       DeleteSourceAction(productId: productId, sourceId: sourceId),
     ),
+    onOpenOffer: (String url) => store.dispatch(OpenOfferUrlAction(url)),
     onRenameProduct: (String name) =>
         store.dispatch(RenameProductAction(productId: productId, name: name)),
     onDeleteProduct: () => store.dispatch(DeleteProductAction(productId)),
@@ -162,8 +150,6 @@ class ProductDetailsViewModel extends Equatable {
     product,
     isRefreshing,
     refreshStatus,
-    sources,
-    isLoadingSources,
     isAddingSource,
     addSourceError,
     editingSourceId,
