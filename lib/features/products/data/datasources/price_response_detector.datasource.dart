@@ -9,21 +9,19 @@ class PriceResponseDetector {
     required String responseBody,
     required bool hasUsablePrice,
   }) {
-    if (_isBlocked(statusCode, responseBody)) {
-      return PriceFetchStatus.blocked;
+    if (hasUsablePrice) {
+      return PriceFetchStatus.success;
     }
     if (statusCode == null || statusCode >= 500) {
       return PriceFetchStatus.networkError;
     }
-    if (statusCode < 200 || statusCode >= 300) {
-      return PriceFetchStatus.unsupported;
+    if (_containsPriceData(responseBody)) {
+      return PriceFetchStatus.invalidData;
     }
-    if (hasUsablePrice) {
-      return PriceFetchStatus.success;
+    if (_isBlocked(statusCode, responseBody)) {
+      return PriceFetchStatus.blocked;
     }
-    return _containsPriceData(responseBody)
-        ? PriceFetchStatus.invalidData
-        : PriceFetchStatus.unsupported;
+    return PriceFetchStatus.unsupported;
   }
 
   bool _isBlocked(int? statusCode, String responseBody) {
@@ -37,6 +35,12 @@ class PriceResponseDetector {
       _priceMarker.hasMatch(responseBody);
 
   static const Set<int> _blockedStatusCodes = {403, 429};
+  // ponytail: matches "captcha"/"challenge" as a bare substring in any
+  // id/class attribute, so an unrelated widget (e.g. Google reCAPTCHA's
+  // own id="grecaptcha-badge") can still misclassify a genuinely
+  // unsupported page as blocked. Lower stakes than the priority bug this
+  // reordering fixes — hasUsablePrice already wins when there's a real
+  // price. Tighten the regex if a real site needs it.
   static final RegExp _blockedBodyMarker = RegExp(
     r'''<(?:title|h1)[^>]*>[^<]*(?:cloudflare challenge|checking your browser|access denied|automated requests)[^<]*</(?:title|h1)>|(?:id|class)=["'][^"']*(?:captcha|cf-chl|challenge)[^"']*["']''',
     caseSensitive: false,
