@@ -24,7 +24,6 @@ import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
-import 'package:worth_loop/shared/utils/currency_helper_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/product_price_fetch_orchestrator_service.dart';
 import 'package:worth_loop/shared/utils/product_url_cleaner_service.dart';
@@ -44,7 +43,6 @@ void main() {
   setUp(() {
     sl.registerSingleton<AppDatabase>(MockAppDatabase());
     sl.registerSingleton<Dio>(MockDio());
-    sl.registerSingleton<CurrencyHelperService>(const CurrencyHelperService());
     sl.registerSingleton<LoggerService>(MockLoggerService());
     sl.registerSingleton<AppPreferencesStore>(MockAppPreferencesStore());
     sl.registerSingleton<ProductPriceFetchOrchestratorService>(

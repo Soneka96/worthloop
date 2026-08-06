@@ -13,7 +13,6 @@ import 'package:worth_loop/features/products/domain/entities/product.entity.dart
 import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
-import 'package:worth_loop/shared/utils/currency_helper_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/product_url_cleaner_service.dart';
 import '../../fixtures/product_source.fixture.dart';
@@ -23,15 +22,12 @@ import '../../fixtures/product_table.fixture.dart';
 
 class MockLoggerService extends Mock implements LoggerService {}
 
-class MockCurrencyHelperService extends Mock implements CurrencyHelperService {}
-
 class MockProductUrlCleanerService extends Mock
     implements ProductUrlCleanerService {}
 
 void main() {
   late AppDatabase db;
   late MockLoggerService mockLoggerService;
-  late MockCurrencyHelperService mockCurrencyHelperService;
   late MockProductUrlCleanerService mockUrlCleanerService;
   late ProductsLocalDatasource datasource;
 
@@ -61,26 +57,12 @@ void main() {
   setUp(() {
     db = AppDatabase.forTesting(NativeDatabase.memory());
     mockLoggerService = MockLoggerService();
-    mockCurrencyHelperService = MockCurrencyHelperService();
     mockUrlCleanerService = MockProductUrlCleanerService();
-    when(() => mockCurrencyHelperService.validate(any())).thenAnswer((
-      invocation,
-    ) {
-      final Iterable<Money> prices =
-          invocation.positionalArguments.single as Iterable<Money>;
-      final Set<String> currencyCodes = prices
-          .map((Money money) => money.currencyCode)
-          .toSet();
-      if (currencyCodes.length > 1) {
-        throw StateError('Prices must use one currency');
-      }
-    });
     when(
       () => mockUrlCleanerService.clean(any()),
     ).thenAnswer((invocation) => invocation.positionalArguments[0] as String);
     datasource = ProductsLocalDatasource(
       db,
-      mockCurrencyHelperService,
       mockLoggerService,
       mockUrlCleanerService,
     );
@@ -89,7 +71,6 @@ void main() {
   tearDown(() async {
     await db.close();
     reset(mockLoggerService);
-    reset(mockCurrencyHelperService);
     reset(mockUrlCleanerService);
   });
 
@@ -145,22 +126,23 @@ void main() {
       },
     );
 
-    test(
-      'returns Left(CurrencyFailure) for mixed-currency stored offers',
-      () async {
-        await insertMixedCurrencyProduct('mixed-product');
+    test('loads mixed-currency stored offers without rejecting them', () async {
+      await insertMixedCurrencyProduct('mixed-product');
 
-        final Either<Failure, List<ProductModel>> result = await datasource
-            .loadProducts();
-        final Failure failure =
-            result.getLeft().toNullable() ??
-            const DatabaseFailure('Expected a failure');
+      final Either<Failure, List<ProductModel>> result = await datasource
+          .loadProducts();
+      final ProductModel? product = result.getRight().toNullable()?.single;
 
-        expect(failure, isA<CurrencyFailure>());
-        verify(() => mockLoggerService.e(failure.message)).called(1);
-        verifyNoMoreInteractions(mockLoggerService);
-      },
-    );
+      expect(product?.sources, hasLength(2));
+      expect(
+        product?.sources.map((ProductSource source) => source.currentPrice),
+        containsAll([
+          const Money(minorUnits: 100, currencyCode: 'USD'),
+          const Money(minorUnits: 100, currencyCode: 'EUR'),
+        ]),
+      );
+      verifyZeroInteractions(mockLoggerService);
+    });
   });
 
   group('Method refreshProduct() returns the correct value', () {
@@ -235,23 +217,6 @@ void main() {
             const DatabaseFailure('Expected a failure');
 
         expect(failure, isA<DatabaseFailure>());
-        verify(() => mockLoggerService.e(failure.message)).called(1);
-        verifyNoMoreInteractions(mockLoggerService);
-      },
-    );
-
-    test(
-      'returns Left(CurrencyFailure) when the product has mixed-currency offers',
-      () async {
-        await insertMixedCurrencyProduct('mixed-product');
-
-        final Either<Failure, ProductModel> result = await datasource
-            .refreshProduct('mixed-product');
-        final Failure failure =
-            result.getLeft().toNullable() ??
-            const DatabaseFailure('Expected a failure');
-
-        expect(failure, isA<CurrencyFailure>());
         verify(() => mockLoggerService.e(failure.message)).called(1);
         verifyNoMoreInteractions(mockLoggerService);
       },
@@ -404,23 +369,6 @@ void main() {
             const DatabaseFailure('Expected a failure');
 
         expect(failure, isA<DatabaseFailure>());
-        verify(() => mockLoggerService.e(failure.message)).called(1);
-        verifyNoMoreInteractions(mockLoggerService);
-      },
-    );
-
-    test(
-      'returns Left(CurrencyFailure) for mixed-currency stored offers',
-      () async {
-        await insertMixedCurrencyProduct('product-1');
-
-        final Either<Failure, ProductModel> result = await datasource
-            .renameProduct('product-1', 'Renamed Product');
-        final Failure failure =
-            result.getLeft().toNullable() ??
-            const DatabaseFailure('Expected a failure');
-
-        expect(failure, isA<CurrencyFailure>());
         verify(() => mockLoggerService.e(failure.message)).called(1);
         verifyNoMoreInteractions(mockLoggerService);
       },
@@ -735,6 +683,48 @@ void main() {
       verifyZeroInteractions(mockLoggerService);
     });
 
+    test(
+      'adds a source with another currency beside an existing offer',
+      () async {
+        await insertProductOne();
+        await datasource.addSourceWithPrice(
+          buildProductSource(
+            currentPrice: const Money(minorUnits: 49999, currencyCode: 'USD'),
+            isAvailable: true,
+          ),
+        );
+
+        final Either<Failure, ProductModel> result = await datasource
+            .addSourceWithPrice(
+              buildProductSource(
+                id: 'source-2',
+                url: 'https://other.example.com/1',
+                currentPrice: const Money(
+                  minorUnits: 45999,
+                  currencyCode: 'EUR',
+                ),
+                isAvailable: true,
+              ),
+            );
+        final List<Money?> prices =
+            result
+                .getRight()
+                .toNullable()
+                ?.sources
+                .map((ProductSource source) => source.currentPrice)
+                .toList(growable: false) ??
+            [];
+
+        expect(
+          prices,
+          containsAll([
+            const Money(minorUnits: 49999, currencyCode: 'USD'),
+            const Money(minorUnits: 45999, currencyCode: 'EUR'),
+          ]),
+        );
+      },
+    );
+
     test('persists the cleaned URL, not the raw one', () async {
       await insertProductOne();
       when(
@@ -811,23 +801,6 @@ void main() {
         verify(() => mockLoggerService.e(any())).called(1);
       },
     );
-
-    test(
-      'returns Left(CurrencyFailure) when another product already has mixed currencies',
-      () async {
-        await insertProductOne();
-        await insertMixedCurrencyProduct('mixed-product');
-
-        final Either<Failure, ProductModel> result = await datasource
-            .addSourceWithPrice(buildProductSource());
-        final Failure failure =
-            result.getLeft().toNullable() ??
-            const DatabaseFailure('Expected a failure');
-
-        expect(failure, isA<CurrencyFailure>());
-        verify(() => mockLoggerService.e(failure.message)).called(1);
-      },
-    );
   });
 
   group('Method editSourceWithPrice() returns the correct value', () {
@@ -863,6 +836,54 @@ void main() {
       expect(row.lastCheckedAt, DateTime(2026, 1, 2));
       verifyZeroInteractions(mockLoggerService);
     });
+
+    test(
+      'edits a source to another currency beside an existing offer',
+      () async {
+        await insertSourceOne();
+        await db
+            .into(db.productSourceTable)
+            .insert(
+              ProductSourceModel.fromEntity(
+                buildProductSource(
+                  id: 'source-2',
+                  url: 'https://other.example.com/1',
+                  currentPrice: const Money(
+                    minorUnits: 45999,
+                    currencyCode: 'EUR',
+                  ),
+                ),
+              ).toCompanion(),
+            );
+
+        final Either<Failure, ProductModel> result = await datasource
+            .editSourceWithPrice(
+              'source-1',
+              buildProductSource(
+                currentPrice: const Money(
+                  minorUnits: 49999,
+                  currencyCode: 'USD',
+                ),
+              ),
+            );
+        final List<Money?> prices =
+            result
+                .getRight()
+                .toNullable()
+                ?.sources
+                .map((ProductSource source) => source.currentPrice)
+                .toList(growable: false) ??
+            [];
+
+        expect(
+          prices,
+          containsAll([
+            const Money(minorUnits: 49999, currencyCode: 'USD'),
+            const Money(minorUnits: 45999, currencyCode: 'EUR'),
+          ]),
+        );
+      },
+    );
 
     test('persists the cleaned URL, not the raw one', () async {
       await insertSourceOne();
@@ -992,23 +1013,6 @@ void main() {
         verify(() => mockLoggerService.e(failure.message)).called(1);
       },
     );
-
-    test(
-      'returns Left(CurrencyFailure) when another product already has mixed currencies',
-      () async {
-        await insertSourceOne();
-        await insertMixedCurrencyProduct('mixed-product');
-
-        final Either<Failure, ProductModel> result = await datasource
-            .editSourceWithPrice('source-1', buildProductSource());
-        final Failure failure =
-            result.getLeft().toNullable() ??
-            const DatabaseFailure('Expected a failure');
-
-        expect(failure, isA<CurrencyFailure>());
-        verify(() => mockLoggerService.e(failure.message)).called(1);
-      },
-    );
   });
 
   group('Method deleteSource() returns the correct value', () {
@@ -1081,28 +1085,6 @@ void main() {
             const DatabaseFailure('Expected a failure');
 
         expect(failure, isA<DatabaseFailure>());
-        verify(() => mockLoggerService.e(failure.message)).called(1);
-      },
-    );
-
-    test(
-      'returns Left(CurrencyFailure) when another product already has mixed currencies',
-      () async {
-        await insertMixedCurrencyProduct('mixed-product');
-        await db.into(db.productTable).insert(buildProductTableCompanion());
-        await db
-            .into(db.productSourceTable)
-            .insert(
-              ProductSourceModel.fromEntity(buildProductSource()).toCompanion(),
-            );
-
-        final Either<Failure, ProductModel> result = await datasource
-            .deleteSource('source-1');
-        final Failure failure =
-            result.getLeft().toNullable() ??
-            const DatabaseFailure('Expected a failure');
-
-        expect(failure, isA<CurrencyFailure>());
         verify(() => mockLoggerService.e(failure.message)).called(1);
       },
     );
@@ -1255,8 +1237,41 @@ void main() {
       },
     );
 
+    test('persists updated offers with different currencies', () async {
+      await insertTwoSources();
+
+      final Either<Failure, ProductModel> result = await datasource
+          .updateSourcePrices('product-1', [
+            buildProductSourceModel(
+              id: 'source-1',
+              currentPrice: const Money(minorUnits: 1999, currencyCode: 'USD'),
+            ),
+            buildProductSourceModel(
+              id: 'source-2',
+              currentPrice: const Money(minorUnits: 1999, currencyCode: 'EUR'),
+            ),
+          ]);
+      final List<Money?> prices =
+          result
+              .getRight()
+              .toNullable()
+              ?.sources
+              .map((ProductSource source) => source.currentPrice)
+              .toList(growable: false) ??
+          [];
+
+      expect(
+        prices,
+        containsAll([
+          const Money(minorUnits: 1999, currencyCode: 'USD'),
+          const Money(minorUnits: 1999, currencyCode: 'EUR'),
+        ]),
+      );
+      verifyZeroInteractions(mockLoggerService);
+    });
+
     test(
-      'returns Left(CurrencyFailure) when an untouched sibling source uses a different currency',
+      'updates one currency while leaving a different sibling unchanged',
       () async {
         await db.into(db.productTable).insert(buildProductTableCompanion());
         await db
@@ -1272,11 +1287,9 @@ void main() {
                   id: 'source-2',
                   url: 'https://other.example.com/1',
                   currentPrice: const Money(
-                    minorUnits: 1999,
-                    currencyCode: 'EUR',
+                    minorUnits: 11700,
+                    currencyCode: 'GBP',
                   ),
-                  isAvailable: true,
-                  lastCheckedAt: DateTime(2026, 1, 1),
                 ),
               ).toCompanion(),
             );
@@ -1285,42 +1298,27 @@ void main() {
             .updateSourcePrices('product-1', [
               buildProductSourceModel(
                 currentPrice: const Money(
-                  minorUnits: 1999,
-                  currencyCode: 'USD',
+                  minorUnits: 45999,
+                  currencyCode: 'EUR',
                 ),
               ),
             ]);
-        final Failure failure =
-            result.getLeft().toNullable() ??
-            const DatabaseFailure('Expected a failure');
+        final List<Money?> prices =
+            result
+                .getRight()
+                .toNullable()
+                ?.sources
+                .map((ProductSource source) => source.currentPrice)
+                .toList(growable: false) ??
+            [];
 
-        expect(failure, isA<CurrencyFailure>());
-        verify(() => mockLoggerService.e(failure.message)).called(1);
-      },
-    );
-
-    test(
-      'returns Left(CurrencyFailure) when the updated sources use different currencies',
-      () async {
-        await insertTwoSources();
-
-        final Either<Failure, ProductModel>
-        result = await datasource.updateSourcePrices('product-1', [
-          buildProductSourceModel(
-            id: 'source-1',
-            currentPrice: const Money(minorUnits: 1999, currencyCode: 'USD'),
-          ),
-          buildProductSourceModel(
-            id: 'source-2',
-            currentPrice: const Money(minorUnits: 1999, currencyCode: 'EUR'),
-          ),
-        ]);
-        final Failure failure =
-            result.getLeft().toNullable() ??
-            const DatabaseFailure('Expected a failure');
-
-        expect(failure, isA<CurrencyFailure>());
-        verify(() => mockLoggerService.e(failure.message)).called(1);
+        expect(
+          prices,
+          containsAll([
+            const Money(minorUnits: 45999, currencyCode: 'EUR'),
+            const Money(minorUnits: 11700, currencyCode: 'GBP'),
+          ]),
+        );
       },
     );
 

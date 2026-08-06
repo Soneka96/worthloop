@@ -8,24 +8,20 @@ import 'package:worth_loop/features/products/data/models/product.model.dart';
 import 'package:worth_loop/features/products/data/models/product_source.model.dart';
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
-import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
-import 'package:worth_loop/shared/utils/currency_helper_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/product_url_cleaner_service.dart';
 
 /// Local product and merchant-offer persistence.
 class ProductsLocalDatasource {
   final AppDatabase _db;
-  final CurrencyHelperService _currencyHelperService;
   final LoggerService _loggerService;
   final ProductUrlCleanerService _urlCleanerService;
 
   /// Creates local product persistence backed by [AppDatabase].
   ProductsLocalDatasource(
     this._db,
-    this._currencyHelperService,
     this._loggerService,
     this._urlCleanerService,
   );
@@ -115,9 +111,9 @@ class ProductsLocalDatasource {
   /// Touches every product's checked timestamp and returns all products.
   Future<Either<Failure, List<ProductModel>>> refreshAllProducts() async {
     try {
-      await (_db.update(_db.productTable)).write(
-        ProductTableCompanion(lastUpdatedAt: Value(DateTime.now())),
-      );
+      await (_db.update(
+        _db.productTable,
+      )).write(ProductTableCompanion(lastUpdatedAt: Value(DateTime.now())));
       return Right(await _readProducts());
     } on SqliteException catch (error) {
       _loggerService.e(error.toString());
@@ -260,23 +256,21 @@ class ProductsLocalDatasource {
           ValidationFailure('This store is already tracked for this product'),
         );
       }
-      await (_db.update(_db.productSourceTable)
-            ..where((table) => table.id.equals(sourceId)))
-          .write(
-            ProductSourceTableCompanion(
-              url: Value(validatedSource.url),
-              merchantDomain: Value(validatedSource.merchantDomain),
-              minorUnits: Value(pricedSource.currentPrice?.minorUnits),
-              currencyCode: Value(pricedSource.currentPrice?.currencyCode),
-              isAvailable: Value(pricedSource.isAvailable),
-              lastCheckedAt: Value(pricedSource.lastCheckedAt),
-            ),
-          );
+      await (_db.update(
+        _db.productSourceTable,
+      )..where((table) => table.id.equals(sourceId))).write(
+        ProductSourceTableCompanion(
+          url: Value(validatedSource.url),
+          merchantDomain: Value(validatedSource.merchantDomain),
+          minorUnits: Value(pricedSource.currentPrice?.minorUnits),
+          currencyCode: Value(pricedSource.currentPrice?.currencyCode),
+          isAvailable: Value(pricedSource.isAvailable),
+          lastCheckedAt: Value(pricedSource.lastCheckedAt),
+        ),
+      );
       final List<ProductModel> products = await _readProducts();
       return Right(
-        products.firstWhere(
-          (ProductModel item) => item.id == row.productId,
-        ),
+        products.firstWhere((ProductModel item) => item.id == row.productId),
       );
     } on ArgumentError catch (error) {
       return Left(ValidationFailure(error.message.toString()));
@@ -303,9 +297,7 @@ class ProductsLocalDatasource {
       )..where((table) => table.id.equals(sourceId))).go();
       final List<ProductModel> products = await _readProducts();
       return Right(
-        products.firstWhere(
-          (ProductModel item) => item.id == row.productId,
-        ),
+        products.firstWhere((ProductModel item) => item.id == row.productId),
       );
     } on SqliteException catch (error) {
       _loggerService.e(error.toString());
@@ -355,11 +347,6 @@ class ProductsLocalDatasource {
     List<ProductSourceModel> updatedSources,
   ) async {
     try {
-      _currencyHelperService.validate(
-        updatedSources
-            .map((ProductSourceModel source) => source.currentPrice)
-            .whereType<Money>(),
-      );
       final ProductModel? product = await _db.transaction(() async {
         final ProductRow? row = await (_db.select(
           _db.productTable,
@@ -368,16 +355,16 @@ class ProductsLocalDatasource {
           return null;
         }
         for (final ProductSourceModel source in updatedSources) {
-          await (_db.update(_db.productSourceTable)
-                ..where((table) => table.id.equals(source.id)))
-              .write(
-                ProductSourceTableCompanion(
-                  minorUnits: Value(source.currentPrice?.minorUnits),
-                  currencyCode: Value(source.currentPrice?.currencyCode),
-                  isAvailable: Value(source.isAvailable),
-                  lastCheckedAt: Value(source.lastCheckedAt),
-                ),
-              );
+          await (_db.update(
+            _db.productSourceTable,
+          )..where((table) => table.id.equals(source.id))).write(
+            ProductSourceTableCompanion(
+              minorUnits: Value(source.currentPrice?.minorUnits),
+              currencyCode: Value(source.currentPrice?.currencyCode),
+              isAvailable: Value(source.isAvailable),
+              lastCheckedAt: Value(source.lastCheckedAt),
+            ),
+          );
         }
         await (_db.update(_db.productTable)
               ..where((table) => table.id.equals(productId)))
@@ -421,11 +408,6 @@ class ProductsLocalDatasource {
         _db.productSourceTable,
       )..where((table) => table.productId.equals(product.id))).get();
       final ProductModel model = ProductModel.fromRows(product, sources);
-      _currencyHelperService.validate(
-        model.sources
-            .map((ProductSource source) => source.currentPrice)
-            .whereType<Money>(),
-      );
       models.add(model);
     }
     return models;
