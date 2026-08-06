@@ -1,8 +1,8 @@
 # WorthLoop
 
 WorthLoop is an Android app for tracking products, comparing merchant offers, and making the
-lowest available price obvious. It is category-neutral: simulation hardware is the initial sample
-data, but the model also fits car parts, electronics, tools, household goods, and other purchases.
+lowest available price obvious. It is category-neutral: the model fits simulation hardware, car
+parts, electronics, tools, household goods, and other purchases alike.
 
 ## Current capabilities
 
@@ -15,8 +15,7 @@ data, but the model also fits car parts, electronics, tools, household goods, an
 - Store a configurable refresh interval without scheduling background work yet.
 - Display English and Portuguese interfaces with accessible light and dark themes.
 
-The bundled products and prices are still illustrative local data, not live merchant offers. The
-generic remote collector is a foundation for user-provided sources, not a guarantee that every
+The generic remote collector is a foundation for user-provided sources, not a guarantee that every
 website can be read. Scheduled background refresh and an Android home-screen widget are deferred.
 
 ## Architecture
