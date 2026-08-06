@@ -348,6 +348,21 @@ enum PriceFetchStatus {
   invalidData,
 }
 
+/// Selects which merchant offers a product section displays.
+enum ProductOfferFilter {
+  /// Sentinel value with no selected filter.
+  none,
+
+  /// Displays every merchant offer.
+  all,
+
+  /// Displays offers currently marked available.
+  available,
+
+  /// Displays offers not currently marked available.
+  unavailable,
+}
+
 /// Display helpers for [WidgetLocation] — kept off the enum itself so the
 /// enum stays a plain set of values.
 extension WidgetLocationX on WidgetLocation {

@@ -9,14 +9,16 @@ import 'package:redux/redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
+import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
-import 'package:worth_loop/features/products/presentation/widgets/product_source_row.widget.dart';
+import 'package:worth_loop/features/products/presentation/widgets/merchant_offer_row.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_sources.section.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_sources_empty.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/source_form_dialog.widget.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
+import '../../fixtures/product.fixture.dart';
 import '../../fixtures/product_source.fixture.dart';
 
 class MockProductDetailsViewModel extends Mock
@@ -25,9 +27,28 @@ class MockProductDetailsViewModel extends Mock
 void main() {
   late MockProductDetailsViewModel mockViewModel;
   late Store<AppState> store;
+  final ProductSource availableSource = buildProductSource(
+    id: 'source-1',
+    url: 'https://example.com/products/1',
+    currentPrice: const Money(minorUnits: 1000, currencyCode: 'EUR'),
+    isAvailable: true,
+  );
+  final ProductSource unavailableSource = buildProductSource(
+    id: 'source-2',
+    url: 'https://another.com/products/2',
+    merchantDomain: 'another.com',
+    currentPrice: const Money(minorUnits: 2000, currencyCode: 'EUR'),
+    isAvailable: false,
+  );
+  final ProductSource unknownAvailabilitySource = buildProductSource(
+    id: 'source-3',
+    url: 'https://unknown.com/products/3',
+    merchantDomain: 'unknown.com',
+  );
   final List<ProductSource> sources = [
-    buildProductSource(id: 'source-1', url: 'https://example.com/products/1'),
-    buildProductSource(id: 'source-2', url: 'https://another.com/products/2'),
+    availableSource,
+    unavailableSource,
+    unknownAvailabilitySource,
   ];
 
   setUp(() {
@@ -56,9 +77,9 @@ void main() {
 
   Widget buildWidget({
     List<ProductSource> sources = const [],
-    bool isLoadingSources = false,
     Set<String> deletingSourceIds = const {},
-    void Function(String sourceId)? onDeleteSource,
+    ValueChanged<String>? onDeleteSource,
+    ValueChanged<String>? onOpenOffer,
   }) => TranslationProvider(
     child: StoreProvider<AppState>(
       store: store,
@@ -67,11 +88,10 @@ void main() {
           body: CustomScrollView(
             slivers: [
               ProductSourcesSection(
-                productId: 'product-1',
-                sources: sources,
-                isLoadingSources: isLoadingSources,
+                product: buildProduct(sources: sources),
                 deletingSourceIds: deletingSourceIds,
                 onDeleteSource: onDeleteSource ?? (_) {},
+                onOpenOffer: onOpenOffer ?? (_) {},
               ),
             ],
           ),
@@ -94,44 +114,32 @@ void main() {
     );
 
     testWidgets(
-      'ProductSourcesSection contains a CircularProgressIndicator with the correct parameters when isLoadingSources = true',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildWidget(sources: sources, isLoadingSources: true),
-        );
-
-        expect(find.byType(CircularProgressIndicator), findsOneWidget);
-        expect(find.byType(ProductSourceRow), findsNothing);
-        expect(find.byType(ProductSourcesEmptyWidget), findsNothing);
-      },
-    );
-
-    testWidgets(
-      'ProductSourcesSection contains a ProductSourcesEmptyWidget with the correct parameters when sources is empty',
+      'ProductSourcesSection contains a ProductSourcesEmptyWidget with the correct parameters when product.sources is empty',
       (WidgetTester tester) async {
         await tester.pumpWidget(buildWidget());
 
         expect(find.byType(ProductSourcesEmptyWidget), findsOneWidget);
+        expect(find.byType(MerchantOfferRow), findsNothing);
       },
     );
 
     testWidgets(
-      'ProductSourcesSection contains a ProductSourceRow per source with the correct parameters when sources is not empty',
+      'ProductSourcesSection contains a MerchantOfferRow per source with the correct parameters when product.sources is not empty',
       (WidgetTester tester) async {
         await tester.pumpWidget(buildWidget(sources: sources));
 
         expect(
-          find.byKey(const Key('product-source-source-1')),
+          find.byKey(const Key('merchant-offer-source-1')),
           findsOneWidget,
         );
         expect(
-          find.byKey(const Key('product-source-source-2')),
+          find.byKey(const Key('merchant-offer-source-2')),
           findsOneWidget,
         );
       },
     );
 
-    testWidgets('ProductSourcesSection uses a lazy source list', (
+    testWidgets('ProductSourcesSection uses a lazy offer list', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(buildWidget(sources: sources));
@@ -142,22 +150,22 @@ void main() {
     });
 
     testWidgets(
-      'ProductSourcesSection contains a ProductSourceRow with isDeleting = true only for the source id in deletingSourceIds',
+      'ProductSourcesSection contains a MerchantOfferRow with isDeleting = true only for the source id in deletingSourceIds',
       (WidgetTester tester) async {
         await tester.pumpWidget(
           buildWidget(sources: sources, deletingSourceIds: const {'source-1'}),
         );
 
-        final ProductSourceRow deletingRow = tester.widget(
+        final MerchantOfferRow deletingRow = tester.widget(
           find.byWidgetPredicate(
             (widget) =>
-                widget is ProductSourceRow && widget.source.id == 'source-1',
+                widget is MerchantOfferRow && widget.source.id == 'source-1',
           ),
         );
-        final ProductSourceRow otherRow = tester.widget(
+        final MerchantOfferRow otherRow = tester.widget(
           find.byWidgetPredicate(
             (widget) =>
-                widget is ProductSourceRow && widget.source.id == 'source-2',
+                widget is MerchantOfferRow && widget.source.id == 'source-2',
           ),
         );
         expect(deletingRow.isDeleting, isA<bool>());
@@ -166,9 +174,164 @@ void main() {
         expect(otherRow.isDeleting, isFalse);
       },
     );
+
+    testWidgets(
+      'ProductSourcesSection marks only the lowest available priced source as the best price',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildWidget(sources: sources));
+
+        final MerchantOfferRow bestRow = tester.widget(
+          find.byKey(const Key('merchant-offer-source-1')),
+        );
+        final MerchantOfferRow unavailableRow = tester.widget(
+          find.byKey(const Key('merchant-offer-source-2')),
+        );
+        final MerchantOfferRow unknownRow = tester.widget(
+          find.byKey(const Key('merchant-offer-source-3')),
+        );
+        expect(bestRow.isBestPrice, isA<bool>());
+        expect(bestRow.isBestPrice, isTrue);
+        expect(unavailableRow.isBestPrice, isA<bool>());
+        expect(unavailableRow.isBestPrice, isFalse);
+        expect(unknownRow.isBestPrice, isA<bool>());
+        expect(unknownRow.isBestPrice, isFalse);
+      },
+    );
+
+    testWidgets(
+      'ProductSourcesSection does not mark a source as the best price when no available price exists',
+      (WidgetTester tester) async {
+        final ProductSource unavailable = buildProductSource(
+          id: 'source-4',
+          isAvailable: false,
+          currentPrice: const Money(minorUnits: 1000, currencyCode: 'EUR'),
+        );
+        await tester.pumpWidget(buildWidget(sources: [unavailable]));
+
+        final MerchantOfferRow row = tester.widget(
+          find.byKey(const Key('merchant-offer-source-4')),
+        );
+        expect(row.isBestPrice, isA<bool>());
+        expect(row.isBestPrice, isFalse);
+      },
+    );
+
+    testWidgets(
+      'ProductSourcesSection contains filter chips when product.sources is not empty',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildWidget(sources: sources));
+
+        expect(
+          find.byKey(const Key('product-details-source-filter-all')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('product-details-source-filter-available')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('product-details-source-filter-unavailable')),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'ProductSourcesSection displays only available offers when the available filter is selected',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildWidget(sources: sources));
+
+        await tester.tap(
+          find.byKey(const Key('product-details-source-filter-available')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(MerchantOfferRow), findsOneWidget);
+        expect(
+          find.byKey(const Key('merchant-offer-source-1')),
+          findsOneWidget,
+        );
+        expect(find.byKey(const Key('merchant-offer-source-2')), findsNothing);
+        final FilterChip allChip = tester.widget(
+          find.byKey(const Key('product-details-source-filter-all')),
+        );
+        final FilterChip availableChip = tester.widget(
+          find.byKey(const Key('product-details-source-filter-available')),
+        );
+        expect(allChip.selected, isA<bool>());
+        expect(allChip.selected, isFalse);
+        expect(availableChip.selected, isA<bool>());
+        expect(availableChip.selected, isTrue);
+
+        await tester.tap(
+          find.byKey(const Key('product-details-source-filter-all')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(MerchantOfferRow), findsNWidgets(3));
+      },
+    );
+
+    testWidgets(
+      'ProductSourcesSection displays only unavailable offers when the unavailable filter is selected',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildWidget(sources: sources));
+
+        await tester.tap(
+          find.byKey(const Key('product-details-source-filter-unavailable')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(MerchantOfferRow), findsNWidgets(2));
+        expect(find.byKey(const Key('merchant-offer-source-1')), findsNothing);
+        expect(
+          find.byKey(const Key('merchant-offer-source-2')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('merchant-offer-source-3')),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'ProductSourcesSection displays no-offers copy when the selected filter has no matches',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildWidget(sources: [availableSource]));
+
+        await tester.tap(
+          find.byKey(const Key('product-details-source-filter-unavailable')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(MerchantOfferRow), findsNothing);
+        expect(find.text(t.productDetails.noOffers), findsOneWidget);
+      },
+    );
   });
 
   group("ProductSourcesSection's elements behavior", () {
+    testWidgets(
+      'ProductSourcesSection calls onOpenOffer when an offer is tapped',
+      (WidgetTester tester) async {
+        String? openedUrl;
+        await tester.pumpWidget(
+          buildWidget(
+            sources: sources,
+            onOpenOffer: (String url) => openedUrl = url,
+          ),
+        );
+
+        await tester.tap(
+          find.byKey(const Key('merchant-offer-source-1-tap-target')),
+        );
+
+        expect(openedUrl, isA<String>());
+        expect(openedUrl, availableSource.url);
+      },
+    );
+
     testWidgets(
       'ProductSourcesSection contains a "product-details-add-source-button" FilledButton with the correct behavior',
       (WidgetTester tester) async {
@@ -188,12 +351,17 @@ void main() {
     );
 
     testWidgets(
-      'ProductSourcesSection contains a "product-source-source-1-edit-button" IconButton with the correct behavior',
+      'ProductSourcesSection contains a merchant-offer edit action with the correct behavior',
       (WidgetTester tester) async {
         await tester.pumpWidget(buildWidget(sources: sources));
 
+        await tester.drag(
+          find.byKey(const Key('merchant-offer-source-1')),
+          const Offset(-400, 0),
+        );
+        await tester.pumpAndSettle();
         await tester.tap(
-          find.byKey(const Key('product-source-source-1-edit-button')),
+          find.byKey(const Key('merchant-offer-source-1-edit-action')),
         );
         await tester.pumpAndSettle();
 
@@ -210,13 +378,30 @@ void main() {
       (WidgetTester tester) async {
         String? deletedId;
         await tester.pumpWidget(
-          buildWidget(sources: sources, onDeleteSource: (id) => deletedId = id),
+          buildWidget(
+            sources: sources,
+            onDeleteSource: (String id) => deletedId = id,
+          ),
         );
 
-        await tester.tap(
-          find.byKey(const Key('product-source-source-1-delete-button')),
+        await tester.drag(
+          find.byKey(const Key('merchant-offer-source-1')),
+          const Offset(-400, 0),
         );
         await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const Key('merchant-offer-source-1-delete-action')),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text(t.productDetails.deleteSourceTitle), findsOneWidget);
+        expect(
+          find.text(
+            t.productDetails.deleteSourceMessage(
+              merchant: availableSource.merchantDomain,
+            ),
+          ),
+          findsOneWidget,
+        );
         await tester.tap(
           find.byKey(const Key('confirm-dialog-confirm-button')),
         );
@@ -232,11 +417,19 @@ void main() {
       (WidgetTester tester) async {
         String? deletedId;
         await tester.pumpWidget(
-          buildWidget(sources: sources, onDeleteSource: (id) => deletedId = id),
+          buildWidget(
+            sources: sources,
+            onDeleteSource: (String id) => deletedId = id,
+          ),
         );
 
+        await tester.drag(
+          find.byKey(const Key('merchant-offer-source-1')),
+          const Offset(-400, 0),
+        );
+        await tester.pumpAndSettle();
         await tester.tap(
-          find.byKey(const Key('product-source-source-1-delete-button')),
+          find.byKey(const Key('merchant-offer-source-1-delete-action')),
         );
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('confirm-dialog-cancel-button')));
@@ -254,10 +447,13 @@ void main() {
       LocaleSettings.setLocale(AppLocale.pt);
 
       try {
-        await tester.pumpWidget(buildWidget());
+        await tester.pumpWidget(buildWidget(sources: sources));
 
         expect(find.text(t.productDetails.sourcesTitle), findsOneWidget);
         expect(find.text(t.productDetails.addSourceButton), findsOneWidget);
+        expect(find.text(t.productDetails.filterAll), findsOneWidget);
+        expect(find.text(t.productDetails.filterAvailable), findsOneWidget);
+        expect(find.text(t.productDetails.filterUnavailable), findsOneWidget);
       } finally {
         LocaleSettings.setLocale(AppLocale.en);
       }
