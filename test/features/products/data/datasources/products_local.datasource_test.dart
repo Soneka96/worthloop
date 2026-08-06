@@ -16,7 +16,6 @@ import 'package:worth_loop/features/products/domain/entities/store_price.entity.
 import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
-import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
 import 'package:worth_loop/shared/utils/currency_helper_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import '../../fixtures/product_source.fixture.dart';
@@ -25,26 +24,16 @@ class MockLoggerService extends Mock implements LoggerService {}
 
 class MockCurrencyHelperService extends Mock implements CurrencyHelperService {}
 
-class MockAppPreferencesStore extends Mock implements AppPreferencesStore {}
-
 void main() {
   late AppDatabase db;
   late MockLoggerService mockLoggerService;
   late MockCurrencyHelperService mockCurrencyHelperService;
-  late MockAppPreferencesStore mockAppPreferencesStore;
   late ProductsLocalDatasource datasource;
 
   setUp(() {
     db = AppDatabase.forTesting(NativeDatabase.memory());
     mockLoggerService = MockLoggerService();
     mockCurrencyHelperService = MockCurrencyHelperService();
-    mockAppPreferencesStore = MockAppPreferencesStore();
-    when(
-      () => mockAppPreferencesStore.readHasSeededIllustrativeProducts(),
-    ).thenAnswer((_) async => false);
-    when(
-      () => mockAppPreferencesStore.writeHasSeededIllustrativeProducts(),
-    ).thenAnswer((_) async {});
     when(() => mockCurrencyHelperService.validate(any())).thenAnswer((
       invocation,
     ) {
@@ -61,7 +50,6 @@ void main() {
       db,
       mockCurrencyHelperService,
       mockLoggerService,
-      mockAppPreferencesStore,
     );
   });
 
@@ -69,92 +57,21 @@ void main() {
     await db.close();
     reset(mockLoggerService);
     reset(mockCurrencyHelperService);
-    reset(mockAppPreferencesStore);
   });
 
   group('Method loadProducts() returns the correct value', () {
-    test(
-      'returns and persists illustrative products when storage is empty',
-      () async {
-        final Either<Failure, List<ProductModel>> result = await datasource
-            .loadProducts();
-        final List<ProductModel> products =
-            result.getRight().toNullable() ?? [];
-        final List<ProductRow> rows = await db.select(db.productTable).get();
+    test('returns an empty list when the product table is empty', () async {
+      final Either<Failure, List<ProductModel>> result = await datasource
+          .loadProducts();
+      final List<ProductModel> products =
+          result.getRight().toNullable() ?? [];
 
-        expect(products.length, isA<int>());
-        expect(products.length, 2);
-        expect(rows.length, isA<int>());
-        expect(rows.length, 2);
-        verify(
-          () => mockAppPreferencesStore.writeHasSeededIllustrativeProducts(),
-        ).called(1);
-        verifyZeroInteractions(mockLoggerService);
-      },
-    );
-
-    test(
-      'does not reseed illustrative products when the table is empty and hasSeeded == true',
-      () async {
-        when(
-          () => mockAppPreferencesStore.readHasSeededIllustrativeProducts(),
-        ).thenAnswer((_) async => true);
-
-        final Either<Failure, List<ProductModel>> result = await datasource
-            .loadProducts();
-        final List<ProductModel> products =
-            result.getRight().toNullable() ?? [];
-
-        expect(products, isEmpty);
-        verifyNever(
-          () => mockAppPreferencesStore.writeHasSeededIllustrativeProducts(),
-        );
-      },
-    );
-
-    test('does not duplicate illustrative products on a second load', () async {
-      await datasource.loadProducts();
-
-      await datasource.loadProducts();
-      final List<ProductRow> rows = await db.select(db.productTable).get();
-
-      expect(rows.length, isA<int>());
-      expect(rows.length, 2);
-    });
-
-    test('succeeds when two loads run concurrently', () async {
-      final List<Either<Failure, List<ProductModel>>> results =
-          await Future.wait([
-            datasource.loadProducts(),
-            datasource.loadProducts(),
-          ]);
-      final List<ProductRow> rows = await db.select(db.productTable).get();
-      final List<StorePriceRow> priceRows = await db
-          .select(db.storePriceTable)
-          .get();
-
-      expect(results, everyElement(isA<Right<Failure, List<ProductModel>>>()));
-      for (final Either<Failure, List<ProductModel>> result in results) {
-        final List<ProductModel> products =
-            result.getRight().toNullable() ?? [];
-        expect(products.length, 2);
-        expect(
-          products.every(
-            (ProductModel product) => product.storePrices.isNotEmpty,
-          ),
-          isTrue,
-        );
-      }
-      expect(rows.length, 2);
-      expect(priceRows.length, 7);
-      verify(
-        () => mockAppPreferencesStore.writeHasSeededIllustrativeProducts(),
-      ).called(2);
+      expect(products, isEmpty);
       verifyZeroInteractions(mockLoggerService);
     });
 
     test(
-      'preserves existing products without inserting illustrative data',
+      'returns the persisted products when the table is not empty',
       () async {
         await db
             .into(db.productTable)
@@ -175,37 +92,7 @@ void main() {
         expect(products.length, 1);
         expect(products.single.id, isA<String>());
         expect(products.single.id, 'custom-product');
-        verify(
-          () => mockAppPreferencesStore.writeHasSeededIllustrativeProducts(),
-        ).called(1);
-      },
-    );
-
-    test(
-      'does not write hasSeeded when the table is non-empty and hasSeeded == true',
-      () async {
-        when(
-          () => mockAppPreferencesStore.readHasSeededIllustrativeProducts(),
-        ).thenAnswer((_) async => true);
-        await db
-            .into(db.productTable)
-            .insert(
-              ProductTableCompanion.insert(
-                id: 'custom-product',
-                name: 'Custom Product',
-                lastUpdatedAt: DateTime(2026, 1, 1, 12),
-              ),
-            );
-
-        final Either<Failure, List<ProductModel>> result = await datasource
-            .loadProducts();
-        final List<ProductModel> products =
-            result.getRight().toNullable() ?? [];
-
-        expect(products.length, 1);
-        verifyNever(
-          () => mockAppPreferencesStore.writeHasSeededIllustrativeProducts(),
-        );
+        verifyZeroInteractions(mockLoggerService);
       },
     );
 
@@ -269,14 +156,38 @@ void main() {
 
   group('Method refreshProduct() returns the correct value', () {
     test('returns the product with newer checked timestamps', () async {
-      await datasource.loadProducts();
       final DateTime oldCheckedAt = DateTime(2020);
       await db
-          .update(db.productTable)
-          .write(ProductTableCompanion(lastUpdatedAt: Value(oldCheckedAt)));
+          .into(db.productTable)
+          .insert(
+            ProductTableCompanion.insert(
+              id: 'product-1',
+              name: 'Product One',
+              lastUpdatedAt: oldCheckedAt,
+            ),
+          );
       await db
-          .update(db.storePriceTable)
-          .write(StorePriceTableCompanion(lastCheckedAt: Value(oldCheckedAt)));
+          .into(db.storePriceTable)
+          .insert(
+            StorePriceTableCompanion.insert(
+              productId: 'product-1',
+              storeName: 'Example Store',
+              productUrl: 'https://example.com/products/1',
+              minorUnits: 999,
+              currencyCode: 'USD',
+              isAvailable: true,
+              lastCheckedAt: oldCheckedAt,
+            ),
+          );
+      await db
+          .into(db.productTable)
+          .insert(
+            ProductTableCompanion.insert(
+              id: 'product-2',
+              name: 'Product Two',
+              lastUpdatedAt: oldCheckedAt,
+            ),
+          );
       final List<ProductModel> products =
           (await datasource.loadProducts()).getRight().toNullable() ?? [];
       final DateTime previous = products.first.lastUpdatedAt;
@@ -314,8 +225,6 @@ void main() {
     });
 
     test('returns Left(NotFoundFailure) when productId is missing', () async {
-      await datasource.loadProducts();
-
       final Either<Failure, ProductModel> result = await datasource
           .refreshProduct('missing');
 
@@ -383,14 +292,51 @@ void main() {
 
   group('Method refreshAllProducts() returns the correct value', () {
     test('returns every product with newer checked timestamps', () async {
-      await datasource.loadProducts();
       final DateTime oldCheckedAt = DateTime(2020);
       await db
-          .update(db.productTable)
-          .write(ProductTableCompanion(lastUpdatedAt: Value(oldCheckedAt)));
+          .into(db.productTable)
+          .insert(
+            ProductTableCompanion.insert(
+              id: 'product-1',
+              name: 'Product One',
+              lastUpdatedAt: oldCheckedAt,
+            ),
+          );
       await db
-          .update(db.storePriceTable)
-          .write(StorePriceTableCompanion(lastCheckedAt: Value(oldCheckedAt)));
+          .into(db.storePriceTable)
+          .insert(
+            StorePriceTableCompanion.insert(
+              productId: 'product-1',
+              storeName: 'Example Store',
+              productUrl: 'https://example.com/products/1',
+              minorUnits: 999,
+              currencyCode: 'USD',
+              isAvailable: true,
+              lastCheckedAt: oldCheckedAt,
+            ),
+          );
+      await db
+          .into(db.productTable)
+          .insert(
+            ProductTableCompanion.insert(
+              id: 'product-2',
+              name: 'Product Two',
+              lastUpdatedAt: oldCheckedAt,
+            ),
+          );
+      await db
+          .into(db.storePriceTable)
+          .insert(
+            StorePriceTableCompanion.insert(
+              productId: 'product-2',
+              storeName: 'Other Store',
+              productUrl: 'https://example.com/products/2',
+              minorUnits: 500,
+              currencyCode: 'USD',
+              isAvailable: true,
+              lastCheckedAt: oldCheckedAt,
+            ),
+          );
       final List<ProductModel> products =
           (await datasource.loadProducts()).getRight().toNullable() ?? [];
       final DateTime previous = products.first.lastUpdatedAt;

@@ -4,7 +4,6 @@ import 'package:fpdart/fpdart.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 // Project imports:
-import 'package:worth_loop/features/products/data/datasources/fake_products.dart';
 import 'package:worth_loop/features/products/data/models/product.model.dart';
 import 'package:worth_loop/features/products/data/models/product_source.model.dart';
 import 'package:worth_loop/features/products/data/models/store_price.model.dart';
@@ -13,7 +12,6 @@ import 'package:worth_loop/features/products/domain/entities/product_source.enti
 import 'package:worth_loop/features/products/domain/entities/store_price.entity.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
-import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
 import 'package:worth_loop/shared/utils/currency_helper_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 
@@ -22,14 +20,12 @@ class ProductsLocalDatasource {
   final AppDatabase _db;
   final CurrencyHelperService _currencyHelperService;
   final LoggerService _loggerService;
-  final AppPreferencesStore _appPreferencesStore;
 
   /// Creates local product persistence backed by [AppDatabase].
   ProductsLocalDatasource(
     this._db,
     this._currencyHelperService,
     this._loggerService,
-    this._appPreferencesStore,
   );
 
   /// Creates a product, and its source when one is given, in one transaction.
@@ -84,22 +80,10 @@ class ProductsLocalDatasource {
     }
   }
 
-  /// Loads every product, inserting illustrative data on the very first
-  /// launch only — a table emptied by later deletions is never reseeded.
+  /// Loads every product.
   Future<Either<Failure, List<ProductModel>>> loadProducts() async {
     try {
-      final bool hasSeeded = await _appPreferencesStore
-          .readHasSeededIllustrativeProducts();
-      final List<ProductModel> products = await _db.transaction(() async {
-        if (!hasSeeded && await _db.productTable.count().getSingle() == 0) {
-          await _replaceProducts(buildFakeProducts(DateTime.now()));
-        }
-        return _readProducts();
-      });
-      if (!hasSeeded) {
-        await _appPreferencesStore.writeHasSeededIllustrativeProducts();
-      }
-      return Right(products);
+      return Right(await _readProducts());
     } on SqliteException catch (error) {
       _loggerService.e(error.toString());
       return Left(DatabaseFailure(error.toString()));
@@ -342,28 +326,6 @@ class ProductsLocalDatasource {
     } on StateError catch (error) {
       _loggerService.e(error.toString());
       return Left(CurrencyFailure(error.toString()));
-    }
-  }
-
-  Future<void> _replaceProducts(List<ProductModel> products) async {
-    for (final ProductModel product in products) {
-      _currencyHelperService.validate(
-        product.storePrices.map((StorePrice price) => price.currentPrice),
-      );
-      await _db.into(_db.productTable).insert(product.toCompanion());
-      for (final StorePrice price in product.storePrices) {
-        final StorePriceTableCompanion companion =
-            StorePriceTableCompanion.insert(
-              productId: product.id,
-              storeName: price.storeName,
-              productUrl: price.productUrl,
-              minorUnits: price.currentPrice.minorUnits,
-              currencyCode: price.currentPrice.currencyCode,
-              isAvailable: price.isAvailable,
-              lastCheckedAt: price.lastCheckedAt,
-            );
-        await _db.into(_db.storePriceTable).insert(companion);
-      }
     }
   }
 

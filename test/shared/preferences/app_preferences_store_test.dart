@@ -31,7 +31,6 @@ void main() {
       expect(await store.readSpacingDensity(), isNull);
       expect(await store.readFontId(), isNull);
       expect(await store.readLocale(), isNull);
-      expect(await store.readHasSeededIllustrativeProducts(), false);
     });
 
     test('persists every supported preference', () async {
@@ -45,7 +44,6 @@ void main() {
       await store.writeSpacingDensity(SpacingDensity.compact);
       await store.writeFontId(FontId.inter);
       await store.writeLocale(AppLocale.pt);
-      await store.writeHasSeededIllustrativeProducts();
 
       final double? zoomLevel = await store.readZoomLevel();
       final ({
@@ -69,7 +67,6 @@ void main() {
       expect(spacingDensity, SpacingDensity.compact);
       expect(fontId, FontId.inter);
       expect(locale, AppLocale.pt);
-      expect(await store.readHasSeededIllustrativeProducts(), true);
     });
 
     test('returns null for malformed preference data', () async {
