@@ -32,7 +32,24 @@ class ProductOfferDecoderService {
     dotAll: true,
   );
   static final RegExp _amazonOffscreenPricePattern = RegExp(
-    r'''<span[^>]*class=["'][^"']*\ba-offscreen\b[^"']*["'][^>]*>([^<]+)</span>''',
+    r'''<span[^>]*class=["'][^"']*\ba-offscreen\b[^"']*["'][^>]*>([^<]*)</span>''',
+    caseSensitive: false,
+  );
+  static final RegExp _amazonAccessiblePricePattern = RegExp(
+    r'''<span[^>]*class=["'][^"']*\baok-offscreen\b[^"']*["'][^>]*>([^<]*)</span>''',
+    caseSensitive: false,
+  );
+  static final RegExp _amazonVisiblePricePartPattern = RegExp(
+    r'''<span[^>]*class=["'][^"']*\b(a-price-symbol|a-price-whole|a-price-decimal|a-price-fraction)\b[^"']*["'][^>]*>(.*?)</span>''',
+    caseSensitive: false,
+    dotAll: true,
+  );
+  static final RegExp _amazonPriceContainerPattern = RegExp(
+    r'''<span[^>]*class=["'][^"']*\ba-price(?=\s|["'])[^"']*["'][^>]*>''',
+    caseSensitive: false,
+  );
+  static final RegExp _amazonUnavailablePattern = RegExp(
+    r'''\b(?:currently\s+unavailable|out\s+of\s+stock|sold\s+out|not\s+available)\b''',
     caseSensitive: false,
   );
   static final RegExp _amazonAmountPattern = RegExp(r'[-+]?\d[\d.,]*');
@@ -124,30 +141,140 @@ class ProductOfferDecoderService {
     if (section == null) {
       return null;
     }
-    final Match? priceMatch = _amazonOffscreenPricePattern.firstMatch(section);
-    final String? priceText = priceMatch?.group(1);
+    final List<RegExp> accessiblePricePatterns = [
+      _amazonAccessiblePricePattern,
+      _amazonOffscreenPricePattern,
+    ];
+    for (final RegExp pattern in accessiblePricePatterns) {
+      for (final Match priceMatch in pattern.allMatches(section)) {
+        final ProductOffer? offer = _decodeAmazonPriceText(
+          priceMatch.group(1),
+          isAvailable: _isAmazonPriceAvailable(section, priceMatch.start),
+        );
+        if (offer != null) {
+          return offer;
+        }
+      }
+    }
+
+    return _decodeAmazonVisiblePrice(section);
+  }
+
+  ProductOffer? _decodeAmazonVisiblePrice(String section) {
+    final List<Match> priceContainers = _amazonPriceContainerPattern
+        .allMatches(section)
+        .toList();
+    for (int index = 0; index < priceContainers.length; index++) {
+      final Match container = priceContainers[index];
+      final int containerEnd = index + 1 < priceContainers.length
+          ? priceContainers[index + 1].start
+          : section.length;
+      final ProductOffer? offer = _decodeAmazonVisiblePriceContainer(
+        section.substring(container.start, containerEnd),
+        section,
+        container.start,
+      );
+      if (offer != null) {
+        return offer;
+      }
+    }
+    return null;
+  }
+
+  ProductOffer? _decodeAmazonVisiblePriceContainer(
+    String container,
+    String section,
+    int containerStart,
+  ) {
+    String? symbol;
+    String? whole;
+    String? decimal;
+    String? fraction;
+    int? firstPricePartStart;
+    for (final Match match in _amazonVisiblePricePartPattern.allMatches(
+      container,
+    )) {
+      firstPricePartStart ??= match.start;
+      final String value = _stripAmazonMarkup(match.group(2) ?? '');
+      switch (match.group(1)?.toLowerCase()) {
+        case 'a-price-symbol':
+          symbol ??= value;
+        case 'a-price-whole':
+          whole ??= value;
+        case 'a-price-decimal':
+          decimal ??= value;
+        case 'a-price-fraction':
+          fraction ??= value;
+      }
+    }
+    if (symbol == null || whole == null) {
+      return null;
+    }
+    final String separator = whole.endsWith('.') || whole.endsWith(',')
+        ? ''
+        : decimal ?? '';
+    final String priceText = '$symbol$whole$separator${fraction ?? ''}';
+    return _decodeAmazonPriceText(
+      priceText,
+      isAvailable: _isAmazonPriceAvailable(
+        section,
+        containerStart + (firstPricePartStart ?? 0),
+      ),
+    );
+  }
+
+  ProductOffer? _decodeAmazonPriceText(
+    String? priceText, {
+    required bool isAvailable,
+  }) {
     if (priceText == null) {
       return null;
     }
-    final Match? amountMatch = _amazonAmountPattern.firstMatch(priceText);
+    final String normalizedPriceText = _stripAmazonMarkup(priceText)
+        .replaceAll(
+          RegExp(r'&(?:euro|#8364|#x20ac);', caseSensitive: false),
+          '€',
+        )
+        .replaceAll(RegExp(r'&(?:pound|#163|#xa3);', caseSensitive: false), '£')
+        .replaceAll(RegExp(r'&(?:nbsp|#160|#xa0);', caseSensitive: false), ' ');
+    final Match? amountMatch = _amazonAmountPattern.firstMatch(
+      normalizedPriceText,
+    );
     final num? amount = _parseNumber(amountMatch?.group(0));
-    final String currencyText = priceText
+    final String currencyText = normalizedPriceText
         .replaceAll(amountMatch?.group(0) ?? '', '')
-        .replaceAll('&nbsp;', '')
-        .replaceAll('\u00a0', '')
+        .replaceAll(RegExp(r'\s+'), '')
         .trim();
     final String? currencyCode =
         _amazonCurrencyCodes[currencyText] ??
-        (RegExp(r'^[A-Z]{3}$').hasMatch(currencyText) ? currencyText : null);
+        (RegExp(r'^[A-Z]{3}$').hasMatch(currencyText.toUpperCase())
+            ? currencyText.toUpperCase()
+            : null);
     if (amount == null || currencyCode == null) {
       return null;
     }
     return ProductOffer(
       minorUnits: (amount.toDouble() * 100).round(),
       currencyCode: currencyCode,
-      isAvailable: true,
+      isAvailable: isAvailable,
     );
   }
+
+  bool _isAmazonPriceAvailable(String section, int priceStart) {
+    final int contextStart = priceStart > 600 ? priceStart - 600 : 0;
+    final int contextEnd = priceStart + 600 < section.length
+        ? priceStart + 600
+        : section.length;
+    return !_amazonUnavailablePattern.hasMatch(
+      section.substring(contextStart, contextEnd),
+    );
+  }
+
+  String _stripAmazonMarkup(String value) => value
+      .replaceAll(RegExp(r'<[^>]+>'), '')
+      .replaceAll('&nbsp;', ' ')
+      .replaceAll('\u00a0', ' ')
+      .trim();
 
   ProductOffer? _decodeJsonLd(String html) {
     for (final Match match in _jsonLdPattern.allMatches(html)) {

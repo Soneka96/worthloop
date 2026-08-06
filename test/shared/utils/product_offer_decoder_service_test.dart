@@ -151,6 +151,119 @@ void main() {
     });
 
     test(
+      'extracts an Amazon aok-offscreen price from the core price block',
+      () {
+        final ProductOffer? result = service.decode('''
+        <div id="corePriceDisplay_mobile_feature_div">
+          <span class="aok-offscreen"> €667.00 </span>
+          <span class="a-price">
+            <span class="a-offscreen"> </span>
+            <span aria-hidden="true">
+              <span class="a-price-symbol">€</span>
+              <span class="a-price-whole">667<span class="a-price-decimal">.</span></span>
+              <span class="a-price-fraction">00</span>
+            </span>
+          </span>
+        </div>
+        <div class="variant-price">
+          <span class="a-price"><span class="a-offscreen">314,00€</span></span>
+        </div>
+      ''', sourceUrl: 'https://www.amazon.es/dp/B0F1D74SCX');
+
+        expect(result, isA<ProductOffer>());
+        expect(result?.minorUnits, 66700);
+        expect(result?.currencyCode, 'EUR');
+        expect(result?.isAvailable, isTrue);
+      },
+    );
+
+    test('extracts an Amazon visible price when a-offscreen is empty', () {
+      final ProductOffer? result = service.decode('''
+        <div id="corePriceDisplay_desktop_feature_div">
+          <span class="a-price">
+            <span class="a-offscreen"> </span>
+            <span aria-hidden="true">
+              <span class="a-price-symbol">€</span>
+              <span class="a-price-whole">667<span class="a-price-decimal">.</span></span>
+              <span class="a-price-fraction">00</span>
+            </span>
+          </span>
+        </div>
+      ''', sourceUrl: 'https://www.amazon.es/dp/B0F1D74SCX');
+
+      expect(result, isA<ProductOffer>());
+      expect(result?.minorUnits, 66700);
+      expect(result?.currencyCode, 'EUR');
+      expect(result?.isAvailable, isTrue);
+    });
+
+    test(
+      'falls through an invalid aok-offscreen price to a valid a-offscreen price',
+      () {
+        final ProductOffer? result = service.decode('''
+        <div id="corePriceDisplay_mobile_feature_div">
+          <span class="aok-offscreen">Price unavailable</span>
+          <span class="a-price"><span class="a-offscreen">&euro;667.00</span></span>
+        </div>
+      ''', sourceUrl: 'https://www.amazon.es/dp/B0F1D74SCX');
+
+        expect(result, isA<ProductOffer>());
+        expect(result?.minorUnits, 66700);
+        expect(result?.currencyCode, 'EUR');
+        expect(result?.isAvailable, isTrue);
+      },
+    );
+
+    test('parses Amazon currency entities and case-insensitive ISO codes', () {
+      final ProductOffer? poundResult = service.decode('''
+        <div id="corePriceDisplay_mobile_feature_div">
+          <span class="aok-offscreen">&pound;19.99</span>
+        </div>
+      ''', sourceUrl: 'https://www.amazon.es/dp/B0F1D74SCX');
+      final ProductOffer? isoResult = service.decode('''
+        <div id="corePriceDisplay_mobile_feature_div">
+          <span class="aok-offscreen">19,99 eur</span>
+        </div>
+      ''', sourceUrl: 'https://www.amazon.es/dp/B0F1D74SCX');
+
+      expect(poundResult?.minorUnits, 1999);
+      expect(poundResult?.currencyCode, 'GBP');
+      expect(isoResult?.minorUnits, 1999);
+      expect(isoResult?.currencyCode, 'EUR');
+    });
+
+    test(
+      'reports an Amazon price unavailable when the selected block says so',
+      () {
+        final ProductOffer? result = service.decode('''
+        <div id="corePriceDisplay_mobile_feature_div">
+          <span class="aok-offscreen"> €667.00 </span>
+          <span>Currently unavailable</span>
+        </div>
+      ''', sourceUrl: 'https://www.amazon.es/dp/B0F1D74SCX');
+
+        expect(result, isA<ProductOffer>());
+        expect(result?.minorUnits, 66700);
+        expect(result?.currencyCode, 'EUR');
+        expect(result?.isAvailable, isFalse);
+      },
+    );
+
+    test('ignores an unavailable message outside the Amazon price block', () {
+      final ProductOffer? result = service.decode('''
+        <div>Currently unavailable option</div>
+        <div id="corePriceDisplay_mobile_feature_div">
+          <span class="aok-offscreen"> €667.00 </span>
+        </div>
+      ''', sourceUrl: 'https://www.amazon.es/dp/B0F1D74SCX');
+
+      expect(result, isA<ProductOffer>());
+      expect(result?.minorUnits, 66700);
+      expect(result?.currencyCode, 'EUR');
+      expect(result?.isAvailable, isTrue);
+    });
+
+    test(
       'decode() returns Amazon dollar and pound prices from shared offer markup',
       () {
         final ProductOffer? dollarResult = service.decode(r'''
