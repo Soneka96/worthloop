@@ -25,6 +25,7 @@ import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/utils/currency_helper_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/product_price_fetch_orchestrator_service.dart';
+import 'package:worth_loop/shared/utils/product_url_cleaner_service.dart';
 
 /// Registers tracked-product dependencies.
 void initProductsDependencies() {
@@ -33,6 +34,7 @@ void initProductsDependencies() {
       sl<AppDatabase>(),
       sl<CurrencyHelperService>(),
       sl<LoggerService>(),
+      sl<ProductUrlCleanerService>(),
     ),
   );
   sl.registerLazySingleton<PriceResponseDetector>(PriceResponseDetector.new);
