@@ -106,6 +106,45 @@ void main() {
     }
     monochrome.dispose();
   });
+
+  test('adaptive launcher layers keep the mark inside the 66dp safe zone', () async {
+    for (final String path in <String>[
+      'android/app/src/main/res/drawable-nodpi/ic_launcher_foreground.png',
+      'android/app/src/main/res/drawable-nodpi/ic_launcher_monochrome.png',
+    ]) {
+      final ui.Image image = await _decodePng(path);
+      expect(image.width, 1254);
+      expect(image.height, 1254);
+
+      final ByteData? pixels = await image.toByteData(
+        format: ui.ImageByteFormat.rawRgba,
+      );
+      expect(pixels, isNotNull);
+
+      int minX = image.width;
+      int minY = image.height;
+      int maxX = -1;
+      int maxY = -1;
+      for (int y = 0; y < image.height; y++) {
+        for (int x = 0; x < image.width; x++) {
+          final int alpha = pixels!.getUint8((y * image.width + x) * 4 + 3);
+          if (alpha > 12) {
+            minX = minX < x ? minX : x;
+            minY = minY < y ? minY : y;
+            maxX = maxX > x ? maxX : x;
+            maxY = maxY > y ? maxY : y;
+          }
+        }
+      }
+
+      final int safeMargin = (1254 * 21 / 108).round();
+      expect(minX, greaterThanOrEqualTo(safeMargin));
+      expect(minY, greaterThanOrEqualTo(safeMargin));
+      expect(maxX, lessThan(1254 - safeMargin));
+      expect(maxY, lessThan(1254 - safeMargin));
+      image.dispose();
+    }
+  });
 }
 
 Future<ui.Image> _decodePng(String path) async {
