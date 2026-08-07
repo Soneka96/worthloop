@@ -29,6 +29,31 @@ class AppPreferencesStore {
   static const String _fontIdKey = 'fontId';
   static const String _localeKey = 'locale';
   static const String _priceAlertEventsKey = 'priceAlertEvents';
+  static const String _backgroundRefreshCompletionKey =
+      'backgroundRefreshCompletion';
+
+  /// Records that a background refresh finished, including its outcome.
+  Future<void> markBackgroundRefreshCompleted({required bool succeeded}) async {
+    await _updateLocked((Map<String, dynamic> data) {
+      data[_backgroundRefreshCompletionKey] = <String, dynamic>{
+        'succeeded': succeeded,
+        'completedAt': DateTime.now().toIso8601String(),
+      };
+      return true;
+    });
+  }
+
+  /// Consumes the completion marker left by the background engine.
+  Future<bool?> consumeBackgroundRefreshCompletion() async {
+    return _updateLocked((Map<String, dynamic> data) {
+      final Object? value = data[_backgroundRefreshCompletionKey];
+      data.remove(_backgroundRefreshCompletionKey);
+      if (value is! Map<String, dynamic>) {
+        return null;
+      }
+      return value['succeeded'] is bool ? value['succeeded'] as bool : null;
+    });
+  }
 
   /// Atomically claims [eventKey], returning `false` when it was already seen.
   Future<bool> claimPriceAlertEvent(String productId, String eventKey) async {

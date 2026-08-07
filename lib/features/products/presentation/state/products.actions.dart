@@ -15,6 +15,15 @@ class LoadProductsAction extends Equatable {
   List<Object?> get props => [];
 }
 
+/// Reloads persisted products after a background refresh returns.
+@immutable
+class ReconcileBackgroundRefreshAction extends Equatable {
+  const ReconcileBackgroundRefreshAction();
+
+  @override
+  List<Object?> get props => [];
+}
+
 /// Carries products loaded by middleware.
 @immutable
 class ProductsLoadedAction extends Equatable {

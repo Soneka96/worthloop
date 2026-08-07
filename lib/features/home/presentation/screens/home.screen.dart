@@ -36,6 +36,7 @@ class HomeScreen extends StatelessWidget {
         return ForegroundRefreshObserver(
           interval: Duration(minutes: viewmodel.refreshIntervalMinutes),
           onRefresh: viewmodel.onRefreshAll,
+          onResume: viewmodel.onResume,
           lastUpdatedAt: viewmodel.oldestUpdatedAt,
           child: Scaffold(
             floatingActionButton: FloatingActionButton.small(

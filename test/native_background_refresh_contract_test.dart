@@ -21,6 +21,10 @@ void main() {
     expect(backgroundService, contains('ENGINE_CHANNEL'));
     expect(backgroundService, contains('"refreshNow"'));
     expect(backgroundService, contains('"stopService"'));
+    expect(backgroundService, contains('"refreshStarted"'));
+    expect(backgroundService, contains('"refreshCompleted"'));
+    expect(backgroundService, contains('"refreshFailed"'));
+    expect(backgroundService, contains('RESULT_CHANNEL_ID'));
     expect(backgroundService, contains('consumePendingRefreshRequest'));
     expect(
       backgroundService,
@@ -28,5 +32,19 @@ void main() {
     );
     expect(backgroundService, contains('pendingRefreshRequest.set(true)'));
     expect(backgroundService, contains('getAndSet(false)'));
+    expect(backgroundService, contains('if (!engineStarted)'));
+    expect(backgroundService, contains('startFlutterEngine()'));
+  });
+
+  test('background entrypoint reports refresh lifecycle status', () {
+    final entrypoint = File(
+      'lib/shared/background_refresh_entrypoint.dart',
+    ).readAsStringSync();
+
+    expect(entrypoint, contains("'refreshStarted'"));
+    expect(entrypoint, contains("'refreshCompleted'"));
+    expect(entrypoint, contains("'refreshFailed'"));
+    expect(entrypoint, contains('runRefresh(force: false)'));
+    expect(entrypoint, contains('runRefresh(force: true)'));
   });
 }

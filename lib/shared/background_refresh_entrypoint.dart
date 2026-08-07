@@ -8,6 +8,7 @@ import 'package:worth_loop/features/products/domain/repositories/Iproducts.repos
 import 'package:worth_loop/features/settings/domain/usecases/load_refresh_settings.usecase.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/usecase/no_params.dart';
+import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
 import 'package:worth_loop/shared/utils/background_refresh_loop.dart';
 import 'package:worth_loop/shared/utils/background_refresh_runner.dart';
 import 'package:worth_loop/shared/utils/product_price_alert_notification_coordinator.dart';
@@ -25,12 +26,56 @@ Future<void> backgroundRefreshEntrypoint() async {
     onPriceDrop: sl<ProductPriceAlertNotificationCoordinator>().notify,
   );
 
-  final BackgroundRefreshLoop loop = BackgroundRefreshLoop(
-    runOnce: runner.runOnce,
-    runManualOnce: () => runner.runOnce(force: true),
-  );
   const MethodChannel engineChannel = MethodChannel(
     'io.github.soneka96.worthloop/background_refresh_engine',
+  );
+  Future<void> notifyRefreshStatus(String method) async {
+    try {
+      await engineChannel.invokeMethod<void>(method);
+    } on MissingPluginException {
+      // Notifications are best effort when running without the native host.
+    } on PlatformException {
+      // Notification failures must not stop product refreshes.
+    }
+  }
+
+  Future<Duration?> runRefresh({required bool force}) async {
+    bool? refreshSucceeded;
+    Future<void> markCompletion(bool succeeded) async {
+      try {
+        await sl<AppPreferencesStore>().markBackgroundRefreshCompleted(
+          succeeded: succeeded,
+        );
+      } catch (_) {
+        // Reconciliation markers are best effort and must not stop a refresh.
+      }
+    }
+
+    try {
+      final Duration? nextDelay = await runner.runOnce(
+        force: force,
+        onRefreshStarted: () => notifyRefreshStatus('refreshStarted'),
+        onRefreshOutcome: (bool succeeded) async {
+          refreshSucceeded = succeeded;
+        },
+      );
+      if (nextDelay != null) {
+        await markCompletion(refreshSucceeded ?? false);
+        await notifyRefreshStatus(
+          refreshSucceeded == false ? 'refreshFailed' : 'refreshCompleted',
+        );
+      }
+      return nextDelay;
+    } catch (_) {
+      await markCompletion(false);
+      await notifyRefreshStatus('refreshFailed');
+      rethrow;
+    }
+  }
+
+  final BackgroundRefreshLoop loop = BackgroundRefreshLoop(
+    runOnce: () => runRefresh(force: false),
+    runManualOnce: () => runRefresh(force: true),
   );
   engineChannel.setMethodCallHandler((MethodCall call) async {
     if (call.method == 'refreshNow') {

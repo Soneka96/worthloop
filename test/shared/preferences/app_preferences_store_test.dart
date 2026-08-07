@@ -41,6 +41,15 @@ void main() {
       expect(await store.claimPriceAlertEvent('product-2', 'event-1'), isTrue);
     });
 
+    test('persists and consumes background refresh completion once', () async {
+      expect(await store.consumeBackgroundRefreshCompletion(), isNull);
+
+      await store.markBackgroundRefreshCompleted(succeeded: false);
+
+      expect(await store.consumeBackgroundRefreshCompletion(), isFalse);
+      expect(await store.consumeBackgroundRefreshCompletion(), isNull);
+    });
+
     test('persists every supported preference', () async {
       await store.writeZoomLevel(125);
       await store.writeThemeSelection(

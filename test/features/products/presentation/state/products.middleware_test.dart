@@ -42,6 +42,7 @@ import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/url_launcher_service.dart';
 import 'package:worth_loop/shared/utils/product_price_alert_notification_coordinator.dart';
 import 'package:worth_loop/shared/utils/android_background_refresh_service.dart';
+import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
 import '../../fixtures/product.fixture.dart';
 import '../../fixtures/product_source.fixture.dart';
 
@@ -60,6 +61,8 @@ class MockRefreshAllProductsUseCase extends Mock
 
 class MockAndroidBackgroundRefreshService extends Mock
     implements AndroidBackgroundRefreshService {}
+
+class MockAppPreferencesStore extends Mock implements AppPreferencesStore {}
 
 class MockAddSourceUseCase extends Mock implements AddSourceUseCase {}
 
@@ -105,6 +108,7 @@ void main() {
   late MockRefreshSourceUseCase mockRefreshSourceUseCase;
   late MockRefreshAllProductsUseCase mockRefreshAllProductsUseCase;
   late MockAndroidBackgroundRefreshService mockBackgroundRefreshService;
+  late MockAppPreferencesStore mockPreferencesStore;
   late MockAddSourceUseCase mockAddSourceUseCase;
   late MockEditSourceUseCase mockEditSourceUseCase;
   late MockDeleteSourceUseCase mockDeleteSourceUseCase;
@@ -139,6 +143,7 @@ void main() {
     mockRefreshSourceUseCase = MockRefreshSourceUseCase();
     mockRefreshAllProductsUseCase = MockRefreshAllProductsUseCase();
     mockBackgroundRefreshService = MockAndroidBackgroundRefreshService();
+    mockPreferencesStore = MockAppPreferencesStore();
     mockAddSourceUseCase = MockAddSourceUseCase();
     mockEditSourceUseCase = MockEditSourceUseCase();
     mockDeleteSourceUseCase = MockDeleteSourceUseCase();
@@ -166,6 +171,7 @@ void main() {
     sl.registerSingleton<AndroidBackgroundRefreshService>(
       mockBackgroundRefreshService,
     );
+    sl.registerSingleton<AppPreferencesStore>(mockPreferencesStore);
     sl.registerSingleton<AddSourceUseCase>(mockAddSourceUseCase);
     sl.registerSingleton<EditSourceUseCase>(mockEditSourceUseCase);
     sl.registerSingleton<DeleteSourceUseCase>(mockDeleteSourceUseCase);
@@ -633,6 +639,25 @@ void main() {
         await Future<void>.delayed(Duration.zero);
       },
     );
+  });
+
+  test('reconciles persisted background results and clears progress', () async {
+    final Product product = buildProduct();
+    when(
+      () => mockPreferencesStore.consumeBackgroundRefreshCompletion(),
+    ).thenAnswer((_) async => true);
+    when(
+      () => mockLoadProductsUseCase(any()),
+    ).thenAnswer((_) async => Right([product]));
+
+    middleware.call(store, const ReconcileBackgroundRefreshAction(), next);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(actionLog.first, const ReconcileBackgroundRefreshAction());
+    expect(actionLog.whereType<ProductsLoadedAction>().single.products, [
+      product,
+    ]);
+    expect(actionLog.last, const SourceRefreshFinishedAction());
   });
 
   group('ProductsMiddleware processes RefreshAllProductsAction', () {

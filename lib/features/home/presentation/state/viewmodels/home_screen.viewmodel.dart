@@ -56,6 +56,9 @@ class HomeScreenViewModel extends Equatable {
   /// Dispatches [RefreshAllProductsAction].
   final void Function() onRefreshAll;
 
+  /// Reloads persisted products and clears background refresh progress.
+  final void Function() onResume;
+
   /// Dispatches [GoToSettingsAction].
   final void Function() onOpenSettings;
 
@@ -80,6 +83,7 @@ class HomeScreenViewModel extends Equatable {
     this.refreshStatus,
     required this.createdProductId,
     required this.onRefreshAll,
+    required this.onResume,
     required this.onOpenSettings,
     required this.onOpenProduct,
     required this.onCreateProduct,
@@ -111,6 +115,9 @@ class HomeScreenViewModel extends Equatable {
       refreshStatus: ProductsSelectors.refreshStatusSelector(store.state),
       createdProductId: ProductsSelectors.createdProductIdSelector(store.state),
       onRefreshAll: () => store.dispatch(const RefreshAllProductsAction()),
+      onResume: () {
+        store.dispatch(const ReconcileBackgroundRefreshAction());
+      },
       onOpenSettings: () => store.dispatch(const GoToSettingsAction()),
       onOpenProduct: (String productId) =>
           store.dispatch(GoToProductDetailsAction(productId)),

@@ -61,6 +61,7 @@ void main() {
     when(() => mockViewModel.productCreationError).thenReturn(null);
     when(() => mockViewModel.createdProductId).thenReturn(null);
     when(() => mockViewModel.onRefreshAll).thenReturn(() {});
+    when(() => mockViewModel.onResume).thenReturn(() {});
     when(() => mockViewModel.onOpenSettings).thenReturn(() {});
     when(() => mockViewModel.onOpenProduct).thenReturn((_) {});
     when(() => mockViewModel.onCreateProduct).thenReturn((_) {});

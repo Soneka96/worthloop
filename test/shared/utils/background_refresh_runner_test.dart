@@ -38,6 +38,23 @@ void main() {
       expect(refreshCalls, 1);
     });
 
+    test('reports whether the refresh use case succeeded', () async {
+      bool? succeeded;
+      final BackgroundRefreshRunner runner = BackgroundRefreshRunner(
+        loadSettings: () async => const Right(
+          RefreshSettings(intervalMinutes: 60, browserRefreshEnabled: true),
+        ),
+        refreshAllProducts: ({onPriceDrop}) async =>
+            const Left(DatabaseFailure('fetch failed')),
+      );
+
+      await runner.runOnce(
+        onRefreshOutcome: (bool value) async => succeeded = value,
+      );
+
+      expect(succeeded, isFalse);
+    });
+
     test('stops without refreshing when browser refresh is disabled', () async {
       int refreshCalls = 0;
       final BackgroundRefreshRunner runner = BackgroundRefreshRunner(

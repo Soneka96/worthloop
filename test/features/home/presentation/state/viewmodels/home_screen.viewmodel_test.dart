@@ -69,6 +69,7 @@ void main() {
       expect(viewmodel.productCreationError, 'creation failed');
       expect(viewmodel.createdProductId, 'product-1');
       expect(viewmodel.onRefreshAll, isA<Function()>());
+      expect(viewmodel.onResume, isA<Function()>());
       expect(viewmodel.onOpenSettings, isA<Function()>());
       expect(viewmodel.onOpenProduct, isA<void Function(String)>());
       expect(viewmodel.onCreateProduct, isA<void Function(String)>());
@@ -126,6 +127,16 @@ void main() {
         expect(dispatchedActions, [const RefreshAllProductsAction()]);
       },
     );
+
+    test('Method onResume reloads products and clears refresh progress', () {
+      final HomeScreenViewModel viewmodel = HomeScreenViewModel.fromStore(
+        buildStore(AppState.initial()),
+      );
+
+      viewmodel.onResume();
+
+      expect(dispatchedActions, [const ReconcileBackgroundRefreshAction()]);
+    });
 
     test('Method onOpenSettings dispatches GoToSettingsAction when called', () {
       final HomeScreenViewModel viewmodel = HomeScreenViewModel.fromStore(

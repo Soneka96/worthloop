@@ -12,6 +12,9 @@ class ForegroundRefreshObserver extends StatefulWidget {
   /// Refreshes all tracked products.
   final VoidCallback onRefresh;
 
+  /// Reconciles persisted results when the app returns to the foreground.
+  final VoidCallback? onResume;
+
   /// Most recent persisted product update time.
   final DateTime? lastUpdatedAt;
 
@@ -21,6 +24,7 @@ class ForegroundRefreshObserver extends StatefulWidget {
   const ForegroundRefreshObserver({
     required this.interval,
     required this.onRefresh,
+    this.onResume,
     this.lastUpdatedAt,
     required this.child,
     super.key,
@@ -65,6 +69,7 @@ class _ForegroundRefreshObserverState extends State<ForegroundRefreshObserver>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _isForeground = state == AppLifecycleState.resumed;
     if (_isForeground) {
+      widget.onResume?.call();
       _refreshIfDue();
       _startTimer();
     } else {

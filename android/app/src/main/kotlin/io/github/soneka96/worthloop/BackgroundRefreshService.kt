@@ -8,6 +8,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.embedding.engine.loader.FlutterLoader
@@ -20,6 +21,8 @@ class BackgroundRefreshService : Service() {
     companion object {
         const val CHANNEL_ID = "background_refresh"
         const val NOTIFICATION_ID = 1001
+        const val RESULT_NOTIFICATION_ID = 1002
+        const val RESULT_CHANNEL_ID = "background_refresh_results"
         const val ACTION_REQUEST_REFRESH =
             "io.github.soneka96.worthloop.action.REQUEST_REFRESH"
         const val ENGINE_CHANNEL =
@@ -42,12 +45,18 @@ class BackgroundRefreshService : Service() {
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, createNotification())
         isRunning = true
-        startFlutterEngine()
     }
+
+    private var engineStarted = false
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_REQUEST_REFRESH) {
             pendingRefreshRequest.set(true)
+        }
+        if (!engineStarted) {
+            startFlutterEngine()
+            engineStarted = true
+        } else if (intent?.action == ACTION_REQUEST_REFRESH) {
             notifyFlutterEngine()
         }
         return START_NOT_STICKY
@@ -57,6 +66,7 @@ class BackgroundRefreshService : Service() {
         isRunning = false
         pendingRefreshRequest.set(false)
         engineChannel = null
+        engineStarted = false
         flutterEngine?.destroy()
         flutterEngine = null
         super.onDestroy()
@@ -73,6 +83,13 @@ class BackgroundRefreshService : Service() {
             )
             getSystemService(NotificationManager::class.java)
                 .createNotificationChannel(channel)
+            val resultChannel = NotificationChannel(
+                RESULT_CHANNEL_ID,
+                "Background refresh results",
+                NotificationManager.IMPORTANCE_DEFAULT,
+            )
+            getSystemService(NotificationManager::class.java)
+                .createNotificationChannel(resultChannel)
         }
     }
 
@@ -87,6 +104,38 @@ class BackgroundRefreshService : Service() {
             .build()
     }
 
+    private fun updateForegroundNotification(message: String) {
+        NotificationManagerCompat.from(this).notify(
+            NOTIFICATION_ID,
+            createNotification(message),
+        )
+    }
+
+    private fun createNotification(message: String): Notification {
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle("WorthLoop")
+            .setContentText(message)
+            .setOngoing(true)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+    }
+
+    private fun showRefreshResult(title: String, message: String) {
+        NotificationManagerCompat.from(this).notify(
+            RESULT_NOTIFICATION_ID,
+            NotificationCompat.Builder(this, RESULT_CHANNEL_ID)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setAutoCancel(true)
+                .setCategory(NotificationCompat.CATEGORY_EVENT)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .build(),
+        )
+    }
+
     private fun startFlutterEngine() {
         val engine = FlutterEngine(this)
         GeneratedPluginRegistrant.registerWith(engine)
@@ -97,6 +146,20 @@ class BackgroundRefreshService : Service() {
                     result.success(consumePendingRefreshRequest())
                 "stopService" -> {
                     stopSelf()
+                    result.success(true)
+                }
+                "refreshStarted" -> {
+                    updateForegroundNotification("Refreshing prices…")
+                    result.success(true)
+                }
+                "refreshCompleted" -> {
+                    updateForegroundNotification("Last refresh completed")
+                    showRefreshResult("Refresh complete", "Product prices were updated")
+                    result.success(true)
+                }
+                "refreshFailed" -> {
+                    updateForegroundNotification("Last refresh failed")
+                    showRefreshResult("Refresh failed", "Some product prices could not be updated")
                     result.success(true)
                 }
                 else -> result.notImplemented()

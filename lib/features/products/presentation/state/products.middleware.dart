@@ -31,6 +31,7 @@ import 'package:worth_loop/shared/navigation/app_routes.dart';
 import 'package:worth_loop/shared/navigation/navigator_service.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/usecase/no_params.dart';
+import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/url_launcher_service.dart';
 import 'package:worth_loop/shared/utils/product_price_alert_notification_coordinator.dart';
@@ -51,6 +52,8 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
     switch (action) {
       case LoadProductsAction _:
         _loadProducts(store, action);
+      case ReconcileBackgroundRefreshAction _:
+        _reconcileBackgroundRefresh(store);
       case CreateProductAction _:
         _createProduct(store, action);
       case RefreshProductAction _:
@@ -110,6 +113,28 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
         store.dispatch(ProductsLoadedAction(products));
       },
     );
+  }
+
+  /// Reloads persisted background results and clears refresh progress.
+  Future<void> _reconcileBackgroundRefresh(Store<AppState> store) async {
+    final bool? refreshSucceeded = await sl<AppPreferencesStore>()
+        .consumeBackgroundRefreshCompletion();
+    if (refreshSucceeded == null) {
+      return;
+    }
+    await (await sl<LoadProductsUseCase>()(NoParams())).fold(
+      (failure) {
+        sl<LoggerService>().e(failure.message, showPopup: true);
+        store.dispatch(ProductsLoadFailedAction(failure.message));
+      },
+      (List<Product> products) {
+        store.dispatch(ProductsLoadedAction(products));
+      },
+    );
+    if (!refreshSucceeded) {
+      store.dispatch(RefreshAllProductsFailedAction(t.common.refreshFailed));
+    }
+    store.dispatch(const SourceRefreshFinishedAction());
   }
 
   /// Handles [RefreshProductAction].

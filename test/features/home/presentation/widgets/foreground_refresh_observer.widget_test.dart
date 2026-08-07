@@ -9,11 +9,13 @@ void main() {
   Widget buildWidget({
     required Duration interval,
     required VoidCallback onRefresh,
+    VoidCallback? onResume,
     DateTime? lastUpdatedAt,
   }) => MaterialApp(
     home: ForegroundRefreshObserver(
       interval: interval,
       onRefresh: onRefresh,
+      onResume: onResume,
       lastUpdatedAt: lastUpdatedAt,
       child: const Text('watchlist'),
     ),
@@ -215,6 +217,27 @@ void main() {
 
         expect(refreshCount, isA<int>());
         expect(refreshCount, 1);
+      },
+    );
+
+    testWidgets(
+      'ForegroundRefreshObserver calls onResume when returning to foreground',
+      (tester) async {
+        int resumeCount = 0;
+        await tester.pumpWidget(
+          buildWidget(
+            interval: const Duration(hours: 1),
+            onRefresh: () {},
+            onResume: () => resumeCount += 1,
+          ),
+        );
+
+        tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+
+        expect(resumeCount, 1);
       },
     );
 
