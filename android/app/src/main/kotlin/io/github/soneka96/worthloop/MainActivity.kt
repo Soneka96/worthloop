@@ -64,6 +64,7 @@ class MainActivity : FlutterActivity() {
             when (call.method) {
                 "start" -> result.success(startBackgroundRefresh())
                 "stop" -> result.success(stopBackgroundRefresh())
+                "requestRefresh" -> result.success(requestBackgroundRefresh())
                 "isRunning" -> result.success(BackgroundRefreshService.isRunning)
                 else -> result.notImplemented()
                 }
@@ -144,6 +145,22 @@ class MainActivity : FlutterActivity() {
 
     private fun stopBackgroundRefresh(): Boolean {
         return stopService(Intent(this, BackgroundRefreshService::class.java))
+    }
+
+    private fun requestBackgroundRefresh(): Boolean {
+        return try {
+            val intent = Intent(this, BackgroundRefreshService::class.java).apply {
+                action = BackgroundRefreshService.ACTION_REQUEST_REFRESH
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent)
+            } else {
+                startService(intent)
+            }
+            true
+        } catch (_: Exception) {
+            false
+        }
     }
 
     private fun areNotificationsEnabled(): Boolean =

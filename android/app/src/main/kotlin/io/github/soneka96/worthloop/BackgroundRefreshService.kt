@@ -13,12 +13,22 @@ import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.embedding.engine.loader.FlutterLoader
 import io.flutter.FlutterInjector
 import io.flutter.plugins.GeneratedPluginRegistrant
+import java.util.concurrent.atomic.AtomicBoolean
 
 class BackgroundRefreshService : Service() {
     companion object {
         const val CHANNEL_ID = "background_refresh"
         const val NOTIFICATION_ID = 1001
+        const val ACTION_REQUEST_REFRESH =
+            "io.github.soneka96.worthloop.action.REQUEST_REFRESH"
+
+        private val pendingRefreshRequest = AtomicBoolean(false)
+
         var isRunning: Boolean = false
+
+        fun consumePendingRefreshRequest(): Boolean {
+            return pendingRefreshRequest.getAndSet(false)
+        }
     }
 
     private var flutterEngine: FlutterEngine? = null
@@ -32,11 +42,15 @@ class BackgroundRefreshService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_REQUEST_REFRESH) {
+            pendingRefreshRequest.set(true)
+        }
         return START_NOT_STICKY
     }
 
     override fun onDestroy() {
         isRunning = false
+        pendingRefreshRequest.set(false)
         flutterEngine?.destroy()
         flutterEngine = null
         super.onDestroy()

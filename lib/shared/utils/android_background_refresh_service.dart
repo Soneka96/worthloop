@@ -35,6 +35,17 @@ class AndroidBackgroundRefreshService {
     }
   }
 
+  /// Requests an immediate refresh from the background service.
+  Future<bool> requestRefresh() async {
+    try {
+      return await _methodChannel.invokeMethod<bool>('requestRefresh') ?? false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException {
+      return false;
+    }
+  }
+
   /// Returns whether the foreground service is currently running.
   Future<bool> isRunning() async {
     try {

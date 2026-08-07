@@ -45,6 +45,16 @@ void main() {
       expect(await service.stop(), isTrue);
     });
 
+    test('requestRefresh returns the native result', () async {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (MethodCall call) async {
+            expect(call.method, 'requestRefresh');
+            return true;
+          });
+
+      expect(await service.requestRefresh(), isTrue);
+    });
+
     test('isRunning returns the native result', () async {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(channel, (MethodCall call) async {
@@ -58,6 +68,7 @@ void main() {
     test('returns false when the native bridge is unavailable', () async {
       expect(await service.start(), isFalse);
       expect(await service.stop(), isFalse);
+      expect(await service.requestRefresh(), isFalse);
       expect(await service.isRunning(), isFalse);
     });
   });
