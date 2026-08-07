@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 // Project imports:
 import 'package:worth_loop/shared/db/app_database.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 
 void main() {
   late AppDatabase db;
@@ -53,37 +54,46 @@ void main() {
       expect(row.currencyCode, isNull);
       expect(row.isAvailable, isNull);
       expect(row.lastCheckedAt, isNull);
+      expect(row.lastRefreshStatus, isNull);
+      expect(row.lastRefreshAt, isNull);
     });
 
-    test('stores and reads a product source row with a fetched offer', () async {
-      await db
-          .into(db.productSourceTable)
-          .insert(
-            ProductSourceTableCompanion.insert(
-              id: 'source-1',
-              productId: 'product-1',
-              url: 'https://example.com/products/1',
-              merchantDomain: 'example.com',
-              minorUnits: const Value(49999),
-              currencyCode: const Value('EUR'),
-              isAvailable: const Value(true),
-              lastCheckedAt: Value(DateTime(2026, 1, 1, 12)),
-              createdAt: DateTime(2026, 1, 1),
-            ),
-          );
+    test(
+      'stores and reads a product source row with a fetched offer',
+      () async {
+        await db
+            .into(db.productSourceTable)
+            .insert(
+              ProductSourceTableCompanion.insert(
+                id: 'source-1',
+                productId: 'product-1',
+                url: 'https://example.com/products/1',
+                merchantDomain: 'example.com',
+                minorUnits: const Value(49999),
+                currencyCode: const Value('EUR'),
+                isAvailable: const Value(true),
+                lastCheckedAt: Value(DateTime(2026, 1, 1, 12)),
+                lastRefreshStatus: const Value('blocked'),
+                lastRefreshAt: Value(DateTime(2026, 1, 3, 12)),
+                createdAt: DateTime(2026, 1, 1),
+              ),
+            );
 
-      final ProductSourceRow row = await db
-          .select(db.productSourceTable)
-          .getSingle();
+        final ProductSourceRow row = await db
+            .select(db.productSourceTable)
+            .getSingle();
 
-      expect(row.minorUnits, isA<int>());
-      expect(row.minorUnits, 49999);
-      expect(row.currencyCode, isA<String>());
-      expect(row.currencyCode, 'EUR');
-      expect(row.isAvailable, isA<bool>());
-      expect(row.isAvailable, isTrue);
-      expect(row.lastCheckedAt, DateTime(2026, 1, 1, 12));
-    });
+        expect(row.minorUnits, isA<int>());
+        expect(row.minorUnits, 49999);
+        expect(row.currencyCode, isA<String>());
+        expect(row.currencyCode, 'EUR');
+        expect(row.isAvailable, isA<bool>());
+        expect(row.isAvailable, isTrue);
+        expect(row.lastCheckedAt, DateTime(2026, 1, 1, 12));
+        expect(row.lastRefreshStatus, PriceFetchStatus.blocked.name);
+        expect(row.lastRefreshAt, DateTime(2026, 1, 3, 12));
+      },
+    );
 
     test('stores and reads isAvailable = false', () async {
       await db

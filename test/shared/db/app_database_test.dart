@@ -35,9 +35,9 @@ void main() {
       await db.close();
     });
 
-    test('AppDatabase.forTesting opens with schema version 5', () {
+    test('AppDatabase.forTesting opens with schema version 6', () {
       expect(db.schemaVersion, isA<int>());
-      expect(db.schemaVersion, 5);
+      expect(db.schemaVersion, 6);
     });
 
     test('AppDatabase.forTesting exposes the WorthLoop tables', () async {
@@ -73,6 +73,8 @@ void main() {
           'previous_price_minor_units',
           'previous_price_currency_code',
           'price_changed_at',
+          'last_refresh_status',
+          'last_refresh_at',
         ]),
       );
     });
@@ -102,6 +104,8 @@ void main() {
               previousPriceMinorUnits: const Value(59999),
               previousPriceCurrencyCode: const Value('EUR'),
               priceChangedAt: Value(DateTime(2026, 1, 2, 12)),
+              lastRefreshStatus: const Value('networkError'),
+              lastRefreshAt: Value(DateTime(2026, 1, 3, 12)),
             ),
           );
 
@@ -116,6 +120,8 @@ void main() {
       expect(source.previousPriceMinorUnits, 59999);
       expect(source.previousPriceCurrencyCode, 'EUR');
       expect(source.priceChangedAt, DateTime(2026, 1, 2, 12));
+      expect(source.lastRefreshStatus, 'networkError');
+      expect(source.lastRefreshAt, DateTime(2026, 1, 3, 12));
     });
   });
 
@@ -220,6 +226,52 @@ void main() {
       expect(products.single.id, 'legacy-product');
       expect(sources, isEmpty);
       expect(settings, isEmpty);
+    });
+
+    test('migrates schema version 5 with refresh metadata columns', () async {
+      final File file = File(p.join(tempDirectory.path, 'version5.sqlite'));
+      final sqlite.Database legacy = sqlite.sqlite3.open(file.path);
+      legacy.execute('''
+        CREATE TABLE product_table (
+          id TEXT NOT NULL PRIMARY KEY,
+          name TEXT NOT NULL,
+          image_url TEXT,
+          last_updated_at INTEGER NOT NULL,
+          previous_best_price_minor_units INTEGER,
+          previous_best_price_currency_code TEXT,
+          best_price_changed_at INTEGER
+        )
+      ''');
+      legacy.execute('''
+        CREATE TABLE product_source_table (
+          id TEXT NOT NULL PRIMARY KEY,
+          product_id TEXT NOT NULL REFERENCES product_table (id) ON DELETE CASCADE,
+          url TEXT NOT NULL,
+          merchant_domain TEXT NOT NULL,
+          minor_units INTEGER,
+          currency_code TEXT,
+          previous_price_minor_units INTEGER,
+          previous_price_currency_code TEXT,
+          is_available INTEGER,
+          last_checked_at INTEGER,
+          price_changed_at INTEGER,
+          created_at INTEGER NOT NULL,
+          UNIQUE (product_id, url)
+        )
+      ''');
+      legacy.execute('PRAGMA user_version = 5');
+      legacy.dispose();
+
+      final AppDatabase migrated = AppDatabase.forTesting(NativeDatabase(file));
+      final List<QueryRow> columns = await migrated
+          .customSelect('PRAGMA table_info(product_source_table)')
+          .get();
+
+      expect(
+        columns.map((QueryRow row) => row.data['name']),
+        containsAll(['last_refresh_status', 'last_refresh_at']),
+      );
+      await migrated.close();
     });
   });
 }

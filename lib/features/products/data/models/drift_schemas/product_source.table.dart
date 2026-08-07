@@ -43,6 +43,12 @@ class ProductSourceTable extends Table {
   /// When the source price last changed.
   DateTimeColumn get priceChangedAt => dateTime().nullable()();
 
+  /// The outcome of the most recently completed refresh attempt.
+  TextColumn get lastRefreshStatus => text().nullable()();
+
+  /// When the most recently completed refresh attempt finished.
+  DateTimeColumn get lastRefreshAt => dateTime().nullable()();
+
   /// When the source was added.
   DateTimeColumn get createdAt => dateTime()();
 

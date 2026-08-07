@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 
 /// Drift-backed model for the domain [ProductSource] entity.
@@ -20,6 +21,8 @@ class ProductSourceModel extends ProductSource {
     super.isAvailable,
     super.lastCheckedAt,
     super.priceChangedAt,
+    super.lastRefreshStatus,
+    super.lastRefreshAt,
   });
 
   /// Copies a domain source into its persisted model type.
@@ -35,6 +38,8 @@ class ProductSourceModel extends ProductSource {
         isAvailable: source.isAvailable,
         lastCheckedAt: source.lastCheckedAt,
         priceChangedAt: source.priceChangedAt,
+        lastRefreshStatus: source.lastRefreshStatus,
+        lastRefreshAt: source.lastRefreshAt,
       );
 
   /// Builds a [ProductSourceModel] from a persisted source row.
@@ -62,6 +67,8 @@ class ProductSourceModel extends ProductSource {
       isAvailable: row.isAvailable,
       lastCheckedAt: row.lastCheckedAt,
       priceChangedAt: row.priceChangedAt,
+      lastRefreshStatus: _statusFromName(row.lastRefreshStatus),
+      lastRefreshAt: row.lastRefreshAt,
     );
   }
 
@@ -80,5 +87,16 @@ class ProductSourceModel extends ProductSource {
         isAvailable: Value(isAvailable),
         lastCheckedAt: Value(lastCheckedAt),
         priceChangedAt: Value(priceChangedAt),
+        lastRefreshStatus: Value(lastRefreshStatus?.name),
+        lastRefreshAt: Value(lastRefreshAt),
       );
+
+  static PriceFetchStatus? _statusFromName(String? name) {
+    for (final PriceFetchStatus status in PriceFetchStatus.values) {
+      if (status.name == name) {
+        return status;
+      }
+    }
+    return null;
+  }
 }

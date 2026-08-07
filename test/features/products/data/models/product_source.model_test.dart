@@ -6,6 +6,7 @@ import 'package:worth_loop/features/products/data/models/product_source.model.da
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import '../../fixtures/product_source.fixture.dart';
 import '../../fixtures/product_source_model.fixture.dart';
 
@@ -66,6 +67,8 @@ void main() {
             isAvailable: true,
             lastCheckedAt: DateTime(2026, 1, 1, 12),
             priceChangedAt: DateTime(2026, 1, 2, 12),
+            lastRefreshStatus: 'blocked',
+            lastRefreshAt: DateTime(2026, 1, 3, 12),
             createdAt: DateTime(2026, 1, 1),
           ),
         );
@@ -82,8 +85,40 @@ void main() {
         expect(model.isAvailable, isTrue);
         expect(model.lastCheckedAt, DateTime(2026, 1, 1, 12));
         expect(model.priceChangedAt, DateTime(2026, 1, 2, 12));
+        expect(model.lastRefreshStatus, PriceFetchStatus.blocked);
+        expect(model.lastRefreshAt, DateTime(2026, 1, 3, 12));
       },
     );
+
+    test('Method fromRow() maps every known and unknown refresh status', () {
+      for (final PriceFetchStatus status in PriceFetchStatus.values) {
+        final ProductSourceModel model = ProductSourceModel.fromRow(
+          ProductSourceRow(
+            id: 'source-1',
+            productId: 'product-1',
+            url: 'https://example.com/products/1',
+            merchantDomain: 'example.com',
+            lastRefreshStatus: status.name,
+            createdAt: DateTime(2026, 1, 1),
+          ),
+        );
+
+        expect(model.lastRefreshStatus, status);
+      }
+
+      final ProductSourceModel unknownModel = ProductSourceModel.fromRow(
+        ProductSourceRow(
+          id: 'source-1',
+          productId: 'product-1',
+          url: 'https://example.com/products/1',
+          merchantDomain: 'example.com',
+          lastRefreshStatus: 'futureStatus',
+          createdAt: DateTime(2026, 1, 1),
+        ),
+      );
+
+      expect(unknownModel.lastRefreshStatus, isNull);
+    });
 
     test(
       'Method fromRow() returns a null currentPrice when currencyCode is missing',
@@ -210,6 +245,8 @@ void main() {
       expect(model.currentPrice, isNull);
       expect(model.isAvailable, isNull);
       expect(model.lastCheckedAt, isNull);
+      expect(model.lastRefreshStatus, isNull);
+      expect(model.lastRefreshAt, isNull);
     });
 
     test(
@@ -222,6 +259,8 @@ void main() {
             isAvailable: true,
             lastCheckedAt: DateTime(2026, 1, 1, 12),
             priceChangedAt: DateTime(2026, 1, 2, 12),
+            lastRefreshStatus: PriceFetchStatus.success,
+            lastRefreshAt: DateTime(2026, 1, 3, 12),
           ),
         );
 
@@ -236,6 +275,8 @@ void main() {
         expect(model.isAvailable, isTrue);
         expect(model.lastCheckedAt, DateTime(2026, 1, 1, 12));
         expect(model.priceChangedAt, DateTime(2026, 1, 2, 12));
+        expect(model.lastRefreshStatus, PriceFetchStatus.success);
+        expect(model.lastRefreshAt, DateTime(2026, 1, 3, 12));
       },
     );
 
@@ -257,6 +298,8 @@ void main() {
         expect(companion.currencyCode.value, isNull);
         expect(companion.isAvailable.value, isNull);
         expect(companion.lastCheckedAt.value, isNull);
+        expect(companion.lastRefreshStatus.value, isNull);
+        expect(companion.lastRefreshAt.value, isNull);
       },
     );
 
@@ -270,6 +313,8 @@ void main() {
           isAvailable: true,
           lastCheckedAt: DateTime(2026, 1, 1, 12),
           priceChangedAt: DateTime(2026, 1, 2, 12),
+          lastRefreshStatus: PriceFetchStatus.success,
+          lastRefreshAt: DateTime(2026, 1, 3, 12),
         );
 
         final ProductSourceTableCompanion companion = model.toCompanion();
@@ -284,6 +329,8 @@ void main() {
         expect(companion.isAvailable.value, isTrue);
         expect(companion.lastCheckedAt.value, DateTime(2026, 1, 1, 12));
         expect(companion.priceChangedAt.value, DateTime(2026, 1, 2, 12));
+        expect(companion.lastRefreshStatus.value, 'success');
+        expect(companion.lastRefreshAt.value, DateTime(2026, 1, 3, 12));
       },
     );
   });

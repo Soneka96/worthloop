@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 
 // Project imports:
+import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 
 /// A website link tracked for a product, together with its latest fetched
@@ -41,6 +42,12 @@ class ProductSource extends Equatable {
   /// When this source's price last changed, or `null` if it has not changed.
   final DateTime? priceChangedAt;
 
+  /// The outcome of the most recently completed refresh attempt.
+  final PriceFetchStatus? lastRefreshStatus;
+
+  /// When the most recently completed refresh attempt finished.
+  final DateTime? lastRefreshAt;
+
   const ProductSource({
     required this.id,
     required this.productId,
@@ -52,6 +59,8 @@ class ProductSource extends Equatable {
     this.isAvailable,
     this.lastCheckedAt,
     this.priceChangedAt,
+    this.lastRefreshStatus,
+    this.lastRefreshAt,
   });
 
   /// Creates a source from a validated HTTPS product URL, with no offer yet.
@@ -90,5 +99,7 @@ class ProductSource extends Equatable {
     isAvailable,
     lastCheckedAt,
     priceChangedAt,
+    lastRefreshStatus,
+    lastRefreshAt,
   ];
 }

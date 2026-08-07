@@ -1,6 +1,7 @@
 // Project imports:
 import 'package:worth_loop/features/products/data/models/product_source.model.dart';
 import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 
 /// Builds a [ProductSourceModel] with overridable values.
 ProductSourceModel buildProductSourceModel({
@@ -14,6 +15,8 @@ ProductSourceModel buildProductSourceModel({
   bool? isAvailable,
   DateTime? lastCheckedAt,
   DateTime? priceChangedAt,
+  PriceFetchStatus? lastRefreshStatus,
+  DateTime? lastRefreshAt,
 }) => ProductSourceModel(
   id: id,
   productId: productId,
@@ -25,4 +28,6 @@ ProductSourceModel buildProductSourceModel({
   isAvailable: isAvailable,
   lastCheckedAt: lastCheckedAt,
   priceChangedAt: priceChangedAt,
+  lastRefreshStatus: lastRefreshStatus,
+  lastRefreshAt: lastRefreshAt,
 );

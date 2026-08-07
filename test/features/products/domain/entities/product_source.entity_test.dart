@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import '../../fixtures/money.fixture.dart';
 
 void main() {
@@ -98,6 +99,7 @@ void main() {
       final DateTime createdAt = DateTime(2026, 1, 1);
       final DateTime checkedAt = DateTime(2026, 1, 2);
       final DateTime changedAt = DateTime(2026, 1, 3);
+      final DateTime refreshedAt = DateTime(2026, 1, 4);
       final ProductSource source = ProductSource(
         id: 'source-1',
         productId: 'product-1',
@@ -109,6 +111,8 @@ void main() {
         isAvailable: true,
         lastCheckedAt: checkedAt,
         priceChangedAt: changedAt,
+        lastRefreshStatus: PriceFetchStatus.success,
+        lastRefreshAt: refreshedAt,
       );
 
       expect(source.props, <Object?>[
@@ -122,6 +126,8 @@ void main() {
         true,
         checkedAt,
         changedAt,
+        PriceFetchStatus.success,
+        refreshedAt,
       ]);
       expect(
         source,
@@ -136,6 +142,8 @@ void main() {
           isAvailable: true,
           lastCheckedAt: checkedAt,
           priceChangedAt: changedAt,
+          lastRefreshStatus: PriceFetchStatus.success,
+          lastRefreshAt: refreshedAt,
         ),
       );
       expect(

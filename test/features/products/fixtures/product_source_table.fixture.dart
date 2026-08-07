@@ -3,6 +3,7 @@ import 'package:drift/drift.dart' show Value;
 
 // Project imports:
 import 'package:worth_loop/shared/db/app_database.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 
 /// Builds a [ProductSourceTableCompanion] with overridable values.
 ProductSourceTableCompanion buildProductSourceTableCompanion({
@@ -15,6 +16,8 @@ ProductSourceTableCompanion buildProductSourceTableCompanion({
   bool? isAvailable,
   DateTime? lastCheckedAt,
   DateTime? createdAt,
+  PriceFetchStatus? lastRefreshStatus,
+  DateTime? lastRefreshAt,
 }) => ProductSourceTableCompanion.insert(
   id: id,
   productId: productId,
@@ -25,4 +28,6 @@ ProductSourceTableCompanion buildProductSourceTableCompanion({
   isAvailable: Value(isAvailable),
   lastCheckedAt: Value(lastCheckedAt),
   createdAt: createdAt ?? DateTime(2026, 1, 1, 12),
+  lastRefreshStatus: Value(lastRefreshStatus?.name),
+  lastRefreshAt: Value(lastRefreshAt),
 );
