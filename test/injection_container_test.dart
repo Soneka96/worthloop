@@ -15,6 +15,7 @@ import 'package:path_provider_platform_interface/path_provider_platform_interfac
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/utils/android_background_capabilities_service.dart';
 import 'package:worth_loop/shared/utils/android_background_refresh_service.dart';
+import 'package:worth_loop/shared/utils/android_price_alert_notification_service.dart';
 import 'package:worth_loop/shared/constants/price_fetch_constants.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/navigation/navigator_service.dart';
@@ -72,6 +73,13 @@ void main() {
       expect(
         sl<AndroidBackgroundRefreshService>(),
         isA<AndroidBackgroundRefreshService>(),
+      );
+    });
+
+    test('price-alert notification service is registered', () {
+      expect(
+        sl<AndroidPriceAlertNotificationService>(),
+        isA<AndroidPriceAlertNotificationService>(),
       );
     });
     test('services are registered', () {

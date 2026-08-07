@@ -27,6 +27,7 @@ import 'package:worth_loop/shared/theme/app_zoom.dart';
 import 'package:worth_loop/shared/utils/browser_request_headers.dart';
 import 'package:worth_loop/shared/utils/android_background_capabilities_service.dart';
 import 'package:worth_loop/shared/utils/android_background_refresh_service.dart';
+import 'package:worth_loop/shared/utils/android_price_alert_notification_service.dart';
 import 'package:worth_loop/shared/utils/dio_product_fetcher_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/popup_service.dart';
@@ -76,6 +77,9 @@ Future<void> initDependencies() async {
   );
   sl.registerLazySingleton<AndroidBackgroundRefreshService>(
     AndroidBackgroundRefreshService.new,
+  );
+  sl.registerLazySingleton<AndroidPriceAlertNotificationService>(
+    AndroidPriceAlertNotificationService.new,
   );
   sl.registerLazySingleton<DioProductFetcherService>(
     () => DioProductFetcherService(sl<Dio>()),
