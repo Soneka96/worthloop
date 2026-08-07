@@ -69,6 +69,29 @@ abstract final class ProductsSelectors {
       state.products.refreshingProductIds.isNotEmpty ||
       state.products.refreshTotalCount > 0;
 
+  /// Returns why a pull-to-refresh for [productId] cannot start.
+  static ProductRefreshBlockReason productRefreshBlockReasonSelector(
+    AppState state,
+    String productId,
+  ) {
+    if (state.products.isRefreshingAll) {
+      return ProductRefreshBlockReason.allProducts;
+    }
+
+    if (isProductSourceRefreshingSelector(state, productId)) {
+      return ProductRefreshBlockReason.thisProduct;
+    }
+
+    final bool anotherProductIsRefreshing = state.products.refreshingProductIds
+        .any((String refreshingProductId) => refreshingProductId != productId);
+    if (anotherProductIsRefreshing ||
+        areOtherSourcesRefreshingSelector(state, productId)) {
+      return ProductRefreshBlockReason.anotherProduct;
+    }
+
+    return ProductRefreshBlockReason.none;
+  }
+
   /// Returns whether [productId]'s sources are currently being refreshed.
   static bool isProductSourceRefreshingSelector(
     AppState state,

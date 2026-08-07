@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 252 (126 per locale)
+/// Strings: 258 (129 per locale)
 ///
-/// Built on 2026-08-07 at 12:19 UTC
+/// Built on 2026-08-07 at 13:57 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -217,6 +217,9 @@ class _StringsProductDetailsEn {
 	String get refreshing => 'Refreshing';
 	String refreshProgress({required Object completed, required Object total}) => '${completed} of ${total} sources checked';
 	String get otherProductsRefreshing => 'Other products refreshing';
+	String get refreshBlockedThisProduct => 'This product is already being checked';
+	String get refreshBlockedOtherProduct => 'Another product is being checked';
+	String get refreshBlockedAllProducts => 'All products are being checked';
 	String get queued => 'Queued';
 	String get checking => 'Checking';
 	String get cannotAccessNow => 'Cannot access now';
@@ -511,6 +514,9 @@ class _StringsProductDetailsPt implements _StringsProductDetailsEn {
 	@override String get refreshing => 'A atualizar';
 	@override String refreshProgress({required Object completed, required Object total}) => '${completed} de ${total} fontes verificadas';
 	@override String get otherProductsRefreshing => 'Outros produtos a atualizar';
+	@override String get refreshBlockedThisProduct => 'Este produto já está a ser verificado';
+	@override String get refreshBlockedOtherProduct => 'Outro produto está a ser verificado';
+	@override String get refreshBlockedAllProducts => 'Todos os produtos estão a ser verificados';
 	@override String get queued => 'Em fila';
 	@override String get checking => 'A verificar';
 	@override String get cannotAccessNow => 'Não é possível aceder agora';
@@ -751,6 +757,9 @@ extension on Translations {
 			case 'productDetails.refreshing': return 'Refreshing';
 			case 'productDetails.refreshProgress': return ({required Object completed, required Object total}) => '${completed} of ${total} sources checked';
 			case 'productDetails.otherProductsRefreshing': return 'Other products refreshing';
+			case 'productDetails.refreshBlockedThisProduct': return 'This product is already being checked';
+			case 'productDetails.refreshBlockedOtherProduct': return 'Another product is being checked';
+			case 'productDetails.refreshBlockedAllProducts': return 'All products are being checked';
 			case 'productDetails.queued': return 'Queued';
 			case 'productDetails.checking': return 'Checking';
 			case 'productDetails.cannotAccessNow': return 'Cannot access now';
@@ -887,6 +896,9 @@ extension on _StringsPt {
 			case 'productDetails.refreshing': return 'A atualizar';
 			case 'productDetails.refreshProgress': return ({required Object completed, required Object total}) => '${completed} de ${total} fontes verificadas';
 			case 'productDetails.otherProductsRefreshing': return 'Outros produtos a atualizar';
+			case 'productDetails.refreshBlockedThisProduct': return 'Este produto já está a ser verificado';
+			case 'productDetails.refreshBlockedOtherProduct': return 'Outro produto está a ser verificado';
+			case 'productDetails.refreshBlockedAllProducts': return 'Todos os produtos estão a ser verificados';
 			case 'productDetails.queued': return 'Em fila';
 			case 'productDetails.checking': return 'A verificar';
 			case 'productDetails.cannotAccessNow': return 'Não é possível aceder agora';

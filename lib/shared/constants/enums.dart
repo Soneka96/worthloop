@@ -372,6 +372,21 @@ enum SourceRefreshStatus {
   unavailable,
 }
 
+/// Describes why a product pull-to-refresh cannot start another refresh.
+enum ProductRefreshBlockReason {
+  /// No refresh is currently blocking a product refresh.
+  none,
+
+  /// The product currently shown is already being refreshed.
+  thisProduct,
+
+  /// A different product is currently being refreshed.
+  anotherProduct,
+
+  /// Every product is currently being refreshed.
+  allProducts,
+}
+
 /// Selects which merchant offers a product section displays.
 enum ProductOfferFilter {
   /// Sentinel value with no selected filter.

@@ -333,6 +333,64 @@ void main() {
         isFalse,
       );
     });
+
+    test('prioritizes all-products refreshes', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          products: [product],
+          isRefreshingAll: true,
+          sourceRefreshStatuses: {'source-1': SourceRefreshStatus.fetching},
+        ),
+      );
+
+      expect(
+        ProductsSelectors.productRefreshBlockReasonSelector(state, product.id),
+        ProductRefreshBlockReason.allProducts,
+      );
+    });
+
+    test('detects when this product is already refreshing', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          products: [product],
+          refreshingProductIds: {product.id},
+        ),
+      );
+
+      expect(
+        ProductsSelectors.productRefreshBlockReasonSelector(state, product.id),
+        ProductRefreshBlockReason.thisProduct,
+      );
+    });
+
+    test('detects when another product is refreshing', () {
+      final Product otherProduct = buildProduct(
+        id: 'product-2',
+        sources: [buildProductSource(id: 'source-3', productId: 'product-2')],
+      );
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          products: [product, otherProduct],
+          refreshingProductIds: {otherProduct.id},
+        ),
+      );
+
+      expect(
+        ProductsSelectors.productRefreshBlockReasonSelector(state, product.id),
+        ProductRefreshBlockReason.anotherProduct,
+      );
+    });
+
+    test('returns none when no refresh is active', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(products: [product]),
+      );
+
+      expect(
+        ProductsSelectors.productRefreshBlockReasonSelector(state, product.id),
+        ProductRefreshBlockReason.none,
+      );
+    });
   });
 
   group(

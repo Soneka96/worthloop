@@ -41,6 +41,9 @@ productDetails:
   refreshing: Refreshing
   refreshProgress: "$completed of $total sources checked"
   otherProductsRefreshing: "Other products refreshing"
+  refreshBlockedThisProduct: This product is already being checked
+  refreshBlockedOtherProduct: Another product is being checked
+  refreshBlockedAllProducts: All products are being checked
   queued: Queued
   checking: Checking
   cannotAccessNow: Cannot access now

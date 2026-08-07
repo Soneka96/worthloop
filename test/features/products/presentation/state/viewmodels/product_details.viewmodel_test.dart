@@ -67,6 +67,10 @@ void main() {
           expect(viewmodel.isRefreshing, isTrue);
           expect(viewmodel.isProductRefreshing, isTrue);
           expect(viewmodel.areOtherSourcesRefreshing, isFalse);
+          expect(
+            viewmodel.refreshBlockReason,
+            ProductRefreshBlockReason.allProducts,
+          );
           expect(viewmodel.productRefreshCompletedCount, 0);
           expect(viewmodel.productRefreshTotalCount, 2);
           expect(viewmodel.refreshStatus, isA<PriceFetchStatus>());
@@ -144,6 +148,10 @@ void main() {
 
           expect(viewmodel.isProductRefreshing, isFalse);
           expect(viewmodel.areOtherSourcesRefreshing, isTrue);
+          expect(
+            viewmodel.refreshBlockReason,
+            ProductRefreshBlockReason.anotherProduct,
+          );
           expect(viewmodel.productRefreshCompletedCount, 0);
           expect(viewmodel.productRefreshTotalCount, 1);
         },

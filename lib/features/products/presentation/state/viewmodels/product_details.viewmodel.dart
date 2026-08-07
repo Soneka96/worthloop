@@ -24,6 +24,9 @@ class ProductDetailsViewModel extends Equatable {
   /// Whether sources belonging to other products are being refreshed.
   final bool areOtherSourcesRefreshing;
 
+  /// Why pulling to refresh cannot start another refresh, if applicable.
+  final ProductRefreshBlockReason refreshBlockReason;
+
   /// Number of this product's sources in a terminal refresh state.
   final int productRefreshCompletedCount;
 
@@ -104,6 +107,7 @@ class ProductDetailsViewModel extends Equatable {
     required this.isRefreshing,
     required this.isProductRefreshing,
     required this.areOtherSourcesRefreshing,
+    required this.refreshBlockReason,
     required this.productRefreshCompletedCount,
     required this.productRefreshTotalCount,
     this.refreshStatus,
@@ -147,6 +151,10 @@ class ProductDetailsViewModel extends Equatable {
           store.state,
           productId,
         ),
+    refreshBlockReason: ProductsSelectors.productRefreshBlockReasonSelector(
+      store.state,
+      productId,
+    ),
     productRefreshCompletedCount:
         ProductsSelectors.productRefreshCompletedCountSelector(
           store.state,
@@ -207,6 +215,7 @@ class ProductDetailsViewModel extends Equatable {
     isRefreshing,
     isProductRefreshing,
     areOtherSourcesRefreshing,
+    refreshBlockReason,
     productRefreshCompletedCount,
     productRefreshTotalCount,
     refreshStatus,

@@ -44,6 +44,9 @@ productDetails:
   refreshing: A atualizar
   refreshProgress: "$completed de $total fontes verificadas"
   otherProductsRefreshing: "Outros produtos a atualizar"
+  refreshBlockedThisProduct: Este produto já está a ser verificado
+  refreshBlockedOtherProduct: Outro produto está a ser verificado
+  refreshBlockedAllProducts: Todos os produtos estão a ser verificados
   queued: Em fila
   checking: A verificar
   cannotAccessNow: Não é possível aceder agora
