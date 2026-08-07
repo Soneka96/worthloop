@@ -19,7 +19,6 @@ import 'package:worth_loop/features/products/domain/usecases/params/edit_source.
 import 'package:worth_loop/features/products/domain/usecases/params/refresh_product.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/refresh_source.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/rename_product.params.dart';
-import 'package:worth_loop/features/products/domain/usecases/refresh_all_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_product.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/rename_product.usecase.dart';
@@ -35,6 +34,7 @@ import 'package:worth_loop/shared/usecase/no_params.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/url_launcher_service.dart';
 import 'package:worth_loop/shared/utils/product_price_alert_notification_coordinator.dart';
+import 'package:worth_loop/shared/utils/android_background_refresh_service.dart';
 
 /// Handles tracked-product actions.
 class ProductsMiddleware extends MiddlewareClass<AppState> {
@@ -43,6 +43,10 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
   @override
   void call(Store<AppState> store, dynamic action, NextDispatcher next) {
     next(action);
+
+    if (action is SourceRefreshFinishedAction) {
+      _refreshInProgress = false;
+    }
 
     switch (action) {
       case LoadProductsAction _:
@@ -249,56 +253,27 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
     }
     _refreshInProgress = true;
     final List<String> sourceIds = _sourceIdsForAllProducts(store);
-    int completedCount = 0;
-    int failedCount = 0;
     store.dispatch(SourceRefreshStartedAction(sourceIds, isGlobal: true));
+    bool backgroundRefreshPending = false;
     try {
-      await (await sl<RefreshAllProductsUseCase>()(
-        NoParams(),
-        onPriceDrop: sl<ProductPriceAlertNotificationCoordinator>().notify,
-        onSourceStatusChanged: (String sourceId, SourceRefreshStatus status) {
-          if (_isTerminalSourceRefreshStatus(status)) {
-            completedCount++;
-          }
-          if (status == SourceRefreshStatus.error) {
-            failedCount++;
-          }
-          store.dispatch(
-            SourceRefreshStatusChangedAction(
-              sourceId: sourceId,
-              status: status,
-            ),
-          );
-        },
-      )).fold(
-        (failure) async {
-          sl<LoggerService>().e(failure.message);
-          if (sourceIds.isNotEmpty) {
-            final Either<Failure, List<Product>> productsResult =
-                await sl<LoadProductsUseCase>()(NoParams());
-            productsResult.fold((_) {}, (List<Product> products) {
-              store.dispatch(ProductsLoadedAction(products));
-            });
-          }
-          store.dispatch(
-            RefreshAllProductsFailedAction(
-              failure.message,
-              status: failure is PriceFetchFailure ? failure.status : null,
-            ),
-          );
-        },
-        (List<Product> products) {
-          store.dispatch(ProductsLoadedAction(products));
-        },
-      );
-      _showRefreshCompletion(
-        sourceCount: sourceIds.length,
-        completedCount: completedCount,
-        failedCount: failedCount,
-      );
+      if (sourceIds.isEmpty) {
+        store.dispatch(const SourceRefreshFinishedAction());
+        return;
+      }
+      final bool requested = await sl<AndroidBackgroundRefreshService>()
+          .requestRefresh();
+      if (!requested) {
+        final String message = t.common.refreshFailed;
+        sl<LoggerService>().e(message, showPopup: true);
+        store.dispatch(RefreshAllProductsFailedAction(message));
+        store.dispatch(const SourceRefreshFinishedAction());
+      } else {
+        backgroundRefreshPending = true;
+      }
     } finally {
-      store.dispatch(const SourceRefreshFinishedAction());
-      _refreshInProgress = false;
+      if (!backgroundRefreshPending) {
+        _refreshInProgress = false;
+      }
     }
   }
 
