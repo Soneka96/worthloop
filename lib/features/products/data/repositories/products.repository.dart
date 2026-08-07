@@ -141,16 +141,13 @@ class ProductsRepository implements IProductsRepository {
           return Left(failure);
         }
       }
-      final Failure? sourceFailure = firstFailure;
-      if (sourceFailure != null) {
-        return Left(sourceFailure);
-      }
       final Either<Failure, List<Product>> refreshedProducts =
           await _localDatasource.refreshAllProducts();
       if (refreshedProducts.isLeft()) {
         return refreshedProducts;
       }
-      return refreshedProducts;
+      final Failure? sourceFailure = firstFailure;
+      return sourceFailure == null ? refreshedProducts : Left(sourceFailure);
     });
   }
 

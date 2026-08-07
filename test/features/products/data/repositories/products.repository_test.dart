@@ -587,7 +587,6 @@ void main() {
         when(
           () => mockDatasource.updateSourcePrices(product.id, [updatedSource]),
         ).thenAnswer((_) async => Right(product));
-
         final Either<Failure, Product> result = await repository.refreshProduct(
           product.id,
         );
@@ -676,7 +675,6 @@ void main() {
         when(
           () => mockDatasource.updateSourcePrices(product.id, [updatedSource]),
         ).thenAnswer((_) async => Right(product));
-
         final Either<Failure, Product> result = await repository.refreshProduct(
           product.id,
         );
@@ -986,6 +984,7 @@ void main() {
 
       verify(() => mockRemoteDatasource.fetchPrices(firstSource)).called(1);
       verify(() => mockRemoteDatasource.fetchPrices(secondSource)).called(1);
+      verifyNever(() => mockDatasource.refreshAllProducts());
 
       firstCompleter.complete(Right(firstUpdated));
       secondCompleter.complete(Right(secondUpdated));
@@ -1031,6 +1030,9 @@ void main() {
         when(
           () => mockDatasource.updateSourcePrices(product.id, [updatedSource]),
         ).thenAnswer((_) async => Right(product));
+        when(
+          () => mockDatasource.refreshAllProducts(),
+        ).thenAnswer((_) async => Right([product]));
 
         final Either<Failure, List<Product>> result = await repository
             .refreshAllProducts();
@@ -1155,6 +1157,9 @@ void main() {
         when(
           () => mockDatasource.updateSourcePrices(product.id, [updatedSource]),
         ).thenAnswer((_) async => Right(product));
+        when(
+          () => mockDatasource.refreshAllProducts(),
+        ).thenAnswer((_) async => Right([product]));
 
         final List<String> lifecycle = [];
         final Either<Failure, List<Product>> result = await repository
@@ -1178,7 +1183,7 @@ void main() {
         verify(
           () => mockDatasource.updateSourcePrices(product.id, [updatedSource]),
         ).called(1);
-        verifyNever(() => mockDatasource.refreshAllProducts());
+        verify(() => mockDatasource.refreshAllProducts()).called(1);
       },
     );
 
@@ -1212,6 +1217,9 @@ void main() {
             const <ProductSourceModel>[],
           ),
         ).thenAnswer((_) async => Right(product));
+        when(
+          () => mockDatasource.refreshAllProducts(),
+        ).thenAnswer((_) async => Right([product]));
 
         final Either<Failure, List<Product>> result = await repository
             .refreshAllProducts();
@@ -1223,7 +1231,7 @@ void main() {
             const <ProductSourceModel>[],
           ),
         ).called(1);
-        verifyNever(() => mockDatasource.refreshAllProducts());
+        verify(() => mockDatasource.refreshAllProducts()).called(1);
       },
     );
 
@@ -1403,12 +1411,90 @@ void main() {
     });
 
     test(
+      'waits for every product source persistence before refreshing all products',
+      () async {
+        final ProductModel firstProduct = buildProductModel();
+        final ProductModel secondProduct = buildProductModel(id: 'product-2');
+        final ProductSourceModel firstSource = buildProductSourceModel(
+          productId: firstProduct.id,
+        );
+        final ProductSourceModel secondSource = buildProductSourceModel(
+          id: 'source-2',
+          productId: secondProduct.id,
+          url: 'https://example.com/products/2',
+        );
+        final ProductSourceModel firstUpdated = buildProductSourceModel(
+          productId: firstProduct.id,
+          currentPrice: const Money(minorUnits: 1999, currencyCode: 'USD'),
+        );
+        final ProductSourceModel secondUpdated = buildProductSourceModel(
+          id: 'source-2',
+          productId: secondProduct.id,
+          url: 'https://example.com/products/2',
+          currentPrice: const Money(minorUnits: 2999, currencyCode: 'USD'),
+        );
+        final Completer<Either<Failure, ProductModel>> firstPersistence =
+            Completer<Either<Failure, ProductModel>>();
+        final Completer<Either<Failure, ProductModel>> secondPersistence =
+            Completer<Either<Failure, ProductModel>>();
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([firstSource, secondSource]));
+        when(
+          () => mockRemoteDatasource.fetchPrices(firstSource),
+        ).thenAnswer((_) async => Right(firstUpdated));
+        when(
+          () => mockRemoteDatasource.fetchPrices(secondSource),
+        ).thenAnswer((_) async => Right(secondUpdated));
+        when(
+          () => mockDatasource.updateSourcePrices(firstProduct.id, [
+            firstUpdated,
+          ]),
+        ).thenAnswer((_) => firstPersistence.future);
+        when(
+          () => mockDatasource.updateSourcePrices(secondProduct.id, [
+            secondUpdated,
+          ]),
+        ).thenAnswer((_) => secondPersistence.future);
+        when(
+          () => mockDatasource.refreshAllProducts(),
+        ).thenAnswer((_) async => Right([firstProduct, secondProduct]));
+
+        final Future<Either<Failure, List<Product>>> resultFuture = repository
+            .refreshAllProducts();
+        await Future<void>.delayed(Duration.zero);
+        verify(
+          () => mockDatasource.updateSourcePrices(firstProduct.id, [
+            firstUpdated,
+          ]),
+        ).called(1);
+        verifyNever(() => mockDatasource.refreshAllProducts());
+
+        firstPersistence.complete(Right(firstProduct));
+        await Future<void>.delayed(Duration.zero);
+        verify(
+          () => mockDatasource.updateSourcePrices(secondProduct.id, [
+            secondUpdated,
+          ]),
+        ).called(1);
+        verifyNever(() => mockDatasource.refreshAllProducts());
+
+        secondPersistence.complete(Right(secondProduct));
+        await resultFuture;
+        verify(() => mockDatasource.refreshAllProducts()).called(1);
+      },
+    );
+
+    test(
       'returns the fetch failure after recording the completed attempt',
       () async {
         final ProductSourceModel source = buildProductSourceModel();
         const PriceFetchFailure failure = PriceFetchFailure(
           status: PriceFetchStatus.blocked,
           message: 'Website blocked the price request',
+        );
+        const DatabaseFailure persistenceFailure = DatabaseFailure(
+          'failed to refresh products',
         );
         when(
           () => mockDatasource.loadProductSources(),
@@ -1424,18 +1510,21 @@ void main() {
         ).thenAnswer(
           (_) async => Right(buildProductModel(id: source.productId)),
         );
+        when(
+          () => mockDatasource.refreshAllProducts(),
+        ).thenAnswer((_) async => const Left(persistenceFailure));
 
         final Either<Failure, List<Product>> result = await repository
             .refreshAllProducts();
 
-        expect(result, const Left(failure));
+        expect(result, const Left(persistenceFailure));
         verify(
           () => mockDatasource.updateSourcePrices(
             source.productId,
             const <ProductSourceModel>[],
           ),
         ).called(1);
-        verifyNever(() => mockDatasource.refreshAllProducts());
+        verify(() => mockDatasource.refreshAllProducts()).called(1);
       },
     );
   });
