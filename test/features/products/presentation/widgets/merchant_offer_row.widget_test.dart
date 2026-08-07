@@ -13,6 +13,8 @@ import 'package:worth_loop/features/products/presentation/widgets/best_price_sta
 import 'package:worth_loop/features/products/presentation/widgets/merchant_offer_row.widget.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
+import 'package:worth_loop/shared/theme/app_shape_presets.dart';
+import 'package:worth_loop/shared/theme/app_shape_theme_extension.dart';
 import '../../fixtures/product_source.fixture.dart';
 
 void main() {
@@ -29,12 +31,19 @@ void main() {
     bool isBestPrice = false,
     bool isDeleting = false,
     SourceRefreshStatus refreshStatus = SourceRefreshStatus.idle,
+    double? cornerRadius,
     VoidCallback? onTap,
     VoidCallback? onEdit,
     VoidCallback? onRefresh,
     VoidCallback? onDelete,
   }) => TranslationProvider(
     child: MaterialApp(
+      theme: ThemeData(
+        extensions: [
+          if (cornerRadius != null)
+            AppShapeThemeExtension(cornerRadius: cornerRadius),
+        ],
+      ),
       home: Scaffold(
         body: MerchantOfferRow(
           source: source ?? buildSource(),
@@ -392,6 +401,75 @@ void main() {
 
         expect(slidable.enabled, isA<bool>());
         expect(slidable.enabled, isTrue);
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow rounds only the trailing edge of its revealed actions',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildWidget());
+        await tester.drag(
+          find.byKey(const Key('merchant-offer-source-1')),
+          const Offset(-400, 0),
+        );
+        await tester.pumpAndSettle();
+
+        final SlidableAction deleteAction = tester.widget(
+          find.byKey(const Key('merchant-offer-source-1-delete-action')),
+        );
+        final Radius roundedRadius = Radius.circular(
+          cornerRadiusPresets[CornerStyle.rounded] ?? 20.0,
+        );
+
+        expect(
+          deleteAction.borderRadius,
+          BorderRadius.only(
+            topRight: roundedRadius,
+            bottomRight: roundedRadius,
+          ),
+        );
+        expect(
+          tester
+              .widget<SlidableAction>(
+                find.byKey(const Key('merchant-offer-source-1-refresh-action')),
+              )
+              .borderRadius,
+          BorderRadius.zero,
+        );
+        expect(
+          tester
+              .widget<SlidableAction>(
+                find.byKey(const Key('merchant-offer-source-1-edit-action')),
+              )
+              .borderRadius,
+          BorderRadius.zero,
+        );
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow uses the square preset radius for the revealed actions',
+      (WidgetTester tester) async {
+        final double squareRadius =
+            cornerRadiusPresets[CornerStyle.square] ?? 4.0;
+        await tester.pumpWidget(buildWidget(cornerRadius: squareRadius));
+        await tester.drag(
+          find.byKey(const Key('merchant-offer-source-1')),
+          const Offset(-400, 0),
+        );
+        await tester.pumpAndSettle();
+
+        final SlidableAction deleteAction = tester.widget(
+          find.byKey(const Key('merchant-offer-source-1-delete-action')),
+        );
+
+        expect(
+          deleteAction.borderRadius,
+          BorderRadius.only(
+            topRight: Radius.circular(squareRadius),
+            bottomRight: Radius.circular(squareRadius),
+          ),
+        );
       },
     );
 

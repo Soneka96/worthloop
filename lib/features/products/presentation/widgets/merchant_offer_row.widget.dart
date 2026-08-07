@@ -98,6 +98,10 @@ class MerchantOfferRow extends StatelessWidget {
             foregroundColor: colorScheme.onErrorContainer,
             icon: Icons.delete_outline,
             label: t.productDetails.deleteSourceTooltip,
+            borderRadius: BorderRadius.only(
+              topRight: borderRadius.topRight,
+              bottomRight: borderRadius.bottomRight,
+            ),
           ),
         ],
       ),
