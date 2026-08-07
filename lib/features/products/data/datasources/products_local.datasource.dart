@@ -8,6 +8,7 @@ import 'package:worth_loop/features/products/data/models/product.model.dart';
 import 'package:worth_loop/features/products/data/models/product_source.model.dart';
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
+import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
@@ -354,21 +355,79 @@ class ProductsLocalDatasource {
         if (row == null) {
           return null;
         }
+        final List<ProductSourceRow> existingSources = await (_db.select(
+          _db.productSourceTable,
+        )..where((table) => table.productId.equals(productId))).get();
+        final ProductModel previousProduct = ProductModel.fromRows(
+          row,
+          existingSources,
+        );
+        final Money? previousBestPrice =
+            previousProduct.bestAvailablePrice?.currentPrice;
         for (final ProductSourceModel source in updatedSources) {
+          ProductSourceRow? existingSource;
+          for (final ProductSourceRow item in existingSources) {
+            if (item.id == source.id) {
+              existingSource = item;
+              break;
+            }
+          }
+          final Money? existingPrice = existingSource == null
+              ? null
+              : _moneyFromRow(existingSource);
+          final bool hasPriceChange =
+              existingPrice != null &&
+              source.currentPrice != null &&
+              existingPrice != source.currentPrice;
           await (_db.update(
             _db.productSourceTable,
           )..where((table) => table.id.equals(source.id))).write(
             ProductSourceTableCompanion(
               minorUnits: Value(source.currentPrice?.minorUnits),
               currencyCode: Value(source.currentPrice?.currencyCode),
+              previousPriceMinorUnits: hasPriceChange
+                  ? Value(existingPrice.minorUnits)
+                  : const Value.absent(),
+              previousPriceCurrencyCode: hasPriceChange
+                  ? Value(existingPrice.currencyCode)
+                  : const Value.absent(),
               isAvailable: Value(source.isAvailable),
               lastCheckedAt: Value(source.lastCheckedAt),
+              priceChangedAt: hasPriceChange
+                  ? Value(source.lastCheckedAt ?? DateTime.now())
+                  : const Value.absent(),
             ),
           );
         }
-        await (_db.update(_db.productTable)
-              ..where((table) => table.id.equals(productId)))
-            .write(ProductTableCompanion(lastUpdatedAt: Value(DateTime.now())));
+        final List<ProductSourceRow> refreshedSources = await (_db.select(
+          _db.productSourceTable,
+        )..where((table) => table.productId.equals(productId))).get();
+        final ProductModel refreshedProduct = ProductModel.fromRows(
+          row,
+          refreshedSources,
+        );
+        final Money? refreshedBestPrice =
+            refreshedProduct.bestAvailablePrice?.currentPrice;
+        final bool hasBestPriceChange =
+            previousBestPrice != null &&
+            refreshedBestPrice != null &&
+            previousBestPrice != refreshedBestPrice;
+        await (_db.update(
+          _db.productTable,
+        )..where((table) => table.id.equals(productId))).write(
+          ProductTableCompanion(
+            lastUpdatedAt: Value(DateTime.now()),
+            previousBestPriceMinorUnits: hasBestPriceChange
+                ? Value(previousBestPrice.minorUnits)
+                : const Value.absent(),
+            previousBestPriceCurrencyCode: hasBestPriceChange
+                ? Value(previousBestPrice.currencyCode)
+                : const Value.absent(),
+            bestPriceChangedAt: hasBestPriceChange
+                ? Value(_latestCheckedAt(updatedSources) ?? DateTime.now())
+                : const Value.absent(),
+          ),
+        );
         final List<ProductModel> products = await _readProducts();
         return products.firstWhere((ProductModel item) => item.id == productId);
       });
@@ -382,6 +441,26 @@ class ProductsLocalDatasource {
       _loggerService.e(error.toString());
       return Left(CurrencyFailure(error.toString()));
     }
+  }
+
+  Money? _moneyFromRow(ProductSourceRow row) {
+    final int? minorUnits = row.minorUnits;
+    final String? currencyCode = row.currencyCode;
+    return minorUnits != null && currencyCode != null
+        ? Money(minorUnits: minorUnits, currencyCode: currencyCode)
+        : null;
+  }
+
+  DateTime? _latestCheckedAt(List<ProductSourceModel> sources) {
+    final List<DateTime> checkedAt = sources
+        .map((ProductSourceModel source) => source.lastCheckedAt)
+        .whereType<DateTime>()
+        .toList(growable: false);
+    if (checkedAt.isEmpty) {
+      return null;
+    }
+    checkedAt.sort();
+    return checkedAt.last;
   }
 
   Future<bool> _hasSourceForUrl({

@@ -1189,9 +1189,255 @@ void main() {
 
         expect(result.getRight().toNullable()?.id, 'product-1');
         expect(row.minorUnits, 1999);
+        expect(row.previousPriceMinorUnits, isNull);
+        expect(row.priceChangedAt, isNull);
         expect(row.isAvailable, isTrue);
         expect(row.lastCheckedAt, DateTime(2026, 1, 2));
         verifyZeroInteractions(mockLoggerService);
+      },
+    );
+
+    test(
+      'stores the previous source price when a refresh changes it',
+      () async {
+        await db.into(db.productTable).insert(buildProductTableCompanion());
+        await db
+            .into(db.productSourceTable)
+            .insert(
+              buildProductSourceModel(
+                currentPrice: const Money(
+                  minorUnits: 2999,
+                  currencyCode: 'EUR',
+                ),
+                lastCheckedAt: DateTime(2026, 1, 1),
+              ).toCompanion(),
+            );
+
+        await datasource.updateSourcePrices('product-1', [
+          buildProductSourceModel(
+            currentPrice: const Money(minorUnits: 1999, currencyCode: 'EUR'),
+            lastCheckedAt: DateTime(2026, 1, 2),
+          ),
+        ]);
+
+        final ProductSourceRow row = await (db.select(
+          db.productSourceTable,
+        )..where((table) => table.id.equals('source-1'))).getSingle();
+        expect(row.minorUnits, 1999);
+        expect(row.previousPriceMinorUnits, 2999);
+        expect(row.previousPriceCurrencyCode, 'EUR');
+        expect(row.priceChangedAt, DateTime(2026, 1, 2));
+      },
+    );
+
+    test(
+      'does not change source history when a refresh finds the same price',
+      () async {
+        await db.into(db.productTable).insert(buildProductTableCompanion());
+        await db
+            .into(db.productSourceTable)
+            .insert(
+              buildProductSourceModel(
+                currentPrice: const Money(
+                  minorUnits: 2999,
+                  currencyCode: 'EUR',
+                ),
+                previousPrice: const Money(
+                  minorUnits: 3999,
+                  currencyCode: 'EUR',
+                ),
+                lastCheckedAt: DateTime(2026, 1, 1),
+                priceChangedAt: DateTime(2025, 12, 31),
+              ).toCompanion(),
+            );
+
+        await datasource.updateSourcePrices('product-1', [
+          buildProductSourceModel(
+            currentPrice: const Money(minorUnits: 2999, currencyCode: 'EUR'),
+            lastCheckedAt: DateTime(2026, 1, 2),
+          ),
+        ]);
+
+        final ProductSourceRow row = await (db.select(
+          db.productSourceTable,
+        )..where((table) => table.id.equals('source-1'))).getSingle();
+        expect(row.previousPriceMinorUnits, 3999);
+        expect(row.previousPriceCurrencyCode, 'EUR');
+        expect(row.priceChangedAt, DateTime(2025, 12, 31));
+      },
+    );
+
+    test('stores history when only the source currency changes', () async {
+      await db.into(db.productTable).insert(buildProductTableCompanion());
+      await db
+          .into(db.productSourceTable)
+          .insert(
+            buildProductSourceModel(
+              currentPrice: const Money(minorUnits: 2999, currencyCode: 'EUR'),
+              lastCheckedAt: DateTime(2026, 1, 1),
+            ).toCompanion(),
+          );
+
+      await datasource.updateSourcePrices('product-1', [
+        buildProductSourceModel(
+          currentPrice: const Money(minorUnits: 2999, currencyCode: 'USD'),
+          lastCheckedAt: DateTime(2026, 1, 2),
+        ),
+      ]);
+
+      final ProductSourceRow row = await (db.select(
+        db.productSourceTable,
+      )..where((table) => table.id.equals('source-1'))).getSingle();
+      expect(row.previousPriceMinorUnits, 2999);
+      expect(row.previousPriceCurrencyCode, 'EUR');
+      expect(row.priceChangedAt, DateTime(2026, 1, 2));
+    });
+
+    test(
+      'stores the previous product best price when the best price changes',
+      () async {
+        await db.into(db.productTable).insert(buildProductTableCompanion());
+        await db
+            .into(db.productSourceTable)
+            .insert(
+              buildProductSourceModel(
+                currentPrice: const Money(
+                  minorUnits: 2999,
+                  currencyCode: 'EUR',
+                ),
+                isAvailable: true,
+              ).toCompanion(),
+            );
+        await db
+            .into(db.productSourceTable)
+            .insert(
+              buildProductSourceModel(
+                id: 'source-2',
+                url: 'https://other.example.com/1',
+                currentPrice: const Money(
+                  minorUnits: 3999,
+                  currencyCode: 'EUR',
+                ),
+                isAvailable: true,
+              ).toCompanion(),
+            );
+
+        final Either<Failure, ProductModel> result = await datasource
+            .updateSourcePrices('product-1', [
+              buildProductSourceModel(
+                currentPrice: const Money(
+                  minorUnits: 1999,
+                  currencyCode: 'EUR',
+                ),
+                isAvailable: true,
+                lastCheckedAt: DateTime(2026, 1, 2),
+              ),
+            ]);
+
+        final ProductModel? product = result.getRight().toNullable();
+        expect(
+          product?.previousBestPrice,
+          const Money(minorUnits: 2999, currencyCode: 'EUR'),
+        );
+        expect(product?.bestPriceChangedAt, DateTime(2026, 1, 2));
+      },
+    );
+
+    test(
+      'does not change product history when a non-best source changes',
+      () async {
+        await db.into(db.productTable).insert(buildProductTableCompanion());
+        await db
+            .into(db.productSourceTable)
+            .insert(
+              buildProductSourceModel(
+                currentPrice: const Money(
+                  minorUnits: 1999,
+                  currencyCode: 'EUR',
+                ),
+                isAvailable: true,
+              ).toCompanion(),
+            );
+        await db
+            .into(db.productSourceTable)
+            .insert(
+              buildProductSourceModel(
+                id: 'source-2',
+                url: 'https://other.example.com/1',
+                currentPrice: const Money(
+                  minorUnits: 3999,
+                  currencyCode: 'EUR',
+                ),
+                isAvailable: true,
+              ).toCompanion(),
+            );
+
+        final Either<Failure, ProductModel> result = await datasource
+            .updateSourcePrices('product-1', [
+              buildProductSourceModel(
+                id: 'source-2',
+                currentPrice: const Money(
+                  minorUnits: 2999,
+                  currencyCode: 'EUR',
+                ),
+                isAvailable: true,
+                lastCheckedAt: DateTime(2026, 1, 2),
+              ),
+            ]);
+
+        final ProductModel? product = result.getRight().toNullable();
+        expect(product?.previousBestPrice, isNull);
+        expect(product?.bestPriceChangedAt, isNull);
+      },
+    );
+
+    test(
+      'stores product history when availability changes the best offer',
+      () async {
+        await db.into(db.productTable).insert(buildProductTableCompanion());
+        await db
+            .into(db.productSourceTable)
+            .insert(
+              buildProductSourceModel(
+                currentPrice: const Money(
+                  minorUnits: 1999,
+                  currencyCode: 'EUR',
+                ),
+                isAvailable: true,
+              ).toCompanion(),
+            );
+        await db
+            .into(db.productSourceTable)
+            .insert(
+              buildProductSourceModel(
+                id: 'source-2',
+                url: 'https://other.example.com/1',
+                currentPrice: const Money(
+                  minorUnits: 2999,
+                  currencyCode: 'EUR',
+                ),
+                isAvailable: true,
+              ).toCompanion(),
+            );
+
+        final Either<Failure, ProductModel> result = await datasource
+            .updateSourcePrices('product-1', [
+              buildProductSourceModel(
+                currentPrice: const Money(
+                  minorUnits: 1999,
+                  currencyCode: 'EUR',
+                ),
+                isAvailable: false,
+                lastCheckedAt: DateTime(2026, 1, 2),
+              ),
+            ]);
+
+        final ProductModel? product = result.getRight().toNullable();
+        expect(
+          product?.previousBestPrice,
+          const Money(minorUnits: 1999, currencyCode: 'EUR'),
+        );
+        expect(product?.bestPriceChangedAt, DateTime(2026, 1, 2));
       },
     );
 
@@ -1228,11 +1474,16 @@ void main() {
       'touches the product and returns it unchanged when given no updates',
       () async {
         await insertTwoSources();
+        final ProductRow before =
+            (await db.select(db.productTable).get()).single;
 
         final Either<Failure, ProductModel> result = await datasource
             .updateSourcePrices('product-1', []);
+        final ProductRow after =
+            (await db.select(db.productTable).get()).single;
 
         expect(result.getRight().toNullable()?.sources, hasLength(2));
+        expect(after.lastUpdatedAt.isAfter(before.lastUpdatedAt), isTrue);
         verifyZeroInteractions(mockLoggerService);
       },
     );
