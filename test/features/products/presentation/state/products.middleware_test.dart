@@ -491,6 +491,7 @@ void main() {
       ).captured;
       expect(captured.single, isA<RefreshSourceParams>());
       expect((captured.single as RefreshSourceParams).sourceId, 'source-1');
+      expect((captured.single as RefreshSourceParams).bypassCooldown, isTrue);
       verifyZeroInteractions(mockLoggerService);
     });
 

@@ -191,6 +191,7 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
       await (await sl<RefreshSourceUseCase>()(
         RefreshSourceParams(
           sourceId: action.sourceId,
+          bypassCooldown: true,
           onSourceStatusChanged: (String sourceId, SourceRefreshStatus status) {
             if (_isTerminalSourceRefreshStatus(status)) {
               completedCount++;
