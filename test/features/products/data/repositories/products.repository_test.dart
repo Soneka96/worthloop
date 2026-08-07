@@ -490,6 +490,12 @@ void main() {
 
       verify(() => mockRemoteDatasource.fetchPrices(firstSource)).called(1);
       verify(() => mockRemoteDatasource.fetchPrices(secondSource)).called(1);
+      verifyNever(
+        () => mockDatasource.updateSourcePrices(product.id, [
+          firstUpdated,
+          secondUpdated,
+        ]),
+      );
       firstCompleter.complete(Right(firstUpdated));
       secondCompleter.complete(Right(secondUpdated));
 
@@ -589,6 +595,51 @@ void main() {
         expect(result, const Left(failure));
         verify(
           () => mockDatasource.updateSourcePrices(product.id, [updatedSource]),
+        ).called(1);
+      },
+    );
+
+    test(
+      'persists a completed attempt when every source fetch fails',
+      () async {
+        final ProductModel product = buildProductModel();
+        final ProductSourceModel firstSource = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final ProductSourceModel secondSource = buildProductSourceModel(
+          id: 'source-2',
+          url: 'https://other.com/products/1',
+        );
+        const PriceFetchFailure failure = PriceFetchFailure(
+          status: PriceFetchStatus.blocked,
+          message: 'blocked',
+        );
+        when(
+          () => mockDatasource.loadProductSourcesForProduct(product.id),
+        ).thenAnswer((_) async => Right([firstSource, secondSource]));
+        when(
+          () => mockRemoteDatasource.fetchPrices(firstSource),
+        ).thenAnswer((_) async => const Left(failure));
+        when(
+          () => mockRemoteDatasource.fetchPrices(secondSource),
+        ).thenAnswer((_) async => const Left(failure));
+        when(
+          () => mockDatasource.updateSourcePrices(
+            product.id,
+            const <ProductSourceModel>[],
+          ),
+        ).thenAnswer((_) async => Right(product));
+
+        final Either<Failure, Product> result = await repository.refreshProduct(
+          product.id,
+        );
+
+        expect(result, const Left(failure));
+        verify(
+          () => mockDatasource.updateSourcePrices(
+            product.id,
+            const <ProductSourceModel>[],
+          ),
         ).called(1);
       },
     );
@@ -1131,6 +1182,51 @@ void main() {
       },
     );
 
+    test(
+      'persists a completed attempt when every source fetch fails',
+      () async {
+        final ProductModel product = buildProductModel();
+        final ProductSourceModel firstSource = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final ProductSourceModel secondSource = buildProductSourceModel(
+          id: 'source-2',
+          url: 'https://other.com/products/1',
+        );
+        const PriceFetchFailure failure = PriceFetchFailure(
+          status: PriceFetchStatus.blocked,
+          message: 'blocked',
+        );
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([firstSource, secondSource]));
+        when(
+          () => mockRemoteDatasource.fetchPrices(firstSource),
+        ).thenAnswer((_) async => const Left(failure));
+        when(
+          () => mockRemoteDatasource.fetchPrices(secondSource),
+        ).thenAnswer((_) async => const Left(failure));
+        when(
+          () => mockDatasource.updateSourcePrices(
+            product.id,
+            const <ProductSourceModel>[],
+          ),
+        ).thenAnswer((_) async => Right(product));
+
+        final Either<Failure, List<Product>> result = await repository
+            .refreshAllProducts();
+
+        expect(result, const Left(failure));
+        verify(
+          () => mockDatasource.updateSourcePrices(
+            product.id,
+            const <ProductSourceModel>[],
+          ),
+        ).called(1);
+        verifyNever(() => mockDatasource.refreshAllProducts());
+      },
+    );
+
     test('Method refreshAllProducts() returns the datasource result', () async {
       const DatabaseFailure failure = DatabaseFailure('failed');
       when(
@@ -1307,7 +1403,7 @@ void main() {
     });
 
     test(
-      'returns the fetch failure without calling updateSourcePrices()',
+      'returns the fetch failure after recording the completed attempt',
       () async {
         final ProductSourceModel source = buildProductSourceModel();
         const PriceFetchFailure failure = PriceFetchFailure(
@@ -1320,12 +1416,25 @@ void main() {
         when(
           () => mockRemoteDatasource.fetchPrices(source),
         ).thenAnswer((_) async => const Left(failure));
+        when(
+          () => mockDatasource.updateSourcePrices(
+            source.productId,
+            const <ProductSourceModel>[],
+          ),
+        ).thenAnswer(
+          (_) async => Right(buildProductModel(id: source.productId)),
+        );
 
         final Either<Failure, List<Product>> result = await repository
             .refreshAllProducts();
 
         expect(result, const Left(failure));
-        verifyNever(() => mockDatasource.updateSourcePrices(any(), any()));
+        verify(
+          () => mockDatasource.updateSourcePrices(
+            source.productId,
+            const <ProductSourceModel>[],
+          ),
+        ).called(1);
         verifyNever(() => mockDatasource.refreshAllProducts());
       },
     );

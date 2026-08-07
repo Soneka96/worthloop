@@ -61,12 +61,6 @@ class ProductsRepository implements IProductsRepository {
           updatedSources.add,
         );
       }
-      if (updatedSources.isEmpty) {
-        final Failure? sourceFailure = firstFailure;
-        return sourceFailure == null
-            ? _localDatasource.updateSourcePrices(productId, updatedSources)
-            : Left(sourceFailure);
-      }
       final Either<Failure, Product> savedResult = await _localDatasource
           .updateSourcePrices(productId, updatedSources);
       if (savedResult.isLeft()) {
@@ -125,7 +119,10 @@ class ProductsRepository implements IProductsRepository {
             sources,
             onSourceStatusChanged: onSourceStatusChanged,
           );
-      final Map<String, List<ProductSourceModel>> updatedSourcesByProduct = {};
+      final Map<String, List<ProductSourceModel>> updatedSourcesByProduct = {
+        for (final ProductSourceModel source in sources)
+          source.productId: <ProductSourceModel>[],
+      };
       Failure? firstFailure;
       for (final Either<Failure, ProductSourceModel> result in results) {
         result.match(
