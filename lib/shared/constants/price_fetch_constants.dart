@@ -11,4 +11,13 @@ abstract final class PriceFetchConstants {
 
   /// A blocked source is skipped for this long before it's retried.
   static const Duration blockedRetryAfter = Duration(hours: 1);
+
+  /// Delay allowed for JavaScript-rendered page content.
+  static const Duration webViewJsRenderDelay = Duration(seconds: 2);
+
+  /// Poll interval while waiting for rendered WebView HTML.
+  static const Duration webViewPollInterval = Duration(milliseconds: 200);
+
+  /// Maximum time allowed for a headless WebView fetch.
+  static const Duration webViewTotalTimeout = Duration(seconds: 30);
 }

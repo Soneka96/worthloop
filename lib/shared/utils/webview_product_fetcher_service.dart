@@ -2,6 +2,7 @@
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 // Project imports:
+import 'package:worth_loop/shared/constants/price_fetch_constants.dart';
 import 'package:worth_loop/shared/utils/fetch_result.value-object.dart';
 
 /// Fetches a product page's rendered HTML via a headless WebView — the
@@ -17,10 +18,6 @@ class WebViewProductFetcherService {
   WebViewProductFetcherService({
     Future<String> Function(String url)? runHeadlessFetch,
   }) : _runHeadlessFetch = runHeadlessFetch ?? _defaultHeadlessFetch;
-
-  static const Duration _jsRenderDelay = Duration(seconds: 2);
-  static const Duration _pollInterval = Duration(milliseconds: 200);
-  static const Duration _totalTimeout = Duration(seconds: 8);
 
   /// Fetches [url] in a headless browser and returns a synthesized status
   /// code (`200` if HTML came back, `null` otherwise) and the rendered
@@ -43,7 +40,7 @@ class WebViewProductFetcherService {
     final HeadlessInAppWebView headless = HeadlessInAppWebView(
       initialUrlRequest: URLRequest(url: WebUri(url)),
       onLoadStop: (controller, loadedUrl) async {
-        await Future<void>.delayed(_jsRenderDelay);
+        await Future<void>.delayed(PriceFetchConstants.webViewJsRenderDelay);
         final dynamic outerHtml = await controller.evaluateJavascript(
           source: 'document.documentElement.outerHTML',
         );
@@ -51,9 +48,11 @@ class WebViewProductFetcherService {
       },
     );
     await headless.run();
-    final DateTime deadline = DateTime.now().add(_totalTimeout);
+    final DateTime deadline = DateTime.now().add(
+      PriceFetchConstants.webViewTotalTimeout,
+    );
     while (html == null && DateTime.now().isBefore(deadline)) {
-      await Future<void>.delayed(_pollInterval);
+      await Future<void>.delayed(PriceFetchConstants.webViewPollInterval);
     }
     await headless.dispose();
     return html ?? '';

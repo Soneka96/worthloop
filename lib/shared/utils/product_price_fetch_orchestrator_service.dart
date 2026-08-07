@@ -1,6 +1,3 @@
-// Dart imports:
-import 'dart:developer' as developer;
-
 // Project imports:
 import 'package:worth_loop/features/products/data/datasources/price_response_detector.datasource.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
@@ -94,12 +91,6 @@ class ProductPriceFetchOrchestratorService {
       fetchResult.body,
       sourceUrl: url,
     );
-    developer.log(
-      'source=$source url=$url status=${fetchResult.statusCode} '
-      'length=${fetchResult.body.length} ${_markerSummary(fetchResult.body)} '
-      'decoded=${_offerSummary(offer)}',
-      name: 'worth_loop.price_fetch',
-    );
     final PriceFetchStatus status = _detector.detect(
       statusCode: fetchResult.statusCode,
       responseBody: fetchResult.body,
@@ -109,20 +100,5 @@ class ProductPriceFetchOrchestratorService {
       status: status,
       offer: status == PriceFetchStatus.success ? offer : null,
     );
-  }
-
-  String _offerSummary(ProductOffer? offer) => offer == null
-      ? 'null'
-      : '${offer.minorUnits}${offer.currencyCode},available=${offer.isAvailable}';
-
-  String _markerSummary(String body) {
-    final String lowerBody = body.toLowerCase();
-    return 'jsonLd=${lowerBody.contains('application/ld+json')} '
-        'offscreen=${lowerBody.contains('a-offscreen')} '
-        'aPrice=${lowerBody.contains('a-price')} '
-        'corePrice=${lowerBody.contains('coreprice')} '
-        'aod=${lowerBody.contains('aod-ingress-link')} '
-        'captcha=${lowerBody.contains('captcha')} '
-        'unavailable=${lowerBody.contains('unavailable')}';
   }
 }
