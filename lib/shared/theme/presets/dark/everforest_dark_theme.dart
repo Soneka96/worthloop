@@ -28,7 +28,7 @@ const ColorScheme everforestDarkColorScheme = ColorScheme(
   onSurfaceVariant: Color(0xFFA7B8A6), // Accessible muted green-grey
   surfaceContainerHighest: Color(0xFF343F44), // Bg1
   outline: Color(0xFFA7B8A6), // Accessible muted green-grey
-  outlineVariant: Color(0xFF718B82), // Visible lifted border
+  outlineVariant: Color(0xFF78958A), // Visible lifted border
   shadow: Color(0xFF000000),
   scrim: Color(0xFF000000),
   inverseSurface: Color(0xFFD3C6AA), // Fg

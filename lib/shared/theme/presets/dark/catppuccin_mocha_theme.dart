@@ -28,7 +28,7 @@ const ColorScheme catppuccinMochaColorScheme = ColorScheme(
   onSurfaceVariant: Color(0xFFA6ADC8), // Subtext0
   surfaceContainerHighest: Color(0xFF313244), // Surface0
   outline: Color(0xFFA6ADC8), // Subtext0
-  outlineVariant: Color(0xFF6672A2), // Visible lifted border
+  outlineVariant: Color(0xFF7586B5), // Visible lifted border
   shadow: Color(0xFF000000),
   scrim: Color(0xFF000000),
   inverseSurface: Color(0xFFCDD6F4), // Text

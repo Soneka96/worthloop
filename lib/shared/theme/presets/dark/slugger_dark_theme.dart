@@ -28,7 +28,7 @@ const ColorScheme sluggerDarkColorScheme = ColorScheme(
   onSurfaceVariant: Color(0xFFAFA8C9), // Accessible muted lavender
   surfaceContainerHighest: Color(0xFF221F3D), // Icon middle ring
   outline: Color(0xFFAFA8C9), // Accessible muted lavender
-  outlineVariant: Color(0xFF6B61A8), // Visible lifted border
+  outlineVariant: Color(0xFF756CB5), // Visible lifted border
   shadow: Color(0xFF000000),
   scrim: Color(0xFF000000),
   inverseSurface: Color(0xFFF1ECEA), // Text

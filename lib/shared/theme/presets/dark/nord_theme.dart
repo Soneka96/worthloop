@@ -28,7 +28,7 @@ const ColorScheme nordColorScheme = ColorScheme(
   onSurfaceVariant: Color(0xFFAAB7CC), // Accessible muted blue-grey
   surfaceContainerHighest: Color(0xFF3B4252), // Polar Night — nord1
   outline: Color(0xFFAAB7CC), // Accessible muted blue-grey
-  outlineVariant: Color(0xFF7584A4), // Visible lifted border
+  outlineVariant: Color(0xFF8F9EBD), // Visible lifted border
   shadow: Color(0xFF000000),
   scrim: Color(0xFF000000),
   inverseSurface: Color(0xFFECEFF4), // Snow Storm — nord6

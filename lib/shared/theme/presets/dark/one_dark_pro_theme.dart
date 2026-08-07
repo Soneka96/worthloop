@@ -28,7 +28,7 @@ const ColorScheme oneDarkProColorScheme = ColorScheme(
   onSurfaceVariant: Color(0xFFAAB2C0), // Accessible muted blue-grey
   surfaceContainerHighest: Color(0xFF2C323C), // Current Line
   outline: Color(0xFFAAB2C0), // Accessible muted blue-grey
-  outlineVariant: Color(0xFF68758D), // Visible lifted border
+  outlineVariant: Color(0xFF7A88A2), // Visible lifted border
   shadow: Color(0xFF000000),
   scrim: Color(0xFF000000),
   inverseSurface: Color(0xFFABB2BF), // Foreground

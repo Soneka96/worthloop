@@ -28,7 +28,7 @@ const ColorScheme draculaColorScheme = ColorScheme(
   onSurfaceVariant: Color(0xFFB8C1E0), // Accessible muted lavender
   surfaceContainerHighest: Color(0xFF44475A), // Current Line
   outline: Color(0xFFB8C1E0), // Accessible muted lavender
-  outlineVariant: Color(0xFF817EA8), // Visible lifted border
+  outlineVariant: Color(0xFFA8A0C8), // Visible lifted border
   shadow: Color(0xFF000000),
   scrim: Color(0xFF000000),
   inverseSurface: Color(0xFFF8F8F2), // Foreground

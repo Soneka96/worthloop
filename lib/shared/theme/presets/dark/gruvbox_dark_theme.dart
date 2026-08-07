@@ -28,7 +28,7 @@ const ColorScheme gruvboxDarkColorScheme = ColorScheme(
   onSurfaceVariant: Color(0xFFC2B39E), // Accessible muted tan
   surfaceContainerHighest: Color(0xFF3C3836), // Dark1
   outline: Color(0xFFC2B39E), // Accessible muted tan
-  outlineVariant: Color(0xFF927A63), // Visible lifted border
+  outlineVariant: Color(0xFF9F8D75), // Visible lifted border
   shadow: Color(0xFF000000),
   scrim: Color(0xFF000000),
   inverseSurface: Color(0xFFEBDBB2), // Light1
