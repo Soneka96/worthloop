@@ -63,6 +63,9 @@ class ProductDetailsViewModel extends Equatable {
   /// Dispatches [RefreshProductAction].
   final void Function() onRefresh;
 
+  /// Dispatches [RefreshSourceAction] for one source.
+  final void Function(String sourceId) onRefreshSource;
+
   /// Dispatches [GoBackFromProductDetailsAction].
   final void Function() onGoBack;
 
@@ -102,6 +105,7 @@ class ProductDetailsViewModel extends Equatable {
     required this.isDeletingProduct,
     required this.deleteProductError,
     required this.onRefresh,
+    required this.onRefreshSource,
     required this.onGoBack,
     required this.onAddSource,
     required this.onEditSource,
@@ -148,6 +152,8 @@ class ProductDetailsViewModel extends Equatable {
       store.state,
     ),
     onRefresh: () => store.dispatch(RefreshProductAction(productId)),
+    onRefreshSource: (String sourceId) =>
+        store.dispatch(RefreshSourceAction(sourceId)),
     onGoBack: () => store.dispatch(const GoBackFromProductDetailsAction()),
     onAddSource: (String url) =>
         store.dispatch(AddSourceAction(productId: productId, url: url)),

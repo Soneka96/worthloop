@@ -87,6 +87,18 @@ class RefreshProductAction extends Equatable {
   List<Object?> get props => [productId];
 }
 
+/// Requests refreshing one saved product source.
+@immutable
+class RefreshSourceAction extends Equatable {
+  /// Identifier of the source to refresh.
+  final String sourceId;
+
+  const RefreshSourceAction(this.sourceId);
+
+  @override
+  List<Object?> get props => [sourceId];
+}
+
 /// Starts tracking the refresh of a product's sources.
 @immutable
 class SourceRefreshStartedAction extends Equatable {

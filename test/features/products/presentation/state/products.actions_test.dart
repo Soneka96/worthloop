@@ -7,6 +7,15 @@ import 'package:worth_loop/shared/constants/enums.dart';
 
 void main() {
   group('Source refresh actions carry their values', () {
+    test('RefreshSourceAction carries the source identifier', () {
+      const RefreshSourceAction action = RefreshSourceAction('source-1');
+
+      expect(action.sourceId, isA<String>());
+      expect(action.sourceId, 'source-1');
+      expect(action, const RefreshSourceAction('source-1'));
+      expect(action, isNot(const RefreshSourceAction('source-2')));
+    });
+
     test('SourceRefreshStartedAction carries source identifiers', () {
       const SourceRefreshStartedAction action = SourceRefreshStartedAction([
         'source-1',

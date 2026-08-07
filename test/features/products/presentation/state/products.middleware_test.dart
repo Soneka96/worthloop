@@ -22,9 +22,11 @@ import 'package:worth_loop/features/products/domain/usecases/params/delete_produ
 import 'package:worth_loop/features/products/domain/usecases/params/delete_source.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/edit_source.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/refresh_product.params.dart';
+import 'package:worth_loop/features/products/domain/usecases/params/refresh_source.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/rename_product.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_all_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_product.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/refresh_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/rename_product.usecase.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/products.middleware.dart';
@@ -50,6 +52,8 @@ class MockCreateProductUseCase extends Mock implements CreateProductUseCase {}
 
 class MockRefreshProductUseCase extends Mock implements RefreshProductUseCase {}
 
+class MockRefreshSourceUseCase extends Mock implements RefreshSourceUseCase {}
+
 class MockRefreshAllProductsUseCase extends Mock
     implements RefreshAllProductsUseCase {}
 
@@ -71,6 +75,8 @@ class MockUrlLauncherService extends Mock implements UrlLauncherService {}
 
 class FakeRefreshProductParams extends Fake implements RefreshProductParams {}
 
+class FakeRefreshSourceParams extends Fake implements RefreshSourceParams {}
+
 class FakeCreateProductParams extends Fake implements CreateProductParams {}
 
 class FakeAddSourceParams extends Fake implements AddSourceParams {}
@@ -89,6 +95,7 @@ void main() {
   late MockLoadProductsUseCase mockLoadProductsUseCase;
   late MockCreateProductUseCase mockCreateProductUseCase;
   late MockRefreshProductUseCase mockRefreshProductUseCase;
+  late MockRefreshSourceUseCase mockRefreshSourceUseCase;
   late MockRefreshAllProductsUseCase mockRefreshAllProductsUseCase;
   late MockAddSourceUseCase mockAddSourceUseCase;
   late MockEditSourceUseCase mockEditSourceUseCase;
@@ -105,6 +112,7 @@ void main() {
   setUpAll(() {
     registerFallbackValue(NoParams());
     registerFallbackValue(FakeRefreshProductParams());
+    registerFallbackValue(FakeRefreshSourceParams());
     registerFallbackValue(FakeCreateProductParams());
     registerFallbackValue(FakeAddSourceParams());
     registerFallbackValue(FakeEditSourceParams());
@@ -119,6 +127,7 @@ void main() {
     mockLoadProductsUseCase = MockLoadProductsUseCase();
     mockCreateProductUseCase = MockCreateProductUseCase();
     mockRefreshProductUseCase = MockRefreshProductUseCase();
+    mockRefreshSourceUseCase = MockRefreshSourceUseCase();
     mockRefreshAllProductsUseCase = MockRefreshAllProductsUseCase();
     mockAddSourceUseCase = MockAddSourceUseCase();
     mockEditSourceUseCase = MockEditSourceUseCase();
@@ -139,6 +148,7 @@ void main() {
     sl.registerSingleton<LoadProductsUseCase>(mockLoadProductsUseCase);
     sl.registerSingleton<CreateProductUseCase>(mockCreateProductUseCase);
     sl.registerSingleton<RefreshProductUseCase>(mockRefreshProductUseCase);
+    sl.registerSingleton<RefreshSourceUseCase>(mockRefreshSourceUseCase);
     sl.registerSingleton<RefreshAllProductsUseCase>(
       mockRefreshAllProductsUseCase,
     );
@@ -429,6 +439,126 @@ void main() {
         middleware.call(store, const RefreshProductAction('product-1'), next);
 
         verify(() => mockRefreshProductUseCase(any())).called(1);
+        completer.complete(Right(buildProduct()));
+        await Future<void>.delayed(Duration.zero);
+      },
+    );
+  });
+
+  group('ProductsMiddleware processes RefreshSourceAction', () {
+    test('RefreshSourceAction dispatches the refreshed product', () async {
+      final Product product = buildProduct();
+      when(() => mockRefreshSourceUseCase(any())).thenAnswer((
+        invocation,
+      ) async {
+        final RefreshSourceParams params =
+            invocation.positionalArguments.single as RefreshSourceParams;
+        params.onSourceStatusChanged?.call(
+          'source-1',
+          SourceRefreshStatus.fetching,
+        );
+        params.onSourceStatusChanged?.call(
+          'source-1',
+          SourceRefreshStatus.success,
+        );
+        return Right(product);
+      });
+
+      middleware.call(store, const RefreshSourceAction('source-1'), next);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(actionLog[0], const RefreshSourceAction('source-1'));
+      expect(actionLog[1], const SourceRefreshStartedAction(['source-1']));
+      expect(
+        actionLog[2],
+        const SourceRefreshStatusChangedAction(
+          sourceId: 'source-1',
+          status: SourceRefreshStatus.fetching,
+        ),
+      );
+      expect(
+        actionLog[3],
+        const SourceRefreshStatusChangedAction(
+          sourceId: 'source-1',
+          status: SourceRefreshStatus.success,
+        ),
+      );
+      expect(actionLog[4], isA<ProductRefreshedAction>());
+      expect((actionLog[4] as ProductRefreshedAction).product, product);
+      expect(actionLog[5], isA<SourceRefreshFinishedAction>());
+      final List<dynamic> captured = verify(
+        () => mockRefreshSourceUseCase(captureAny()),
+      ).captured;
+      expect(captured.single, isA<RefreshSourceParams>());
+      expect((captured.single as RefreshSourceParams).sourceId, 'source-1');
+      verifyZeroInteractions(mockLoggerService);
+    });
+
+    test('RefreshSourceAction reports a failure as a source error', () async {
+      const DatabaseFailure failure = DatabaseFailure('failed');
+      when(
+        () => mockRefreshSourceUseCase(any()),
+      ).thenAnswer((_) async => const Left(failure));
+
+      middleware.call(store, const RefreshSourceAction('source-1'), next);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(actionLog[0], const RefreshSourceAction('source-1'));
+      expect(actionLog[1], const SourceRefreshStartedAction(['source-1']));
+      expect(
+        actionLog[2],
+        const SourceRefreshStatusChangedAction(
+          sourceId: 'source-1',
+          status: SourceRefreshStatus.error,
+        ),
+      );
+      expect(actionLog[3], isA<SourceRefreshFinishedAction>());
+      verify(() => mockLoggerService.e('failed', showPopup: true)).called(1);
+      verifyNoMoreInteractions(mockLoggerService);
+    });
+
+    test(
+      'RefreshSourceAction does not duplicate a terminal source error',
+      () async {
+        const DatabaseFailure failure = DatabaseFailure('failed');
+        when(() => mockRefreshSourceUseCase(any())).thenAnswer((
+          invocation,
+        ) async {
+          final RefreshSourceParams params =
+              invocation.positionalArguments.single as RefreshSourceParams;
+          params.onSourceStatusChanged?.call(
+            'source-1',
+            SourceRefreshStatus.error,
+          );
+          return const Left(failure);
+        });
+
+        middleware.call(store, const RefreshSourceAction('source-1'), next);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(actionLog.length, 4);
+        expect(
+          actionLog.whereType<SourceRefreshStatusChangedAction>().length,
+          1,
+        );
+        expect(actionLog.last, isA<SourceRefreshFinishedAction>());
+      },
+    );
+
+    test(
+      'RefreshSourceAction ignores a second refresh while one is active',
+      () async {
+        final Completer<Either<Failure, Product>> completer =
+            Completer<Either<Failure, Product>>();
+        when(
+          () => mockRefreshSourceUseCase(any()),
+        ).thenAnswer((_) => completer.future);
+
+        middleware.call(store, const RefreshSourceAction('source-1'), next);
+        await Future<void>.delayed(Duration.zero);
+        middleware.call(store, const RefreshSourceAction('source-1'), next);
+
+        verify(() => mockRefreshSourceUseCase(any())).called(1);
         completer.complete(Right(buildProduct()));
         await Future<void>.delayed(Duration.zero);
       },

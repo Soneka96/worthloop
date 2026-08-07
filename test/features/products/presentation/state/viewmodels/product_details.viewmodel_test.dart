@@ -80,6 +80,7 @@ void main() {
           expect(viewmodel.isDeletingProduct, isTrue);
           expect(viewmodel.deleteProductError, 'product delete failed');
           expect(viewmodel.onRefresh, isA<Function()>());
+          expect(viewmodel.onRefreshSource, isA<Function(String)>());
           expect(viewmodel.onGoBack, isA<Function()>());
           expect(viewmodel.onAddSource, isA<Function(String)>());
           expect(viewmodel.onEditSource, isA<Function(String, String)>());
@@ -101,6 +102,21 @@ void main() {
 
         expect(dispatchedActions, [const RefreshProductAction('product-1')]);
       });
+
+      test(
+        'Method onRefreshSource dispatches RefreshSourceAction when called',
+        () {
+          final ProductDetailsViewModel viewmodel =
+              ProductDetailsViewModel.fromStore(
+                buildStore(AppState.initial()),
+                'product-1',
+              );
+
+          viewmodel.onRefreshSource('source-1');
+
+          expect(dispatchedActions, [const RefreshSourceAction('source-1')]);
+        },
+      );
 
       test(
         'Method onGoBack dispatches GoBackFromProductDetailsAction when called',

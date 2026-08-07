@@ -17,9 +17,11 @@ import 'package:worth_loop/features/products/domain/usecases/params/delete_produ
 import 'package:worth_loop/features/products/domain/usecases/params/delete_source.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/edit_source.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/refresh_product.params.dart';
+import 'package:worth_loop/features/products/domain/usecases/params/refresh_source.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/rename_product.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_all_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_product.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/refresh_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/rename_product.usecase.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
@@ -48,6 +50,8 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
         _createProduct(store, action);
       case RefreshProductAction _:
         _refreshProduct(store, action);
+      case RefreshSourceAction _:
+        _refreshSource(store, action);
       case RefreshAllProductsAction _:
         _refreshAllProducts(store, action);
       case GoToProductDetailsAction _:
@@ -165,6 +169,55 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
         completedCount: completedCount,
         failedCount: failedCount,
         isGlobal: false,
+      );
+    } finally {
+      store.dispatch(const SourceRefreshFinishedAction());
+      _refreshInProgress = false;
+    }
+  }
+
+  /// Handles [RefreshSourceAction].
+  Future<void> _refreshSource(
+    Store<AppState> store,
+    RefreshSourceAction action,
+  ) async {
+    if (_refreshInProgress) {
+      return;
+    }
+    _refreshInProgress = true;
+    int completedCount = 0;
+    store.dispatch(SourceRefreshStartedAction([action.sourceId]));
+    try {
+      await (await sl<RefreshSourceUseCase>()(
+        RefreshSourceParams(
+          sourceId: action.sourceId,
+          onSourceStatusChanged: (String sourceId, SourceRefreshStatus status) {
+            if (_isTerminalSourceRefreshStatus(status)) {
+              completedCount++;
+            }
+            store.dispatch(
+              SourceRefreshStatusChangedAction(
+                sourceId: sourceId,
+                status: status,
+              ),
+            );
+          },
+        ),
+      )).fold(
+        (failure) {
+          sl<LoggerService>().e(failure.message, showPopup: true);
+          if (completedCount == 0) {
+            store.dispatch(
+              SourceRefreshStatusChangedAction(
+                sourceId: action.sourceId,
+                status: SourceRefreshStatus.error,
+              ),
+            );
+          }
+        },
+        (Product product) {
+          store.dispatch(ProductRefreshedAction(product));
+        },
       );
     } finally {
       store.dispatch(const SourceRefreshFinishedAction());
