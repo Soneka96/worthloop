@@ -13,6 +13,43 @@ void main() {
       service = ProductOfferDecoderService();
     });
 
+    test('decodes a valid offer asynchronously', () async {
+      final ProductOffer? result = await service.decodeAsync('''
+        <meta property="product:price:amount" content="19.99">
+        <meta property="product:price:currency" content="EUR">
+      ''');
+
+      expect(
+        result,
+        const ProductOffer(
+          minorUnits: 1999,
+          currencyCode: 'EUR',
+          isAvailable: true,
+        ),
+      );
+    });
+
+    test(
+      'returns null asynchronously when no supported price exists',
+      () async {
+        final ProductOffer? result = await service.decodeAsync('<html></html>');
+
+        expect(result, isNull);
+      },
+    );
+
+    test('preserves unavailable JSON-LD offers asynchronously', () async {
+      final ProductOffer? result = await service.decodeAsync('''
+        <script type="application/ld+json">
+          {"offers":{"price":"19.99","priceCurrency":"EUR","availability":"OutOfStock"}}
+        </script>
+      ''');
+
+      expect(result?.minorUnits, 1999);
+      expect(result?.currencyCode, 'EUR');
+      expect(result?.isAvailable, isFalse);
+    });
+
     test('extracts a JSON-LD offer with its currency', () {
       final ProductOffer? result = service.decode('''
         <script type="application/ld+json">

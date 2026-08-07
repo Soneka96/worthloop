@@ -1,5 +1,6 @@
 // Dart imports:
 import 'dart:convert';
+import 'dart:isolate';
 
 // Project imports:
 import 'package:worth_loop/shared/utils/product_offer.value-object.dart';
@@ -111,6 +112,22 @@ class ProductOfferDecoderService {
         _decodeMicrodata(html) ??
         _decodeAmazonMainOffer(html) ??
         _decodeAmazonSellerOffer(html);
+  }
+
+  /// Decodes [html] on a worker isolate so large responses do not block the
+  /// Flutter UI isolate.
+  Future<ProductOffer?> decodeAsync(String html, {String? sourceUrl}) async {
+    final List<Object?> result = await Isolate.run(
+      () => _decodeForIsolate(html, sourceUrl),
+    );
+    if (result.isEmpty) {
+      return null;
+    }
+    return ProductOffer(
+      minorUnits: result[0] as int,
+      currencyCode: result[1] as String,
+      isAvailable: result[2] as bool,
+    );
   }
 
   ProductOffer? _decodeAmazonOffer(String html) =>
@@ -425,4 +442,14 @@ class ProductOfferDecoderService {
     }
     return num.tryParse(normalized);
   }
+}
+
+List<Object?> _decodeForIsolate(String html, String? sourceUrl) {
+  final ProductOffer? offer = ProductOfferDecoderService().decode(
+    html,
+    sourceUrl: sourceUrl,
+  );
+  return offer == null
+      ? const <Object?>[]
+      : <Object?>[offer.minorUnits, offer.currencyCode, offer.isAvailable];
 }

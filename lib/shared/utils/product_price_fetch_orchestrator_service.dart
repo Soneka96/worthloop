@@ -58,13 +58,13 @@ class ProductPriceFetchOrchestratorService {
       );
     }
 
-    PriceFetchResult result = _classify(
+    PriceFetchResult result = await _classify(
       await _dioFetcher.fetch(cleanedUrl),
       source: 'dio',
       url: cleanedUrl,
     );
     if (_fallbackTriggers.contains(result.status)) {
-      result = _classify(
+      result = await _classify(
         await _webViewFetcher.fetch(cleanedUrl),
         source: 'webview',
         url: cleanedUrl,
@@ -78,12 +78,12 @@ class ProductPriceFetchOrchestratorService {
     return result;
   }
 
-  PriceFetchResult _classify(
+  Future<PriceFetchResult> _classify(
     FetchResult fetchResult, {
     required String source,
     required String url,
-  }) {
-    final ProductOffer? offer = _offerDecoder.decode(
+  }) async {
+    final ProductOffer? offer = await _offerDecoder.decodeAsync(
       fetchResult.body,
       sourceUrl: url,
     );
