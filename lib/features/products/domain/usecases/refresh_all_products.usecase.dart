@@ -16,7 +16,12 @@ class RefreshAllProductsUseCase
   RefreshAllProductsUseCase(this._repository);
 
   @override
-  Future<Either<Failure, List<Product>>> call(NoParams params) {
-    return _repository.refreshAllProducts();
+  Future<Either<Failure, List<Product>>> call(
+    NoParams params, {
+    SourceRefreshListener? onSourceStatusChanged,
+  }) {
+    return _repository.refreshAllProducts(
+      onSourceStatusChanged: onSourceStatusChanged,
+    );
   }
 }

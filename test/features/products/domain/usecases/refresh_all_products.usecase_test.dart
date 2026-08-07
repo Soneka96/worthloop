@@ -28,13 +28,15 @@ void main() {
       () async {
         final List<Product> products = [buildProduct()];
         when(
-          () => mockRepository.refreshAllProducts(),
+          () => mockRepository.refreshAllProducts(onSourceStatusChanged: null),
         ).thenAnswer((_) async => Right(products));
 
         final Either<Failure, List<Product>> result = await useCase(NoParams());
 
         expect(result, Right(products));
-        verify(() => mockRepository.refreshAllProducts()).called(1);
+        verify(
+          () => mockRepository.refreshAllProducts(onSourceStatusChanged: null),
+        ).called(1);
         verifyNoMoreInteractions(mockRepository);
       },
     );
@@ -44,13 +46,15 @@ void main() {
       () async {
         const DatabaseFailure failure = DatabaseFailure('database failed');
         when(
-          () => mockRepository.refreshAllProducts(),
+          () => mockRepository.refreshAllProducts(onSourceStatusChanged: null),
         ).thenAnswer((_) async => const Left(failure));
 
         final Either<Failure, List<Product>> result = await useCase(NoParams());
 
         expect(result, const Left(failure));
-        verify(() => mockRepository.refreshAllProducts()).called(1);
+        verify(
+          () => mockRepository.refreshAllProducts(onSourceStatusChanged: null),
+        ).called(1);
         verifyNoMoreInteractions(mockRepository);
       },
     );
@@ -60,13 +64,15 @@ void main() {
       () async {
         const NetworkFailure failure = NetworkFailure('network failed');
         when(
-          () => mockRepository.refreshAllProducts(),
+          () => mockRepository.refreshAllProducts(onSourceStatusChanged: null),
         ).thenAnswer((_) async => const Left(failure));
 
         final Either<Failure, List<Product>> result = await useCase(NoParams());
 
         expect(result, const Left(failure));
-        verify(() => mockRepository.refreshAllProducts()).called(1);
+        verify(
+          () => mockRepository.refreshAllProducts(onSourceStatusChanged: null),
+        ).called(1);
         verifyNoMoreInteractions(mockRepository);
       },
     );

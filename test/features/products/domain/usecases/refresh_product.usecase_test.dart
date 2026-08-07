@@ -26,7 +26,10 @@ void main() {
     test('returns Right(Product) when the repository returns Right', () async {
       final Product product = buildProduct();
       when(
-        () => mockRepository.refreshProduct('product-1'),
+        () => mockRepository.refreshProduct(
+          'product-1',
+          onSourceStatusChanged: null,
+        ),
       ).thenAnswer((_) async => Right(product));
 
       final Either<Failure, Product> result = await useCase(
@@ -34,7 +37,12 @@ void main() {
       );
 
       expect(result, Right(product));
-      verify(() => mockRepository.refreshProduct('product-1')).called(1);
+      verify(
+        () => mockRepository.refreshProduct(
+          'product-1',
+          onSourceStatusChanged: null,
+        ),
+      ).called(1);
       verifyNoMoreInteractions(mockRepository);
     });
 
@@ -43,7 +51,10 @@ void main() {
       () async {
         const DatabaseFailure failure = DatabaseFailure('database failed');
         when(
-          () => mockRepository.refreshProduct('product-1'),
+          () => mockRepository.refreshProduct(
+            'product-1',
+            onSourceStatusChanged: null,
+          ),
         ).thenAnswer((_) async => const Left(failure));
 
         final Either<Failure, Product> result = await useCase(
@@ -51,7 +62,12 @@ void main() {
         );
 
         expect(result, const Left(failure));
-        verify(() => mockRepository.refreshProduct('product-1')).called(1);
+        verify(
+          () => mockRepository.refreshProduct(
+            'product-1',
+            onSourceStatusChanged: null,
+          ),
+        ).called(1);
         verifyNoMoreInteractions(mockRepository);
       },
     );
@@ -61,7 +77,10 @@ void main() {
       () async {
         const NetworkFailure failure = NetworkFailure('network failed');
         when(
-          () => mockRepository.refreshProduct('product-1'),
+          () => mockRepository.refreshProduct(
+            'product-1',
+            onSourceStatusChanged: null,
+          ),
         ).thenAnswer((_) async => const Left(failure));
 
         final Either<Failure, Product> result = await useCase(
@@ -69,7 +88,12 @@ void main() {
         );
 
         expect(result, const Left(failure));
-        verify(() => mockRepository.refreshProduct('product-1')).called(1);
+        verify(
+          () => mockRepository.refreshProduct(
+            'product-1',
+            onSourceStatusChanged: null,
+          ),
+        ).called(1);
         verifyNoMoreInteractions(mockRepository);
       },
     );
@@ -77,7 +101,10 @@ void main() {
     test('forwards a different productId to the repository', () async {
       final Product product = buildProduct(id: 'product-2');
       when(
-        () => mockRepository.refreshProduct('product-2'),
+        () => mockRepository.refreshProduct(
+          'product-2',
+          onSourceStatusChanged: null,
+        ),
       ).thenAnswer((_) async => Right(product));
 
       final Either<Failure, Product> result = await useCase(
@@ -85,7 +112,12 @@ void main() {
       );
 
       expect(result, Right(product));
-      verify(() => mockRepository.refreshProduct('product-2')).called(1);
+      verify(
+        () => mockRepository.refreshProduct(
+          'product-2',
+          onSourceStatusChanged: null,
+        ),
+      ).called(1);
       verifyNoMoreInteractions(mockRepository);
     });
   });

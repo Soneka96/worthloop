@@ -3,6 +3,7 @@ import 'package:redux/redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/domain/usecases/add_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/create_product.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/delete_product.usecase.dart';
@@ -22,9 +23,10 @@ import 'package:worth_loop/features/products/domain/usecases/rename_product.usec
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
+import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/navigation/app_routes.dart';
 import 'package:worth_loop/shared/navigation/navigator_service.dart';
-import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/usecase/no_params.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
@@ -32,6 +34,8 @@ import 'package:worth_loop/shared/utils/url_launcher_service.dart';
 
 /// Handles tracked-product actions.
 class ProductsMiddleware extends MiddlewareClass<AppState> {
+  bool _refreshInProgress = false;
+
   @override
   void call(Store<AppState> store, dynamic action, NextDispatcher next) {
     next(action);
@@ -103,23 +107,45 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
     Store<AppState> store,
     RefreshProductAction action,
   ) async {
-    (await sl<RefreshProductUseCase>()(
-      RefreshProductParams(productId: action.productId),
-    )).fold(
-      (failure) {
-        sl<LoggerService>().e(failure.message, showPopup: true);
-        store.dispatch(
-          ProductRefreshFailedAction(
-            productId: action.productId,
-            message: failure.message,
-            status: failure is PriceFetchFailure ? failure.status : null,
-          ),
-        );
-      },
-      (Product product) {
-        store.dispatch(ProductRefreshedAction(product));
-      },
+    if (_refreshInProgress) {
+      return;
+    }
+    _refreshInProgress = true;
+    store.dispatch(
+      SourceRefreshStartedAction(_sourceIdsForProduct(store, action.productId)),
     );
+    try {
+      (await sl<RefreshProductUseCase>()(
+        RefreshProductParams(
+          productId: action.productId,
+          onSourceStatusChanged: (String sourceId, SourceRefreshStatus status) {
+            store.dispatch(
+              SourceRefreshStatusChangedAction(
+                sourceId: sourceId,
+                status: status,
+              ),
+            );
+          },
+        ),
+      )).fold(
+        (failure) {
+          sl<LoggerService>().e(failure.message, showPopup: true);
+          store.dispatch(
+            ProductRefreshFailedAction(
+              productId: action.productId,
+              message: failure.message,
+              status: failure is PriceFetchFailure ? failure.status : null,
+            ),
+          );
+        },
+        (Product product) {
+          store.dispatch(ProductRefreshedAction(product));
+        },
+      );
+    } finally {
+      store.dispatch(const SourceRefreshFinishedAction());
+      _refreshInProgress = false;
+    }
   }
 
   /// Handles [RefreshAllProductsAction].
@@ -127,21 +153,60 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
     Store<AppState> store,
     RefreshAllProductsAction action,
   ) async {
-    (await sl<RefreshAllProductsUseCase>()(NoParams())).fold(
-      (failure) {
-        sl<LoggerService>().e(failure.message, showPopup: true);
-        store.dispatch(
-          RefreshAllProductsFailedAction(
-            failure.message,
-            status: failure is PriceFetchFailure ? failure.status : null,
-          ),
-        );
-      },
-      (List<Product> products) {
-        store.dispatch(ProductsLoadedAction(products));
-      },
-    );
+    if (_refreshInProgress) {
+      return;
+    }
+    _refreshInProgress = true;
+    store.dispatch(SourceRefreshStartedAction(_sourceIdsForAllProducts(store)));
+    try {
+      (await sl<RefreshAllProductsUseCase>()(
+        NoParams(),
+        onSourceStatusChanged: (String sourceId, SourceRefreshStatus status) {
+          store.dispatch(
+            SourceRefreshStatusChangedAction(
+              sourceId: sourceId,
+              status: status,
+            ),
+          );
+        },
+      )).fold(
+        (failure) {
+          sl<LoggerService>().e(failure.message, showPopup: true);
+          store.dispatch(
+            RefreshAllProductsFailedAction(
+              failure.message,
+              status: failure is PriceFetchFailure ? failure.status : null,
+            ),
+          );
+        },
+        (List<Product> products) {
+          store.dispatch(ProductsLoadedAction(products));
+        },
+      );
+    } finally {
+      store.dispatch(const SourceRefreshFinishedAction());
+      _refreshInProgress = false;
+    }
   }
+
+  List<String> _sourceIdsForProduct(Store<AppState> store, String productId) {
+    for (final Product product in store.state.products.products) {
+      if (product.id == productId) {
+        return product.sources
+            .map((ProductSource source) => source.id)
+            .toList();
+      }
+    }
+    return [];
+  }
+
+  List<String> _sourceIdsForAllProducts(Store<AppState> store) => store
+      .state
+      .products
+      .products
+      .expand((Product product) => product.sources)
+      .map((ProductSource source) => source.id)
+      .toList();
 
   /// Handles [GoToProductDetailsAction].
   Future<void> _goToProductDetails(

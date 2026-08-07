@@ -9,6 +9,7 @@ import 'package:worth_loop/features/products/data/models/product_source.model.da
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 
 /// Implements [IProductsRepository] with local and remote product data.
@@ -33,7 +34,10 @@ class ProductsRepository implements IProductsRepository {
   }
 
   @override
-  Future<Either<Failure, Product>> refreshProduct(String productId) async {
+  Future<Either<Failure, Product>> refreshProduct(
+    String productId, {
+    SourceRefreshListener? onSourceStatusChanged,
+  }) async {
     final Either<Failure, List<ProductSourceModel>> sourceResult =
         await _localDatasource.loadProductSourcesForProduct(productId);
     return sourceResult.match((Failure failure) async => Left(failure), (
@@ -43,43 +47,67 @@ class ProductsRepository implements IProductsRepository {
         return _localDatasource.refreshProduct(productId);
       }
       final List<ProductSourceModel> updatedSources = [];
+      Failure? firstFailure;
       for (final ProductSourceModel source in sources) {
+        onSourceStatusChanged?.call(source.id, SourceRefreshStatus.fetching);
         final Either<Failure, ProductSourceModel> priceResult =
             await _remoteDatasource.fetchPrices(source);
-        final Failure? failure = priceResult.getLeft().toNullable();
-        if (failure != null) {
-          return Left(failure);
-        }
-        final ProductSourceModel? updated = priceResult.getRight().toNullable();
-        if (updated != null) {
-          updatedSources.add(updated);
-        }
+        priceResult.match(
+          (Failure failure) {
+            firstFailure ??= failure;
+            onSourceStatusChanged?.call(source.id, SourceRefreshStatus.error);
+          },
+          (ProductSourceModel updated) {
+            updatedSources.add(updated);
+            onSourceStatusChanged?.call(
+              source.id,
+              updated.isAvailable == true
+                  ? SourceRefreshStatus.success
+                  : SourceRefreshStatus.unavailable,
+            );
+          },
+        );
+      }
+      final Failure? sourceFailure = firstFailure;
+      if (sourceFailure != null) {
+        return Left(sourceFailure);
       }
       return _localDatasource.updateSourcePrices(productId, updatedSources);
     });
   }
 
   @override
-  Future<Either<Failure, List<Product>>> refreshAllProducts() async {
+  Future<Either<Failure, List<Product>>> refreshAllProducts({
+    SourceRefreshListener? onSourceStatusChanged,
+  }) async {
     final Either<Failure, List<ProductSourceModel>> sourcesResult =
         await _localDatasource.loadProductSources();
     return sourcesResult.match((Failure failure) async => Left(failure), (
       List<ProductSourceModel> sources,
     ) async {
       final Map<String, List<ProductSourceModel>> updatedSourcesByProduct = {};
+      Failure? firstFailure;
       for (final ProductSourceModel source in sources) {
+        onSourceStatusChanged?.call(source.id, SourceRefreshStatus.fetching);
         final Either<Failure, ProductSourceModel> priceResult =
             await _remoteDatasource.fetchPrices(source);
-        final Failure? failure = priceResult.getLeft().toNullable();
-        if (failure != null) {
-          return Left(failure);
-        }
-        final ProductSourceModel? updated = priceResult.getRight().toNullable();
-        if (updated != null) {
-          updatedSourcesByProduct
-              .putIfAbsent(source.productId, () => <ProductSourceModel>[])
-              .add(updated);
-        }
+        priceResult.match(
+          (Failure failure) {
+            firstFailure ??= failure;
+            onSourceStatusChanged?.call(source.id, SourceRefreshStatus.error);
+          },
+          (ProductSourceModel updated) {
+            updatedSourcesByProduct
+                .putIfAbsent(source.productId, () => <ProductSourceModel>[])
+                .add(updated);
+            onSourceStatusChanged?.call(
+              source.id,
+              updated.isAvailable == true
+                  ? SourceRefreshStatus.success
+                  : SourceRefreshStatus.unavailable,
+            );
+          },
+        );
       }
       for (final MapEntry<String, List<ProductSourceModel>> entry
           in updatedSourcesByProduct.entries) {
@@ -90,7 +118,16 @@ class ProductsRepository implements IProductsRepository {
           return Left(failure);
         }
       }
-      return _localDatasource.refreshAllProducts();
+      final Failure? sourceFailure = firstFailure;
+      if (sourceFailure != null) {
+        return Left(sourceFailure);
+      }
+      final Either<Failure, List<Product>> refreshedProducts =
+          await _localDatasource.refreshAllProducts();
+      if (refreshedProducts.isLeft()) {
+        return refreshedProducts;
+      }
+      return refreshedProducts;
     });
   }
 

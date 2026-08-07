@@ -1,3 +1,6 @@
+// Dart imports:
+import 'dart:async';
+
 // Package imports:
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
@@ -122,6 +125,8 @@ void main() {
     mockNavigatorService = MockNavigatorService();
     mockUrlLauncherService = MockUrlLauncherService();
     actionLog = [];
+
+    when(() => store.state).thenReturn(AppState.initial());
 
     when(() => store.dispatch(any())).thenAnswer(
       (Invocation invocation) =>
@@ -268,8 +273,10 @@ void main() {
         await Future<void>.delayed(Duration.zero);
 
         expect(actionLog[0], isA<RefreshProductAction>());
-        expect(actionLog[1], isA<ProductRefreshedAction>());
-        expect((actionLog[1] as ProductRefreshedAction).product, product);
+        expect(actionLog[1], isA<SourceRefreshStartedAction>());
+        expect(actionLog[2], isA<ProductRefreshedAction>());
+        expect((actionLog[2] as ProductRefreshedAction).product, product);
+        expect(actionLog[3], isA<SourceRefreshFinishedAction>());
         verify(
           () => mockRefreshProductUseCase(
             const RefreshProductParams(productId: 'product-1'),
@@ -292,7 +299,7 @@ void main() {
         await Future<void>.delayed(Duration.zero);
 
         final ProductRefreshFailedAction action =
-            actionLog[1] as ProductRefreshFailedAction;
+            actionLog[2] as ProductRefreshFailedAction;
         expect(action.productId, isA<String>());
         expect(action.productId, 'product-1');
         expect(action.message, isA<String>());
@@ -307,6 +314,25 @@ void main() {
         verifyNoMoreInteractions(mockLoggerService);
       },
     );
+
+    test(
+      'RefreshProductAction ignores a second refresh while one is active',
+      () async {
+        final Completer<Either<Failure, Product>> completer =
+            Completer<Either<Failure, Product>>();
+        when(
+          () => mockRefreshProductUseCase(any()),
+        ).thenAnswer((_) => completer.future);
+
+        middleware.call(store, const RefreshProductAction('product-1'), next);
+        await Future<void>.delayed(Duration.zero);
+        middleware.call(store, const RefreshProductAction('product-1'), next);
+
+        verify(() => mockRefreshProductUseCase(any())).called(1);
+        completer.complete(Right(buildProduct()));
+        await Future<void>.delayed(Duration.zero);
+      },
+    );
   });
 
   group('ProductsMiddleware processes RefreshAllProductsAction', () {
@@ -315,17 +341,25 @@ void main() {
       () async {
         final Product product = buildProduct();
         when(
-          () => mockRefreshAllProductsUseCase(any()),
+          () => mockRefreshAllProductsUseCase(
+            any(),
+            onSourceStatusChanged: any(named: 'onSourceStatusChanged'),
+          ),
         ).thenAnswer((_) async => Right([product]));
 
         middleware.call(store, const RefreshAllProductsAction(), next);
         await Future<void>.delayed(Duration.zero);
 
         expect(actionLog[0], isA<RefreshAllProductsAction>());
-        expect(actionLog[1], isA<ProductsLoadedAction>());
-        expect((actionLog[1] as ProductsLoadedAction).products, [product]);
+        expect(actionLog[1], isA<SourceRefreshStartedAction>());
+        expect(actionLog[2], isA<ProductsLoadedAction>());
+        expect((actionLog[2] as ProductsLoadedAction).products, [product]);
+        expect(actionLog[3], isA<SourceRefreshFinishedAction>());
         final List<dynamic> captured = verify(
-          () => mockRefreshAllProductsUseCase(captureAny()),
+          () => mockRefreshAllProductsUseCase(
+            captureAny(),
+            onSourceStatusChanged: any(named: 'onSourceStatusChanged'),
+          ),
         ).captured;
         expect(captured.single, isA<NoParams>());
         verifyNoMoreInteractions(mockRefreshAllProductsUseCase);
@@ -338,23 +372,30 @@ void main() {
       () async {
         const DatabaseFailure failure = DatabaseFailure('failed');
         when(
-          () => mockRefreshAllProductsUseCase(any()),
+          () => mockRefreshAllProductsUseCase(
+            any(),
+            onSourceStatusChanged: any(named: 'onSourceStatusChanged'),
+          ),
         ).thenAnswer((_) async => const Left(failure));
 
         middleware.call(store, const RefreshAllProductsAction(), next);
         await Future<void>.delayed(Duration.zero);
 
-        expect(actionLog[1], isA<RefreshAllProductsFailedAction>());
+        expect(actionLog[2], isA<RefreshAllProductsFailedAction>());
         expect(
-          (actionLog[1] as RefreshAllProductsFailedAction).message,
+          (actionLog[2] as RefreshAllProductsFailedAction).message,
           isA<String>(),
         );
         expect(
-          (actionLog[1] as RefreshAllProductsFailedAction).message,
+          (actionLog[2] as RefreshAllProductsFailedAction).message,
           'failed',
         );
+        expect(actionLog[3], isA<SourceRefreshFinishedAction>());
         final List<dynamic> captured = verify(
-          () => mockRefreshAllProductsUseCase(captureAny()),
+          () => mockRefreshAllProductsUseCase(
+            captureAny(),
+            onSourceStatusChanged: any(named: 'onSourceStatusChanged'),
+          ),
         ).captured;
         expect(captured.single, isA<NoParams>());
         verifyNoMoreInteractions(mockRefreshAllProductsUseCase);

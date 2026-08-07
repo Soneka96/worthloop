@@ -17,6 +17,9 @@ void main() {
       final ProductsState state = ProductsState.initial().copyWith(
         products: [buildProduct()],
         error: const Some('old failure'),
+        sourceRefreshStatuses: {'source-1': SourceRefreshStatus.success},
+        refreshCompletedCount: 1,
+        refreshTotalCount: 1,
       );
       final ProductsState reducedState = productsReducer(
         state,
@@ -28,6 +31,21 @@ void main() {
       expect(reducedState.isLoading, isA<bool>());
       expect(reducedState.isLoading, isTrue, reason: 'loading starts');
       expect(reducedState.error, isNull, reason: 'old error is cleared');
+      expect(
+        reducedState.sourceRefreshStatuses,
+        isEmpty,
+        reason: 'stale source statuses clear on a fresh load',
+      );
+      expect(
+        reducedState.refreshCompletedCount,
+        0,
+        reason: 'source progress resets on a fresh load',
+      );
+      expect(
+        reducedState.refreshTotalCount,
+        0,
+        reason: 'source total resets on a fresh load',
+      );
       expect(
         reducedState.products,
         state.products,
@@ -44,9 +62,6 @@ void main() {
         refreshingProductIds: {'product-1'},
         error: const Some('old failure'),
         productRefreshStatuses: {'product-1': PriceFetchStatus.blocked},
-        sourceRefreshStatuses: {'source-1': SourceRefreshStatus.success},
-        refreshCompletedCount: 1,
-        refreshTotalCount: 1,
       );
       final Product product = buildProduct();
       final ProductsState reducedState = productsReducer(
@@ -79,21 +94,6 @@ void main() {
         reducedState.productRefreshStatuses,
         isEmpty,
         reason: 'stale per-product statuses clear on a fresh load',
-      );
-      expect(
-        reducedState.sourceRefreshStatuses,
-        isEmpty,
-        reason: 'stale source statuses clear on a fresh load',
-      );
-      expect(
-        reducedState.refreshCompletedCount,
-        0,
-        reason: 'source progress resets on a fresh load',
-      );
-      expect(
-        reducedState.refreshTotalCount,
-        0,
-        reason: 'source total resets on a fresh load',
       );
     });
   });
@@ -240,6 +240,38 @@ void main() {
         reason: 'products are preserved',
       );
     });
+
+    test(
+      'RefreshProductAction modifies nothing when another refresh is active',
+      () {
+        final ProductsState state = ProductsState.initial().copyWith(
+          isRefreshingAll: true,
+        );
+
+        final ProductsState reducedState = productsReducer(
+          state,
+          const RefreshProductAction('product-1'),
+        );
+
+        expect(reducedState, state);
+      },
+    );
+
+    test(
+      'RefreshProductAction modifies nothing when a product refresh is active',
+      () {
+        final ProductsState state = ProductsState.initial().copyWith(
+          refreshingProductIds: {'product-2'},
+        );
+
+        final ProductsState reducedState = productsReducer(
+          state,
+          const RefreshProductAction('product-1'),
+        );
+
+        expect(reducedState, state);
+      },
+    );
   });
 
   group('productsReducer processes SourceRefreshStartedAction correctly', () {
@@ -589,6 +621,22 @@ void main() {
         reason: 'products are preserved',
       );
     });
+
+    test(
+      'RefreshAllProductsAction modifies nothing when a refresh is active',
+      () {
+        final ProductsState state = ProductsState.initial().copyWith(
+          refreshingProductIds: {'product-1'},
+        );
+
+        final ProductsState reducedState = productsReducer(
+          state,
+          const RefreshAllProductsAction(),
+        );
+
+        expect(reducedState, state);
+      },
+    );
   });
 
   group(

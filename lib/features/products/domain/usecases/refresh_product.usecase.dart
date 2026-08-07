@@ -17,6 +17,9 @@ class RefreshProductUseCase
 
   @override
   Future<Either<Failure, Product>> call(RefreshProductParams params) {
-    return _repository.refreshProduct(params.productId);
+    return _repository.refreshProduct(
+      params.productId,
+      onSourceStatusChanged: params.onSourceStatusChanged,
+    );
   }
 }

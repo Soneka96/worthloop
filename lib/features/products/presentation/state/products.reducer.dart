@@ -164,6 +164,9 @@ ProductsState loadProductsReducer(
   isLoading: true,
   error: const None(),
   refreshStatus: const None(),
+  sourceRefreshStatuses: {},
+  refreshCompletedCount: 0,
+  refreshTotalCount: 0,
 );
 
 /// Handles [ProductsLoadedAction].
@@ -179,9 +182,6 @@ ProductsState productsLoadedReducer(
   error: const None(),
   refreshStatus: const None(),
   productRefreshStatuses: {},
-  sourceRefreshStatuses: {},
-  refreshCompletedCount: 0,
-  refreshTotalCount: 0,
 );
 
 /// Handles [ProductsLoadFailedAction].
@@ -230,6 +230,9 @@ ProductsState refreshProductReducer(
   ProductsState state,
   RefreshProductAction action,
 ) {
+  if (state.isRefreshingAll || state.refreshingProductIds.isNotEmpty) {
+    return state;
+  }
   final Map<String, PriceFetchStatus> productRefreshStatuses = {
     ...state.productRefreshStatuses,
   }..remove(action.productId);
@@ -346,11 +349,16 @@ ProductsState productRefreshFailedReducer(
 ProductsState refreshAllProductsReducer(
   ProductsState state,
   RefreshAllProductsAction action,
-) => state.copyWith(
-  isRefreshingAll: true,
-  error: const None(),
-  refreshStatus: const None(),
-);
+) {
+  if (state.isRefreshingAll || state.refreshingProductIds.isNotEmpty) {
+    return state;
+  }
+  return state.copyWith(
+    isRefreshingAll: true,
+    error: const None(),
+    refreshStatus: const None(),
+  );
+}
 
 /// Handles [RefreshAllProductsFailedAction].
 /// Updates [ProductsState.isRefreshingAll], [ProductsState.error].
