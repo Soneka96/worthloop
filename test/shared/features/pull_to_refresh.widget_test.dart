@@ -96,6 +96,36 @@ void main() {
     );
 
     testWidgets(
+      'PullToRefreshWidget retracts the blocked text when the pull reverses',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildWidget(
+            blockedMessage: 'Another product is being checked',
+            onRefresh: () async {},
+          ),
+        );
+
+        final double initialTop = tester.getTopLeft(find.byType(ListView)).dy;
+        final TestGesture gesture = await tester.startGesture(
+          const Offset(200, 200),
+        );
+        await gesture.moveBy(const Offset(0, 250));
+        await tester.pump();
+
+        expect(find.text('Another product is being checked'), findsOneWidget);
+
+        await gesture.moveBy(const Offset(0, -250));
+        await tester.pump();
+
+        expect(tester.getTopLeft(find.byType(ListView)).dy, initialTop);
+        expect(find.text('Another product is being checked'), findsNothing);
+
+        await gesture.up();
+        await tester.pumpAndSettle();
+      },
+    );
+
+    testWidgets(
       'PullToRefreshWidget resets content when blocked state ends mid-gesture',
       (WidgetTester tester) async {
         final GlobalKey contentKey = GlobalKey();

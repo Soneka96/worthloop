@@ -65,6 +65,19 @@ class _PullToRefreshWidgetState extends State<PullToRefreshWidget> {
       }
     }
 
+    final double? scrollDelta = notification is ScrollUpdateNotification
+        ? notification.scrollDelta
+        : null;
+    if (scrollDelta != null && scrollDelta > 0 && _pullExtent > 0 && mounted) {
+      final double nextPullExtent = math.max(0, _pullExtent - scrollDelta);
+      setState(() {
+        _pullExtent = nextPullExtent;
+        if (nextPullExtent == 0) {
+          _activeBlockedMessage = null;
+        }
+      });
+    }
+
     if (notification is ScrollEndNotification) {
       _resetPullState();
     }
