@@ -12,12 +12,16 @@ class ForegroundRefreshObserver extends StatefulWidget {
   /// Refreshes all tracked products.
   final VoidCallback onRefresh;
 
+  /// Most recent persisted product update time.
+  final DateTime? lastUpdatedAt;
+
   /// Content that remains visible while observing app lifecycle changes.
   final Widget child;
 
   const ForegroundRefreshObserver({
     required this.interval,
     required this.onRefresh,
+    this.lastUpdatedAt,
     required this.child,
     super.key,
   });
@@ -30,7 +34,7 @@ class ForegroundRefreshObserver extends StatefulWidget {
 class _ForegroundRefreshObserverState extends State<ForegroundRefreshObserver>
     with WidgetsBindingObserver {
   Timer? _timer;
-  DateTime _lastRefreshAt = DateTime.now();
+  DateTime? _lastRefreshAt;
   bool _isForeground = true;
 
   @override
@@ -57,6 +61,7 @@ class _ForegroundRefreshObserverState extends State<ForegroundRefreshObserver>
     } else {
       _timer?.cancel();
       _timer = null;
+      _lastRefreshAt = null;
     }
   }
 
@@ -79,10 +84,21 @@ class _ForegroundRefreshObserverState extends State<ForegroundRefreshObserver>
     if (!_isForeground || widget.interval <= Duration.zero) {
       return;
     }
-    if (DateTime.now().difference(_lastRefreshAt) < widget.interval) {
+    final DateTime now = DateTime.now();
+    final DateTime? lastUpdatedAt = widget.lastUpdatedAt;
+    final bool attemptIsDue =
+        _lastRefreshAt == null ||
+        now.difference(_lastRefreshAt ?? now) >= widget.interval;
+    final bool dataIsStale =
+        lastUpdatedAt != null &&
+        now.difference(lastUpdatedAt) >= widget.interval;
+    final bool refreshIsDue = lastUpdatedAt == null
+        ? attemptIsDue
+        : dataIsStale && attemptIsDue;
+    if (!refreshIsDue) {
       return;
     }
-    _lastRefreshAt = DateTime.now();
+    _lastRefreshAt = now;
     widget.onRefresh();
   }
 

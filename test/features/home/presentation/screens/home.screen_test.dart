@@ -145,6 +145,7 @@ void main() {
 
         expect(observer.interval, const Duration(hours: 1));
         expect(observer.onRefresh, isA<VoidCallback>());
+        expect(observer.lastUpdatedAt, mockViewModel.latestUpdatedAt);
       },
     );
 
