@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 /// A short branded transition between the native launch screen and the app.
@@ -14,16 +12,41 @@ class AppLaunchSplash extends StatefulWidget {
 
 class _AppLaunchSplashState extends State<AppLaunchSplash>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller =
-      AnimationController(
-          vsync: this,
-          duration: const Duration(milliseconds: 1100),
-        )
-        ..forward().whenComplete(() {
-          if (mounted) {
-            widget.onFinished();
-          }
-        });
+  static const Duration _animationDuration = Duration(milliseconds: 600);
+
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: _animationDuration,
+  );
+  bool _started = false;
+  bool _finished = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started) {
+      return;
+    }
+    _started = true;
+    if (MediaQuery.of(context).disableAnimations) {
+      _controller.value = 1;
+      _finish();
+    } else {
+      _controller.forward().whenComplete(_finish);
+    }
+  }
+
+  void _finish() {
+    if (_finished) {
+      return;
+    }
+    _finished = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        widget.onFinished();
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -36,33 +59,28 @@ class _AppLaunchSplashState extends State<AppLaunchSplash>
     return Directionality(
       textDirection: TextDirection.ltr,
       child: Scaffold(
-        backgroundColor: const Color(0xFF0B0B10),
+        backgroundColor: const Color(0xFF101827),
         body: Center(
-          child: AnimatedBuilder(
-            animation: _controller,
-            builder: (context, child) {
-              final double entrance = Curves.easeOutCubic.transform(
-                _controller.value,
-              );
-              final double sway = math.sin(_controller.value * math.pi * 2);
-              return Opacity(
-                opacity: entrance,
-                child: Transform.translate(
-                  offset: Offset(0, 12 * (1 - entrance) + sway * 2),
-                  child: Transform.scale(
-                    scale: 0.9 + entrance * 0.1 + sway * 0.012,
-                    child: child,
-                  ),
+          child: FadeTransition(
+            opacity: CurvedAnimation(
+              parent: _controller,
+              curve: Curves.easeOutCubic,
+            ),
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.96, end: 1).animate(
+                CurvedAnimation(
+                  parent: _controller,
+                  curve: Curves.easeOutCubic,
                 ),
-              );
-            },
-            child: Semantics(
-              label: 'WorthLoop loading',
-              child: Image.asset(
-                'assets/launch_icon_alpha.png',
-                width: 220,
-                height: 220,
-                filterQuality: FilterQuality.high,
+              ),
+              child: Semantics(
+                label: 'WorthLoop loading',
+                child: Image.asset(
+                  'assets/worthloop_mark.png',
+                  width: 180,
+                  height: 180,
+                  filterQuality: FilterQuality.high,
+                ),
               ),
             ),
           ),
