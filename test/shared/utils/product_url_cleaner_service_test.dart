@@ -71,6 +71,26 @@ void main() {
       expect(result, 'https://example.com/product-1');
     });
 
+    test('strips PcComponentes affiliate params', () {
+      const String firstUrl =
+          'https://www.pccomponentes.pt/moza-racing-r12-v2-base-para-volante-direct-drive-12nm-aluminio-preto?'
+          'utm_source=176013&utm_medium=afi&utm_campaign=pt.redbrain.shop&sv1=affiliate&sv_campaign_id=176013&awc=20983_1786099189_f5da4f824a3c928150facd2305d679c3&utm_term=deeplink&utm_content=pt.redbrain.shop';
+      const String secondUrl =
+          'https://www.pccomponentes.pt/moza-racing-r12-v2-base-para-volante-direct-drive-12nm-aluminio-preto?'
+          'sv1=affiliate&sv_campaign_id=369493&awc=20983_1786038606_0fb8628229063e19c574bbcc1aaf4dd5';
+
+      final String firstResult = service.clean(firstUrl);
+      final String secondResult = service.clean(secondUrl);
+
+      expect(firstResult, isA<String>());
+      expect(
+        firstResult,
+        'https://www.pccomponentes.pt/moza-racing-r12-v2-base-para-volante-direct-drive-12nm-aluminio-preto',
+      );
+      expect(secondResult, isA<String>());
+      expect(secondResult, firstResult);
+    });
+
     test('keeps a non-tracking query param such as a Shopify variant id', () {
       final String result = service.clean(
         'https://simufy.com/products/pedales-moza-srp2?variant=53591391338829',

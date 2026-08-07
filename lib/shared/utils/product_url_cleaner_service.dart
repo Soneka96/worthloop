@@ -15,6 +15,9 @@ class ProductUrlCleanerService {
     'fbclid',
     'gclid',
     'msclkid',
+    'sv1',
+    'sv_campaign_id',
+    'awc',
   };
 
   /// Trims [url] and strips known tracking/affiliate query params

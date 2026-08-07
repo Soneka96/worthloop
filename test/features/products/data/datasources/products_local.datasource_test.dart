@@ -760,6 +760,36 @@ void main() {
       expect(await db.select(db.productSourceTable).get(), hasLength(1));
     });
 
+    test('rejects affiliate URL variants of an already tracked product', () async {
+      await insertProductOne();
+      const String firstUrl =
+          'https://www.pccomponentes.pt/moza-racing-r12-v2-base-para-volante-direct-drive-12nm-aluminio-preto?sv1=affiliate&sv_campaign_id=176013&awc=first';
+      const String secondUrl =
+          'https://www.pccomponentes.pt/moza-racing-r12-v2-base-para-volante-direct-drive-12nm-aluminio-preto?sv1=affiliate&sv_campaign_id=369493&awc=second';
+      const String canonicalUrl =
+          'https://www.pccomponentes.pt/moza-racing-r12-v2-base-para-volante-direct-drive-12nm-aluminio-preto';
+      when(
+        () => mockUrlCleanerService.clean(firstUrl),
+      ).thenReturn(canonicalUrl);
+      when(
+        () => mockUrlCleanerService.clean(secondUrl),
+      ).thenReturn(canonicalUrl);
+
+      await datasource.addSourceWithPrice(buildProductSource(url: firstUrl));
+      final Either<Failure, ProductModel> result = await datasource
+          .addSourceWithPrice(
+            buildProductSource(id: 'source-2', url: secondUrl),
+          );
+
+      expect(
+        result,
+        const Left(
+          ValidationFailure('This store is already tracked for this product'),
+        ),
+      );
+      expect(await db.select(db.productSourceTable).get(), hasLength(1));
+    });
+
     test('allows the same cleaned URL for a different product', () async {
       await insertProductOne();
       await db
