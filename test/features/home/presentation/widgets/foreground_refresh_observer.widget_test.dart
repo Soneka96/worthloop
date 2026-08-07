@@ -34,6 +34,114 @@ void main() {
 
   group("ForegroundRefreshObserver's elements behavior", () {
     testWidgets(
+      'ForegroundRefreshObserver calls onRefresh immediately for stale data on startup',
+      (tester) async {
+        int refreshCount = 0;
+        await tester.pumpWidget(
+          buildWidget(
+            interval: const Duration(hours: 1),
+            lastUpdatedAt: DateTime.now().subtract(const Duration(hours: 2)),
+            onRefresh: () => refreshCount += 1,
+          ),
+        );
+
+        expect(refreshCount, isA<int>());
+        expect(refreshCount, 1);
+      },
+    );
+
+    testWidgets(
+      'ForegroundRefreshObserver does not call onRefresh immediately for fresh data on startup',
+      (tester) async {
+        int refreshCount = 0;
+        await tester.pumpWidget(
+          buildWidget(
+            interval: const Duration(hours: 1),
+            lastUpdatedAt: DateTime.now(),
+            onRefresh: () => refreshCount += 1,
+          ),
+        );
+
+        expect(refreshCount, isA<int>());
+        expect(refreshCount, 0);
+      },
+    );
+
+    testWidgets(
+      'ForegroundRefreshObserver does not call onRefresh for fresh data before the interval',
+      (tester) async {
+        int refreshCount = 0;
+        await tester.pumpWidget(
+          buildWidget(
+            interval: const Duration(hours: 1),
+            lastUpdatedAt: DateTime.now(),
+            onRefresh: () => refreshCount += 1,
+          ),
+        );
+
+        await tester.pump(const Duration(milliseconds: 10));
+
+        expect(refreshCount, isA<int>());
+        expect(refreshCount, 0);
+      },
+    );
+
+    testWidgets(
+      'ForegroundRefreshObserver calls onRefresh when loaded data is stale',
+      (tester) async {
+        int refreshCount = 0;
+        await tester.pumpWidget(
+          buildWidget(
+            interval: const Duration(hours: 1),
+            onRefresh: () => refreshCount += 1,
+          ),
+        );
+
+        await tester.pumpWidget(
+          buildWidget(
+            interval: const Duration(hours: 1),
+            lastUpdatedAt: DateTime.now().subtract(const Duration(hours: 2)),
+            onRefresh: () => refreshCount += 1,
+          ),
+        );
+
+        expect(refreshCount, isA<int>());
+        expect(refreshCount, 1);
+      },
+    );
+
+    testWidgets(
+      'ForegroundRefreshObserver does not refresh twice for repeated stale data updates',
+      (tester) async {
+        int refreshCount = 0;
+        await tester.pumpWidget(
+          buildWidget(
+            interval: const Duration(hours: 1),
+            onRefresh: () => refreshCount += 1,
+          ),
+        );
+
+        await tester.pumpWidget(
+          buildWidget(
+            interval: const Duration(hours: 1),
+            lastUpdatedAt: DateTime(2026, 1, 1),
+            onRefresh: () => refreshCount += 1,
+          ),
+        );
+        await tester.pumpWidget(
+          buildWidget(
+            interval: const Duration(hours: 1),
+            lastUpdatedAt: DateTime(2026, 1, 2),
+            onRefresh: () => refreshCount += 1,
+          ),
+        );
+
+        expect(refreshCount, isA<int>());
+        expect(refreshCount, 1);
+      },
+    );
+
+    testWidgets(
       'ForegroundRefreshObserver calls onRefresh after the foreground interval',
       (tester) async {
         int refreshCount = 0;
@@ -117,11 +225,18 @@ void main() {
         await tester.pumpWidget(
           buildWidget(
             interval: const Duration(hours: 1),
-            lastUpdatedAt: DateTime.now().subtract(const Duration(hours: 2)),
+            lastUpdatedAt: DateTime.now(),
             onRefresh: () => refreshCount += 1,
           ),
         );
         tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+        await tester.pumpWidget(
+          buildWidget(
+            interval: const Duration(hours: 1),
+            lastUpdatedAt: DateTime.now().subtract(const Duration(hours: 2)),
+            onRefresh: () => refreshCount += 1,
+          ),
+        );
         tester.binding.handleAppLifecycleStateChanged(
           AppLifecycleState.resumed,
         );
@@ -199,6 +314,32 @@ void main() {
 
         expect(refreshCount, isA<int>());
         expect(refreshCount, refreshesBeforeDisable);
+      },
+    );
+
+    testWidgets(
+      'ForegroundRefreshObserver resumes refreshing after interval becomes positive',
+      (tester) async {
+        int refreshCount = 0;
+        await tester.pumpWidget(
+          buildWidget(
+            interval: Duration.zero,
+            lastUpdatedAt: DateTime(2026, 1, 1),
+            onRefresh: () => refreshCount += 1,
+          ),
+        );
+
+        await tester.pumpWidget(
+          buildWidget(
+            interval: const Duration(milliseconds: 1),
+            lastUpdatedAt: DateTime(2026, 1, 1),
+            onRefresh: () => refreshCount += 1,
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 10));
+
+        expect(refreshCount, isA<int>());
+        expect(refreshCount, greaterThanOrEqualTo(1));
       },
     );
 

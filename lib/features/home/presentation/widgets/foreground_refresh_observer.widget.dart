@@ -41,13 +41,22 @@ class _ForegroundRefreshObserverState extends State<ForegroundRefreshObserver>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    if (widget.lastUpdatedAt != null) {
+      _refreshIfDue();
+    }
     _startTimer();
   }
 
   @override
   void didUpdateWidget(covariant ForegroundRefreshObserver oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.interval != widget.interval) {
+    final bool intervalChanged = oldWidget.interval != widget.interval;
+    final bool lastUpdatedAtChanged =
+        oldWidget.lastUpdatedAt != widget.lastUpdatedAt;
+    if (lastUpdatedAtChanged && widget.lastUpdatedAt != null) {
+      _refreshIfDue();
+    }
+    if (intervalChanged) {
       _startTimer();
     }
   }
