@@ -373,6 +373,137 @@ void main() {
       ).called(2);
     });
 
+    test(
+      'bypasses an active cooldown and clears it after a successful fetch',
+      () async {
+        final FetchResult result = buildFetchResult(statusCode: 403);
+        final ProductOffer offer = buildProductOffer();
+        when(
+          () => dioFetcher.fetch(cleanedUrl),
+        ).thenAnswer((_) async => result);
+        when(
+          () => webViewFetcher.fetch(cleanedUrl),
+        ).thenAnswer((_) async => result);
+        when(
+          () => offerDecoder.decode(any(), sourceUrl: any(named: 'sourceUrl')),
+        ).thenReturn(null);
+        when(
+          () => detector.detect(
+            statusCode: result.statusCode,
+            responseBody: result.body,
+            hasUsablePrice: false,
+          ),
+        ).thenReturn(PriceFetchStatus.blocked);
+
+        await orchestrator.fetch(url);
+
+        when(
+          () => offerDecoder.decode(any(), sourceUrl: any(named: 'sourceUrl')),
+        ).thenReturn(offer);
+        when(
+          () => detector.detect(
+            statusCode: result.statusCode,
+            responseBody: result.body,
+            hasUsablePrice: true,
+          ),
+        ).thenReturn(PriceFetchStatus.success);
+
+        final PriceFetchResult forcedResult = await orchestrator.fetch(
+          url,
+          bypassCooldown: true,
+        );
+        final PriceFetchResult nextResult = await orchestrator.fetch(url);
+
+        expect(forcedResult.status, PriceFetchStatus.success);
+        expect(forcedResult.offer, offer);
+        expect(nextResult.status, PriceFetchStatus.success);
+        verify(() => dioFetcher.fetch(cleanedUrl)).called(3);
+        verify(() => webViewFetcher.fetch(cleanedUrl)).called(1);
+      },
+    );
+
+    test('keeps the cooldown after a forced fetch remains blocked', () async {
+      final FetchResult result = buildFetchResult(statusCode: 403);
+      when(() => dioFetcher.fetch(cleanedUrl)).thenAnswer((_) async => result);
+      when(
+        () => webViewFetcher.fetch(cleanedUrl),
+      ).thenAnswer((_) async => result);
+      when(
+        () => offerDecoder.decode(any(), sourceUrl: any(named: 'sourceUrl')),
+      ).thenReturn(null);
+      when(
+        () => detector.detect(
+          statusCode: result.statusCode,
+          responseBody: result.body,
+          hasUsablePrice: false,
+        ),
+      ).thenReturn(PriceFetchStatus.blocked);
+
+      await orchestrator.fetch(url);
+      final PriceFetchResult forcedResult = await orchestrator.fetch(
+        url,
+        bypassCooldown: true,
+      );
+      final PriceFetchResult nextResult = await orchestrator.fetch(url);
+
+      expect(forcedResult.status, PriceFetchStatus.blocked);
+      expect(nextResult.status, PriceFetchStatus.blocked);
+      verify(() => dioFetcher.fetch(cleanedUrl)).called(2);
+      verify(() => webViewFetcher.fetch(cleanedUrl)).called(2);
+    });
+
+    test(
+      'clears the cooldown when a forced WebView fallback succeeds',
+      () async {
+        final FetchResult blockedResult = buildFetchResult(statusCode: 403);
+        final FetchResult successResult = buildFetchResult(
+          statusCode: 200,
+          body: '<html>ok</html>',
+        );
+        final ProductOffer offer = buildProductOffer();
+        int webViewCalls = 0;
+        when(
+          () => dioFetcher.fetch(cleanedUrl),
+        ).thenAnswer((_) async => blockedResult);
+        when(() => webViewFetcher.fetch(cleanedUrl)).thenAnswer((_) async {
+          webViewCalls++;
+          return webViewCalls == 1 ? blockedResult : successResult;
+        });
+        when(
+          () => offerDecoder.decode(blockedResult.body, sourceUrl: cleanedUrl),
+        ).thenReturn(null);
+        when(
+          () => offerDecoder.decode(successResult.body, sourceUrl: cleanedUrl),
+        ).thenReturn(offer);
+        when(
+          () => detector.detect(
+            statusCode: blockedResult.statusCode,
+            responseBody: blockedResult.body,
+            hasUsablePrice: false,
+          ),
+        ).thenReturn(PriceFetchStatus.blocked);
+        when(
+          () => detector.detect(
+            statusCode: successResult.statusCode,
+            responseBody: successResult.body,
+            hasUsablePrice: true,
+          ),
+        ).thenReturn(PriceFetchStatus.success);
+
+        final PriceFetchResult initialResult = await orchestrator.fetch(url);
+        final PriceFetchResult forcedResult = await orchestrator.fetch(
+          url,
+          bypassCooldown: true,
+        );
+        final PriceFetchResult nextResult = await orchestrator.fetch(url);
+
+        expect(initialResult.status, PriceFetchStatus.blocked);
+        expect(forcedResult.status, PriceFetchStatus.success);
+        expect(nextResult.status, PriceFetchStatus.success);
+        verify(() => dioFetcher.fetch(cleanedUrl)).called(3);
+      },
+    );
+
     test('resumes fetching after the cooldown has expired', () async {
       final FetchResult blockedResult = buildFetchResult(statusCode: 403);
       when(

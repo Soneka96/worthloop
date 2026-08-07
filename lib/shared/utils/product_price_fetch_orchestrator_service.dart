@@ -47,11 +47,16 @@ class ProductPriceFetchOrchestratorService {
 
   /// Fetches and classifies a price offer for [url] — Dio first, falling
   /// back to a headless WebView on [_fallbackTriggers]. Tracks a per-URL
-  /// cooldown so a blocked source isn't retried immediately.
-  Future<PriceFetchResult> fetch(String url) async {
+  /// cooldown so a blocked source isn't retried immediately unless forced.
+  Future<PriceFetchResult> fetch(
+    String url, {
+    bool bypassCooldown = false,
+  }) async {
     final String cleanedUrl = _urlCleaner.clean(url);
     final DateTime? blockedUntil = _blockedUntilByUrl[cleanedUrl];
-    if (blockedUntil != null && _now().isBefore(blockedUntil)) {
+    if (!bypassCooldown &&
+        blockedUntil != null &&
+        _now().isBefore(blockedUntil)) {
       return const PriceFetchResult(
         status: PriceFetchStatus.blocked,
         offer: null,
@@ -70,7 +75,9 @@ class ProductPriceFetchOrchestratorService {
         url: cleanedUrl,
       );
     }
-    if (result.status == PriceFetchStatus.blocked) {
+    if (result.status == PriceFetchStatus.success) {
+      _blockedUntilByUrl.remove(cleanedUrl);
+    } else if (result.status == PriceFetchStatus.blocked) {
       _blockedUntilByUrl[cleanedUrl] = _now().add(
         PriceFetchConstants.blockedRetryAfter,
       );
