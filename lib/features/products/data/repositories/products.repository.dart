@@ -55,11 +55,12 @@ class ProductsRepository implements IProductsRepository {
           );
       Failure? firstFailure;
       final List<ProductSourceModel> updatedSources = [];
-      for (final Either<Failure, ProductSourceModel> result in results) {
-        result.match(
-          (Failure failure) => firstFailure ??= failure,
-          updatedSources.add,
-        );
+      for (final (int index, Either<Failure, ProductSourceModel> result)
+          in results.indexed) {
+        result.match((Failure failure) {
+          firstFailure ??= failure;
+          updatedSources.add(_sourceAfterFailure(sources[index], failure));
+        }, updatedSources.add);
       }
       final Either<Failure, Product> savedResult = await _localDatasource
           .updateSourcePrices(productId, updatedSources);
@@ -92,13 +93,20 @@ class ProductsRepository implements IProductsRepository {
       if (source == null) {
         return const Left(NotFoundFailure('Source not found'));
       }
+      final ProductSourceModel loadedSource = source;
       final Either<Failure, ProductSourceModel> result = await _fetchSource(
-        source,
+        loadedSource,
         onSourceStatusChanged: onSourceStatusChanged,
         bypassCooldown: bypassCooldown,
       );
       return result.match(
-        (Failure failure) async => Left(failure),
+        (Failure failure) async {
+          final Either<Failure, Product> persisted = await _localDatasource
+              .updateSourcePrices(loadedSource.productId, [
+                _sourceAfterFailure(loadedSource, failure),
+              ]);
+          return persisted.isLeft() ? persisted : Left(failure);
+        },
         (ProductSourceModel updatedSource) => _localDatasource
             .updateSourcePrices(updatedSource.productId, [updatedSource]),
       );
@@ -124,9 +132,15 @@ class ProductsRepository implements IProductsRepository {
           source.productId: <ProductSourceModel>[],
       };
       Failure? firstFailure;
-      for (final Either<Failure, ProductSourceModel> result in results) {
+      for (final (int index, Either<Failure, ProductSourceModel> result)
+          in results.indexed) {
         result.match(
-          (Failure failure) => firstFailure ??= failure,
+          (Failure failure) {
+            firstFailure ??= failure;
+            updatedSourcesByProduct[sources[index].productId]!.add(
+              _sourceAfterFailure(sources[index], failure),
+            );
+          },
           (ProductSourceModel updated) => updatedSourcesByProduct
               .putIfAbsent(updated.productId, () => <ProductSourceModel>[])
               .add(updated),
@@ -150,6 +164,25 @@ class ProductsRepository implements IProductsRepository {
       return sourceFailure == null ? refreshedProducts : Left(sourceFailure);
     });
   }
+
+  ProductSourceModel _sourceAfterFailure(
+    ProductSourceModel source,
+    Failure failure,
+  ) => ProductSourceModel(
+    id: source.id,
+    productId: source.productId,
+    url: source.url,
+    merchantDomain: source.merchantDomain,
+    createdAt: source.createdAt,
+    currentPrice: source.currentPrice,
+    previousPrice: source.previousPrice,
+    isAvailable: source.isAvailable,
+    lastCheckedAt: source.lastCheckedAt,
+    priceChangedAt: source.priceChangedAt,
+    lastRefreshStatus: failure is PriceFetchFailure
+        ? failure.status
+        : PriceFetchStatus.networkError,
+  );
 
   Future<List<Either<Failure, ProductSourceModel>>> _fetchSources(
     List<ProductSourceModel> sources, {

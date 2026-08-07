@@ -12,6 +12,7 @@ import 'package:worth_loop/features/products/domain/entities/product_source.enti
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/product_url_cleaner_service.dart';
@@ -1211,6 +1212,8 @@ void main() {
                 ),
                 isAvailable: true,
                 lastCheckedAt: DateTime(2026, 1, 2),
+                lastRefreshStatus: PriceFetchStatus.success,
+                lastRefreshAt: DateTime(2026, 1, 2, 12),
               ),
             ]);
         final ProductSourceRow row = await (db.select(
@@ -1223,7 +1226,45 @@ void main() {
         expect(row.priceChangedAt, isNull);
         expect(row.isAvailable, isTrue);
         expect(row.lastCheckedAt, DateTime(2026, 1, 2));
+        expect(row.lastRefreshStatus, PriceFetchStatus.success.name);
+        expect(row.lastRefreshAt, DateTime(2026, 1, 2, 12));
         verifyZeroInteractions(mockLoggerService);
+      },
+    );
+
+    test(
+      'records a failed refresh while preserving the previous offer',
+      () async {
+        await db.into(db.productTable).insert(buildProductTableCompanion());
+        await db
+            .into(db.productSourceTable)
+            .insert(
+              buildProductSourceModel(
+                currentPrice: const Money(
+                  minorUnits: 2999,
+                  currencyCode: 'EUR',
+                ),
+                isAvailable: true,
+                lastCheckedAt: DateTime(2026, 1, 1),
+              ).toCompanion(),
+            );
+
+        await datasource.updateSourcePrices('product-1', [
+          buildProductSourceModel(
+            currentPrice: const Money(minorUnits: 2999, currencyCode: 'EUR'),
+            isAvailable: true,
+            lastCheckedAt: DateTime(2026, 1, 1),
+            lastRefreshStatus: PriceFetchStatus.blocked,
+          ),
+        ]);
+        final ProductSourceRow row = await (db.select(
+          db.productSourceTable,
+        )..where((table) => table.id.equals('source-1'))).getSingle();
+
+        expect(row.minorUnits, 2999);
+        expect(row.currencyCode, 'EUR');
+        expect(row.lastRefreshStatus, PriceFetchStatus.blocked.name);
+        expect(row.lastRefreshAt, isA<DateTime>());
       },
     );
 

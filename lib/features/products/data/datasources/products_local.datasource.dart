@@ -9,6 +9,7 @@ import 'package:worth_loop/features/products/data/models/product_source.model.da
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
@@ -396,6 +397,10 @@ class ProductsLocalDatasource {
               priceChangedAt: hasPriceChange
                   ? Value(source.lastCheckedAt ?? DateTime.now())
                   : const Value.absent(),
+              lastRefreshStatus: Value(
+                (source.lastRefreshStatus ?? PriceFetchStatus.success).name,
+              ),
+              lastRefreshAt: Value(source.lastRefreshAt ?? DateTime.now()),
             ),
           );
         }
