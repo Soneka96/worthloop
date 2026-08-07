@@ -389,7 +389,13 @@ void main() {
           find.byKey(const Key('product-details-source-filters-scroll')),
         );
         expect(filters.scrollDirection, Axis.horizontal);
-        expect(filters.child, isA<Row>());
+        final Padding contentPadding = filters.child! as Padding;
+        expect(contentPadding.padding.horizontal, greaterThan(0));
+        final EdgeInsets resolvedPadding = contentPadding.padding.resolve(
+          TextDirection.ltr,
+        );
+        expect(resolvedPadding.left, resolvedPadding.right);
+        expect(contentPadding.child, isA<Row>());
 
         expect(
           find.byKey(const Key('product-details-source-filter-all')),
@@ -420,12 +426,23 @@ void main() {
         final Finder filters = find.byKey(
           const Key('product-details-source-filters-scroll'),
         );
-        await tester.drag(filters, const Offset(-300, 0));
+        final ScrollPosition position = tester
+            .state<ScrollableState>(
+              find.descendant(of: filters, matching: find.byType(Scrollable)),
+            )
+            .position;
+        expect(position.pixels, 0);
+
+        await tester.drag(filters, const Offset(-1000, 0));
         await tester.pumpAndSettle();
         final Finder issuesFilter = find.byKey(
           const Key('product-details-source-filter-issues'),
         );
-        await tester.ensureVisible(issuesFilter);
+        expect(position.pixels, position.maxScrollExtent);
+        final Rect viewport = tester.getRect(filters);
+        final Rect issuesRect = tester.getRect(issuesFilter);
+        expect(issuesRect.left, greaterThanOrEqualTo(viewport.left));
+        expect(issuesRect.right, lessThanOrEqualTo(viewport.right));
         await tester.tap(issuesFilter);
         await tester.pumpAndSettle();
 
