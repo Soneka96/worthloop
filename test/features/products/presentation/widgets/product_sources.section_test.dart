@@ -472,23 +472,28 @@ void main() {
             isRefreshing: true,
             sourceRefreshStatuses: {
               availableSource.id: SourceRefreshStatus.error,
-              unavailableSource.id: SourceRefreshStatus.success,
+              unavailableSource.id: SourceRefreshStatus.error,
               unknownAvailabilitySource.id: SourceRefreshStatus.error,
             },
           ),
         );
+
+        expect(find.byType(MerchantOfferRow), findsNWidgets(3));
 
         await tester.tap(
           find.byKey(const Key('product-details-source-filter-issues')),
         );
         await tester.pumpAndSettle();
 
-        expect(find.byType(MerchantOfferRow), findsNWidgets(2));
+        expect(find.byType(MerchantOfferRow), findsNWidgets(3));
         expect(
           find.byKey(const Key('merchant-offer-source-1')),
           findsOneWidget,
         );
-        expect(find.byKey(const Key('merchant-offer-source-2')), findsNothing);
+        expect(
+          find.byKey(const Key('merchant-offer-source-2')),
+          findsOneWidget,
+        );
         expect(
           find.byKey(const Key('merchant-offer-source-3')),
           findsOneWidget,
@@ -517,6 +522,41 @@ void main() {
 
         expect(find.byType(MerchantOfferRow), findsNothing);
         expect(find.text(t.productDetails.noOffers), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'ProductSourcesSection excludes issue sources from available and unavailable filters',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildWidget(
+            sources: sources,
+            sourceRefreshStatuses: {
+              availableSource.id: SourceRefreshStatus.error,
+              unavailableSource.id: SourceRefreshStatus.success,
+              unknownAvailabilitySource.id: SourceRefreshStatus.error,
+            },
+          ),
+        );
+
+        await tester.tap(
+          find.byKey(const Key('product-details-source-filter-available')),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byType(MerchantOfferRow), findsNothing);
+        expect(find.text(t.productDetails.noOffers), findsOneWidget);
+
+        await tester.tap(
+          find.byKey(const Key('product-details-source-filter-unavailable')),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byType(MerchantOfferRow), findsOneWidget);
+        expect(
+          find.byKey(const Key('merchant-offer-source-2')),
+          findsOneWidget,
+        );
+        expect(find.byKey(const Key('merchant-offer-source-1')), findsNothing);
+        expect(find.byKey(const Key('merchant-offer-source-3')), findsNothing);
       },
     );
 

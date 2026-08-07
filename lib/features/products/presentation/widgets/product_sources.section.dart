@@ -83,11 +83,21 @@ class _ProductSourcesSectionState extends State<ProductSourcesSection> {
         ProductOfferFilter.none || ProductOfferFilter.all => orderedSources,
         ProductOfferFilter.available =>
           orderedSources
-              .where((ProductSource source) => source.isAvailable == true)
+              .where(
+                (ProductSource source) =>
+                    source.isAvailable == true &&
+                    widget.sourceRefreshStatuses[source.id] !=
+                        SourceRefreshStatus.error,
+              )
               .toList(growable: false),
         ProductOfferFilter.unavailable =>
           orderedSources
-              .where((ProductSource source) => source.isAvailable != true)
+              .where(
+                (ProductSource source) =>
+                    source.isAvailable != true &&
+                    widget.sourceRefreshStatuses[source.id] !=
+                        SourceRefreshStatus.error,
+              )
               .toList(growable: false),
         ProductOfferFilter.issues =>
           orderedSources
@@ -113,11 +123,21 @@ class _ProductSourcesSectionState extends State<ProductSourcesSection> {
       ProductOfferFilter.none || ProductOfferFilter.all => orderedSources,
       ProductOfferFilter.available =>
         orderedSources
-            .where((ProductSource source) => source.isAvailable == true)
+            .where(
+              (ProductSource source) =>
+                  source.isAvailable == true &&
+                  widget.sourceRefreshStatuses[source.id] !=
+                      SourceRefreshStatus.error,
+            )
             .toList(growable: false),
       ProductOfferFilter.unavailable =>
         orderedSources
-            .where((ProductSource source) => source.isAvailable != true)
+            .where(
+              (ProductSource source) =>
+                  source.isAvailable != true &&
+                  widget.sourceRefreshStatuses[source.id] !=
+                      SourceRefreshStatus.error,
+            )
             .toList(growable: false),
       ProductOfferFilter.issues =>
         orderedSources
