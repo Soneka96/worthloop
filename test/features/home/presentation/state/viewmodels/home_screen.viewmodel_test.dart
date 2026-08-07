@@ -9,6 +9,7 @@ import 'package:worth_loop/features/home/presentation/state/viewmodels/home_scre
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/products.state.dart';
+import 'package:worth_loop/features/settings/presentation/state/refresh_settings.state.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
 import '../../../../products/fixtures/product.fixture.dart';
@@ -44,6 +45,9 @@ void main() {
             createdProductId: const Some('product-1'),
             sourceRefreshStatuses: {'source-1': SourceRefreshStatus.error},
           ),
+          refreshSettings: RefreshSettingsState.initial().copyWith(
+            intervalMinutes: 180,
+          ),
         );
 
         final HomeScreenViewModel viewmodel = HomeScreenViewModel.fromStore(
@@ -60,6 +64,8 @@ void main() {
         expect(viewmodel.refreshCompletedCount, 18);
         expect(viewmodel.refreshTotalCount, isA<int>());
         expect(viewmodel.refreshTotalCount, 42);
+        expect(viewmodel.refreshIntervalMinutes, isA<int>());
+        expect(viewmodel.refreshIntervalMinutes, 180);
         expect(viewmodel.isCreatingProduct, isTrue);
         expect(viewmodel.productCreationError, 'creation failed');
         expect(viewmodel.createdProductId, 'product-1');

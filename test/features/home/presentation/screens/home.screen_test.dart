@@ -12,6 +12,7 @@ import 'package:redux/redux.dart';
 import 'package:worth_loop/features/home/presentation/screens/home.screen.dart';
 import 'package:worth_loop/features/home/presentation/state/viewmodels/home_screen.viewmodel.dart';
 import 'package:worth_loop/features/home/presentation/widgets/add_product_dialog.widget.dart';
+import 'package:worth_loop/features/home/presentation/widgets/foreground_refresh_observer.widget.dart';
 import 'package:worth_loop/features/home/presentation/widgets/tracked_product.widget.dart';
 import 'package:worth_loop/features/home/presentation/widgets/tracked_products_empty.widget.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
@@ -46,6 +47,7 @@ void main() {
     when(() => mockViewModel.isRefreshingAll).thenReturn(false);
     when(() => mockViewModel.refreshCompletedCount).thenReturn(0);
     when(() => mockViewModel.refreshTotalCount).thenReturn(0);
+    when(() => mockViewModel.refreshIntervalMinutes).thenReturn(60);
     when(
       () => mockViewModel.latestUpdatedAt,
     ).thenReturn(DateTime(2026, 8, 7, 21, 51));
@@ -130,6 +132,20 @@ void main() {
       expect(find.byType(RefreshIndicator), findsOneWidget);
       expect(find.byKey(const Key('home-refresh-all-button')), findsNothing);
     });
+
+    testWidgets(
+      'HomeScreen passes the selected refresh interval to ForegroundRefreshObserver',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildWidget());
+
+        final ForegroundRefreshObserver observer = tester.widget(
+          find.byType(ForegroundRefreshObserver),
+        );
+
+        expect(observer.interval, const Duration(hours: 1));
+        expect(observer.onRefresh, isA<VoidCallback>());
+      },
+    );
 
     testWidgets('HomeScreen keeps the list pullable when content is short', (
       WidgetTester tester,

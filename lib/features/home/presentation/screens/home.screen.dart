@@ -7,6 +7,7 @@ import 'package:flutter_redux/flutter_redux.dart';
 // Project imports:
 import 'package:worth_loop/features/home/presentation/state/viewmodels/home_screen.viewmodel.dart';
 import 'package:worth_loop/features/home/presentation/widgets/add_product_dialog.widget.dart';
+import 'package:worth_loop/features/home/presentation/widgets/foreground_refresh_observer.widget.dart';
 import 'package:worth_loop/features/home/presentation/widgets/home_header.widget.dart';
 import 'package:worth_loop/features/home/presentation/widgets/home_products_header.widget.dart';
 import 'package:worth_loop/features/home/presentation/widgets/tracked_products_list.section.dart';
@@ -27,47 +28,51 @@ class HomeScreen extends StatelessWidget {
       onInit: (store) => store.dispatch(const LoadProductsAction()),
       converter: (store) => sl<HomeScreenViewModel>(param1: store),
       builder: (context, viewmodel) {
-        return Scaffold(
-          floatingActionButton: FloatingActionButton.small(
-            key: const Key('home-add-product-button'),
-            tooltip: t.home.addProductButton,
-            onPressed: () => showDialog<void>(
-              context: context,
-              builder: (context) => const AddProductDialog(),
+        return ForegroundRefreshObserver(
+          interval: Duration(minutes: viewmodel.refreshIntervalMinutes),
+          onRefresh: viewmodel.onRefreshAll,
+          child: Scaffold(
+            floatingActionButton: FloatingActionButton.small(
+              key: const Key('home-add-product-button'),
+              tooltip: t.home.addProductButton,
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (context) => const AddProductDialog(),
+              ),
+              child: const Icon(Icons.add),
             ),
-            child: const Icon(Icons.add),
-          ),
-          body: SafeArea(
-            child: RefreshIndicator(
-              onRefresh: () async {
-                viewmodel.onRefreshAll();
-              },
-              child: CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: [
-                  SliverPadding(
-                    padding: EdgeInsets.all(context.spacing.md),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate([
-                        HomeHeader(onOpenSettings: viewmodel.onOpenSettings),
-                        HomeProductsHeader(
-                          productCount: viewmodel.products.length,
-                          isRefreshingAll: viewmodel.isRefreshingAll,
-                          refreshCompletedCount:
-                              viewmodel.refreshCompletedCount,
-                          refreshTotalCount: viewmodel.refreshTotalCount,
-                          latestUpdatedAt: viewmodel.latestUpdatedAt,
-                        ),
-                      ]),
+            body: SafeArea(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  viewmodel.onRefreshAll();
+                },
+                child: CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    SliverPadding(
+                      padding: EdgeInsets.all(context.spacing.md),
+                      sliver: SliverList(
+                        delegate: SliverChildListDelegate([
+                          HomeHeader(onOpenSettings: viewmodel.onOpenSettings),
+                          HomeProductsHeader(
+                            productCount: viewmodel.products.length,
+                            isRefreshingAll: viewmodel.isRefreshingAll,
+                            refreshCompletedCount:
+                                viewmodel.refreshCompletedCount,
+                            refreshTotalCount: viewmodel.refreshTotalCount,
+                            latestUpdatedAt: viewmodel.latestUpdatedAt,
+                          ),
+                        ]),
+                      ),
                     ),
-                  ),
-                  TrackedProductsListSection(
-                    products: viewmodel.products,
-                    isLoading: viewmodel.isLoading,
-                    sourceRefreshStatuses: viewmodel.sourceRefreshStatuses,
-                    onProductTap: viewmodel.onOpenProduct,
-                  ),
-                ],
+                    TrackedProductsListSection(
+                      products: viewmodel.products,
+                      isLoading: viewmodel.isLoading,
+                      sourceRefreshStatuses: viewmodel.sourceRefreshStatuses,
+                      onProductTap: viewmodel.onOpenProduct,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

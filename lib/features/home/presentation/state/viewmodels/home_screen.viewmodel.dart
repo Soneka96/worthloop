@@ -8,6 +8,7 @@ import 'package:worth_loop/features/home/presentation/state/home.actions.dart';
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/products.selectors.dart';
+import 'package:worth_loop/features/settings/presentation/state/refresh_settings.selectors.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
 
@@ -30,6 +31,9 @@ class HomeScreenViewModel extends Equatable {
 
   /// Number of sources included in the active refresh.
   final int refreshTotalCount;
+
+  /// Preferred foreground refresh interval in minutes.
+  final int refreshIntervalMinutes;
 
   /// Whether a product is being created.
   final bool isCreatingProduct;
@@ -65,6 +69,7 @@ class HomeScreenViewModel extends Equatable {
     required this.isRefreshingAll,
     required this.refreshCompletedCount,
     required this.refreshTotalCount,
+    required this.refreshIntervalMinutes,
     required this.isCreatingProduct,
     required this.productCreationError,
     this.refreshStatus,
@@ -86,6 +91,9 @@ class HomeScreenViewModel extends Equatable {
         store.state,
       ),
       refreshTotalCount: ProductsSelectors.refreshTotalCountSelector(
+        store.state,
+      ),
+      refreshIntervalMinutes: RefreshSettingsSelectors.intervalMinutesSelector(
         store.state,
       ),
       isCreatingProduct: ProductsSelectors.isCreatingProductSelector(
@@ -116,6 +124,7 @@ class HomeScreenViewModel extends Equatable {
     isRefreshingAll,
     refreshCompletedCount,
     refreshTotalCount,
+    refreshIntervalMinutes,
     isCreatingProduct,
     productCreationError,
     refreshStatus,
