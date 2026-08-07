@@ -14,6 +14,8 @@ import 'package:worth_loop/shared/failures/failures.dart';
 
 /// Implements [IProductsRepository] with local and remote product data.
 class ProductsRepository implements IProductsRepository {
+  static const int _maxConcurrentMerchantQueues = 4;
+
   final ProductsLocalDatasource _localDatasource;
   final IProductsRemoteDatasource _remoteDatasource;
 
@@ -47,13 +49,9 @@ class ProductsRepository implements IProductsRepository {
         return _localDatasource.refreshProduct(productId);
       }
       final List<Either<Failure, ProductSourceModel>> results =
-          await Future.wait(
-            sources.map(
-              (ProductSourceModel source) => _fetchSource(
-                source,
-                onSourceStatusChanged: onSourceStatusChanged,
-              ),
-            ),
+          await _fetchSources(
+            sources,
+            onSourceStatusChanged: onSourceStatusChanged,
           );
       Failure? firstFailure;
       final List<ProductSourceModel> updatedSources = [];
@@ -89,13 +87,9 @@ class ProductsRepository implements IProductsRepository {
       List<ProductSourceModel> sources,
     ) async {
       final List<Either<Failure, ProductSourceModel>> results =
-          await Future.wait(
-            sources.map(
-              (ProductSourceModel source) => _fetchSource(
-                source,
-                onSourceStatusChanged: onSourceStatusChanged,
-              ),
-            ),
+          await _fetchSources(
+            sources,
+            onSourceStatusChanged: onSourceStatusChanged,
           );
       final Map<String, List<ProductSourceModel>> updatedSourcesByProduct = {};
       Failure? firstFailure;
@@ -127,6 +121,47 @@ class ProductsRepository implements IProductsRepository {
       }
       return refreshedProducts;
     });
+  }
+
+  Future<List<Either<Failure, ProductSourceModel>>> _fetchSources(
+    List<ProductSourceModel> sources, {
+    SourceRefreshListener? onSourceStatusChanged,
+  }) async {
+    final Map<String, List<ProductSourceModel>> sourcesByMerchant = {};
+    for (final ProductSourceModel source in sources) {
+      sourcesByMerchant
+          .putIfAbsent(source.merchantDomain.toLowerCase(), () => [])
+          .add(source);
+    }
+
+    final List<List<ProductSourceModel>> merchantQueues = sourcesByMerchant
+        .values
+        .toList();
+    final Map<String, Either<Failure, ProductSourceModel>> resultsBySourceId =
+        {};
+    int nextQueueIndex = 0;
+
+    Future<void> runQueue() async {
+      while (nextQueueIndex < merchantQueues.length) {
+        final List<ProductSourceModel> queue = merchantQueues[nextQueueIndex++];
+        for (final ProductSourceModel source in queue) {
+          resultsBySourceId[source.id] = await _fetchSource(
+            source,
+            onSourceStatusChanged: onSourceStatusChanged,
+          );
+        }
+      }
+    }
+
+    final int workerCount = merchantQueues.length < _maxConcurrentMerchantQueues
+        ? merchantQueues.length
+        : _maxConcurrentMerchantQueues;
+    await Future.wait(List.generate(workerCount, (_) => runQueue()));
+
+    return sources
+        .map((ProductSourceModel source) => resultsBySourceId[source.id])
+        .whereType<Either<Failure, ProductSourceModel>>()
+        .toList();
   }
 
   Future<Either<Failure, ProductSourceModel>> _fetchSource(

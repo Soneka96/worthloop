@@ -445,13 +445,14 @@ void main() {
   });
 
   group('ProductsRepository implements refreshProduct() correctly', () {
-    test('starts every source fetch before awaiting any result', () async {
+    test('runs different merchants in parallel', () async {
       final ProductSourceModel firstSource = buildProductSourceModel(
         id: 'source-1',
       );
       final ProductSourceModel secondSource = buildProductSourceModel(
         id: 'source-2',
         url: 'https://other.com/products/1',
+        merchantDomain: 'other.com',
       );
       final ProductSourceModel firstUpdated = buildProductSourceModel(
         id: 'source-1',
@@ -819,6 +820,258 @@ void main() {
   });
 
   group('ProductsRepository implements refreshAllProducts() correctly', () {
+    test('serializes sources from the same merchant', () async {
+      final ProductModel product = buildProductModel();
+      final ProductSourceModel firstSource = buildProductSourceModel(
+        id: 'source-1',
+        merchantDomain: 'shop.example',
+      );
+      final ProductSourceModel secondSource = buildProductSourceModel(
+        id: 'source-2',
+        merchantDomain: 'shop.example',
+        url: 'https://shop.example/products/2',
+      );
+      final ProductSourceModel firstUpdated = buildProductSourceModel(
+        id: 'source-1',
+        merchantDomain: 'shop.example',
+        isAvailable: true,
+      );
+      final ProductSourceModel secondUpdated = buildProductSourceModel(
+        id: 'source-2',
+        merchantDomain: 'shop.example',
+        url: 'https://shop.example/products/2',
+        isAvailable: true,
+      );
+      final Completer<Either<Failure, ProductSourceModel>> firstCompleter =
+          Completer<Either<Failure, ProductSourceModel>>();
+      final Completer<Either<Failure, ProductSourceModel>> secondCompleter =
+          Completer<Either<Failure, ProductSourceModel>>();
+      when(
+        () => mockDatasource.loadProductSources(),
+      ).thenAnswer((_) async => Right([firstSource, secondSource]));
+      when(
+        () => mockRemoteDatasource.fetchPrices(firstSource),
+      ).thenAnswer((_) => firstCompleter.future);
+      when(
+        () => mockRemoteDatasource.fetchPrices(secondSource),
+      ).thenAnswer((_) => secondCompleter.future);
+      when(
+        () => mockDatasource.updateSourcePrices(product.id, [
+          firstUpdated,
+          secondUpdated,
+        ]),
+      ).thenAnswer((_) async => Right(product));
+      when(
+        () => mockDatasource.refreshAllProducts(),
+      ).thenAnswer((_) async => Right([product]));
+
+      final Future<Either<Failure, List<Product>>> refresh = repository
+          .refreshAllProducts();
+      await Future<void>.delayed(Duration.zero);
+
+      verify(() => mockRemoteDatasource.fetchPrices(firstSource)).called(1);
+      verifyNever(() => mockRemoteDatasource.fetchPrices(secondSource));
+
+      firstCompleter.complete(Right(firstUpdated));
+      await Future<void>.delayed(Duration.zero);
+      verify(() => mockRemoteDatasource.fetchPrices(secondSource)).called(1);
+
+      secondCompleter.complete(Right(secondUpdated));
+      final Either<Failure, List<Product>> result = await refresh;
+      result.match(
+        (Failure failure) => fail(failure.message),
+        (List<Product> products) => expect(products, [product]),
+      );
+    });
+
+    test('runs different merchants in parallel', () async {
+      final ProductModel product = buildProductModel();
+      final ProductSourceModel firstSource = buildProductSourceModel(
+        id: 'source-1',
+        merchantDomain: 'first.example',
+      );
+      final ProductSourceModel secondSource = buildProductSourceModel(
+        id: 'source-2',
+        merchantDomain: 'second.example',
+        url: 'https://second.example/products/2',
+      );
+      final ProductSourceModel firstUpdated = buildProductSourceModel(
+        id: 'source-1',
+        merchantDomain: 'first.example',
+        isAvailable: true,
+      );
+      final ProductSourceModel secondUpdated = buildProductSourceModel(
+        id: 'source-2',
+        merchantDomain: 'second.example',
+        url: 'https://second.example/products/2',
+        isAvailable: true,
+      );
+      final Completer<Either<Failure, ProductSourceModel>> firstCompleter =
+          Completer<Either<Failure, ProductSourceModel>>();
+      final Completer<Either<Failure, ProductSourceModel>> secondCompleter =
+          Completer<Either<Failure, ProductSourceModel>>();
+      when(
+        () => mockDatasource.loadProductSources(),
+      ).thenAnswer((_) async => Right([firstSource, secondSource]));
+      when(
+        () => mockRemoteDatasource.fetchPrices(firstSource),
+      ).thenAnswer((_) => firstCompleter.future);
+      when(
+        () => mockRemoteDatasource.fetchPrices(secondSource),
+      ).thenAnswer((_) => secondCompleter.future);
+      when(
+        () => mockDatasource.updateSourcePrices(product.id, [
+          firstUpdated,
+          secondUpdated,
+        ]),
+      ).thenAnswer((_) async => Right(product));
+      when(
+        () => mockDatasource.refreshAllProducts(),
+      ).thenAnswer((_) async => Right([product]));
+
+      final Future<Either<Failure, List<Product>>> refresh = repository
+          .refreshAllProducts();
+      await Future<void>.delayed(Duration.zero);
+
+      verify(() => mockRemoteDatasource.fetchPrices(firstSource)).called(1);
+      verify(() => mockRemoteDatasource.fetchPrices(secondSource)).called(1);
+
+      firstCompleter.complete(Right(firstUpdated));
+      secondCompleter.complete(Right(secondUpdated));
+      final Either<Failure, List<Product>> result = await refresh;
+      result.match(
+        (Failure failure) => fail(failure.message),
+        (List<Product> products) => expect(products, [product]),
+      );
+    });
+
+    test(
+      'continues to the next source after a same-merchant failure',
+      () async {
+        final ProductModel product = buildProductModel();
+        final ProductSourceModel failedSource = buildProductSourceModel(
+          id: 'source-1',
+          merchantDomain: 'shop.example',
+        );
+        final ProductSourceModel successfulSource = buildProductSourceModel(
+          id: 'source-2',
+          merchantDomain: 'shop.example',
+          url: 'https://shop.example/products/2',
+        );
+        final ProductSourceModel updatedSource = buildProductSourceModel(
+          id: 'source-2',
+          merchantDomain: 'shop.example',
+          url: 'https://shop.example/products/2',
+          isAvailable: true,
+        );
+        const PriceFetchFailure failure = PriceFetchFailure(
+          status: PriceFetchStatus.blocked,
+          message: 'blocked',
+        );
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([failedSource, successfulSource]));
+        when(
+          () => mockRemoteDatasource.fetchPrices(failedSource),
+        ).thenAnswer((_) async => const Left(failure));
+        when(
+          () => mockRemoteDatasource.fetchPrices(successfulSource),
+        ).thenAnswer((_) async => Right(updatedSource));
+        when(
+          () => mockDatasource.updateSourcePrices(product.id, [updatedSource]),
+        ).thenAnswer((_) async => Right(product));
+
+        final Either<Failure, List<Product>> result = await repository
+            .refreshAllProducts();
+
+        expect(result, const Left(failure));
+        verify(
+          () => mockRemoteDatasource.fetchPrices(successfulSource),
+        ).called(1);
+        verify(
+          () => mockDatasource.updateSourcePrices(product.id, [updatedSource]),
+        ).called(1);
+      },
+    );
+
+    test('limits the number of active merchant queues', () async {
+      final ProductModel product = buildProductModel();
+      final List<ProductSourceModel> sources = List.generate(
+        5,
+        (int index) => buildProductSourceModel(
+          id: 'source-${index + 1}',
+          merchantDomain: 'merchant$index.example',
+          url: 'https://merchant$index.example/products/1',
+        ),
+      );
+      final List<ProductSourceModel> updatedSources = sources
+          .map(
+            (ProductSourceModel source) => buildProductSourceModel(
+              id: source.id,
+              merchantDomain: source.merchantDomain,
+              url: source.url,
+              isAvailable: true,
+            ),
+          )
+          .toList();
+      final Map<String, Completer<Either<Failure, ProductSourceModel>>>
+      completers = {
+        for (final ProductSourceModel source in sources)
+          source.id: Completer<Either<Failure, ProductSourceModel>>(),
+      };
+      when(
+        () => mockDatasource.loadProductSources(),
+      ).thenAnswer((_) async => Right(sources));
+      for (final ProductSourceModel source in sources) {
+        final Completer<Either<Failure, ProductSourceModel>>? completer =
+            completers[source.id];
+        if (completer == null) {
+          fail('Missing completer for ${source.id}');
+        }
+        when(
+          () => mockRemoteDatasource.fetchPrices(source),
+        ).thenAnswer((_) => completer.future);
+      }
+      when(
+        () => mockDatasource.updateSourcePrices(product.id, updatedSources),
+      ).thenAnswer((_) async => Right(product));
+      when(
+        () => mockDatasource.refreshAllProducts(),
+      ).thenAnswer((_) async => Right([product]));
+
+      final Future<Either<Failure, List<Product>>> refresh = repository
+          .refreshAllProducts();
+      await Future<void>.delayed(Duration.zero);
+
+      for (final ProductSourceModel source in sources.take(4)) {
+        verify(() => mockRemoteDatasource.fetchPrices(source)).called(1);
+      }
+      verifyNever(() => mockRemoteDatasource.fetchPrices(sources[4]));
+
+      final Completer<Either<Failure, ProductSourceModel>>? firstCompleter =
+          completers[sources[0].id];
+      if (firstCompleter == null) {
+        fail('Missing completer for ${sources[0].id}');
+      }
+      firstCompleter.complete(Right(updatedSources[0]));
+      await Future<void>.delayed(Duration.zero);
+      verify(() => mockRemoteDatasource.fetchPrices(sources[4])).called(1);
+
+      for (final ProductSourceModel source in sources.skip(1)) {
+        final Completer<Either<Failure, ProductSourceModel>>? completer =
+            completers[source.id];
+        if (completer == null) {
+          fail('Missing completer for ${source.id}');
+        }
+        completer.complete(Right(updatedSources[sources.indexOf(source)]));
+      }
+      final Either<Failure, List<Product>> result = await refresh;
+      result.match(
+        (Failure failure) => fail(failure.message),
+        (List<Product> products) => expect(products, [product]),
+      );
+    });
+
     test(
       'persists successful sources and reports a later source failure',
       () async {
