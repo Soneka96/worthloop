@@ -7,7 +7,6 @@ import 'package:flutter_redux/flutter_redux.dart';
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
-import 'package:worth_loop/features/products/presentation/widgets/product_offers_header.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_not_found.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_sources.section.dart';
 import 'package:worth_loop/features/products/presentation/widgets/rename_product_dialog.widget.dart';
@@ -97,33 +96,11 @@ class ProductDetailsScreen extends StatelessWidget {
               ? const ProductNotFoundWidget()
               : CustomScrollView(
                   slivers: [
-                    SliverPadding(
-                      padding: EdgeInsets.all(context.spacing.md),
-                      sliver: SliverList(
-                        delegate: SliverChildListDelegate([
-                          ProductOffersHeader(
-                            offerCount: product.sources.length,
-                          ),
-                          SizedBox(height: context.spacing.sm),
-                          if (viewmodel.isRefreshing &&
-                              viewmodel.refreshTotalCount > 0)
-                            Padding(
-                              padding: EdgeInsets.only(
-                                bottom: context.spacing.sm,
-                              ),
-                              child: Text(
-                                t.productDetails.refreshProgress(
-                                  completed: viewmodel.refreshCompletedCount,
-                                  total: viewmodel.refreshTotalCount,
-                                ),
-                              ),
-                            ),
-                        ]),
-                      ),
-                    ),
                     ProductSourcesSection(
                       product: product,
                       isRefreshing: viewmodel.isRefreshing,
+                      refreshCompletedCount: viewmodel.refreshCompletedCount,
+                      refreshTotalCount: viewmodel.refreshTotalCount,
                       sourceRefreshStatuses: viewmodel.sourceRefreshStatuses,
                       deletingSourceIds: viewmodel.deletingSourceIds,
                       onRefresh: viewmodel.onRefresh,

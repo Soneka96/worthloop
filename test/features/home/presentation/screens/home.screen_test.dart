@@ -45,6 +45,7 @@ void main() {
     ]);
     when(() => mockViewModel.isLoading).thenReturn(false);
     when(() => mockViewModel.isRefreshingAll).thenReturn(false);
+    when(() => mockViewModel.isRefreshing).thenReturn(false);
     when(() => mockViewModel.refreshCompletedCount).thenReturn(0);
     when(() => mockViewModel.refreshTotalCount).thenReturn(0);
     when(() => mockViewModel.refreshIntervalMinutes).thenReturn(60);
@@ -162,7 +163,7 @@ void main() {
     testWidgets(
       'HomeScreen displays compact refresh progress from the viewmodel',
       (WidgetTester tester) async {
-        when(() => mockViewModel.isRefreshingAll).thenReturn(true);
+        when(() => mockViewModel.isRefreshing).thenReturn(true);
         when(() => mockViewModel.refreshCompletedCount).thenReturn(18);
         when(() => mockViewModel.refreshTotalCount).thenReturn(42);
 

@@ -9,7 +9,7 @@ import 'package:worth_loop/i18n/strings.g.dart';
 void main() {
   Widget buildWidget({
     int productCount = 2,
-    bool isRefreshingAll = false,
+    bool isRefreshing = false,
     int refreshCompletedCount = 0,
     int refreshTotalCount = 0,
     DateTime? latestUpdatedAt,
@@ -19,7 +19,7 @@ void main() {
       home: Scaffold(
         body: HomeProductsHeader(
           productCount: productCount,
-          isRefreshingAll: isRefreshingAll,
+          isRefreshing: isRefreshing,
           refreshCompletedCount: refreshCompletedCount,
           refreshTotalCount: refreshTotalCount,
           latestUpdatedAt: omitUpdatedAt
@@ -48,7 +48,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       buildWidget(
-        isRefreshingAll: true,
+        isRefreshing: true,
         refreshCompletedCount: 18,
         refreshTotalCount: 42,
       ),
@@ -88,7 +88,7 @@ void main() {
 
       await tester.pumpWidget(
         buildWidget(
-          isRefreshingAll: true,
+          isRefreshing: true,
           refreshCompletedCount: 18,
           refreshTotalCount: 42,
         ),

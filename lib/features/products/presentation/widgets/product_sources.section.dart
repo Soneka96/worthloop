@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/presentation/widgets/merchant_offer_row.widget.dart';
+import 'package:worth_loop/features/products/presentation/widgets/product_offers_header.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_sources_empty.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/source_form_dialog.widget.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
@@ -20,6 +21,12 @@ class ProductSourcesSection extends StatefulWidget {
 
   /// Whether source refresh is active.
   final bool isRefreshing;
+
+  /// Number of sources that have reached a terminal state.
+  final int refreshCompletedCount;
+
+  /// Number of sources included in the active refresh.
+  final int refreshTotalCount;
 
   /// Current refresh state keyed by source identifier.
   final Map<String, SourceRefreshStatus> sourceRefreshStatuses;
@@ -42,6 +49,8 @@ class ProductSourcesSection extends StatefulWidget {
   const ProductSourcesSection({
     required this.product,
     this.isRefreshing = false,
+    this.refreshCompletedCount = 0,
+    this.refreshTotalCount = 0,
     this.sourceRefreshStatuses = const {},
     required this.deletingSourceIds,
     required this.onRefresh,
@@ -157,41 +166,62 @@ class _ProductSourcesSectionState extends State<ProductSourcesSection> {
       padding: EdgeInsets.only(
         left: context.spacing.md,
         right: context.spacing.md,
-        top: context.spacing.lg,
+        top: context.spacing.md,
       ),
       sliver: SliverMainAxisGroup(
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.only(bottom: context.spacing.sm),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Text(
-                      t.productDetails.sourcesTitle,
-                      style: textTheme.labelSmall,
-                    ),
+                  ProductOffersHeader(
+                    offerCount: widget.product.sources.length,
                   ),
-                  OutlinedButton.icon(
-                    key: const Key('product-details-refresh-button'),
-                    onPressed: widget.isRefreshing ? null : widget.onRefresh,
-                    icon: widget.isRefreshing
-                        ? const SizedBox.square(
-                            dimension: IconSizes.md,
-                            child: CircularProgressIndicator(),
-                          )
-                        : const Icon(Icons.refresh),
-                    label: Text(
-                      widget.isRefreshing
-                          ? t.productDetails.refreshing
-                          : t.productDetails.refresh,
+                  if (widget.isRefreshing && widget.refreshTotalCount > 0)
+                    Padding(
+                      padding: EdgeInsets.only(top: context.spacing.xs),
+                      child: Text(
+                        t.productDetails.refreshProgress(
+                          completed: widget.refreshCompletedCount,
+                          total: widget.refreshTotalCount,
+                        ),
+                      ),
                     ),
-                  ),
-                  FilledButton.icon(
-                    key: const Key('product-details-add-source-button'),
-                    onPressed: () => _openAddDialog(context),
-                    icon: const Icon(Icons.add),
-                    label: Text(t.productDetails.addSourceButton),
+                  SizedBox(height: context.spacing.sm),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          t.productDetails.sourcesTitle,
+                          style: textTheme.labelSmall,
+                        ),
+                      ),
+                      OutlinedButton.icon(
+                        key: const Key('product-details-refresh-button'),
+                        onPressed: widget.isRefreshing
+                            ? null
+                            : widget.onRefresh,
+                        icon: widget.isRefreshing
+                            ? const SizedBox.square(
+                                dimension: IconSizes.md,
+                                child: CircularProgressIndicator(),
+                              )
+                            : const Icon(Icons.refresh),
+                        label: Text(
+                          widget.isRefreshing
+                              ? t.productDetails.refreshing
+                              : t.productDetails.refresh,
+                        ),
+                      ),
+                      FilledButton.icon(
+                        key: const Key('product-details-add-source-button'),
+                        onPressed: () => _openAddDialog(context),
+                        icon: const Icon(Icons.add),
+                        label: Text(t.productDetails.addSourceButton),
+                      ),
+                    ],
                   ),
                 ],
               ),

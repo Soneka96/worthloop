@@ -56,7 +56,7 @@ class HomeScreen extends StatelessWidget {
                           HomeHeader(onOpenSettings: viewmodel.onOpenSettings),
                           HomeProductsHeader(
                             productCount: viewmodel.products.length,
-                            isRefreshingAll: viewmodel.isRefreshingAll,
+                            isRefreshing: viewmodel.isRefreshing,
                             refreshCompletedCount:
                                 viewmodel.refreshCompletedCount,
                             refreshTotalCount: viewmodel.refreshTotalCount,

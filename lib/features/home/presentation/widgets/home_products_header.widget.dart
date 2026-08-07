@@ -10,8 +10,8 @@ class HomeProductsHeader extends StatelessWidget {
   /// Number of tracked products.
   final int productCount;
 
-  /// Whether every product is currently being refreshed.
-  final bool isRefreshingAll;
+  /// Whether any product or source refresh is currently active.
+  final bool isRefreshing;
 
   /// Number of sources that have reached a terminal state.
   final int refreshCompletedCount;
@@ -24,7 +24,7 @@ class HomeProductsHeader extends StatelessWidget {
 
   const HomeProductsHeader({
     required this.productCount,
-    required this.isRefreshingAll,
+    required this.isRefreshing,
     required this.refreshCompletedCount,
     required this.refreshTotalCount,
     required this.latestUpdatedAt,
@@ -41,7 +41,7 @@ class HomeProductsHeader extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: context.spacing.xs),
       child: Text(
-        isRefreshingAll
+        isRefreshing
             ? t.home.refreshProgress(
                 completed: refreshCompletedCount,
                 total: refreshTotalCount,

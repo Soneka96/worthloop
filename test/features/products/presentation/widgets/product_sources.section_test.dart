@@ -12,6 +12,7 @@ import 'package:worth_loop/features/products/domain/entities/product_source.enti
 import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
 import 'package:worth_loop/features/products/presentation/widgets/merchant_offer_row.widget.dart';
+import 'package:worth_loop/features/products/presentation/widgets/product_offers_header.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_sources.section.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_sources_empty.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/source_form_dialog.widget.dart';
@@ -79,6 +80,8 @@ void main() {
   Widget buildWidget({
     List<ProductSource> sources = const [],
     bool isRefreshing = false,
+    int refreshCompletedCount = 0,
+    int refreshTotalCount = 0,
     Map<String, SourceRefreshStatus> sourceRefreshStatuses = const {},
     Set<String> deletingSourceIds = const {},
     ValueChanged<String>? onDeleteSource,
@@ -95,6 +98,8 @@ void main() {
               ProductSourcesSection(
                 product: buildProduct(sources: sources),
                 isRefreshing: isRefreshing,
+                refreshCompletedCount: refreshCompletedCount,
+                refreshTotalCount: refreshTotalCount,
                 sourceRefreshStatuses: sourceRefreshStatuses,
                 deletingSourceIds: deletingSourceIds,
                 onRefresh: onRefresh ?? () {},
@@ -110,6 +115,24 @@ void main() {
   );
 
   group('ProductSourcesSection contains widgets', () {
+    testWidgets(
+      'ProductSourcesSection contains the offer count and refresh progress with the correct parameters when isRefreshing = true',
+      (tester) async {
+        await tester.pumpWidget(
+          buildWidget(
+            isRefreshing: true,
+            refreshCompletedCount: 3,
+            refreshTotalCount: 6,
+          ),
+        );
+
+        expect(find.byType(ProductOffersHeader), findsOneWidget);
+        expect(
+          find.text(t.productDetails.refreshProgress(completed: 3, total: 6)),
+          findsOneWidget,
+        );
+      },
+    );
     testWidgets(
       'ProductSourcesSection contains a "product-details-add-source-button" FilledButton with the correct parameters',
       (WidgetTester tester) async {

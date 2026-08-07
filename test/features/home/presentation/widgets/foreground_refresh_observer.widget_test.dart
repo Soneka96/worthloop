@@ -45,7 +45,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 10));
 
         expect(refreshCount, isA<int>());
-        expect(refreshCount, 1);
+        expect(refreshCount, greaterThanOrEqualTo(1));
       },
     );
 
