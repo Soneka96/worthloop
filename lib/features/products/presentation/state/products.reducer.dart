@@ -4,6 +4,7 @@ import 'package:redux/redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/products.state.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
@@ -174,15 +175,46 @@ ProductsState loadProductsReducer(
 ProductsState productsLoadedReducer(
   ProductsState state,
   ProductsLoadedAction action,
-) => state.copyWith(
-  products: action.products,
-  isLoading: false,
-  isRefreshingAll: false,
-  refreshingProductIds: {},
-  error: const None(),
-  refreshStatus: const None(),
-  productRefreshStatuses: {},
-);
+) {
+  return state.copyWith(
+    products: action.products,
+    isLoading: false,
+    isRefreshingAll: false,
+    refreshingProductIds: {},
+    error: const None(),
+    refreshStatus: const None(),
+    sourceRefreshStatuses: _sourceRefreshStatusesForProducts(action.products),
+    productRefreshStatuses: {},
+  );
+}
+
+Map<String, SourceRefreshStatus> _sourceRefreshStatusesForProducts(
+  List<Product> products, [
+  Map<String, SourceRefreshStatus> existing = const {},
+]) {
+  final Set<String> sourceIds = products
+      .expand((Product product) => product.sources)
+      .map((ProductSource source) => source.id)
+      .toSet();
+  final Map<String, SourceRefreshStatus> statuses = {
+    for (final MapEntry<String, SourceRefreshStatus> entry in existing.entries)
+      if (sourceIds.contains(entry.key)) entry.key: entry.value,
+  };
+  for (final Product product in products) {
+    for (final ProductSource source in product.sources) {
+      final PriceFetchStatus? refreshStatus = source.lastRefreshStatus;
+      if (refreshStatus == null || refreshStatus == PriceFetchStatus.none) {
+        continue;
+      }
+      statuses[source.id] = refreshStatus == PriceFetchStatus.success
+          ? source.isAvailable == true
+                ? SourceRefreshStatus.success
+                : SourceRefreshStatus.unavailable
+          : SourceRefreshStatus.error;
+    }
+  }
+  return statuses;
+}
 
 /// Handles [ProductsLoadFailedAction].
 /// Updates [ProductsState.isLoading], [ProductsState.error].
@@ -316,10 +348,13 @@ ProductsState productRefreshedReducer(
   final Map<String, PriceFetchStatus> productRefreshStatuses = {
     ...state.productRefreshStatuses,
   }..remove(action.product.id);
+  final Map<String, SourceRefreshStatus> sourceRefreshStatuses =
+      _sourceRefreshStatusesForProducts(products, state.sourceRefreshStatuses);
   return state.copyWith(
     products: products,
     refreshingProductIds: refreshingProductIds,
     error: const None(),
+    sourceRefreshStatuses: sourceRefreshStatuses,
     productRefreshStatuses: productRefreshStatuses,
   );
 }
@@ -394,8 +429,11 @@ ProductsState sourceAddedReducer(
             product.id == action.product.id ? action.product : product,
       )
       .toList(growable: false);
+  final Map<String, SourceRefreshStatus> sourceRefreshStatuses =
+      _sourceRefreshStatusesForProducts(products, state.sourceRefreshStatuses);
   return state.copyWith(
     products: products,
+    sourceRefreshStatuses: sourceRefreshStatuses,
     isAddingSource: false,
     addSourceError: const None(),
   );
@@ -429,8 +467,11 @@ ProductsState sourceEditedReducer(
             product.id == action.product.id ? action.product : product,
       )
       .toList(growable: false);
+  final Map<String, SourceRefreshStatus> sourceRefreshStatuses =
+      _sourceRefreshStatusesForProducts(products, state.sourceRefreshStatuses);
   return state.copyWith(
     products: products,
+    sourceRefreshStatuses: sourceRefreshStatuses,
     editingSourceId: const None(),
     editSourceError: const None(),
   );
@@ -470,9 +511,12 @@ ProductsState sourceDeletedReducer(
       .toList(growable: false);
   final Set<String> deletingSourceIds = {...state.deletingSourceIds}
     ..remove(action.sourceId);
+  final Map<String, SourceRefreshStatus> sourceRefreshStatuses =
+      _sourceRefreshStatusesForProducts(products, state.sourceRefreshStatuses);
   return state.copyWith(
     products: products,
     deletingSourceIds: deletingSourceIds,
+    sourceRefreshStatuses: sourceRefreshStatuses,
   );
 }
 

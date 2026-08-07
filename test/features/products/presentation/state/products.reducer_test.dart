@@ -96,6 +96,55 @@ void main() {
         reason: 'stale per-product statuses clear on a fresh load',
       );
     });
+
+    test('ProductsLoadedAction restores persisted source refresh statuses', () {
+      final Product product = buildProduct(
+        sources: [
+          buildProductSource(
+            id: 'successful-source',
+            isAvailable: true,
+            lastRefreshStatus: PriceFetchStatus.success,
+          ),
+          buildProductSource(
+            id: 'unavailable-source',
+            isAvailable: false,
+            lastRefreshStatus: PriceFetchStatus.success,
+          ),
+          buildProductSource(
+            id: 'blocked-source',
+            lastRefreshStatus: PriceFetchStatus.blocked,
+          ),
+          buildProductSource(
+            id: 'never-refreshed-status-source',
+            lastRefreshStatus: PriceFetchStatus.none,
+          ),
+          buildProductSource(id: 'never-refreshed-source'),
+        ],
+      );
+
+      final ProductsState reducedState = productsReducer(
+        ProductsState.initial(),
+        ProductsLoadedAction([product]),
+      );
+
+      expect(reducedState.sourceRefreshStatuses, {
+        'successful-source': SourceRefreshStatus.success,
+        'unavailable-source': SourceRefreshStatus.unavailable,
+        'blocked-source': SourceRefreshStatus.error,
+      });
+      expect(
+        reducedState.sourceRefreshStatuses.containsKey(
+          'never-refreshed-status-source',
+        ),
+        isFalse,
+      );
+      expect(
+        reducedState.sourceRefreshStatuses.containsKey(
+          'never-refreshed-source',
+        ),
+        isFalse,
+      );
+    });
   });
 
   group('productsReducer processes ProductsLoadFailedAction correctly', () {
@@ -996,6 +1045,10 @@ void main() {
         final ProductsState state = ProductsState.initial().copyWith(
           products: [first, second],
           deletingSourceIds: {'source-1', 'source-2'},
+          sourceRefreshStatuses: {
+            'source-1': SourceRefreshStatus.error,
+            'source-2': SourceRefreshStatus.success,
+          },
         );
 
         final ProductsState reducedState = productsReducer(
@@ -1022,6 +1075,11 @@ void main() {
           {'source-2'},
           reason:
               "the deleted source's delete completes, the other source's is untouched",
+        );
+        expect(
+          reducedState.sourceRefreshStatuses,
+          isEmpty,
+          reason: 'deleted source statuses are removed with the source',
         );
       },
     );
