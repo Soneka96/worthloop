@@ -26,6 +26,9 @@ class HomeScreenViewModel extends Equatable {
   /// Whether every product is being refreshed.
   final bool isRefreshingAll;
 
+  /// Whether any product or source refresh is active.
+  final bool isRefreshing;
+
   /// Number of sources that have reached a terminal state.
   final int refreshCompletedCount;
 
@@ -67,6 +70,7 @@ class HomeScreenViewModel extends Equatable {
     required this.latestUpdatedAt,
     required this.isLoading,
     required this.isRefreshingAll,
+    required this.isRefreshing,
     required this.refreshCompletedCount,
     required this.refreshTotalCount,
     required this.refreshIntervalMinutes,
@@ -87,6 +91,7 @@ class HomeScreenViewModel extends Equatable {
       latestUpdatedAt: ProductsSelectors.latestUpdatedAtSelector(store.state),
       isLoading: ProductsSelectors.isLoadingSelector(store.state),
       isRefreshingAll: ProductsSelectors.isRefreshingAllSelector(store.state),
+      isRefreshing: ProductsSelectors.isRefreshingSelector(store.state),
       refreshCompletedCount: ProductsSelectors.refreshCompletedCountSelector(
         store.state,
       ),
@@ -122,6 +127,7 @@ class HomeScreenViewModel extends Equatable {
     latestUpdatedAt,
     isLoading,
     isRefreshingAll,
+    isRefreshing,
     refreshCompletedCount,
     refreshTotalCount,
     refreshIntervalMinutes,

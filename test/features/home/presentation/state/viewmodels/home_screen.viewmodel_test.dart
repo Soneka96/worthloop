@@ -60,6 +60,8 @@ void main() {
         expect(viewmodel.isLoading, isTrue);
         expect(viewmodel.isRefreshingAll, isA<bool>());
         expect(viewmodel.isRefreshingAll, isTrue);
+        expect(viewmodel.isRefreshing, isA<bool>());
+        expect(viewmodel.isRefreshing, isTrue);
         expect(viewmodel.refreshCompletedCount, isA<int>());
         expect(viewmodel.refreshCompletedCount, 18);
         expect(viewmodel.refreshTotalCount, isA<int>());
@@ -77,6 +79,22 @@ void main() {
         expect(viewmodel.onOpenProduct, isA<void Function(String)>());
         expect(viewmodel.onCreateProduct, isA<void Function(String)>());
       });
+
+      test(
+        'Method fromStore() returns isRefreshing when a source refresh is active',
+        () {
+          final AppState state = AppState.initial().copyWith(
+            products: ProductsState.initial().copyWith(refreshTotalCount: 1),
+          );
+
+          final HomeScreenViewModel viewmodel = HomeScreenViewModel.fromStore(
+            buildStore(state),
+          );
+
+          expect(viewmodel.isRefreshing, isA<bool>());
+          expect(viewmodel.isRefreshing, isTrue);
+        },
+      );
 
       test(
         'Method onRefreshAll dispatches RefreshAllProductsAction when called',

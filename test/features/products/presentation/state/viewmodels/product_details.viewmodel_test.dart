@@ -35,7 +35,7 @@ void main() {
           final AppState state = AppState.initial().copyWith(
             products: ProductsState.initial().copyWith(
               products: [product],
-              refreshingProductIds: {product.id},
+              isRefreshingAll: true,
               productRefreshStatuses: {product.id: PriceFetchStatus.blocked},
               sourceRefreshStatuses: {'source-1': SourceRefreshStatus.fetching},
               refreshCompletedCount: 3,
@@ -88,6 +88,25 @@ void main() {
           expect(viewmodel.onOpenOffer, isA<Function(String)>());
           expect(viewmodel.onRenameProduct, isA<Function(String)>());
           expect(viewmodel.onDeleteProduct, isA<Function()>());
+        },
+      );
+
+      test(
+        'Method fromStore() returns isRefreshing when a source refresh is active',
+        () {
+          final Product product = buildProduct();
+          final AppState state = AppState.initial().copyWith(
+            products: ProductsState.initial().copyWith(
+              products: [product],
+              refreshTotalCount: 1,
+            ),
+          );
+
+          final ProductDetailsViewModel viewmodel =
+              ProductDetailsViewModel.fromStore(buildStore(state), product.id);
+
+          expect(viewmodel.isRefreshing, isA<bool>());
+          expect(viewmodel.isRefreshing, isTrue);
         },
       );
 

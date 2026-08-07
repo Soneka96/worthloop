@@ -122,6 +122,48 @@ void main() {
     });
   });
 
+  group('Method isRefreshingSelector() returns a bool instance', () {
+    test('returns true when a global refresh is active', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(isRefreshingAll: true),
+      );
+
+      expect(ProductsSelectors.isRefreshingSelector(state), isA<bool>());
+      expect(ProductsSelectors.isRefreshingSelector(state), isTrue);
+    });
+
+    test('returns true when a product refresh is active', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          refreshingProductIds: {'product-1'},
+        ),
+      );
+
+      expect(ProductsSelectors.isRefreshingSelector(state), isA<bool>());
+      expect(ProductsSelectors.isRefreshingSelector(state), isTrue);
+    });
+
+    test('returns true when a source refresh is active', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(refreshTotalCount: 1),
+      );
+
+      expect(ProductsSelectors.isRefreshingSelector(state), isA<bool>());
+      expect(ProductsSelectors.isRefreshingSelector(state), isTrue);
+    });
+
+    test('returns false when no refresh is active', () {
+      expect(
+        ProductsSelectors.isRefreshingSelector(AppState.initial()),
+        isA<bool>(),
+      );
+      expect(
+        ProductsSelectors.isRefreshingSelector(AppState.initial()),
+        isFalse,
+      );
+    });
+  });
+
   group(
     'Method sourceRefreshStatusSelector() returns a SourceRefreshStatus instance',
     () {

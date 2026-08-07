@@ -46,6 +46,12 @@ abstract final class ProductsSelectors {
   static bool isRefreshingProductSelector(AppState state, String productId) =>
       state.products.refreshingProductIds.contains(productId);
 
+  /// Returns whether any global, product, or source refresh is active.
+  static bool isRefreshingSelector(AppState state) =>
+      state.products.isRefreshingAll ||
+      state.products.refreshingProductIds.isNotEmpty ||
+      state.products.refreshTotalCount > 0;
+
   /// Returns the refresh state for [sourceId].
   static SourceRefreshStatus sourceRefreshStatusSelector(
     AppState state,

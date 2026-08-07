@@ -121,10 +121,7 @@ class ProductDetailsViewModel extends Equatable {
     String productId,
   ) => ProductDetailsViewModel(
     product: ProductsSelectors.productSelector(store.state, productId),
-    isRefreshing: ProductsSelectors.isRefreshingProductSelector(
-      store.state,
-      productId,
-    ),
+    isRefreshing: ProductsSelectors.isRefreshingSelector(store.state),
     refreshStatus: ProductsSelectors.refreshStatusForProductSelector(
       store.state,
       productId,
