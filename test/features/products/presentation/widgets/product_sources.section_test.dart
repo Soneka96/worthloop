@@ -12,7 +12,6 @@ import 'package:worth_loop/features/products/domain/entities/product_source.enti
 import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
 import 'package:worth_loop/features/products/presentation/widgets/merchant_offer_row.widget.dart';
-import 'package:worth_loop/features/products/presentation/widgets/product_offers_header.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_sources.section.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_sources_empty.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/source_form_dialog.widget.dart';
@@ -80,13 +79,9 @@ void main() {
   Widget buildWidget({
     List<ProductSource> sources = const [],
     bool isRefreshing = false,
-    int refreshCompletedCount = 0,
-    int refreshTotalCount = 0,
-    bool areOtherSourcesRefreshing = false,
     Map<String, SourceRefreshStatus> sourceRefreshStatuses = const {},
     Set<String> deletingSourceIds = const {},
     ValueChanged<String>? onDeleteSource,
-    VoidCallback? onRefresh,
     ValueChanged<String>? onRefreshSource,
     ValueChanged<String>? onOpenOffer,
   }) => TranslationProvider(
@@ -99,12 +94,8 @@ void main() {
               ProductSourcesSection(
                 product: buildProduct(sources: sources),
                 isRefreshing: isRefreshing,
-                refreshCompletedCount: refreshCompletedCount,
-                refreshTotalCount: refreshTotalCount,
-                areOtherSourcesRefreshing: areOtherSourcesRefreshing,
                 sourceRefreshStatuses: sourceRefreshStatuses,
                 deletingSourceIds: deletingSourceIds,
-                onRefresh: onRefresh ?? () {},
                 onRefreshSource: onRefreshSource ?? (_) {},
                 onDeleteSource: onDeleteSource ?? (_) {},
                 onOpenOffer: onOpenOffer ?? (_) {},
@@ -118,44 +109,14 @@ void main() {
 
   group('ProductSourcesSection contains widgets', () {
     testWidgets(
-      'ProductSourcesSection contains the source count and refresh progress with the correct parameters when isRefreshing = true',
-      (tester) async {
-        await tester.pumpWidget(
-          buildWidget(
-            isRefreshing: true,
-            refreshCompletedCount: 3,
-            refreshTotalCount: 6,
-          ),
-        );
-
-        expect(find.byType(ProductOffersHeader), findsOneWidget);
-        expect(
-          find.text(t.productDetails.refreshProgress(completed: 3, total: 6)),
-          findsOneWidget,
-        );
-      },
-    );
-
-    testWidgets(
-      'ProductSourcesSection shows other-product refresh status without local progress',
+      'ProductSourcesSection contains filters without refresh or add-source controls',
       (WidgetTester tester) async {
-        await tester.pumpWidget(buildWidget(areOtherSourcesRefreshing: true));
+        await tester.pumpWidget(buildWidget(sources: sources));
 
-        expect(
-          find.text(t.productDetails.otherProductsRefreshing),
-          findsOneWidget,
-        );
-      },
-    );
-    testWidgets(
-      'ProductSourcesSection contains a "product-details-add-source-button" FilledButton with the correct parameters',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(buildWidget());
-
-        expect(
-          find.byKey(const Key('product-details-add-source-button')),
-          findsOneWidget,
-        );
+        expect(find.byType(FilterChip), findsNWidgets(3));
+        expect(find.byType(OutlinedButton), findsNothing);
+        expect(find.byType(FilledButton), findsNothing);
+        expect(find.textContaining('sources checked'), findsNothing);
       },
     );
 
@@ -536,68 +497,6 @@ void main() {
     );
 
     testWidgets(
-      'ProductSourcesSection contains a "product-details-add-source-button" FilledButton with the correct behavior',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(buildWidget());
-
-        await tester.tap(
-          find.byKey(const Key('product-details-add-source-button')),
-        );
-        await tester.pumpAndSettle();
-
-        final SourceFormDialog dialog = tester.widget(
-          find.byType(SourceFormDialog),
-        );
-        expect(dialog.productId, 'product-1');
-        expect(dialog.source, isNull);
-      },
-    );
-
-    testWidgets(
-      'ProductSourcesSection keeps Refresh and Add Source on the same row',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(buildWidget());
-
-        final Finder refresh = find.byKey(
-          const Key('product-details-refresh-button'),
-        );
-        final Finder addSource = find.byKey(
-          const Key('product-details-add-source-button'),
-        );
-        expect(refresh, findsOneWidget);
-        expect(addSource, findsOneWidget);
-        expect(tester.getTopLeft(refresh).dy, tester.getTopLeft(addSource).dy);
-      },
-    );
-
-    testWidgets(
-      'ProductSourcesSection calls onRefresh when not already refreshing',
-      (WidgetTester tester) async {
-        bool refreshed = false;
-        await tester.pumpWidget(buildWidget(onRefresh: () => refreshed = true));
-
-        await tester.tap(
-          find.byKey(const Key('product-details-refresh-button')),
-        );
-
-        expect(refreshed, isTrue);
-      },
-    );
-
-    testWidgets('ProductSourcesSection disables Refresh while refreshing', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(buildWidget(isRefreshing: true));
-
-      final OutlinedButton refreshButton = tester.widget(
-        find.byKey(const Key('product-details-refresh-button')),
-      );
-
-      expect(refreshButton.onPressed, isNull);
-      expect(find.text(t.productDetails.refreshing), findsOneWidget);
-    });
-
-    testWidgets(
       'ProductSourcesSection calls onRefreshSource for a slid source action',
       (WidgetTester tester) async {
         String? refreshedId;
@@ -720,12 +619,6 @@ void main() {
 
       try {
         await tester.pumpWidget(buildWidget(sources: sources));
-
-        expect(
-          find.text('${t.productDetails.sourcesTitle} · 3'),
-          findsOneWidget,
-        );
-        expect(find.text(t.productDetails.addSourceButton), findsOneWidget);
         expect(find.text(t.productDetails.filterAll), findsOneWidget);
         expect(find.text(t.productDetails.filterAvailable), findsOneWidget);
         expect(find.text(t.productDetails.filterUnavailable), findsOneWidget);

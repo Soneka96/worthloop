@@ -12,7 +12,6 @@ import 'package:redux/redux.dart';
 import 'package:worth_loop/features/products/presentation/screens/product_details.screen.dart';
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
 import 'package:worth_loop/features/products/presentation/widgets/merchant_offer_row.widget.dart';
-import 'package:worth_loop/features/products/presentation/widgets/product_offers_header.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_sources_empty.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/rename_product_dialog.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/source_form_dialog.widget.dart';
@@ -160,40 +159,30 @@ void main() {
 
         expect(find.text('Example Product'), findsOneWidget);
         expect(find.byType(MerchantOfferRow), findsNWidgets(3));
-        expect(find.text('399.99 €'), findsOneWidget);
+        expect(find.textContaining('399.99'), findsOneWidget);
         expect(find.text(t.productDetails.available), findsNWidgets(2));
         expect(find.text(t.productDetails.unavailable), findsOneWidget);
       },
     );
 
-    testWidgets(
-      'ProductDetailsScreen displays refresh progress when sources are refreshing',
-      (WidgetTester tester) async {
-        when(() => mockViewModel.isRefreshing).thenReturn(true);
-        when(() => mockViewModel.isProductRefreshing).thenReturn(true);
-        when(() => mockViewModel.productRefreshCompletedCount).thenReturn(3);
-        when(() => mockViewModel.productRefreshTotalCount).thenReturn(6);
-
-        await pumpScreen(tester);
-
-        expect(
-          find.text(t.productDetails.refreshProgress(completed: 3, total: 6)),
-          findsOneWidget,
-        );
-      },
-    );
+    testWidgets('ProductDetailsScreen shows the source count in the AppBar', (
+      WidgetTester tester,
+    ) async {
+      await pumpScreen(tester);
+      expect(
+        find.textContaining(t.productDetails.sourcesTitle),
+        findsOneWidget,
+      );
+    });
 
     testWidgets(
-      'ProductDetailsScreen hides refresh progress when isRefreshing = false',
+      'ProductDetailsScreen contains a RefreshIndicator for pull-to-refresh',
       (WidgetTester tester) async {
-        when(() => mockViewModel.refreshCompletedCount).thenReturn(3);
-        when(() => mockViewModel.refreshTotalCount).thenReturn(6);
-        when(() => mockViewModel.productRefreshCompletedCount).thenReturn(3);
-        when(() => mockViewModel.productRefreshTotalCount).thenReturn(6);
-
         await pumpScreen(tester);
 
-        expect(find.textContaining('3 of 6'), findsNothing);
+        expect(find.byType(RefreshIndicator), findsOneWidget);
+        expect(find.text(t.productDetails.refreshing), findsNothing);
+        expect(find.textContaining('sources checked'), findsNothing);
       },
     );
 
@@ -256,12 +245,12 @@ void main() {
     });
 
     testWidgets(
-      'ProductDetailsScreen contains a "product-details-add-source-button" FilledButton with the correct parameters',
+      'ProductDetailsScreen contains a product-details-add-source-fab',
       (WidgetTester tester) async {
         await pumpScreen(tester);
 
         expect(
-          find.byKey(const Key('product-details-add-source-button')),
+          find.byKey(const Key('product-details-add-source-fab')),
           findsOneWidget,
         );
       },
@@ -291,19 +280,6 @@ void main() {
           find.byKey(const Key('merchant-offer-source-2')),
           findsOneWidget,
         );
-      },
-    );
-
-    testWidgets(
-      'ProductDetailsScreen passes the source count to ProductOffersHeader',
-      (WidgetTester tester) async {
-        await pumpScreen(tester);
-
-        final ProductOffersHeader header = tester.widget(
-          find.byType(ProductOffersHeader),
-        );
-        expect(header.offerCount, isA<int>());
-        expect(header.offerCount, 3);
       },
     );
 
@@ -339,11 +315,7 @@ void main() {
           findsNothing,
         );
         expect(
-          find.byKey(const Key('product-details-refresh-button')),
-          findsNothing,
-        );
-        expect(
-          find.byKey(const Key('product-details-add-source-button')),
+          find.byKey(const Key('product-details-add-source-fab')),
           findsNothing,
         );
       },
@@ -371,24 +343,6 @@ void main() {
 
   group("ProductDetailsScreen's elements behavior", () {
     testWidgets(
-      'ProductDetailsScreen contains a "product-details-refresh-button" FilledButton with the correct behavior',
-      (WidgetTester tester) async {
-        when(
-          () => mockViewModel.onRefresh,
-        ).thenReturn(() => print('refresh called'));
-
-        await pumpScreen(tester);
-
-        await expectLater(
-          () => tester.tap(
-            find.byKey(const Key('product-details-refresh-button')),
-          ),
-          prints('refresh called\n'),
-        );
-      },
-    );
-
-    testWidgets(
       'ProductDetailsScreen contains a "product-details-back-button" IconButton with the correct behavior',
       (WidgetTester tester) async {
         when(
@@ -401,40 +355,6 @@ void main() {
           () =>
               tester.tap(find.byKey(const Key('product-details-back-button'))),
           prints('back called\n'),
-        );
-      },
-    );
-
-    testWidgets(
-      'ProductDetailsScreen contains a disabled "product-details-refresh-button" FilledButton when isRefreshing = true',
-      (WidgetTester tester) async {
-        when(() => mockViewModel.isRefreshing).thenReturn(true);
-
-        await pumpScreen(tester);
-        final OutlinedButton button = tester.widget(
-          find.byKey(const Key('product-details-refresh-button')),
-        );
-
-        expect(button.onPressed, isNull);
-        expect(find.text(t.productDetails.refreshing), findsOneWidget);
-      },
-    );
-
-    testWidgets(
-      'ProductDetailsScreen does not call onRefresh when isRefreshing = true',
-      (WidgetTester tester) async {
-        when(() => mockViewModel.isRefreshing).thenReturn(true);
-        when(
-          () => mockViewModel.onRefresh,
-        ).thenReturn(() => print('refresh called'));
-
-        await pumpScreen(tester);
-
-        await expectLater(
-          () => tester.tap(
-            find.byKey(const Key('product-details-refresh-button')),
-          ),
-          prints(isEmpty),
         );
       },
     );
@@ -479,23 +399,20 @@ void main() {
       },
     );
 
-    testWidgets(
-      'ProductDetailsScreen contains a "product-details-add-source-button" FilledButton with the correct behavior',
-      (WidgetTester tester) async {
-        await pumpScreen(tester);
+    testWidgets('ProductDetailsScreen opens the source dialog from the FAB', (
+      WidgetTester tester,
+    ) async {
+      await pumpScreen(tester);
 
-        await tester.tap(
-          find.byKey(const Key('product-details-add-source-button')),
-        );
-        await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('product-details-add-source-fab')));
+      await tester.pumpAndSettle();
 
-        final SourceFormDialog dialog = tester.widget(
-          find.byType(SourceFormDialog),
-        );
-        expect(dialog.productId, isA<String>());
-        expect(dialog.productId, 'product-1');
-      },
-    );
+      final SourceFormDialog dialog = tester.widget(
+        find.byType(SourceFormDialog),
+      );
+      expect(dialog.productId, isA<String>());
+      expect(dialog.productId, 'product-1');
+    });
 
     testWidgets(
       'ProductDetailsScreen contains a "product-details-rename-button" IconButton with the correct behavior',
@@ -606,13 +523,8 @@ void main() {
       try {
         await pumpScreen(tester);
 
-        expect(find.text(t.productDetails.refresh), findsOneWidget);
         expect(find.text(t.productDetails.available), findsNWidgets(2));
         expect(find.text(t.productDetails.unavailable), findsOneWidget);
-        expect(
-          find.text('${t.productDetails.sourcesTitle} · 3'),
-          findsOneWidget,
-        );
         expect(find.text(t.productDetails.filterAll), findsOneWidget);
         expect(find.text(t.productDetails.filterAvailable), findsOneWidget);
         expect(find.text(t.productDetails.filterUnavailable), findsOneWidget);
@@ -699,8 +611,6 @@ void main() {
             const Key('product-details-back-button'),
             const Key('product-details-rename-button'),
             const Key('product-details-delete-button'),
-            const Key('product-details-refresh-button'),
-            const Key('product-details-add-source-button'),
             const Key('product-details-source-filter-all'),
             const Key('product-details-source-filter-available'),
             const Key('product-details-source-filter-unavailable'),

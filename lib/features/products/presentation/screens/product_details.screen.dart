@@ -10,6 +10,7 @@ import 'package:worth_loop/features/products/presentation/state/viewmodels/produ
 import 'package:worth_loop/features/products/presentation/widgets/product_not_found.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_sources.section.dart';
 import 'package:worth_loop/features/products/presentation/widgets/rename_product_dialog.widget.dart';
+import 'package:worth_loop/features/products/presentation/widgets/source_form_dialog.widget.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/constants/layout_constants.dart';
@@ -40,6 +41,12 @@ class ProductDetailsScreen extends StatelessWidget {
     }
   }
 
+  void _openAddSourceDialog(BuildContext context, Product product) =>
+      showDialog<void>(
+        context: context,
+        builder: (context) => SourceFormDialog(productId: product.id),
+      );
+
   @override
   Widget build(BuildContext context) {
     return StoreConnector<AppState, ProductDetailsViewModel>(
@@ -56,7 +63,20 @@ class ProductDetailsScreen extends StatelessWidget {
               tooltip: t.productDetails.backTooltip,
               icon: const Icon(Icons.arrow_back),
             ),
-            title: Text(product?.name ?? t.productDetails.title),
+            centerTitle: true,
+            title: product == null
+                ? Text(t.productDetails.title)
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(product.name),
+                      Text(
+                        '${t.productDetails.sourcesTitle} \u00B7 ${product.sources.length}',
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                    ],
+                  ),
             actions: product == null
                 ? null
                 : [
@@ -92,26 +112,32 @@ class ProductDetailsScreen extends StatelessWidget {
                           ),
                   ],
           ),
+          floatingActionButton: product == null
+              ? null
+              : FloatingActionButton.small(
+                  key: const Key('product-details-add-source-fab'),
+                  onPressed: () => _openAddSourceDialog(context, product),
+                  tooltip: t.productDetails.addSourceButton,
+                  child: const Icon(Icons.add),
+                ),
           body: product == null
               ? const ProductNotFoundWidget()
-              : CustomScrollView(
-                  slivers: [
-                    ProductSourcesSection(
-                      product: product,
-                      isRefreshing: viewmodel.isRefreshing,
-                      refreshCompletedCount:
-                          viewmodel.productRefreshCompletedCount,
-                      refreshTotalCount: viewmodel.productRefreshTotalCount,
-                      areOtherSourcesRefreshing:
-                          viewmodel.areOtherSourcesRefreshing,
-                      sourceRefreshStatuses: viewmodel.sourceRefreshStatuses,
-                      deletingSourceIds: viewmodel.deletingSourceIds,
-                      onRefresh: viewmodel.onRefresh,
-                      onRefreshSource: viewmodel.onRefreshSource,
-                      onDeleteSource: viewmodel.onDeleteSource,
-                      onOpenOffer: viewmodel.onOpenOffer,
-                    ),
-                  ],
+              : RefreshIndicator(
+                  onRefresh: () async => viewmodel.onRefresh(),
+                  child: CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      ProductSourcesSection(
+                        product: product,
+                        isRefreshing: viewmodel.isProductRefreshing,
+                        sourceRefreshStatuses: viewmodel.sourceRefreshStatuses,
+                        deletingSourceIds: viewmodel.deletingSourceIds,
+                        onRefreshSource: viewmodel.onRefreshSource,
+                        onDeleteSource: viewmodel.onDeleteSource,
+                        onOpenOffer: viewmodel.onOpenOffer,
+                      ),
+                    ],
+                  ),
                 ),
         );
       },

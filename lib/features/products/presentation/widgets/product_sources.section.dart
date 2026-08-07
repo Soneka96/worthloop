@@ -5,12 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/presentation/widgets/merchant_offer_row.widget.dart';
-import 'package:worth_loop/features/products/presentation/widgets/product_offers_header.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_sources_empty.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/source_form_dialog.widget.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
-import 'package:worth_loop/shared/constants/layout_constants.dart';
 import 'package:worth_loop/shared/features/confirm_dialog.widget.dart';
 import 'package:worth_loop/shared/theme/app_spacing_theme_extension.dart';
 
@@ -19,26 +17,14 @@ class ProductSourcesSection extends StatefulWidget {
   /// Product whose saved merchant sources are displayed.
   final Product product;
 
-  /// Whether source refresh is active.
+  /// Whether source refresh is active, used to preserve source order.
   final bool isRefreshing;
-
-  /// Number of sources that have reached a terminal state.
-  final int refreshCompletedCount;
-
-  /// Number of sources included in the active refresh.
-  final int refreshTotalCount;
-
-  /// Whether sources belonging to other products are being refreshed.
-  final bool areOtherSourcesRefreshing;
 
   /// Current refresh state keyed by source identifier.
   final Map<String, SourceRefreshStatus> sourceRefreshStatuses;
 
   /// Source identifiers currently being deleted.
   final Set<String> deletingSourceIds;
-
-  /// Refreshes every source for this product.
-  final VoidCallback onRefresh;
 
   /// Refreshes one source only.
   final ValueChanged<String> onRefreshSource;
@@ -52,12 +38,8 @@ class ProductSourcesSection extends StatefulWidget {
   const ProductSourcesSection({
     required this.product,
     this.isRefreshing = false,
-    this.refreshCompletedCount = 0,
-    this.refreshTotalCount = 0,
-    this.areOtherSourcesRefreshing = false,
     this.sourceRefreshStatuses = const {},
     required this.deletingSourceIds,
-    required this.onRefresh,
     required this.onRefreshSource,
     required this.onDeleteSource,
     required this.onOpenOffer,
@@ -132,11 +114,6 @@ class _ProductSourcesSectionState extends State<ProductSourcesSection> {
     };
   }
 
-  void _openAddDialog(BuildContext context) => showDialog<void>(
-    context: context,
-    builder: (context) => SourceFormDialog(productId: widget.product.id),
-  );
-
   void _openEditDialog(BuildContext context, ProductSource source) =>
       showDialog<void>(
         context: context,
@@ -163,7 +140,6 @@ class _ProductSourcesSectionState extends State<ProductSourcesSection> {
 
   @override
   Widget build(BuildContext context) {
-    final TextTheme textTheme = Theme.of(context).textTheme;
     final ProductSource? bestAvailablePrice = widget.product.bestAvailablePrice;
 
     return SliverPadding(
@@ -174,64 +150,6 @@ class _ProductSourcesSectionState extends State<ProductSourcesSection> {
       ),
       sliver: SliverMainAxisGroup(
         slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.only(bottom: context.spacing.sm),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ProductOffersHeader(
-                          offerCount: widget.product.sources.length,
-                        ),
-                      ),
-                      OutlinedButton.icon(
-                        key: const Key('product-details-refresh-button'),
-                        onPressed: widget.isRefreshing
-                            ? null
-                            : widget.onRefresh,
-                        icon: widget.isRefreshing
-                            ? const SizedBox.square(
-                                dimension: IconSizes.md,
-                                child: CircularProgressIndicator(),
-                              )
-                            : const Icon(Icons.refresh),
-                        label: Text(
-                          widget.isRefreshing
-                              ? t.productDetails.refreshing
-                              : t.productDetails.refresh,
-                        ),
-                      ),
-                      FilledButton.icon(
-                        key: const Key('product-details-add-source-button'),
-                        onPressed: () => _openAddDialog(context),
-                        icon: const Icon(Icons.add),
-                        label: Text(t.productDetails.addSourceButton),
-                      ),
-                    ],
-                  ),
-                  if (widget.isRefreshing && widget.refreshTotalCount > 0)
-                    Padding(
-                      padding: EdgeInsets.only(top: context.spacing.xs),
-                      child: Text(
-                        '${t.productDetails.refreshProgress(completed: widget.refreshCompletedCount, total: widget.refreshTotalCount)}${widget.areOtherSourcesRefreshing ? ' · ${t.productDetails.otherProductsRefreshing}' : ''}',
-                        style: textTheme.bodySmall,
-                      ),
-                    )
-                  else if (widget.areOtherSourcesRefreshing)
-                    Padding(
-                      padding: EdgeInsets.only(top: context.spacing.xs),
-                      child: Text(
-                        t.productDetails.otherProductsRefreshing,
-                        style: textTheme.bodySmall,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
           if (widget.product.sources.isEmpty)
             const SliverToBoxAdapter(child: ProductSourcesEmptyWidget())
           else ...[
