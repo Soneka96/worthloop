@@ -87,7 +87,7 @@ dev_dependencies:
   url_launcher_platform_interface: ^2.3.2
 
 flutter_launcher_icons:
-  image_path: "assets/icon,png.png"
+  image_path: "assets/worthloop_mark.png"
   android: true
 
 flutter:
