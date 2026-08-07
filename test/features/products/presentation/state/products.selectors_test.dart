@@ -95,6 +95,67 @@ void main() {
   });
 
   group(
+    'Method sourceRefreshStatusSelector() returns a SourceRefreshStatus instance',
+    () {
+      test(
+        'sourceRefreshStatusSelector() returns the matching source status',
+        () {
+          final AppState state = AppState.initial().copyWith(
+            products: ProductsState.initial().copyWith(
+              sourceRefreshStatuses: {'source-1': SourceRefreshStatus.fetching},
+            ),
+          );
+
+          expect(
+            ProductsSelectors.sourceRefreshStatusSelector(state, 'source-1'),
+            isA<SourceRefreshStatus>(),
+          );
+          expect(
+            ProductsSelectors.sourceRefreshStatusSelector(state, 'source-1'),
+            SourceRefreshStatus.fetching,
+          );
+        },
+      );
+
+      test(
+        'sourceRefreshStatusSelector() returns idle when sourceId has no status',
+        () {
+          expect(
+            ProductsSelectors.sourceRefreshStatusSelector(
+              AppState.initial(),
+              'source-1',
+            ),
+            SourceRefreshStatus.idle,
+          );
+        },
+      );
+    },
+  );
+
+  group('Refresh progress selectors return the correct values', () {
+    test('refreshCompletedCountSelector() returns the completed count', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(refreshCompletedCount: 3),
+      );
+
+      expect(
+        ProductsSelectors.refreshCompletedCountSelector(state),
+        isA<int>(),
+      );
+      expect(ProductsSelectors.refreshCompletedCountSelector(state), 3);
+    });
+
+    test('refreshTotalCountSelector() returns the total count', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(refreshTotalCount: 6),
+      );
+
+      expect(ProductsSelectors.refreshTotalCountSelector(state), isA<int>());
+      expect(ProductsSelectors.refreshTotalCountSelector(state), 6);
+    });
+  });
+
+  group(
     'Method refreshStatusForProductSelector() returns a PriceFetchStatus instance',
     () {
       test(

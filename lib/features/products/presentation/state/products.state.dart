@@ -32,6 +32,15 @@ class ProductsState extends Equatable {
   /// product identifier.
   final Map<String, PriceFetchStatus> productRefreshStatuses;
 
+  /// Current refresh state for each source, keyed by source identifier.
+  final Map<String, SourceRefreshStatus> sourceRefreshStatuses;
+
+  /// Number of sources that have reached a terminal refresh state.
+  final int refreshCompletedCount;
+
+  /// Number of sources included in the active refresh.
+  final int refreshTotalCount;
+
   /// Whether a product is being created.
   final bool isCreatingProduct;
 
@@ -79,6 +88,9 @@ class ProductsState extends Equatable {
     required this.error,
     this.refreshStatus,
     required this.productRefreshStatuses,
+    required this.sourceRefreshStatuses,
+    required this.refreshCompletedCount,
+    required this.refreshTotalCount,
     required this.isCreatingProduct,
     required this.creationError,
     required this.createdProductId,
@@ -102,6 +114,9 @@ class ProductsState extends Equatable {
     refreshingProductIds: {},
     error: null,
     productRefreshStatuses: {},
+    sourceRefreshStatuses: {},
+    refreshCompletedCount: 0,
+    refreshTotalCount: 0,
     isCreatingProduct: false,
     creationError: null,
     createdProductId: null,
@@ -126,6 +141,9 @@ class ProductsState extends Equatable {
     Option<String>? error,
     Option<PriceFetchStatus>? refreshStatus,
     Map<String, PriceFetchStatus>? productRefreshStatuses,
+    Map<String, SourceRefreshStatus>? sourceRefreshStatuses,
+    int? refreshCompletedCount,
+    int? refreshTotalCount,
     bool? isCreatingProduct,
     Option<String>? creationError,
     Option<String>? createdProductId,
@@ -150,6 +168,9 @@ class ProductsState extends Equatable {
         : refreshStatus.toNullable(),
     productRefreshStatuses:
         productRefreshStatuses ?? this.productRefreshStatuses,
+    sourceRefreshStatuses: sourceRefreshStatuses ?? this.sourceRefreshStatuses,
+    refreshCompletedCount: refreshCompletedCount ?? this.refreshCompletedCount,
+    refreshTotalCount: refreshTotalCount ?? this.refreshTotalCount,
     isCreatingProduct: isCreatingProduct ?? this.isCreatingProduct,
     creationError: creationError == null
         ? this.creationError
@@ -190,6 +211,9 @@ class ProductsState extends Equatable {
     error,
     refreshStatus,
     productRefreshStatuses,
+    sourceRefreshStatuses,
+    refreshCompletedCount,
+    refreshTotalCount,
     isCreatingProduct,
     creationError,
     createdProductId,

@@ -21,6 +21,9 @@ void main() {
       expect(state.refreshingProductIds, isEmpty);
       expect(state.error, isNull);
       expect(state.productRefreshStatuses, isEmpty);
+      expect(state.sourceRefreshStatuses, isEmpty);
+      expect(state.refreshCompletedCount, 0);
+      expect(state.refreshTotalCount, 0);
       expect(state.isCreatingProduct, isFalse);
       expect(state.creationError, isNull);
       expect(state.createdProductId, isNull);
@@ -48,6 +51,9 @@ void main() {
         refreshingProductIds: {'product-1'},
         error: const Some('failed'),
         productRefreshStatuses: {'product-1': PriceFetchStatus.networkError},
+        sourceRefreshStatuses: {'source-1': SourceRefreshStatus.fetching},
+        refreshCompletedCount: 2,
+        refreshTotalCount: 6,
         isCreatingProduct: true,
         creationError: const Some('creation failed'),
         createdProductId: const Some('product-1'),
@@ -74,6 +80,11 @@ void main() {
       expect(state.productRefreshStatuses, {
         'product-1': PriceFetchStatus.networkError,
       });
+      expect(state.sourceRefreshStatuses, {
+        'source-1': SourceRefreshStatus.fetching,
+      });
+      expect(state.refreshCompletedCount, 2);
+      expect(state.refreshTotalCount, 6);
       expect(state.isCreatingProduct, isTrue);
       expect(state.creationError, 'creation failed');
       expect(state.createdProductId, 'product-1');
@@ -125,6 +136,9 @@ void main() {
         refreshingProductIds: {'product-1'},
         error: const Some('failed'),
         productRefreshStatuses: {'product-1': PriceFetchStatus.networkError},
+        sourceRefreshStatuses: {'source-1': SourceRefreshStatus.success},
+        refreshCompletedCount: 1,
+        refreshTotalCount: 2,
         isAddingSource: true,
         addSourceError: const Some('add failed'),
         editingSourceId: const Some('source-1'),

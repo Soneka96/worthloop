@@ -348,6 +348,30 @@ enum PriceFetchStatus {
   invalidData,
 }
 
+/// Describes the current state of refreshing one product source.
+enum SourceRefreshStatus {
+  /// No refresh state is available.
+  none,
+
+  /// The source is idle and has not been queued for refresh.
+  idle,
+
+  /// The source is waiting for its refresh request to start.
+  queued,
+
+  /// The source refresh request is in progress.
+  fetching,
+
+  /// The source returned a usable result.
+  success,
+
+  /// The source refresh request failed.
+  error,
+
+  /// The source responded without a currently available offer.
+  unavailable,
+}
+
 /// Selects which merchant offers a product section displays.
 enum ProductOfferFilter {
   /// Sentinel value with no selected filter.

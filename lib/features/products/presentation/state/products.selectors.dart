@@ -30,6 +30,22 @@ abstract final class ProductsSelectors {
   static bool isRefreshingProductSelector(AppState state, String productId) =>
       state.products.refreshingProductIds.contains(productId);
 
+  /// Returns the refresh state for [sourceId].
+  static SourceRefreshStatus sourceRefreshStatusSelector(
+    AppState state,
+    String sourceId,
+  ) =>
+      state.products.sourceRefreshStatuses[sourceId] ??
+      SourceRefreshStatus.idle;
+
+  /// Returns the number of sources that have reached a terminal state.
+  static int refreshCompletedCountSelector(AppState state) =>
+      state.products.refreshCompletedCount;
+
+  /// Returns the number of sources in the active refresh.
+  static int refreshTotalCountSelector(AppState state) =>
+      state.products.refreshTotalCount;
+
   /// Returns the latest product-operation failure, or `null`.
   static String? errorSelector(AppState state) => state.products.error;
 

@@ -44,6 +44,9 @@ void main() {
         refreshingProductIds: {'product-1'},
         error: const Some('old failure'),
         productRefreshStatuses: {'product-1': PriceFetchStatus.blocked},
+        sourceRefreshStatuses: {'source-1': SourceRefreshStatus.success},
+        refreshCompletedCount: 1,
+        refreshTotalCount: 1,
       );
       final Product product = buildProduct();
       final ProductsState reducedState = productsReducer(
@@ -76,6 +79,21 @@ void main() {
         reducedState.productRefreshStatuses,
         isEmpty,
         reason: 'stale per-product statuses clear on a fresh load',
+      );
+      expect(
+        reducedState.sourceRefreshStatuses,
+        isEmpty,
+        reason: 'stale source statuses clear on a fresh load',
+      );
+      expect(
+        reducedState.refreshCompletedCount,
+        0,
+        reason: 'source progress resets on a fresh load',
+      );
+      expect(
+        reducedState.refreshTotalCount,
+        0,
+        reason: 'source total resets on a fresh load',
       );
     });
   });
@@ -223,6 +241,214 @@ void main() {
       );
     });
   });
+
+  group('productsReducer processes SourceRefreshStartedAction correctly', () {
+    test('SourceRefreshStartedAction queues sources in order', () {
+      final ProductsState state = ProductsState.initial().copyWith(
+        sourceRefreshStatuses: {'old-source': SourceRefreshStatus.success},
+        refreshCompletedCount: 4,
+        refreshTotalCount: 4,
+      );
+
+      final ProductsState reducedState = productsReducer(
+        state,
+        const SourceRefreshStartedAction(['source-1', 'source-2']),
+      );
+
+      expect(
+        state.refreshCompletedCount,
+        4,
+        reason: 'previous progress exists',
+      );
+      expect(reducedState.sourceRefreshStatuses, {
+        'source-1': SourceRefreshStatus.queued,
+        'source-2': SourceRefreshStatus.queued,
+      }, reason: 'all sources are queued');
+      expect(
+        reducedState.refreshCompletedCount,
+        0,
+        reason: 'new refresh starts with no completed sources',
+      );
+      expect(
+        reducedState.refreshTotalCount,
+        2,
+        reason: 'total matches the new source list',
+      );
+    });
+  });
+
+  group(
+    'productsReducer processes SourceRefreshStatusChangedAction correctly',
+    () {
+      test('SourceRefreshStatusChangedAction records a non-terminal state', () {
+        final ProductsState state = ProductsState.initial().copyWith(
+          sourceRefreshStatuses: {'source-1': SourceRefreshStatus.queued},
+          refreshTotalCount: 2,
+        );
+
+        final ProductsState reducedState = productsReducer(
+          state,
+          const SourceRefreshStatusChangedAction(
+            sourceId: 'source-1',
+            status: SourceRefreshStatus.fetching,
+          ),
+        );
+
+        expect(state.refreshCompletedCount, 0, reason: 'no source completed');
+        expect(
+          reducedState.sourceRefreshStatuses['source-1'],
+          SourceRefreshStatus.fetching,
+        );
+        expect(
+          reducedState.refreshCompletedCount,
+          0,
+          reason: 'fetching is not terminal',
+        );
+      });
+
+      test('SourceRefreshStatusChangedAction counts a terminal state once', () {
+        final ProductsState state = ProductsState.initial().copyWith(
+          sourceRefreshStatuses: {'source-1': SourceRefreshStatus.fetching},
+          refreshCompletedCount: 1,
+          refreshTotalCount: 2,
+        );
+
+        final ProductsState reducedState = productsReducer(
+          state,
+          const SourceRefreshStatusChangedAction(
+            sourceId: 'source-1',
+            status: SourceRefreshStatus.error,
+          ),
+        );
+
+        expect(
+          state.refreshCompletedCount,
+          1,
+          reason: 'previous progress exists',
+        );
+        expect(
+          reducedState.refreshCompletedCount,
+          2,
+          reason: 'the source reached a terminal state',
+        );
+
+        final ProductsState repeatedState = productsReducer(
+          reducedState,
+          const SourceRefreshStatusChangedAction(
+            sourceId: 'source-1',
+            status: SourceRefreshStatus.error,
+          ),
+        );
+        expect(
+          repeatedState.refreshCompletedCount,
+          2,
+          reason: 'repeated terminal updates are not double-counted',
+        );
+      });
+
+      test(
+        'SourceRefreshStatusChangedAction counts success and unavailable',
+        () {
+          final ProductsState state = ProductsState.initial().copyWith(
+            sourceRefreshStatuses: {
+              'source-1': SourceRefreshStatus.fetching,
+              'source-2': SourceRefreshStatus.fetching,
+            },
+          );
+
+          final ProductsState successState = productsReducer(
+            state,
+            const SourceRefreshStatusChangedAction(
+              sourceId: 'source-1',
+              status: SourceRefreshStatus.success,
+            ),
+          );
+          final ProductsState unavailableState = productsReducer(
+            successState,
+            const SourceRefreshStatusChangedAction(
+              sourceId: 'source-2',
+              status: SourceRefreshStatus.unavailable,
+            ),
+          );
+
+          expect(
+            successState.refreshCompletedCount,
+            1,
+            reason: 'success is terminal',
+          );
+          expect(
+            unavailableState.refreshCompletedCount,
+            2,
+            reason: 'unavailable is terminal',
+          );
+        },
+      );
+
+      test('SourceRefreshStatusChangedAction counts a new terminal source', () {
+        final ProductsState reducedState = productsReducer(
+          ProductsState.initial(),
+          const SourceRefreshStatusChangedAction(
+            sourceId: 'source-1',
+            status: SourceRefreshStatus.success,
+          ),
+        );
+
+        expect(
+          reducedState.refreshCompletedCount,
+          1,
+          reason: 'a terminal source is counted even without a prior map entry',
+        );
+      });
+    },
+  );
+
+  group('productsReducer processes SourceRefreshFinishedAction correctly', () {
+    test('SourceRefreshFinishedAction clears progress counters', () {
+      final ProductsState state = ProductsState.initial().copyWith(
+        sourceRefreshStatuses: {'source-1': SourceRefreshStatus.success},
+        refreshCompletedCount: 1,
+        refreshTotalCount: 1,
+      );
+
+      final ProductsState reducedState = productsReducer(
+        state,
+        const SourceRefreshFinishedAction(),
+      );
+
+      expect(state.refreshTotalCount, 1, reason: 'refresh was active');
+      expect(
+        reducedState.refreshCompletedCount,
+        0,
+        reason: 'completed count is cleared',
+      );
+      expect(
+        reducedState.refreshTotalCount,
+        0,
+        reason: 'total count is cleared',
+      );
+      expect(
+        reducedState.sourceRefreshStatuses,
+        {'source-1': SourceRefreshStatus.success},
+        reason: 'terminal source statuses are preserved',
+      );
+    });
+  });
+
+  group(
+    'productsReducer processes an empty SourceRefreshStartedAction correctly',
+    () {
+      test('empty SourceRefreshStartedAction starts with zero progress', () {
+        final ProductsState reducedState = productsReducer(
+          ProductsState.initial(),
+          const SourceRefreshStartedAction([]),
+        );
+
+        expect(reducedState.sourceRefreshStatuses, isEmpty);
+        expect(reducedState.refreshCompletedCount, 0);
+        expect(reducedState.refreshTotalCount, 0);
+      });
+    },
+  );
 
   group('productsReducer processes ProductRefreshedAction correctly', () {
     test('ProductRefreshedAction modifies only the matching product', () {

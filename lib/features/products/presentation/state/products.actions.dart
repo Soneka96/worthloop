@@ -87,6 +87,45 @@ class RefreshProductAction extends Equatable {
   List<Object?> get props => [productId];
 }
 
+/// Starts tracking the refresh of a product's sources.
+@immutable
+class SourceRefreshStartedAction extends Equatable {
+  /// Identifiers of the sources being refreshed in display order.
+  final List<String> sourceIds;
+
+  const SourceRefreshStartedAction(this.sourceIds);
+
+  @override
+  List<Object?> get props => [sourceIds];
+}
+
+/// Updates the refresh state of one source.
+@immutable
+class SourceRefreshStatusChangedAction extends Equatable {
+  /// Identifier of the source whose state changed.
+  final String sourceId;
+
+  /// New refresh state for the source.
+  final SourceRefreshStatus status;
+
+  const SourceRefreshStatusChangedAction({
+    required this.sourceId,
+    required this.status,
+  });
+
+  @override
+  List<Object?> get props => [sourceId, status];
+}
+
+/// Clears the active source refresh progress.
+@immutable
+class SourceRefreshFinishedAction extends Equatable {
+  const SourceRefreshFinishedAction();
+
+  @override
+  List<Object?> get props => [];
+}
+
 /// Carries one refreshed product.
 @immutable
 class ProductRefreshedAction extends Equatable {

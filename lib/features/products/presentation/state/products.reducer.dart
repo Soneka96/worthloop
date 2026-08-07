@@ -42,6 +42,24 @@ Reducer<ProductsState> productsReducer = combineReducers<ProductsState>([
   /// Updates [ProductsState.refreshingProductIds], [ProductsState.error].
   TypedReducer<ProductsState, RefreshProductAction>(refreshProductReducer).call,
 
+  /// Handles [SourceRefreshStartedAction].
+  /// Updates [ProductsState.sourceRefreshStatuses], [ProductsState.refreshTotalCount], [ProductsState.refreshCompletedCount].
+  TypedReducer<ProductsState, SourceRefreshStartedAction>(
+    sourceRefreshStartedReducer,
+  ).call,
+
+  /// Handles [SourceRefreshStatusChangedAction].
+  /// Updates [ProductsState.sourceRefreshStatuses], [ProductsState.refreshCompletedCount].
+  TypedReducer<ProductsState, SourceRefreshStatusChangedAction>(
+    sourceRefreshStatusChangedReducer,
+  ).call,
+
+  /// Handles [SourceRefreshFinishedAction].
+  /// Updates [ProductsState.refreshTotalCount], [ProductsState.refreshCompletedCount].
+  TypedReducer<ProductsState, SourceRefreshFinishedAction>(
+    sourceRefreshFinishedReducer,
+  ).call,
+
   /// Handles [ProductRefreshedAction].
   /// Updates [ProductsState.products], [ProductsState.refreshingProductIds], [ProductsState.error].
   TypedReducer<ProductsState, ProductRefreshedAction>(
@@ -161,6 +179,9 @@ ProductsState productsLoadedReducer(
   error: const None(),
   refreshStatus: const None(),
   productRefreshStatuses: {},
+  sourceRefreshStatuses: {},
+  refreshCompletedCount: 0,
+  refreshTotalCount: 0,
 );
 
 /// Handles [ProductsLoadFailedAction].
@@ -218,6 +239,58 @@ ProductsState refreshProductReducer(
     productRefreshStatuses: productRefreshStatuses,
   );
 }
+
+/// Handles [SourceRefreshStartedAction].
+/// Updates [ProductsState.sourceRefreshStatuses], [ProductsState.refreshTotalCount], [ProductsState.refreshCompletedCount].
+ProductsState sourceRefreshStartedReducer(
+  ProductsState state,
+  SourceRefreshStartedAction action,
+) {
+  final Map<String, SourceRefreshStatus> sourceRefreshStatuses = {
+    for (final String sourceId in action.sourceIds)
+      sourceId: SourceRefreshStatus.queued,
+  };
+  return state.copyWith(
+    sourceRefreshStatuses: sourceRefreshStatuses,
+    refreshCompletedCount: 0,
+    refreshTotalCount: action.sourceIds.length,
+  );
+}
+
+/// Handles [SourceRefreshStatusChangedAction].
+/// Updates [ProductsState.sourceRefreshStatuses], [ProductsState.refreshCompletedCount].
+ProductsState sourceRefreshStatusChangedReducer(
+  ProductsState state,
+  SourceRefreshStatusChangedAction action,
+) {
+  final SourceRefreshStatus? previousStatus =
+      state.sourceRefreshStatuses[action.sourceId];
+  final Map<String, SourceRefreshStatus> sourceRefreshStatuses = {
+    ...state.sourceRefreshStatuses,
+    action.sourceId: action.status,
+  };
+  final bool becameTerminal =
+      _isTerminalSourceRefreshStatus(action.status) &&
+      !_isTerminalSourceRefreshStatus(previousStatus);
+  return state.copyWith(
+    sourceRefreshStatuses: sourceRefreshStatuses,
+    refreshCompletedCount: becameTerminal
+        ? state.refreshCompletedCount + 1
+        : state.refreshCompletedCount,
+  );
+}
+
+/// Handles [SourceRefreshFinishedAction].
+/// Updates [ProductsState.refreshTotalCount], [ProductsState.refreshCompletedCount].
+ProductsState sourceRefreshFinishedReducer(
+  ProductsState state,
+  SourceRefreshFinishedAction action,
+) => state.copyWith(refreshCompletedCount: 0, refreshTotalCount: 0);
+
+bool _isTerminalSourceRefreshStatus(SourceRefreshStatus? status) =>
+    status == SourceRefreshStatus.success ||
+    status == SourceRefreshStatus.error ||
+    status == SourceRefreshStatus.unavailable;
 
 /// Handles [ProductRefreshedAction].
 /// Updates [ProductsState.products], [ProductsState.refreshingProductIds], [ProductsState.error].
