@@ -66,6 +66,55 @@ always will):
 - `inverseSurface` / `onInverseSurface` ← swap `onSurface`/`surface`
 - `surfaceTint` ← same as `primary`
 
+### Important: source palettes are not semantic UI systems
+
+Most named themes are editor or terminal palettes. Their canonical web/editor definitions usually
+provide values such as background, foreground, selection, comment, and syntax accents — not
+Material meanings such as "success surface", "error surface", or "secondary action". A canonical
+web version can therefore provide useful source values, but it does not automatically provide a
+correct value for every `ColorScheme` role. Treat the Material mapping as an explicit design
+decision and record any invented role in the file comment.
+
+Do not mechanically reuse one source colour for every container role. This app consumes those
+roles as state surfaces in `MerchantOfferRow`:
+
+```dart
+queued/fetching -> primaryContainer
+error           -> errorContainer
+unavailable     -> secondaryContainer
+success         -> tertiaryContainer
+```
+
+If all four container roles are identical, those states lose their background distinction. Reuse
+the source's neutral panel colour as the starting point, then create restrained, role-specific
+variants when the app needs state surfaces. Error and success must remain distinguishable without
+relying only on an icon or text colour. Likewise, `outlineVariant` must be visibly different from
+the surface it borders, and `inversePrimary` should be an accent intended for inverse surfaces —
+not merely another container colour.
+
+### Contrast and role audit before writing the file
+
+Check the actual foreground/background pairs this app renders, not only the nominal `on*` pairs:
+
+- `onSurface` on `surface` for normal app text.
+- `onSurfaceVariant` on both `surface` and each state container, because `bodySmall` uses
+  `onSurfaceVariant` in the shared text theme.
+- `onPrimary`/`primary`, `onSecondary`/`secondary`, `onTertiary`/`tertiary`, and
+  `onError`/`error` for icons and filled controls.
+- `onPrimaryContainer`/`primaryContainer` and the corresponding secondary, tertiary, and error
+  pairs for container content.
+
+Use WCAG 2 contrast as a minimum signal: 4.5:1 for normal text and 3:1 for large text or
+large UI graphics. A theme comment claiming WCAG AA is not sufficient unless these consuming
+pairs have been checked. Flag any muted text below 4.5:1, especially on cards. Also check that
+brightness matches the target folder and that light/dark siblings preserve semantic meaning rather
+than merely swapping colours.
+
+For every imported theme, report three things before calling it done: the canonical source and
+which values came directly from it; any roles invented because the source had no semantic match;
+and any contrast or state-surface trade-off that remains. Prefer a short automated audit or a
+focused test over visual confidence alone.
+
 Never leave a slot unset / falling back to `ColorScheme.dark()`'s defaults — that silently mixes
 stock Material colours into the theme, which is the exact bug this skill exists to avoid. Use the
 full named-parameter `ColorScheme(...)` constructor (not `ColorScheme.dark()`), same as
