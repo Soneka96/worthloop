@@ -164,6 +164,7 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
         sourceCount: sourceIds.length,
         completedCount: completedCount,
         failedCount: failedCount,
+        isGlobal: false,
       );
     } finally {
       store.dispatch(const SourceRefreshFinishedAction());
@@ -226,6 +227,7 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
         sourceCount: sourceIds.length,
         completedCount: completedCount,
         failedCount: failedCount,
+        isGlobal: true,
       );
     } finally {
       store.dispatch(const SourceRefreshFinishedAction());
@@ -256,11 +258,16 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
     required int sourceCount,
     required int completedCount,
     required int failedCount,
+    required bool isGlobal,
   }) {
     if (sourceCount == 0 || completedCount != sourceCount) {
       return;
     }
-    final String message = failedCount == 0
+    final String message = isGlobal
+        ? failedCount == 0
+              ? t.home.refreshAllComplete
+              : t.home.refreshAllPartial(failed: failedCount)
+        : failedCount == 0
         ? t.productDetails.refreshComplete(total: sourceCount)
         : t.productDetails.refreshPartial(
             completed: completedCount,

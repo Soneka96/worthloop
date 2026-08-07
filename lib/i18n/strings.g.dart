@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 230 (115 per locale)
+/// Strings: 234 (117 per locale)
 ///
-/// Built on 2026-08-07 at 08:42 UTC
+/// Built on 2026-08-07 at 09:26 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -177,6 +177,8 @@ class _StringsHomeEn {
 	String trackedProducts({required Object count}) => '${count} tracked';
 	String get refreshAll => 'Refresh all';
 	String get refreshing => 'Refreshing';
+	String get refreshAllComplete => 'All sources checked.';
+	String refreshAllPartial({required Object failed}) => 'Refresh finished; ${failed} sources couldn\'t be checked.';
 	String get bestPrice => 'Best price';
 	String get noAvailablePrice => 'No available price';
 	String get noStore => 'No store in stock';
@@ -458,6 +460,8 @@ class _StringsHomePt implements _StringsHomeEn {
 	@override String trackedProducts({required Object count}) => '${count} acompanhados';
 	@override String get refreshAll => 'Atualizar todos';
 	@override String get refreshing => 'A atualizar';
+	@override String get refreshAllComplete => 'Todas as fontes foram verificadas.';
+	@override String refreshAllPartial({required Object failed}) => 'Atualização concluída; não foi possível verificar ${failed} fontes.';
 	@override String get bestPrice => 'Melhor preço';
 	@override String get noAvailablePrice => 'Sem preço disponível';
 	@override String get noStore => 'Nenhuma loja com stock';
@@ -698,6 +702,8 @@ extension on Translations {
 			case 'home.trackedProducts': return ({required Object count}) => '${count} tracked';
 			case 'home.refreshAll': return 'Refresh all';
 			case 'home.refreshing': return 'Refreshing';
+			case 'home.refreshAllComplete': return 'All sources checked.';
+			case 'home.refreshAllPartial': return ({required Object failed}) => 'Refresh finished; ${failed} sources couldn\'t be checked.';
 			case 'home.bestPrice': return 'Best price';
 			case 'home.noAvailablePrice': return 'No available price';
 			case 'home.noStore': return 'No store in stock';
@@ -821,6 +827,8 @@ extension on _StringsPt {
 			case 'home.trackedProducts': return ({required Object count}) => '${count} acompanhados';
 			case 'home.refreshAll': return 'Atualizar todos';
 			case 'home.refreshing': return 'A atualizar';
+			case 'home.refreshAllComplete': return 'Todas as fontes foram verificadas.';
+			case 'home.refreshAllPartial': return ({required Object failed}) => 'Atualização concluída; não foi possível verificar ${failed} fontes.';
 			case 'home.bestPrice': return 'Melhor preço';
 			case 'home.noAvailablePrice': return 'Sem preço disponível';
 			case 'home.noStore': return 'Nenhuma loja com stock';

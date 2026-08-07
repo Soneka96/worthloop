@@ -8,6 +8,8 @@ home:
   trackedProducts: $count tracked
   refreshAll: Refresh all
   refreshing: Refreshing
+  refreshAllComplete: "All sources checked."
+  refreshAllPartial: "Refresh finished; $failed sources couldn't be checked."
   bestPrice: Best price
   noAvailablePrice: No available price
   noStore: No store in stock

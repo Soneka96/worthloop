@@ -436,6 +436,36 @@ void main() {
 
   group('ProductsMiddleware processes RefreshAllProductsAction', () {
     test(
+      'RefreshAllProductsAction shows the global completion message',
+      () async {
+        final Product product = buildProduct(sources: [buildProductSource()]);
+        when(() => store.state).thenReturn(
+          AppState.initial().copyWith(
+            products: ProductsState.initial().copyWith(products: [product]),
+          ),
+        );
+        when(
+          () => mockRefreshAllProductsUseCase(
+            any(),
+            onSourceStatusChanged: any(named: 'onSourceStatusChanged'),
+          ),
+        ).thenAnswer((invocation) async {
+          final SourceRefreshListener callback =
+              invocation.namedArguments[const Symbol('onSourceStatusChanged')];
+          callback('source-1', SourceRefreshStatus.success);
+          return Right([product]);
+        });
+
+        middleware.call(store, const RefreshAllProductsAction(), next);
+        await Future<void>.delayed(Duration.zero);
+
+        verify(
+          () => mockLoggerService.i(t.home.refreshAllComplete, showPopup: true),
+        ).called(1);
+      },
+    );
+
+    test(
       'RefreshAllProductsAction shows partial feedback when a source fails',
       () async {
         final Product product = buildProduct(sources: [buildProductSource()]);
@@ -468,7 +498,7 @@ void main() {
 
         verify(
           () => mockLoggerService.i(
-            t.productDetails.refreshPartial(completed: 1, total: 1, failed: 1),
+            t.home.refreshAllPartial(failed: 1),
             showPopup: true,
           ),
         ).called(1);

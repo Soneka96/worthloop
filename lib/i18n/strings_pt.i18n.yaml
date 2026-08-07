@@ -8,6 +8,8 @@ home:
   trackedProducts: $count acompanhados
   refreshAll: Atualizar todos
   refreshing: A atualizar
+  refreshAllComplete: "Todas as fontes foram verificadas."
+  refreshAllPartial: "Atualização concluída; não foi possível verificar $failed fontes."
   bestPrice: Melhor preço
   noAvailablePrice: Sem preço disponível
   noStore: Nenhuma loja com stock
