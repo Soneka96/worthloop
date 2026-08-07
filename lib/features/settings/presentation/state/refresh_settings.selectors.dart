@@ -7,6 +7,10 @@ abstract final class RefreshSettingsSelectors {
   static int intervalMinutesSelector(AppState state) =>
       state.refreshSettings.intervalMinutes;
 
+  /// Returns whether browser-backed background refresh is enabled.
+  static bool browserRefreshEnabledSelector(AppState state) =>
+      state.refreshSettings.browserRefreshEnabled;
+
   /// Returns whether refresh settings are loading or saving.
   static bool isBusySelector(AppState state) =>
       state.refreshSettings.isLoading || state.refreshSettings.isSaving;

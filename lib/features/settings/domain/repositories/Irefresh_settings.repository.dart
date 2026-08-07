@@ -12,4 +12,9 @@ abstract class IRefreshSettingsRepository {
 
   /// Persists [intervalMinutes] as the preferred refresh interval.
   Future<Either<Failure, RefreshSettings>> saveInterval(int intervalMinutes);
+
+  /// Persists whether browser-backed background refresh is enabled.
+  Future<Either<Failure, RefreshSettings>> saveBrowserRefreshEnabled(
+    bool enabled,
+  );
 }

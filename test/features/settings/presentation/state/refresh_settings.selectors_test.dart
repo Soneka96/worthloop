@@ -57,4 +57,23 @@ void main() {
       );
     });
   });
+
+  group('Method browserRefreshEnabledSelector() returns a bool instance', () {
+    test('browserRefreshEnabledSelector() returns the preference', () {
+      final AppState state = AppState.initial().copyWith(
+        refreshSettings: RefreshSettingsState.initial().copyWith(
+          browserRefreshEnabled: true,
+        ),
+      );
+
+      expect(
+        RefreshSettingsSelectors.browserRefreshEnabledSelector(state),
+        isA<bool>(),
+      );
+      expect(
+        RefreshSettingsSelectors.browserRefreshEnabledSelector(state),
+        isTrue,
+      );
+    });
+  });
 }

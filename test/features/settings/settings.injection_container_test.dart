@@ -7,6 +7,7 @@ import 'package:redux/redux.dart';
 import 'package:worth_loop/features/settings/data/datasources/refresh_settings_local.datasource.dart';
 import 'package:worth_loop/features/settings/domain/repositories/Irefresh_settings.repository.dart';
 import 'package:worth_loop/features/settings/domain/usecases/load_refresh_settings.usecase.dart';
+import 'package:worth_loop/features/settings/domain/usecases/save_browser_refresh_enabled.usecase.dart';
 import 'package:worth_loop/features/settings/domain/usecases/save_refresh_interval.usecase.dart';
 import 'package:worth_loop/features/settings/presentation/state/viewmodels/general_settings_screen.viewmodel.dart';
 import 'package:worth_loop/features/settings/settings.injection_container.dart';
@@ -34,6 +35,8 @@ void main() {
       expect(sl.isRegistered<LoadRefreshSettingsUseCase>(), isTrue);
       expect(sl.isRegistered<SaveRefreshIntervalUseCase>(), isA<bool>());
       expect(sl.isRegistered<SaveRefreshIntervalUseCase>(), isTrue);
+      expect(sl.isRegistered<SaveBrowserRefreshEnabledUseCase>(), isA<bool>());
+      expect(sl.isRegistered<SaveBrowserRefreshEnabledUseCase>(), isTrue);
       expect(
         sl<RefreshSettingsLocalDatasource>(),
         isA<RefreshSettingsLocalDatasource>(),
@@ -49,6 +52,10 @@ void main() {
       expect(
         sl<SaveRefreshIntervalUseCase>(),
         isA<SaveRefreshIntervalUseCase>(),
+      );
+      expect(
+        sl<SaveBrowserRefreshEnabledUseCase>(),
+        isA<SaveBrowserRefreshEnabledUseCase>(),
       );
     });
 

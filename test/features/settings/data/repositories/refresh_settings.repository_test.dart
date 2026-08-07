@@ -95,4 +95,50 @@ void main() {
       verifyNoMoreInteractions(mockDatasource);
     });
   });
+
+  group(
+    'RefreshSettingsRepository implements saveBrowserRefreshEnabled() correctly',
+    () {
+      test(
+        'Method saveBrowserRefreshEnabled() calls datasource saveBrowserRefreshEnabled()',
+        () async {
+          when(() => mockDatasource.saveBrowserRefreshEnabled(true)).thenAnswer(
+            (_) async =>
+                Right(buildRefreshSettingsModel(browserRefreshEnabled: true)),
+          );
+
+          final Either<Failure, RefreshSettings> result = await repository
+              .saveBrowserRefreshEnabled(true);
+
+          expect(
+            result,
+            Right(buildRefreshSettingsModel(browserRefreshEnabled: true)),
+          );
+          verify(
+            () => mockDatasource.saveBrowserRefreshEnabled(true),
+          ).called(1);
+          verifyNoMoreInteractions(mockDatasource);
+        },
+      );
+
+      test(
+        'Method saveBrowserRefreshEnabled() returns datasource failures',
+        () async {
+          const DatabaseFailure failure = DatabaseFailure('failed');
+          when(
+            () => mockDatasource.saveBrowserRefreshEnabled(false),
+          ).thenAnswer((_) async => const Left(failure));
+
+          final Either<Failure, RefreshSettings> result = await repository
+              .saveBrowserRefreshEnabled(false);
+
+          expect(result, const Left(failure));
+          verify(
+            () => mockDatasource.saveBrowserRefreshEnabled(false),
+          ).called(1);
+          verifyNoMoreInteractions(mockDatasource);
+        },
+      );
+    },
+  );
 }

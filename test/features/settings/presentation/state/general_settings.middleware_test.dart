@@ -6,7 +6,9 @@ import 'package:redux/redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/settings/domain/usecases/load_refresh_settings.usecase.dart';
+import 'package:worth_loop/features/settings/domain/usecases/params/save_browser_refresh_enabled.params.dart';
 import 'package:worth_loop/features/settings/domain/usecases/params/save_refresh_interval.params.dart';
+import 'package:worth_loop/features/settings/domain/usecases/save_browser_refresh_enabled.usecase.dart';
 import 'package:worth_loop/features/settings/domain/usecases/save_refresh_interval.usecase.dart';
 import 'package:worth_loop/features/settings/presentation/state/general_settings.actions.dart';
 import 'package:worth_loop/features/settings/presentation/state/general_settings.middleware.dart';
@@ -28,8 +30,14 @@ class MockLoadRefreshSettingsUseCase extends Mock
 class MockSaveRefreshIntervalUseCase extends Mock
     implements SaveRefreshIntervalUseCase {}
 
+class MockSaveBrowserRefreshEnabledUseCase extends Mock
+    implements SaveBrowserRefreshEnabledUseCase {}
+
 class FakeSaveRefreshIntervalParams extends Fake
     implements SaveRefreshIntervalParams {}
+
+class FakeSaveBrowserRefreshEnabledParams extends Fake
+    implements SaveBrowserRefreshEnabledParams {}
 
 void main() {
   late List<dynamic> actionLog;
@@ -38,12 +46,14 @@ void main() {
   late MockStore mockStore;
   late MockLoadRefreshSettingsUseCase mockLoadUseCase;
   late MockSaveRefreshIntervalUseCase mockSaveUseCase;
+  late MockSaveBrowserRefreshEnabledUseCase mockSaveBrowserRefreshUseCase;
 
   void next(dynamic action) => actionLog.add(action);
 
   setUpAll(() {
     registerFallbackValue(NoParams());
     registerFallbackValue(FakeSaveRefreshIntervalParams());
+    registerFallbackValue(FakeSaveBrowserRefreshEnabledParams());
   });
 
   setUp(() {
@@ -53,6 +63,7 @@ void main() {
     mockStore = MockStore();
     mockLoadUseCase = MockLoadRefreshSettingsUseCase();
     mockSaveUseCase = MockSaveRefreshIntervalUseCase();
+    mockSaveBrowserRefreshUseCase = MockSaveBrowserRefreshEnabledUseCase();
     when(() => mockStore.dispatch(any())).thenAnswer(
       (Invocation invocation) =>
           actionLog.add(invocation.positionalArguments.first),
@@ -60,6 +71,9 @@ void main() {
     sl.registerSingleton<LoggerService>(mockLoggerService);
     sl.registerSingleton<LoadRefreshSettingsUseCase>(mockLoadUseCase);
     sl.registerSingleton<SaveRefreshIntervalUseCase>(mockSaveUseCase);
+    sl.registerSingleton<SaveBrowserRefreshEnabledUseCase>(
+      mockSaveBrowserRefreshUseCase,
+    );
   });
 
   tearDown(() async {
@@ -207,4 +221,60 @@ void main() {
       );
     });
   });
+
+  group(
+    'GeneralSettingsMiddleware processes SaveBrowserRefreshEnabledAction',
+    () {
+      test(
+        'dispatches BrowserRefreshEnabledSavedAction when successful',
+        () async {
+          when(() => mockSaveBrowserRefreshUseCase(any())).thenAnswer(
+            (_) async =>
+                Right(buildRefreshSettings(browserRefreshEnabled: true)),
+          );
+
+          middleware.call(
+            mockStore,
+            const SaveBrowserRefreshEnabledAction(true),
+            next,
+          );
+          await Future<void>.delayed(Duration.zero);
+
+          expect(actionLog[0], isA<SaveBrowserRefreshEnabledAction>());
+          expect(actionLog[1], const BrowserRefreshEnabledSavedAction(true));
+          verify(
+            () => mockSaveBrowserRefreshUseCase(
+              const SaveBrowserRefreshEnabledParams(enabled: true),
+            ),
+          ).called(1);
+          verifyNoMoreInteractions(mockSaveBrowserRefreshUseCase);
+          verifyZeroInteractions(mockLoggerService);
+        },
+      );
+
+      test('dispatches BrowserRefreshSaveFailedAction when failed', () async {
+        const DatabaseFailure failure = DatabaseFailure('failed');
+        when(
+          () => mockSaveBrowserRefreshUseCase(any()),
+        ).thenAnswer((_) async => const Left(failure));
+
+        middleware.call(
+          mockStore,
+          const SaveBrowserRefreshEnabledAction(false),
+          next,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(actionLog[1], const BrowserRefreshSaveFailedAction('failed'));
+        verify(
+          () => mockSaveBrowserRefreshUseCase(
+            const SaveBrowserRefreshEnabledParams(enabled: false),
+          ),
+        ).called(1);
+        verifyNoMoreInteractions(mockSaveBrowserRefreshUseCase);
+        verify(() => mockLoggerService.e('failed', showPopup: true)).called(1);
+        verifyNoMoreInteractions(mockLoggerService);
+      });
+    },
+  );
 }

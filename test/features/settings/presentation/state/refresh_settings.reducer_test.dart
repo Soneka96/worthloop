@@ -46,6 +46,16 @@ void main() {
 
           expect(state.intervalMinutes, 60, reason: 'previous value');
           expect(reducedState.intervalMinutes, 180, reason: 'new value');
+          expect(
+            state.browserRefreshEnabled,
+            isFalse,
+            reason: 'previous value',
+          );
+          expect(
+            reducedState.browserRefreshEnabled,
+            isFalse,
+            reason: 'new value',
+          );
           expect(state.isLoading, isTrue, reason: 'previous value');
           expect(reducedState.isLoading, isFalse, reason: 'new value');
         },
@@ -140,4 +150,73 @@ void main() {
       expect(refreshSettingsReducer(state, Object()), state);
     });
   });
+
+  group(
+    'RefreshSettingsReducer processes SaveBrowserRefreshEnabledAction correctly',
+    () {
+      test('SaveBrowserRefreshEnabledAction modifies isSaving and error', () {
+        final RefreshSettingsState state = RefreshSettingsState.initial()
+            .copyWith(error: const Some('failed'));
+
+        final RefreshSettingsState reducedState = refreshSettingsReducer(
+          state,
+          const SaveBrowserRefreshEnabledAction(true),
+        );
+
+        expect(state.isSaving, isFalse, reason: 'previous value');
+        expect(reducedState.isSaving, isTrue, reason: 'new value');
+        expect(reducedState.error, isNull);
+      });
+    },
+  );
+
+  group(
+    'RefreshSettingsReducer processes BrowserRefreshEnabledSavedAction correctly',
+    () {
+      test(
+        'BrowserRefreshEnabledSavedAction modifies the preference and isSaving',
+        () {
+          final RefreshSettingsState state = RefreshSettingsState.initial()
+              .copyWith(isSaving: true);
+
+          final RefreshSettingsState reducedState = refreshSettingsReducer(
+            state,
+            const BrowserRefreshEnabledSavedAction(true),
+          );
+
+          expect(
+            state.browserRefreshEnabled,
+            isFalse,
+            reason: 'previous value',
+          );
+          expect(
+            reducedState.browserRefreshEnabled,
+            isTrue,
+            reason: 'new value',
+          );
+          expect(state.isSaving, isTrue, reason: 'previous value');
+          expect(reducedState.isSaving, isFalse, reason: 'new value');
+        },
+      );
+    },
+  );
+
+  group(
+    'RefreshSettingsReducer processes BrowserRefreshSaveFailedAction correctly',
+    () {
+      test('BrowserRefreshSaveFailedAction modifies isSaving and error', () {
+        final RefreshSettingsState state = RefreshSettingsState.initial()
+            .copyWith(isSaving: true);
+
+        final RefreshSettingsState reducedState = refreshSettingsReducer(
+          state,
+          const BrowserRefreshSaveFailedAction('failed'),
+        );
+
+        expect(state.isSaving, isTrue, reason: 'previous value');
+        expect(reducedState.isSaving, isFalse, reason: 'new value');
+        expect(reducedState.error, 'failed');
+      });
+    },
+  );
 }

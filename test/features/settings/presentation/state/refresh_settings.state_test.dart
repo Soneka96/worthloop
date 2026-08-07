@@ -12,6 +12,8 @@ void main() {
 
       expect(state.intervalMinutes, isA<int>());
       expect(state.intervalMinutes, 60);
+      expect(state.browserRefreshEnabled, isA<bool>());
+      expect(state.browserRefreshEnabled, isFalse);
       expect(state.isLoading, isA<bool>());
       expect(state.isLoading, isFalse);
       expect(state.isSaving, isA<bool>());
@@ -25,6 +27,7 @@ void main() {
       final RefreshSettingsState state = RefreshSettingsState.initial()
           .copyWith(
             intervalMinutes: 180,
+            browserRefreshEnabled: true,
             isLoading: true,
             isSaving: true,
             error: const Some('failed'),
@@ -32,6 +35,8 @@ void main() {
 
       expect(state.intervalMinutes, isA<int>());
       expect(state.intervalMinutes, 180);
+      expect(state.browserRefreshEnabled, isA<bool>());
+      expect(state.browserRefreshEnabled, isTrue);
       expect(state.isLoading, isA<bool>());
       expect(state.isLoading, isTrue);
       expect(state.isSaving, isA<bool>());

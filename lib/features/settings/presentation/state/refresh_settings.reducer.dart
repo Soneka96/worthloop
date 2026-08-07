@@ -21,6 +21,12 @@ refreshSettingsReducer = combineReducers<RefreshSettingsState>([
     refreshSettingsLoadedReducer,
   ).call,
 
+  /// Handles [SaveBrowserRefreshEnabledAction].
+  /// Updates [RefreshSettingsState.isSaving], [RefreshSettingsState.error].
+  TypedReducer<RefreshSettingsState, SaveBrowserRefreshEnabledAction>(
+    saveBrowserRefreshEnabledReducer,
+  ).call,
+
   /// Handles [RefreshSettingsLoadFailedAction].
   /// Updates [RefreshSettingsState.isLoading], [RefreshSettingsState.error].
   TypedReducer<RefreshSettingsState, RefreshSettingsLoadFailedAction>(
@@ -44,6 +50,18 @@ refreshSettingsReducer = combineReducers<RefreshSettingsState>([
   TypedReducer<RefreshSettingsState, RefreshIntervalSaveFailedAction>(
     refreshIntervalSaveFailedReducer,
   ).call,
+
+  /// Handles [BrowserRefreshEnabledSavedAction].
+  /// Updates [RefreshSettingsState.browserRefreshEnabled], [RefreshSettingsState.isSaving], [RefreshSettingsState.error].
+  TypedReducer<RefreshSettingsState, BrowserRefreshEnabledSavedAction>(
+    browserRefreshEnabledSavedReducer,
+  ).call,
+
+  /// Handles [BrowserRefreshSaveFailedAction].
+  /// Updates [RefreshSettingsState.isSaving], [RefreshSettingsState.error].
+  TypedReducer<RefreshSettingsState, BrowserRefreshSaveFailedAction>(
+    browserRefreshSaveFailedReducer,
+  ).call,
 ]);
 
 /// Handles [LoadRefreshSettingsAction].
@@ -60,6 +78,7 @@ RefreshSettingsState refreshSettingsLoadedReducer(
   RefreshSettingsLoadedAction action,
 ) => state.copyWith(
   intervalMinutes: action.settings.intervalMinutes,
+  browserRefreshEnabled: action.settings.browserRefreshEnabled,
   isLoading: false,
   error: const None(),
 );
@@ -94,4 +113,29 @@ RefreshSettingsState refreshIntervalSavedReducer(
 RefreshSettingsState refreshIntervalSaveFailedReducer(
   RefreshSettingsState state,
   RefreshIntervalSaveFailedAction action,
+) => state.copyWith(isSaving: false, error: Some(action.message));
+
+/// Handles [SaveBrowserRefreshEnabledAction].
+/// Updates [RefreshSettingsState.isSaving], [RefreshSettingsState.error].
+RefreshSettingsState saveBrowserRefreshEnabledReducer(
+  RefreshSettingsState state,
+  SaveBrowserRefreshEnabledAction action,
+) => state.copyWith(isSaving: true, error: const None());
+
+/// Handles [BrowserRefreshEnabledSavedAction].
+/// Updates [RefreshSettingsState.browserRefreshEnabled], [RefreshSettingsState.isSaving], [RefreshSettingsState.error].
+RefreshSettingsState browserRefreshEnabledSavedReducer(
+  RefreshSettingsState state,
+  BrowserRefreshEnabledSavedAction action,
+) => state.copyWith(
+  browserRefreshEnabled: action.enabled,
+  isSaving: false,
+  error: const None(),
+);
+
+/// Handles [BrowserRefreshSaveFailedAction].
+/// Updates [RefreshSettingsState.isSaving], [RefreshSettingsState.error].
+RefreshSettingsState browserRefreshSaveFailedReducer(
+  RefreshSettingsState state,
+  BrowserRefreshSaveFailedAction action,
 ) => state.copyWith(isSaving: false, error: Some(action.message));

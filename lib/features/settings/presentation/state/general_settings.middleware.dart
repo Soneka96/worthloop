@@ -4,7 +4,9 @@ import 'package:redux/redux.dart';
 // Project imports:
 import 'package:worth_loop/features/settings/domain/entities/refresh_settings.entity.dart';
 import 'package:worth_loop/features/settings/domain/usecases/load_refresh_settings.usecase.dart';
+import 'package:worth_loop/features/settings/domain/usecases/params/save_browser_refresh_enabled.params.dart';
 import 'package:worth_loop/features/settings/domain/usecases/params/save_refresh_interval.params.dart';
+import 'package:worth_loop/features/settings/domain/usecases/save_browser_refresh_enabled.usecase.dart';
 import 'package:worth_loop/features/settings/domain/usecases/save_refresh_interval.usecase.dart';
 import 'package:worth_loop/features/settings/presentation/state/general_settings.actions.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
@@ -28,6 +30,8 @@ class GeneralSettingsMiddleware extends MiddlewareClass<AppState> {
         _loadRefreshSettings(store, action);
       case SaveRefreshIntervalAction _:
         _saveRefreshInterval(store, action);
+      case SaveBrowserRefreshEnabledAction _:
+        _saveBrowserRefreshEnabled(store, action);
     }
   }
 
@@ -77,6 +81,26 @@ class GeneralSettingsMiddleware extends MiddlewareClass<AppState> {
       },
       (RefreshSettings settings) {
         store.dispatch(RefreshIntervalSavedAction(settings.intervalMinutes));
+      },
+    );
+  }
+
+  /// Handles [SaveBrowserRefreshEnabledAction].
+  Future<void> _saveBrowserRefreshEnabled(
+    Store<AppState> store,
+    SaveBrowserRefreshEnabledAction action,
+  ) async {
+    (await sl<SaveBrowserRefreshEnabledUseCase>()(
+      SaveBrowserRefreshEnabledParams(enabled: action.enabled),
+    )).fold(
+      (failure) {
+        sl<LoggerService>().e(failure.message, showPopup: true);
+        store.dispatch(BrowserRefreshSaveFailedAction(failure.message));
+      },
+      (RefreshSettings settings) {
+        store.dispatch(
+          BrowserRefreshEnabledSavedAction(settings.browserRefreshEnabled),
+        );
       },
     );
   }

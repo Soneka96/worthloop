@@ -91,3 +91,39 @@ class RefreshIntervalSaveFailedAction extends Equatable {
   @override
   List<Object?> get props => [message];
 }
+
+/// Requests persisting the browser-refresh preference.
+@immutable
+class SaveBrowserRefreshEnabledAction extends Equatable {
+  /// Whether browser-backed background refresh should be enabled.
+  final bool enabled;
+
+  const SaveBrowserRefreshEnabledAction(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+/// Carries a persisted browser-refresh preference.
+@immutable
+class BrowserRefreshEnabledSavedAction extends Equatable {
+  /// Persisted preference value.
+  final bool enabled;
+
+  const BrowserRefreshEnabledSavedAction(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+/// Carries a browser-refresh preference persistence failure.
+@immutable
+class BrowserRefreshSaveFailedAction extends Equatable {
+  /// Failure message.
+  final String message;
+
+  const BrowserRefreshSaveFailedAction(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}

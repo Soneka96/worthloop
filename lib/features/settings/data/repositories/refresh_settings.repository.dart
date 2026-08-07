@@ -21,4 +21,9 @@ class RefreshSettingsRepository implements IRefreshSettingsRepository {
   @override
   Future<Either<Failure, RefreshSettings>> saveInterval(int intervalMinutes) =>
       _localDatasource.saveInterval(intervalMinutes);
+
+  @override
+  Future<Either<Failure, RefreshSettings>> saveBrowserRefreshEnabled(
+    bool enabled,
+  ) => _localDatasource.saveBrowserRefreshEnabled(enabled);
 }
