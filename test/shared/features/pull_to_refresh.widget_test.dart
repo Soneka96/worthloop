@@ -77,8 +77,11 @@ void main() {
         );
 
         final double initialTop = tester.getTopLeft(find.byKey(contentKey)).dy;
-        await tester.fling(find.byType(ListView), const Offset(0, 400), 1000);
-        await tester.pump(const Duration(milliseconds: 500));
+        final TestGesture gesture = await tester.startGesture(
+          const Offset(200, 200),
+        );
+        await gesture.moveBy(const Offset(0, 250));
+        await tester.pump();
 
         expect(find.text('Another product is being checked'), findsOneWidget);
         expect(
@@ -86,7 +89,55 @@ void main() {
           greaterThan(initialTop),
         );
         expect(find.byType(AlertDialog), findsNothing);
+
+        await gesture.up();
+        await tester.pumpAndSettle();
       },
     );
+
+    testWidgets(
+      'PullToRefreshWidget resets content when blocked state ends mid-gesture',
+      (WidgetTester tester) async {
+        final GlobalKey contentKey = GlobalKey();
+        await tester.pumpWidget(
+          buildWidget(
+            blockedMessage: 'Another product is being checked',
+            onRefresh: () async {},
+            contentKey: contentKey,
+          ),
+        );
+
+        final double initialTop = tester.getTopLeft(find.byKey(contentKey)).dy;
+        await tester.fling(find.byType(ListView), const Offset(0, 400), 1000);
+        await tester.pump(const Duration(milliseconds: 300));
+
+        await tester.pumpWidget(
+          buildWidget(onRefresh: () async {}, contentKey: contentKey),
+        );
+        await tester.pump(const Duration(milliseconds: 800));
+
+        expect(tester.getTopLeft(find.byKey(contentKey)).dy, initialTop);
+        expect(find.text('Another product is being checked'), findsNothing);
+      },
+    );
+
+    testWidgets('PullToRefreshWidget resets content after a cancelled pull', (
+      WidgetTester tester,
+    ) async {
+      final GlobalKey contentKey = GlobalKey();
+      await tester.pumpWidget(
+        buildWidget(
+          blockedMessage: 'Another product is being checked',
+          onRefresh: () async {},
+          contentKey: contentKey,
+        ),
+      );
+
+      final double initialTop = tester.getTopLeft(find.byKey(contentKey)).dy;
+      await tester.dragFrom(const Offset(200, 200), const Offset(200, 250));
+      await tester.pumpAndSettle();
+
+      expect(tester.getTopLeft(find.byKey(contentKey)).dy, initialTop);
+    });
   });
 }
