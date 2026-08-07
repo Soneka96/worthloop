@@ -95,6 +95,7 @@ flutter:
   assets:
     - assets/icon,png.png
     - assets/launch_icon_alpha.png
+    - assets/worthloop_mark.png
   fonts:
     - family: Inter
       fonts:
