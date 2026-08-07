@@ -16,6 +16,7 @@ import 'package:worth_loop/features/settings/presentation/state/general_settings
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
+import 'package:worth_loop/shared/features/pull_to_refresh.widget.dart';
 import 'package:worth_loop/shared/theme/app_spacing_theme_extension.dart';
 
 /// Displays tracked products and their best current offers.
@@ -47,7 +48,12 @@ class HomeScreen extends StatelessWidget {
               child: const Icon(Icons.add),
             ),
             body: SafeArea(
-              child: RefreshIndicator(
+              child: PullToRefreshWidget(
+                blockedMessage: viewmodel.isRefreshing
+                    ? viewmodel.isRefreshingAll
+                          ? t.home.refreshBlockedAllProducts
+                          : t.home.refreshBlockedProduct
+                    : null,
                 onRefresh: () async {
                   viewmodel.onRefreshAll();
                 },

@@ -11,6 +11,8 @@ home:
   refreshing: Refreshing
   refreshAllComplete: "All sources checked."
   refreshAllPartial: "Refresh finished; $failed sources couldn't be checked."
+  refreshBlockedProduct: A product is already being checked
+  refreshBlockedAllProducts: All products are being checked
   sourceRefreshChecking: "Checking $count sources"
   sourceRefreshFailed: "Couldn't check $merchant"
   sourceRefreshFailedCount: "$count sources couldn't be checked"

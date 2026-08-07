@@ -8,7 +8,6 @@ import 'package:flutter_redux/flutter_redux.dart';
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_not_found.widget.dart';
-import 'package:worth_loop/features/products/presentation/widgets/product_refresh_indicator.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_sources.section.dart';
 import 'package:worth_loop/features/products/presentation/widgets/rename_product_dialog.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/source_form_dialog.widget.dart';
@@ -17,6 +16,7 @@ import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/constants/layout_constants.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/features/confirm_dialog.widget.dart';
+import 'package:worth_loop/shared/features/pull_to_refresh.widget.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/theme/app_spacing_theme_extension.dart';
 
@@ -133,7 +133,7 @@ class ProductDetailsScreen extends StatelessWidget {
                 ),
           body: product == null
               ? const ProductNotFoundWidget()
-              : ProductRefreshIndicator(
+              : PullToRefreshWidget(
                   blockedMessage: blockedMessage,
                   onRefresh: () async => viewmodel.onRefresh(),
                   child: CustomScrollView(

@@ -13,12 +13,12 @@ import 'package:worth_loop/features/products/presentation/screens/product_detail
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
 import 'package:worth_loop/features/products/presentation/widgets/merchant_offer_row.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_sources_empty.widget.dart';
-import 'package:worth_loop/features/products/presentation/widgets/product_refresh_indicator.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/rename_product_dialog.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/source_form_dialog.widget.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/features/confirm_dialog.widget.dart';
+import 'package:worth_loop/shared/features/pull_to_refresh.widget.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import '../../fixtures/money.fixture.dart';
@@ -199,8 +199,8 @@ void main() {
         ).thenReturn(ProductRefreshBlockReason.anotherProduct);
         await pumpScreen(tester);
 
-        final ProductRefreshIndicator indicator = tester.widget(
-          find.byType(ProductRefreshIndicator),
+        final PullToRefreshWidget indicator = tester.widget(
+          find.byType(PullToRefreshWidget),
         );
         expect(
           indicator.blockedMessage,

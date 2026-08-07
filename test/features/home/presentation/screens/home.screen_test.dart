@@ -20,6 +20,7 @@ import 'package:worth_loop/features/settings/presentation/state/general_settings
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
+import 'package:worth_loop/shared/features/pull_to_refresh.widget.dart';
 import '../../../products/fixtures/money.fixture.dart';
 import '../../../products/fixtures/product.fixture.dart';
 import '../../../products/fixtures/product_source.fixture.dart';
@@ -135,6 +136,34 @@ void main() {
 
       expect(find.byType(RefreshIndicator), findsOneWidget);
       expect(find.byKey(const Key('home-refresh-all-button')), findsNothing);
+    });
+
+    testWidgets('HomeScreen uses shared blocked refresh feedback', (
+      WidgetTester tester,
+    ) async {
+      when(() => mockViewModel.isRefreshing).thenReturn(true);
+      when(() => mockViewModel.isRefreshingAll).thenReturn(false);
+
+      await tester.pumpWidget(buildWidget());
+
+      final PullToRefreshWidget refreshWidget = tester.widget(
+        find.byType(PullToRefreshWidget),
+      );
+      expect(refreshWidget.blockedMessage, t.home.refreshBlockedProduct);
+    });
+
+    testWidgets('HomeScreen prioritizes global refresh feedback', (
+      WidgetTester tester,
+    ) async {
+      when(() => mockViewModel.isRefreshing).thenReturn(true);
+      when(() => mockViewModel.isRefreshingAll).thenReturn(true);
+
+      await tester.pumpWidget(buildWidget());
+
+      final PullToRefreshWidget refreshWidget = tester.widget(
+        find.byType(PullToRefreshWidget),
+      );
+      expect(refreshWidget.blockedMessage, t.home.refreshBlockedAllProducts);
     });
 
     testWidgets(

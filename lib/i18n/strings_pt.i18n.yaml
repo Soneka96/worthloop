@@ -10,6 +10,8 @@ home:
   refreshAll: Atualizar todos
   refreshing: A atualizar
   refreshAllComplete: "Todas as fontes foram verificadas."
+  refreshBlockedProduct: JÃ¡ estÃ¡ a ser verificado um produto
+  refreshBlockedAllProducts: Todos os produtos estÃ£o a ser verificados
   refreshAllPartial: "Atualização concluída; não foi possível verificar $failed fontes."
   sourceRefreshChecking: "A verificar $count fontes"
   sourceRefreshFailed: "Não foi possível verificar $merchant"

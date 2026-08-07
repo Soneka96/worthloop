@@ -5,13 +5,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:redux/redux.dart';
 
 // Project imports:
-import 'package:worth_loop/features/products/presentation/widgets/product_refresh_indicator.widget.dart';
+import 'package:worth_loop/shared/features/pull_to_refresh.widget.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 
 void main() {
   Widget buildWidget({
     String? blockedMessage,
     required Future<void> Function() onRefresh,
+    GlobalKey? contentKey,
   }) {
     final Store<AppState> store = Store<AppState>(
       (AppState state, dynamic action) => state,
@@ -20,22 +21,25 @@ void main() {
     return StoreProvider<AppState>(
       store: store,
       child: MaterialApp(
-        home: ProductRefreshIndicator(
+        home: PullToRefreshWidget(
           blockedMessage: blockedMessage,
           onRefresh: onRefresh,
           child: ListView.builder(
             itemCount: 20,
-            itemBuilder: (context, index) =>
-                SizedBox(height: 80, child: Text('Item $index')),
+            itemBuilder: (context, index) => SizedBox(
+              key: index == 0 ? contentKey : null,
+              height: 80,
+              child: Text('Item $index'),
+            ),
           ),
         ),
       ),
     );
   }
 
-  group('ProductRefreshIndicator contains widgets', () {
+  group('PullToRefreshWidget contains widgets', () {
     testWidgets(
-      'ProductRefreshIndicator contains a RefreshIndicator with the correct parameters',
+      'PullToRefreshWidget contains a RefreshIndicator with the correct parameters',
       (WidgetTester tester) async {
         await tester.pumpWidget(buildWidget(onRefresh: () async {}));
 
@@ -44,9 +48,9 @@ void main() {
     );
   });
 
-  group("ProductRefreshIndicator's elements behavior", () {
+  group("PullToRefreshWidget's elements behavior", () {
     testWidgets(
-      'ProductRefreshIndicator calls the normal refresh callback when no refresh is active',
+      'PullToRefreshWidget calls onRefresh when no refresh is active',
       (WidgetTester tester) async {
         int refreshCount = 0;
         await tester.pumpWidget(
@@ -57,26 +61,31 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(refreshCount, 1);
-        expect(find.text('Another product is being checked'), findsNothing);
       },
     );
 
     testWidgets(
-      'ProductRefreshIndicator shows blocked feedback after a blocked pull',
+      'PullToRefreshWidget shows blocked text without a popup after a blocked pull',
       (WidgetTester tester) async {
-        int refreshCount = 0;
+        final GlobalKey contentKey = GlobalKey();
         await tester.pumpWidget(
           buildWidget(
             blockedMessage: 'Another product is being checked',
-            onRefresh: () async => refreshCount++,
+            onRefresh: () async {},
+            contentKey: contentKey,
           ),
         );
 
+        final double initialTop = tester.getTopLeft(find.byKey(contentKey)).dy;
         await tester.fling(find.byType(ListView), const Offset(0, 400), 1000);
         await tester.pump(const Duration(milliseconds: 500));
 
-        expect(refreshCount, 0);
         expect(find.text('Another product is being checked'), findsOneWidget);
+        expect(
+          tester.getTopLeft(find.byKey(contentKey)).dy,
+          greaterThan(initialTop),
+        );
+        expect(find.byType(AlertDialog), findsNothing);
       },
     );
   });

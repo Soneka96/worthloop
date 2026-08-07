@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 258 (129 per locale)
+/// Strings: 262 (131 per locale)
 ///
-/// Built on 2026-08-07 at 13:57 UTC
+/// Built on 2026-08-07 at 14:27 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -180,6 +180,8 @@ class _StringsHomeEn {
 	String get refreshing => 'Refreshing';
 	String get refreshAllComplete => 'All sources checked.';
 	String refreshAllPartial({required Object failed}) => 'Refresh finished; ${failed} sources couldn\'t be checked.';
+	String get refreshBlockedProduct => 'A product is already being checked';
+	String get refreshBlockedAllProducts => 'All products are being checked';
 	String sourceRefreshChecking({required Object count}) => 'Checking ${count} sources';
 	String sourceRefreshFailed({required Object merchant}) => 'Couldn\'t check ${merchant}';
 	String sourceRefreshFailedCount({required Object count}) => '${count} sources couldn\'t be checked';
@@ -474,6 +476,8 @@ class _StringsHomePt implements _StringsHomeEn {
 	@override String get refreshAll => 'Atualizar todos';
 	@override String get refreshing => 'A atualizar';
 	@override String get refreshAllComplete => 'Todas as fontes foram verificadas.';
+	@override String get refreshBlockedProduct => 'JÃ¡ estÃ¡ a ser verificado um produto';
+	@override String get refreshBlockedAllProducts => 'Todos os produtos estÃ£o a ser verificados';
 	@override String refreshAllPartial({required Object failed}) => 'Atualização concluída; não foi possível verificar ${failed} fontes.';
 	@override String sourceRefreshChecking({required Object count}) => 'A verificar ${count} fontes';
 	@override String sourceRefreshFailed({required Object merchant}) => 'Não foi possível verificar ${merchant}';
@@ -729,6 +733,8 @@ extension on Translations {
 			case 'home.refreshing': return 'Refreshing';
 			case 'home.refreshAllComplete': return 'All sources checked.';
 			case 'home.refreshAllPartial': return ({required Object failed}) => 'Refresh finished; ${failed} sources couldn\'t be checked.';
+			case 'home.refreshBlockedProduct': return 'A product is already being checked';
+			case 'home.refreshBlockedAllProducts': return 'All products are being checked';
 			case 'home.sourceRefreshChecking': return ({required Object count}) => 'Checking ${count} sources';
 			case 'home.sourceRefreshFailed': return ({required Object merchant}) => 'Couldn\'t check ${merchant}';
 			case 'home.sourceRefreshFailedCount': return ({required Object count}) => '${count} sources couldn\'t be checked';
@@ -865,6 +871,8 @@ extension on _StringsPt {
 			case 'home.refreshAll': return 'Atualizar todos';
 			case 'home.refreshing': return 'A atualizar';
 			case 'home.refreshAllComplete': return 'Todas as fontes foram verificadas.';
+			case 'home.refreshBlockedProduct': return 'JÃ¡ estÃ¡ a ser verificado um produto';
+			case 'home.refreshBlockedAllProducts': return 'Todos os produtos estÃ£o a ser verificados';
 			case 'home.refreshAllPartial': return ({required Object failed}) => 'Atualização concluída; não foi possível verificar ${failed} fontes.';
 			case 'home.sourceRefreshChecking': return ({required Object count}) => 'A verificar ${count} fontes';
 			case 'home.sourceRefreshFailed': return ({required Object merchant}) => 'Não foi possível verificar ${merchant}';
