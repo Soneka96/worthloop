@@ -8,6 +8,11 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.embedding.engine.dart.DartExecutor
+import io.flutter.embedding.engine.loader.FlutterLoader
+import io.flutter.FlutterInjector
+import io.flutter.plugins.GeneratedPluginRegistrant
 
 class BackgroundRefreshService : Service() {
     companion object {
@@ -16,11 +21,14 @@ class BackgroundRefreshService : Service() {
         var isRunning: Boolean = false
     }
 
+    private var flutterEngine: FlutterEngine? = null
+
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, createNotification())
         isRunning = true
+        startFlutterEngine()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -29,6 +37,8 @@ class BackgroundRefreshService : Service() {
 
     override fun onDestroy() {
         isRunning = false
+        flutterEngine?.destroy()
+        flutterEngine = null
         super.onDestroy()
     }
 
@@ -55,5 +65,17 @@ class BackgroundRefreshService : Service() {
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
+    }
+
+    private fun startFlutterEngine() {
+        val engine = FlutterEngine(this)
+        GeneratedPluginRegistrant.registerWith(engine)
+        val loader: FlutterLoader = FlutterInjector.instance().flutterLoader()
+        val entrypoint = DartExecutor.DartEntrypoint(
+            loader.findAppBundlePath(),
+            "backgroundRefreshEntrypoint",
+        )
+        engine.dartExecutor.executeDartEntrypoint(entrypoint)
+        flutterEngine = engine
     }
 }
