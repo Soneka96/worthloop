@@ -20,6 +20,9 @@ class ProductSourcesSection extends StatefulWidget {
   /// Whether source refresh is active, used to preserve source order.
   final bool isRefreshing;
 
+  /// Whether any refresh currently blocks starting a source refresh.
+  final bool isRefreshBlocked;
+
   /// Current refresh state keyed by source identifier.
   final Map<String, SourceRefreshStatus> sourceRefreshStatuses;
 
@@ -38,6 +41,7 @@ class ProductSourcesSection extends StatefulWidget {
   const ProductSourcesSection({
     required this.product,
     this.isRefreshing = false,
+    this.isRefreshBlocked = false,
     this.sourceRefreshStatuses = const {},
     required this.deletingSourceIds,
     required this.onRefreshSource,
@@ -267,6 +271,7 @@ class _ProductSourcesSectionState extends State<ProductSourcesSection> {
                       refreshStatus:
                           widget.sourceRefreshStatuses[source.id] ??
                           SourceRefreshStatus.idle,
+                      isRefreshBlocked: widget.isRefreshBlocked,
                       isBestPrice: source == bestAvailablePrice,
                       isDeleting: widget.deletingSourceIds.contains(source.id),
                       onTap: () => widget.onOpenOffer(source.url),

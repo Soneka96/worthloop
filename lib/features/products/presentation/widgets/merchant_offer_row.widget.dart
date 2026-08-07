@@ -31,6 +31,9 @@ class MerchantOfferRow extends StatelessWidget {
   /// Current refresh state for this source.
   final SourceRefreshStatus refreshStatus;
 
+  /// Whether another refresh currently blocks starting this source refresh.
+  final bool isRefreshBlocked;
+
   /// Opens [source.url] in the device's default browser.
   final VoidCallback onTap;
 
@@ -48,6 +51,7 @@ class MerchantOfferRow extends StatelessWidget {
     required this.isBestPrice,
     required this.isDeleting,
     this.refreshStatus = SourceRefreshStatus.idle,
+    this.isRefreshBlocked = false,
     required this.onTap,
     required this.onEdit,
     required this.onRefresh,
@@ -75,7 +79,10 @@ class MerchantOfferRow extends StatelessWidget {
         children: [
           SlidableAction(
             key: Key('merchant-offer-${source.id}-refresh-action'),
-            onPressed: refreshStatus == SourceRefreshStatus.fetching
+            onPressed:
+                isRefreshBlocked ||
+                    refreshStatus == SourceRefreshStatus.queued ||
+                    refreshStatus == SourceRefreshStatus.fetching
                 ? null
                 : (_) => onRefresh(),
             backgroundColor: colorScheme.primaryContainer,

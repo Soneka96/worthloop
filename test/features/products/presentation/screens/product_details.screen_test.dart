@@ -307,6 +307,28 @@ void main() {
     );
 
     testWidgets(
+      'ProductDetailsScreen blocks source refresh actions while any refresh is active',
+      (WidgetTester tester) async {
+        when(() => mockViewModel.isRefreshing).thenReturn(true);
+
+        await pumpScreen(tester);
+
+        final List<MerchantOfferRow> rows = tester
+            .widgetList<MerchantOfferRow>(find.byType(MerchantOfferRow))
+            .toList();
+
+        expect(
+          rows,
+          everyElement(
+            predicate<MerchantOfferRow>(
+              (MerchantOfferRow row) => row.isRefreshBlocked,
+            ),
+          ),
+        );
+      },
+    );
+
+    testWidgets(
       'ProductDetailsScreen contains a "product-details-rename-button" IconButton and a "product-details-delete-button" IconButton with the correct parameters',
       (WidgetTester tester) async {
         await pumpScreen(tester);

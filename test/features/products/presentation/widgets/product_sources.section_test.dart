@@ -79,6 +79,7 @@ void main() {
   Widget buildWidget({
     List<ProductSource> sources = const [],
     bool isRefreshing = false,
+    bool isRefreshBlocked = false,
     Map<String, SourceRefreshStatus> sourceRefreshStatuses = const {},
     Set<String> deletingSourceIds = const {},
     ValueChanged<String>? onDeleteSource,
@@ -94,6 +95,7 @@ void main() {
               ProductSourcesSection(
                 product: buildProduct(sources: sources),
                 isRefreshing: isRefreshing,
+                isRefreshBlocked: isRefreshBlocked,
                 sourceRefreshStatuses: sourceRefreshStatuses,
                 deletingSourceIds: deletingSourceIds,
                 onRefreshSource: onRefreshSource ?? (_) {},
@@ -150,6 +152,28 @@ void main() {
           ),
         );
         expect(idleRow.refreshStatus, SourceRefreshStatus.idle);
+      },
+    );
+
+    testWidgets(
+      'ProductSourcesSection passes the refresh-blocked state to each merchant row',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildWidget(sources: sources, isRefreshBlocked: true),
+        );
+
+        final List<MerchantOfferRow> rows = tester
+            .widgetList<MerchantOfferRow>(find.byType(MerchantOfferRow))
+            .toList();
+
+        expect(
+          rows,
+          everyElement(
+            predicate<MerchantOfferRow>(
+              (MerchantOfferRow row) => row.isRefreshBlocked,
+            ),
+          ),
+        );
       },
     );
 

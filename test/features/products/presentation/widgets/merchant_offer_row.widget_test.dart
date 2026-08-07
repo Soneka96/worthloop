@@ -31,6 +31,7 @@ void main() {
     bool isBestPrice = false,
     bool isDeleting = false,
     SourceRefreshStatus refreshStatus = SourceRefreshStatus.idle,
+    bool isRefreshBlocked = false,
     double? cornerRadius,
     VoidCallback? onTap,
     VoidCallback? onEdit,
@@ -50,6 +51,7 @@ void main() {
           isBestPrice: isBestPrice,
           isDeleting: isDeleting,
           refreshStatus: refreshStatus,
+          isRefreshBlocked: isRefreshBlocked,
           onTap: onTap ?? () {},
           onEdit: onEdit ?? () {},
           onRefresh: onRefresh ?? () {},
@@ -177,6 +179,54 @@ void main() {
         await tester.pumpWidget(
           buildWidget(
             refreshStatus: SourceRefreshStatus.fetching,
+            onRefresh: () => refreshed = true,
+          ),
+        );
+
+        await tester.drag(
+          find.byKey(const Key('merchant-offer-source-1')),
+          const Offset(-500, 0),
+        );
+        await tester.pump();
+        await tester.tap(
+          find.byKey(const Key('merchant-offer-source-1-refresh-action')),
+        );
+
+        expect(refreshed, isFalse);
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow disables its refresh slide action when another refresh is active',
+      (WidgetTester tester) async {
+        bool refreshed = false;
+        await tester.pumpWidget(
+          buildWidget(
+            isRefreshBlocked: true,
+            onRefresh: () => refreshed = true,
+          ),
+        );
+
+        await tester.drag(
+          find.byKey(const Key('merchant-offer-source-1')),
+          const Offset(-500, 0),
+        );
+        await tester.pump();
+        await tester.tap(
+          find.byKey(const Key('merchant-offer-source-1-refresh-action')),
+        );
+
+        expect(refreshed, isFalse);
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow disables its refresh slide action while queued',
+      (WidgetTester tester) async {
+        bool refreshed = false;
+        await tester.pumpWidget(
+          buildWidget(
+            refreshStatus: SourceRefreshStatus.queued,
             onRefresh: () => refreshed = true,
           ),
         );
