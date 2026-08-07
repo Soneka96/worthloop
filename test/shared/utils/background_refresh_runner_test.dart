@@ -55,6 +55,23 @@ void main() {
       expect(refreshCalls, 0);
     });
 
+    test('forced refresh ignores the automatic refresh setting once', () async {
+      int refreshCalls = 0;
+      final BackgroundRefreshRunner runner = BackgroundRefreshRunner(
+        loadSettings: () async =>
+            const Right(RefreshSettings(intervalMinutes: 60)),
+        refreshAllProducts: ({onPriceDrop}) async {
+          refreshCalls++;
+          return Right(<Product>[product]);
+        },
+      );
+
+      final Duration? nextDelay = await runner.runOnce(force: true);
+
+      expect(nextDelay, const Duration(minutes: 60));
+      expect(refreshCalls, 1);
+    });
+
     test('uses the hourly retry interval when settings cannot load', () async {
       int refreshCalls = 0;
       final BackgroundRefreshRunner runner = BackgroundRefreshRunner(

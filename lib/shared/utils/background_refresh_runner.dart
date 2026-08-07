@@ -30,7 +30,9 @@ class BackgroundRefreshRunner {
        _onPriceDrop = onPriceDrop;
 
   /// Runs one cycle, returning `null` when the service should stop.
-  Future<Duration?> runOnce() async {
+  ///
+  /// A forced cycle refreshes once even when automatic refresh is disabled.
+  Future<Duration?> runOnce({bool force = false}) async {
     final Either<Failure, RefreshSettings> settingsResult =
         await _loadSettings();
     return settingsResult.fold(
@@ -39,7 +41,7 @@ class BackgroundRefreshRunner {
         return const Duration(minutes: RefreshIntervalConstants.hourly);
       },
       (RefreshSettings settings) async {
-        if (!settings.browserRefreshEnabled) {
+        if (!settings.browserRefreshEnabled && !force) {
           return null;
         }
         await _refreshAllProducts(onPriceDrop: _onPriceDrop);

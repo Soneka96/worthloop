@@ -1,4 +1,5 @@
 // Flutter imports:
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 // Project imports:
@@ -7,6 +8,7 @@ import 'package:worth_loop/features/products/domain/repositories/Iproducts.repos
 import 'package:worth_loop/features/settings/domain/usecases/load_refresh_settings.usecase.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/usecase/no_params.dart';
+import 'package:worth_loop/shared/utils/background_refresh_loop.dart';
 import 'package:worth_loop/shared/utils/background_refresh_runner.dart';
 import 'package:worth_loop/shared/utils/product_price_alert_notification_coordinator.dart';
 
@@ -23,11 +25,43 @@ Future<void> backgroundRefreshEntrypoint() async {
     onPriceDrop: sl<ProductPriceAlertNotificationCoordinator>().notify,
   );
 
-  while (true) {
-    final Duration? nextDelay = await runner.runOnce();
-    if (nextDelay == null) {
-      return;
+  final BackgroundRefreshLoop loop = BackgroundRefreshLoop(
+    runOnce: runner.runOnce,
+    runManualOnce: () => runner.runOnce(force: true),
+  );
+  const MethodChannel engineChannel = MethodChannel(
+    'io.github.soneka96.worthloop/background_refresh_engine',
+  );
+  engineChannel.setMethodCallHandler((MethodCall call) async {
+    if (call.method == 'refreshNow') {
+      loop.requestRefresh();
     }
-    await Future<void>.delayed(nextDelay);
+  });
+
+  try {
+    final bool hasPendingRefresh =
+        await engineChannel.invokeMethod<bool>(
+          'consumePendingRefreshRequest',
+        ) ??
+        false;
+    if (hasPendingRefresh) {
+      loop.requestRefresh();
+    }
+  } on MissingPluginException {
+    // The entrypoint can still perform scheduled refreshes on unsupported hosts.
+  } on PlatformException {
+    // The entrypoint can still perform scheduled refreshes if the bridge fails.
+  }
+
+  try {
+    await loop.run();
+  } finally {
+    try {
+      await engineChannel.invokeMethod<void>('stopService');
+    } on MissingPluginException {
+      // Nothing to stop when the entrypoint is running without the native host.
+    } on PlatformException {
+      // Native cleanup is best effort after the refresh loop finishes.
+    }
   }
 }

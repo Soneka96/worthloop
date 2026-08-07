@@ -18,12 +18,15 @@ void main() {
     );
     expect(mainActivity, contains('ACTION_REQUEST_REFRESH'));
     expect(backgroundService, contains('ACTION_REQUEST_REFRESH'));
+    expect(backgroundService, contains('ENGINE_CHANNEL'));
+    expect(backgroundService, contains('"refreshNow"'));
+    expect(backgroundService, contains('"stopService"'));
+    expect(backgroundService, contains('consumePendingRefreshRequest'));
     expect(
       backgroundService,
       contains('intent?.action == ACTION_REQUEST_REFRESH'),
     );
     expect(backgroundService, contains('pendingRefreshRequest.set(true)'));
     expect(backgroundService, contains('getAndSet(false)'));
-    expect(backgroundService, contains('consumePendingRefreshRequest'));
   });
 }

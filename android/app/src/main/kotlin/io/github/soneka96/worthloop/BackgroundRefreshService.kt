@@ -12,6 +12,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.embedding.engine.loader.FlutterLoader
 import io.flutter.FlutterInjector
+import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugins.GeneratedPluginRegistrant
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -21,6 +22,8 @@ class BackgroundRefreshService : Service() {
         const val NOTIFICATION_ID = 1001
         const val ACTION_REQUEST_REFRESH =
             "io.github.soneka96.worthloop.action.REQUEST_REFRESH"
+        const val ENGINE_CHANNEL =
+            "io.github.soneka96.worthloop/background_refresh_engine"
 
         private val pendingRefreshRequest = AtomicBoolean(false)
 
@@ -32,6 +35,7 @@ class BackgroundRefreshService : Service() {
     }
 
     private var flutterEngine: FlutterEngine? = null
+    private var engineChannel: MethodChannel? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -44,6 +48,7 @@ class BackgroundRefreshService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_REQUEST_REFRESH) {
             pendingRefreshRequest.set(true)
+            notifyFlutterEngine()
         }
         return START_NOT_STICKY
     }
@@ -51,6 +56,7 @@ class BackgroundRefreshService : Service() {
     override fun onDestroy() {
         isRunning = false
         pendingRefreshRequest.set(false)
+        engineChannel = null
         flutterEngine?.destroy()
         flutterEngine = null
         super.onDestroy()
@@ -84,12 +90,29 @@ class BackgroundRefreshService : Service() {
     private fun startFlutterEngine() {
         val engine = FlutterEngine(this)
         GeneratedPluginRegistrant.registerWith(engine)
+        val channel = MethodChannel(engine.dartExecutor.binaryMessenger, ENGINE_CHANNEL)
+        channel.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "consumePendingRefreshRequest" ->
+                    result.success(consumePendingRefreshRequest())
+                "stopService" -> {
+                    stopSelf()
+                    result.success(true)
+                }
+                else -> result.notImplemented()
+            }
+        }
+        engineChannel = channel
+        flutterEngine = engine
         val loader: FlutterLoader = FlutterInjector.instance().flutterLoader()
         val entrypoint = DartExecutor.DartEntrypoint(
             loader.findAppBundlePath(),
             "backgroundRefreshEntrypoint",
         )
         engine.dartExecutor.executeDartEntrypoint(entrypoint)
-        flutterEngine = engine
+    }
+
+    private fun notifyFlutterEngine() {
+        engineChannel?.invokeMethod("refreshNow", null)
     }
 }
