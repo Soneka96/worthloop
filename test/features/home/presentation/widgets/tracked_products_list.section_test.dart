@@ -2,7 +2,9 @@
 import 'package:flutter/material.dart';
 
 // Package imports:
+import 'package:flutter_redux/flutter_redux.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:redux/redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/home/presentation/widgets/home_search_field.widget.dart';
@@ -11,8 +13,10 @@ import 'package:worth_loop/features/home/presentation/widgets/tracked_products_e
 import 'package:worth_loop/features/home/presentation/widgets/tracked_products_list.section.dart';
 import 'package:worth_loop/features/home/presentation/widgets/tracked_products_no_matches.widget.dart';
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/presentation/state/products.state.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
+import 'package:worth_loop/shared/state/app.state.dart';
 import '../../../products/fixtures/product.fixture.dart';
 import '../../../products/fixtures/product_source.fixture.dart';
 
@@ -27,22 +31,35 @@ void main() {
     bool isLoading = false,
     ValueChanged<String>? onProductTap,
     Map<String, SourceRefreshStatus> sourceRefreshStatuses = const {},
-  }) => TranslationProvider(
-    child: MaterialApp(
-      home: Scaffold(
-        body: CustomScrollView(
-          slivers: [
-            TrackedProductsListSection(
-              products: products,
-              isLoading: isLoading,
-              sourceRefreshStatuses: sourceRefreshStatuses,
-              onProductTap: onProductTap ?? (_) {},
-            ),
-          ],
+  }) {
+    final Store<AppState> store = Store<AppState>(
+      (AppState state, dynamic action) => state,
+      initialState: AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          products: products,
+          sourceRefreshStatuses: sourceRefreshStatuses,
         ),
       ),
-    ),
-  );
+    );
+    return TranslationProvider(
+      child: StoreProvider<AppState>(
+        store: store,
+        child: MaterialApp(
+          home: Scaffold(
+            body: CustomScrollView(
+              slivers: [
+                TrackedProductsListSection(
+                  products: products,
+                  isLoading: isLoading,
+                  onProductTap: onProductTap ?? (_) {},
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   group('TrackedProductsListSection contains widgets', () {
     testWidgets(
@@ -74,7 +91,10 @@ void main() {
 
         expect(find.byType(CircularProgressIndicator), findsOneWidget);
         expect(find.byType(HomeSearchField), findsNothing);
-        expect(find.byType(TrackedProductWidget), findsNothing);
+        expect(
+          find.byKey(const Key('tracked-product-product-1')),
+          findsNothing,
+        );
       },
     );
 

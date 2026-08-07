@@ -1,5 +1,6 @@
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 
@@ -150,6 +151,21 @@ abstract final class ProductsSelectors {
   static Map<String, SourceRefreshStatus> sourceRefreshStatusesSelector(
     AppState state,
   ) => state.products.sourceRefreshStatuses;
+
+  /// Returns refresh statuses for the sources belonging to [productId].
+  static Map<String, SourceRefreshStatus>
+  sourceRefreshStatusesForProductSelector(AppState state, String productId) {
+    final Product? product = productSelector(state, productId);
+    if (product == null) {
+      return const {};
+    }
+    return {
+      for (final ProductSource source in product.sources)
+        source.id:
+            state.products.sourceRefreshStatuses[source.id] ??
+            SourceRefreshStatus.idle,
+    };
+  }
 
   /// Returns the number of sources that have reached a terminal state.
   static int refreshCompletedCountSelector(AppState state) =>

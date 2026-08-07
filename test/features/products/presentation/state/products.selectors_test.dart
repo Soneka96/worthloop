@@ -220,6 +220,58 @@ void main() {
       ],
     );
 
+    test('returns only statuses for the requested product sources', () {
+      final Product otherProduct = buildProduct(
+        id: 'product-2',
+        sources: [buildProductSource(id: 'source-3', productId: 'product-2')],
+      );
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          products: [product, otherProduct],
+          sourceRefreshStatuses: {
+            'source-1': SourceRefreshStatus.fetching,
+            'source-3': SourceRefreshStatus.error,
+          },
+        ),
+      );
+
+      expect(
+        ProductsSelectors.sourceRefreshStatusesForProductSelector(
+          state,
+          product.id,
+        ),
+        {
+          'source-1': SourceRefreshStatus.fetching,
+          'source-2': SourceRefreshStatus.idle,
+        },
+      );
+    });
+
+    test('returns no statuses when the product is missing', () {
+      expect(
+        ProductsSelectors.sourceRefreshStatusesForProductSelector(
+          AppState.initial(),
+          'missing',
+        ),
+        isEmpty,
+      );
+    });
+
+    test('returns an empty map for a product without sources', () {
+      final Product product = buildProduct(sources: const []);
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(products: [product]),
+      );
+
+      expect(
+        ProductsSelectors.sourceRefreshStatusesForProductSelector(
+          state,
+          product.id,
+        ),
+        isEmpty,
+      );
+    });
+
     test('detects a refresh on this product', () {
       final AppState state = AppState.initial().copyWith(
         products: ProductsState.initial().copyWith(

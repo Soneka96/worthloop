@@ -73,7 +73,6 @@ class HomeScreen extends StatelessWidget {
                     TrackedProductsListSection(
                       products: viewmodel.products,
                       isLoading: viewmodel.isLoading,
-                      sourceRefreshStatuses: viewmodel.sourceRefreshStatuses,
                       onProductTap: viewmodel.onOpenProduct,
                     ),
                   ],

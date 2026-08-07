@@ -50,9 +50,6 @@ class HomeScreenViewModel extends Equatable {
   /// Classified reason for the latest refresh failure, or `null`.
   final PriceFetchStatus? refreshStatus;
 
-  /// Current refresh state for every product source.
-  final Map<String, SourceRefreshStatus> sourceRefreshStatuses;
-
   /// Identifier of the latest created product, or `null`.
   final String? createdProductId;
 
@@ -81,7 +78,6 @@ class HomeScreenViewModel extends Equatable {
     required this.isCreatingProduct,
     required this.productCreationError,
     this.refreshStatus,
-    this.sourceRefreshStatuses = const {},
     required this.createdProductId,
     required this.onRefreshAll,
     required this.onOpenSettings,
@@ -113,9 +109,6 @@ class HomeScreenViewModel extends Equatable {
         store.state,
       ),
       refreshStatus: ProductsSelectors.refreshStatusSelector(store.state),
-      sourceRefreshStatuses: ProductsSelectors.sourceRefreshStatusesSelector(
-        store.state,
-      ),
       createdProductId: ProductsSelectors.createdProductIdSelector(store.state),
       onRefreshAll: () => store.dispatch(const RefreshAllProductsAction()),
       onOpenSettings: () => store.dispatch(const GoToSettingsAction()),
@@ -140,7 +133,6 @@ class HomeScreenViewModel extends Equatable {
     isCreatingProduct,
     productCreationError,
     refreshStatus,
-    sourceRefreshStatuses,
     createdProductId,
   ];
 }
