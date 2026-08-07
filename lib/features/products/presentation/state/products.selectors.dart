@@ -25,6 +25,22 @@ abstract final class ProductsSelectors {
     return latest;
   }
 
+  /// Returns the oldest product update time, or `null` when empty.
+  static DateTime? oldestUpdatedAtSelector(AppState state) {
+    final List<Product> products = state.products.products;
+    if (products.isEmpty) {
+      return null;
+    }
+
+    DateTime oldest = products.first.lastUpdatedAt;
+    for (final Product product in products.skip(1)) {
+      if (product.lastUpdatedAt.isBefore(oldest)) {
+        oldest = product.lastUpdatedAt;
+      }
+    }
+    return oldest;
+  }
+
   /// Returns the product identified by [productId], or `null`.
   static Product? productSelector(AppState state, String productId) {
     for (final Product product in state.products.products) {

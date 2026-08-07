@@ -53,6 +53,9 @@ void main() {
     when(
       () => mockViewModel.latestUpdatedAt,
     ).thenReturn(DateTime(2026, 8, 7, 21, 51));
+    when(
+      () => mockViewModel.oldestUpdatedAt,
+    ).thenReturn(DateTime(2026, 8, 7, 20, 51));
     when(() => mockViewModel.isCreatingProduct).thenReturn(false);
     when(() => mockViewModel.productCreationError).thenReturn(null);
     when(() => mockViewModel.createdProductId).thenReturn(null);
@@ -146,7 +149,22 @@ void main() {
 
         expect(observer.interval, const Duration(hours: 1));
         expect(observer.onRefresh, isA<VoidCallback>());
-        expect(observer.lastUpdatedAt, mockViewModel.latestUpdatedAt);
+        expect(observer.lastUpdatedAt, mockViewModel.oldestUpdatedAt);
+      },
+    );
+
+    testWidgets(
+      'HomeScreen passes null to ForegroundRefreshObserver when no products exist',
+      (WidgetTester tester) async {
+        when(() => mockViewModel.oldestUpdatedAt).thenReturn(null);
+
+        await tester.pumpWidget(buildWidget());
+
+        final ForegroundRefreshObserver observer = tester.widget(
+          find.byType(ForegroundRefreshObserver),
+        );
+
+        expect(observer.lastUpdatedAt, isNull);
       },
     );
 

@@ -20,6 +20,9 @@ class HomeScreenViewModel extends Equatable {
   /// Most recent update time across tracked products, or `null` when empty.
   final DateTime? latestUpdatedAt;
 
+  /// Oldest update time across tracked products, or `null` when empty.
+  final DateTime? oldestUpdatedAt;
+
   /// Whether the initial product load is active.
   final bool isLoading;
 
@@ -68,6 +71,7 @@ class HomeScreenViewModel extends Equatable {
   const HomeScreenViewModel({
     required this.products,
     required this.latestUpdatedAt,
+    required this.oldestUpdatedAt,
     required this.isLoading,
     required this.isRefreshingAll,
     required this.isRefreshing,
@@ -89,6 +93,7 @@ class HomeScreenViewModel extends Equatable {
     return HomeScreenViewModel(
       products: ProductsSelectors.productsSelector(store.state),
       latestUpdatedAt: ProductsSelectors.latestUpdatedAtSelector(store.state),
+      oldestUpdatedAt: ProductsSelectors.oldestUpdatedAtSelector(store.state),
       isLoading: ProductsSelectors.isLoadingSelector(store.state),
       isRefreshingAll: ProductsSelectors.isRefreshingAllSelector(store.state),
       isRefreshing: ProductsSelectors.isRefreshingSelector(store.state),
@@ -125,6 +130,7 @@ class HomeScreenViewModel extends Equatable {
   List<Object?> get props => [
     products,
     latestUpdatedAt,
+    oldestUpdatedAt,
     isLoading,
     isRefreshingAll,
     isRefreshing,

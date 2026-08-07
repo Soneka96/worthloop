@@ -51,6 +51,53 @@ void main() {
     });
   });
 
+  group('oldestUpdatedAtSelector() returns the oldest product update', () {
+    test('returns the oldest timestamp across products', () {
+      final Product older = buildProduct(
+        id: 'older',
+        lastUpdatedAt: DateTime(2026, 1, 1),
+      );
+      final Product newer = buildProduct(
+        id: 'newer',
+        lastUpdatedAt: DateTime(2026, 1, 2),
+      );
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(products: [newer, older]),
+      );
+
+      expect(
+        ProductsSelectors.oldestUpdatedAtSelector(state),
+        DateTime(2026, 1, 1),
+      );
+    });
+
+    test('keeps the first timestamp when it is already the oldest', () {
+      final Product older = buildProduct(
+        id: 'older',
+        lastUpdatedAt: DateTime(2026, 1, 1),
+      );
+      final Product newer = buildProduct(
+        id: 'newer',
+        lastUpdatedAt: DateTime(2026, 1, 2),
+      );
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(products: [older, newer]),
+      );
+
+      expect(
+        ProductsSelectors.oldestUpdatedAtSelector(state),
+        DateTime(2026, 1, 1),
+      );
+    });
+
+    test('returns null when no products are tracked', () {
+      expect(
+        ProductsSelectors.oldestUpdatedAtSelector(AppState.initial()),
+        isNull,
+      );
+    });
+  });
+
   group('Method productSelector() returns a Product instance', () {
     test('productSelector() returns the matching product', () {
       final Product product = buildProduct();

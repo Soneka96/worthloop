@@ -35,7 +35,7 @@ class HomeScreen extends StatelessWidget {
         return ForegroundRefreshObserver(
           interval: Duration(minutes: viewmodel.refreshIntervalMinutes),
           onRefresh: viewmodel.onRefreshAll,
-          lastUpdatedAt: viewmodel.latestUpdatedAt,
+          lastUpdatedAt: viewmodel.oldestUpdatedAt,
           child: Scaffold(
             floatingActionButton: FloatingActionButton.small(
               key: const Key('home-add-product-button'),
