@@ -286,6 +286,9 @@ ProductsState sourceRefreshStatusChangedReducer(
 
 /// Handles [SourceRefreshFinishedAction].
 /// Updates [ProductsState.refreshTotalCount], [ProductsState.refreshCompletedCount].
+///
+/// Per-source terminal statuses intentionally remain available after cleanup so
+/// the product details Issues filter can show the latest refresh failures.
 ProductsState sourceRefreshFinishedReducer(
   ProductsState state,
   SourceRefreshFinishedAction action,

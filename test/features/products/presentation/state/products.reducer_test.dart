@@ -486,15 +486,61 @@ void main() {
           reason: 'a terminal source is counted even without a prior map entry',
         );
       });
+
+      test(
+        'SourceRefreshStatusChangedAction replaces a source error when a later refresh succeeds',
+        () {
+          final ProductsState state = ProductsState.initial().copyWith(
+            sourceRefreshStatuses: {
+              'source-1': SourceRefreshStatus.error,
+              'source-2': SourceRefreshStatus.unavailable,
+            },
+            refreshCompletedCount: 1,
+            refreshTotalCount: 1,
+          );
+
+          final ProductsState reducedState = productsReducer(
+            state,
+            const SourceRefreshStatusChangedAction(
+              sourceId: 'source-1',
+              status: SourceRefreshStatus.success,
+            ),
+          );
+
+          expect(
+            state.sourceRefreshStatuses['source-1'],
+            SourceRefreshStatus.error,
+            reason: 'the previous issue is present before the retry result',
+          );
+          expect(
+            reducedState.sourceRefreshStatuses['source-1'],
+            SourceRefreshStatus.success,
+            reason: 'a successful retry clears the source issue state',
+          );
+          expect(
+            reducedState.sourceRefreshStatuses['source-2'],
+            SourceRefreshStatus.unavailable,
+            reason: 'a retry leaves sibling source statuses unchanged',
+          );
+          expect(
+            reducedState.refreshCompletedCount,
+            1,
+            reason: 'a terminal-to-terminal update is not double-counted',
+          );
+        },
+      );
     },
   );
 
   group('productsReducer processes SourceRefreshFinishedAction correctly', () {
     test('SourceRefreshFinishedAction clears progress counters', () {
       final ProductsState state = ProductsState.initial().copyWith(
-        sourceRefreshStatuses: {'source-1': SourceRefreshStatus.success},
-        refreshCompletedCount: 1,
-        refreshTotalCount: 1,
+        sourceRefreshStatuses: {
+          'source-1': SourceRefreshStatus.error,
+          'source-2': SourceRefreshStatus.unavailable,
+        },
+        refreshCompletedCount: 2,
+        refreshTotalCount: 2,
       );
 
       final ProductsState reducedState = productsReducer(
@@ -502,7 +548,7 @@ void main() {
         const SourceRefreshFinishedAction(),
       );
 
-      expect(state.refreshTotalCount, 1, reason: 'refresh was active');
+      expect(state.refreshTotalCount, 2, reason: 'refresh was active');
       expect(
         reducedState.refreshCompletedCount,
         0,
@@ -515,8 +561,11 @@ void main() {
       );
       expect(
         reducedState.sourceRefreshStatuses,
-        {'source-1': SourceRefreshStatus.success},
-        reason: 'terminal source statuses are preserved',
+        {
+          'source-1': SourceRefreshStatus.error,
+          'source-2': SourceRefreshStatus.unavailable,
+        },
+        reason: 'error and unavailable source statuses are preserved',
       );
     });
   });
