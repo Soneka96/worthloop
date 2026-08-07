@@ -60,6 +60,10 @@ void main() {
       ),
     );
     when(() => mockViewModel.isRefreshing).thenReturn(false);
+    when(() => mockViewModel.isProductRefreshing).thenReturn(false);
+    when(() => mockViewModel.areOtherSourcesRefreshing).thenReturn(false);
+    when(() => mockViewModel.productRefreshCompletedCount).thenReturn(0);
+    when(() => mockViewModel.productRefreshTotalCount).thenReturn(0);
     when(() => mockViewModel.sourceRefreshStatuses).thenReturn(const {});
     when(() => mockViewModel.refreshCompletedCount).thenReturn(0);
     when(() => mockViewModel.refreshTotalCount).thenReturn(0);
@@ -166,8 +170,9 @@ void main() {
       'ProductDetailsScreen displays refresh progress when sources are refreshing',
       (WidgetTester tester) async {
         when(() => mockViewModel.isRefreshing).thenReturn(true);
-        when(() => mockViewModel.refreshCompletedCount).thenReturn(3);
-        when(() => mockViewModel.refreshTotalCount).thenReturn(6);
+        when(() => mockViewModel.isProductRefreshing).thenReturn(true);
+        when(() => mockViewModel.productRefreshCompletedCount).thenReturn(3);
+        when(() => mockViewModel.productRefreshTotalCount).thenReturn(6);
 
         await pumpScreen(tester);
 
@@ -183,6 +188,8 @@ void main() {
       (WidgetTester tester) async {
         when(() => mockViewModel.refreshCompletedCount).thenReturn(3);
         when(() => mockViewModel.refreshTotalCount).thenReturn(6);
+        when(() => mockViewModel.productRefreshCompletedCount).thenReturn(3);
+        when(() => mockViewModel.productRefreshTotalCount).thenReturn(6);
 
         await pumpScreen(tester);
 
@@ -602,7 +609,10 @@ void main() {
         expect(find.text(t.productDetails.refresh), findsOneWidget);
         expect(find.text(t.productDetails.available), findsNWidgets(2));
         expect(find.text(t.productDetails.unavailable), findsOneWidget);
-        expect(find.text(t.productDetails.sourcesTitle), findsOneWidget);
+        expect(
+          find.text('${t.productDetails.sourcesTitle} · 3'),
+          findsOneWidget,
+        );
         expect(find.text(t.productDetails.filterAll), findsOneWidget);
         expect(find.text(t.productDetails.filterAvailable), findsOneWidget);
         expect(find.text(t.productDetails.filterUnavailable), findsOneWidget);

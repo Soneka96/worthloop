@@ -82,6 +82,7 @@ void main() {
     bool isRefreshing = false,
     int refreshCompletedCount = 0,
     int refreshTotalCount = 0,
+    bool areOtherSourcesRefreshing = false,
     Map<String, SourceRefreshStatus> sourceRefreshStatuses = const {},
     Set<String> deletingSourceIds = const {},
     ValueChanged<String>? onDeleteSource,
@@ -100,6 +101,7 @@ void main() {
                 isRefreshing: isRefreshing,
                 refreshCompletedCount: refreshCompletedCount,
                 refreshTotalCount: refreshTotalCount,
+                areOtherSourcesRefreshing: areOtherSourcesRefreshing,
                 sourceRefreshStatuses: sourceRefreshStatuses,
                 deletingSourceIds: deletingSourceIds,
                 onRefresh: onRefresh ?? () {},
@@ -116,7 +118,7 @@ void main() {
 
   group('ProductSourcesSection contains widgets', () {
     testWidgets(
-      'ProductSourcesSection contains the offer count and refresh progress with the correct parameters when isRefreshing = true',
+      'ProductSourcesSection contains the source count and refresh progress with the correct parameters when isRefreshing = true',
       (tester) async {
         await tester.pumpWidget(
           buildWidget(
@@ -129,6 +131,18 @@ void main() {
         expect(find.byType(ProductOffersHeader), findsOneWidget);
         expect(
           find.text(t.productDetails.refreshProgress(completed: 3, total: 6)),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'ProductSourcesSection shows other-product refresh status without local progress',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildWidget(areOtherSourcesRefreshing: true));
+
+        expect(
+          find.text(t.productDetails.otherProductsRefreshing),
           findsOneWidget,
         );
       },
@@ -707,7 +721,10 @@ void main() {
       try {
         await tester.pumpWidget(buildWidget(sources: sources));
 
-        expect(find.text(t.productDetails.sourcesTitle), findsOneWidget);
+        expect(
+          find.text('${t.productDetails.sourcesTitle} · 3'),
+          findsOneWidget,
+        );
         expect(find.text(t.productDetails.addSourceButton), findsOneWidget);
         expect(find.text(t.productDetails.filterAll), findsOneWidget);
         expect(find.text(t.productDetails.filterAvailable), findsOneWidget);

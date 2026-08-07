@@ -19,7 +19,10 @@ void main() {
       (WidgetTester tester) async {
         await tester.pumpWidget(buildWidget());
 
-        expect(find.text(t.productDetails.offers(count: 3)), findsOneWidget);
+        expect(
+          find.text('${t.productDetails.sourcesTitle} · 3'),
+          findsOneWidget,
+        );
         expect(
           find.byKey(const Key('product-details-refresh-button')),
           findsNothing,
@@ -32,7 +35,7 @@ void main() {
     ) async {
       await tester.pumpWidget(buildWidget(offerCount: 0));
 
-      expect(find.text(t.productDetails.offers(count: 0)), findsOneWidget);
+      expect(find.text('${t.productDetails.sourcesTitle} · 0'), findsOneWidget);
     });
   });
 
@@ -45,7 +48,10 @@ void main() {
       try {
         await tester.pumpWidget(buildWidget());
 
-        expect(find.text(t.productDetails.offers(count: 3)), findsOneWidget);
+        expect(
+          find.text('${t.productDetails.sourcesTitle} · 3'),
+          findsOneWidget,
+        );
       } finally {
         LocaleSettings.setLocale(AppLocale.en);
       }

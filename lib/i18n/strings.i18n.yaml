@@ -40,6 +40,7 @@ productDetails:
   refresh: Refresh
   refreshing: Refreshing
   refreshProgress: "$completed of $total sources checked"
+  otherProductsRefreshing: "Other products refreshing"
   queued: Queued
   checking: Checking
   cannotAccessNow: Cannot access now

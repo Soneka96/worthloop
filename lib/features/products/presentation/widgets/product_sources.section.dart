@@ -28,6 +28,9 @@ class ProductSourcesSection extends StatefulWidget {
   /// Number of sources included in the active refresh.
   final int refreshTotalCount;
 
+  /// Whether sources belonging to other products are being refreshed.
+  final bool areOtherSourcesRefreshing;
+
   /// Current refresh state keyed by source identifier.
   final Map<String, SourceRefreshStatus> sourceRefreshStatuses;
 
@@ -51,6 +54,7 @@ class ProductSourcesSection extends StatefulWidget {
     this.isRefreshing = false,
     this.refreshCompletedCount = 0,
     this.refreshTotalCount = 0,
+    this.areOtherSourcesRefreshing = false,
     this.sourceRefreshStatuses = const {},
     required this.deletingSourceIds,
     required this.onRefresh,
@@ -176,26 +180,11 @@ class _ProductSourcesSectionState extends State<ProductSourcesSection> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ProductOffersHeader(
-                    offerCount: widget.product.sources.length,
-                  ),
-                  if (widget.isRefreshing && widget.refreshTotalCount > 0)
-                    Padding(
-                      padding: EdgeInsets.only(top: context.spacing.xs),
-                      child: Text(
-                        t.productDetails.refreshProgress(
-                          completed: widget.refreshCompletedCount,
-                          total: widget.refreshTotalCount,
-                        ),
-                      ),
-                    ),
-                  SizedBox(height: context.spacing.sm),
                   Row(
                     children: [
                       Expanded(
-                        child: Text(
-                          t.productDetails.sourcesTitle,
-                          style: textTheme.labelSmall,
+                        child: ProductOffersHeader(
+                          offerCount: widget.product.sources.length,
                         ),
                       ),
                       OutlinedButton.icon(
@@ -223,6 +212,22 @@ class _ProductSourcesSectionState extends State<ProductSourcesSection> {
                       ),
                     ],
                   ),
+                  if (widget.isRefreshing && widget.refreshTotalCount > 0)
+                    Padding(
+                      padding: EdgeInsets.only(top: context.spacing.xs),
+                      child: Text(
+                        '${t.productDetails.refreshProgress(completed: widget.refreshCompletedCount, total: widget.refreshTotalCount)}${widget.areOtherSourcesRefreshing ? ' · ${t.productDetails.otherProductsRefreshing}' : ''}',
+                        style: textTheme.bodySmall,
+                      ),
+                    )
+                  else if (widget.areOtherSourcesRefreshing)
+                    Padding(
+                      padding: EdgeInsets.only(top: context.spacing.xs),
+                      child: Text(
+                        t.productDetails.otherProductsRefreshing,
+                        style: textTheme.bodySmall,
+                      ),
+                    ),
                 ],
               ),
             ),

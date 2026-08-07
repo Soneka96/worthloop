@@ -99,8 +99,11 @@ class ProductDetailsScreen extends StatelessWidget {
                     ProductSourcesSection(
                       product: product,
                       isRefreshing: viewmodel.isRefreshing,
-                      refreshCompletedCount: viewmodel.refreshCompletedCount,
-                      refreshTotalCount: viewmodel.refreshTotalCount,
+                      refreshCompletedCount:
+                          viewmodel.productRefreshCompletedCount,
+                      refreshTotalCount: viewmodel.productRefreshTotalCount,
+                      areOtherSourcesRefreshing:
+                          viewmodel.areOtherSourcesRefreshing,
                       sourceRefreshStatuses: viewmodel.sourceRefreshStatuses,
                       deletingSourceIds: viewmodel.deletingSourceIds,
                       onRefresh: viewmodel.onRefresh,

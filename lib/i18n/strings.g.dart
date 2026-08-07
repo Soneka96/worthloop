@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 250 (125 per locale)
+/// Strings: 252 (126 per locale)
 ///
-/// Built on 2026-08-07 at 11:17 UTC
+/// Built on 2026-08-07 at 12:19 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -216,6 +216,7 @@ class _StringsProductDetailsEn {
 	String get refresh => 'Refresh';
 	String get refreshing => 'Refreshing';
 	String refreshProgress({required Object completed, required Object total}) => '${completed} of ${total} sources checked';
+	String get otherProductsRefreshing => 'Other products refreshing';
 	String get queued => 'Queued';
 	String get checking => 'Checking';
 	String get cannotAccessNow => 'Cannot access now';
@@ -509,6 +510,7 @@ class _StringsProductDetailsPt implements _StringsProductDetailsEn {
 	@override String get refresh => 'Atualizar';
 	@override String get refreshing => 'A atualizar';
 	@override String refreshProgress({required Object completed, required Object total}) => '${completed} de ${total} fontes verificadas';
+	@override String get otherProductsRefreshing => 'Outros produtos a atualizar';
 	@override String get queued => 'Em fila';
 	@override String get checking => 'A verificar';
 	@override String get cannotAccessNow => 'Não é possível aceder agora';
@@ -748,6 +750,7 @@ extension on Translations {
 			case 'productDetails.refresh': return 'Refresh';
 			case 'productDetails.refreshing': return 'Refreshing';
 			case 'productDetails.refreshProgress': return ({required Object completed, required Object total}) => '${completed} of ${total} sources checked';
+			case 'productDetails.otherProductsRefreshing': return 'Other products refreshing';
 			case 'productDetails.queued': return 'Queued';
 			case 'productDetails.checking': return 'Checking';
 			case 'productDetails.cannotAccessNow': return 'Cannot access now';
@@ -883,6 +886,7 @@ extension on _StringsPt {
 			case 'productDetails.refresh': return 'Atualizar';
 			case 'productDetails.refreshing': return 'A atualizar';
 			case 'productDetails.refreshProgress': return ({required Object completed, required Object total}) => '${completed} de ${total} fontes verificadas';
+			case 'productDetails.otherProductsRefreshing': return 'Outros produtos a atualizar';
 			case 'productDetails.queued': return 'Em fila';
 			case 'productDetails.checking': return 'A verificar';
 			case 'productDetails.cannotAccessNow': return 'Não é possível aceder agora';

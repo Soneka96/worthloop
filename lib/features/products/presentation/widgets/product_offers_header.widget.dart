@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 // Project imports:
 import 'package:worth_loop/i18n/strings.g.dart';
 
-/// Displays a product's offer count.
+/// Displays a product's tracked source count.
 class ProductOffersHeader extends StatelessWidget {
-  /// Number of merchant offers currently displayed.
+  /// Number of merchant sources currently tracked.
   final int offerCount;
 
   const ProductOffersHeader({required this.offerCount, super.key});
@@ -16,7 +16,7 @@ class ProductOffersHeader extends StatelessWidget {
     final TextTheme textTheme = Theme.of(context).textTheme;
 
     return Text(
-      t.productDetails.offers(count: offerCount),
+      '${t.productDetails.sourcesTitle} · $offerCount',
       style: textTheme.labelSmall,
     );
   }
