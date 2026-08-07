@@ -36,6 +36,7 @@ class TrackedProductWidget extends StatelessWidget {
     final TextTheme textTheme = Theme.of(context).textTheme;
     final ProductSource? bestPrice = product.bestAvailablePrice;
     final Money? currentPrice = bestPrice?.currentPrice;
+    final String? priceChange = _priceChangeLabel(context);
     final List<ProductSource> failedSources = product.sources
         .where(
           (ProductSource source) =>
@@ -77,6 +78,14 @@ class TrackedProductWidget extends StatelessWidget {
                 key: Key('tracked-product-price-${product.id}'),
                 style: textTheme.headlineSmall,
               ),
+              if (priceChange != null) ...[
+                SizedBox(height: context.spacing.xs),
+                Text(
+                  priceChange,
+                  key: Key('tracked-product-price-change-${product.id}'),
+                  style: textTheme.bodySmall,
+                ),
+              ],
               SizedBox(height: context.spacing.sm),
               Wrap(
                 spacing: context.spacing.sm,
@@ -113,6 +122,34 @@ class TrackedProductWidget extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String? _priceChangeLabel(BuildContext context) {
+    final Money? currentPrice = product.bestAvailablePrice?.currentPrice;
+    final Money? previousPrice = product.previousBestPrice;
+    final DateTime? changedAt = product.bestPriceChangedAt;
+    if (currentPrice == null ||
+        previousPrice == null ||
+        changedAt == null ||
+        currentPrice.currencyCode != previousPrice.currencyCode) {
+      return null;
+    }
+    final int difference = currentPrice.minorUnits - previousPrice.minorUnits;
+    if (difference == 0) {
+      return null;
+    }
+    final String amount = formatPrice(
+      Money(
+        minorUnits: difference.abs(),
+        currencyCode: currentPrice.currencyCode,
+      ),
+    );
+    final String date = MaterialLocalizations.of(
+      context,
+    ).formatMediumDate(changedAt);
+    return difference < 0
+        ? t.home.priceDrop(amount: amount, date: date)
+        : t.home.priceIncrease(amount: amount, date: date);
   }
 
   Widget _buildRefreshStatus(

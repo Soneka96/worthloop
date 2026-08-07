@@ -65,6 +65,72 @@ void main() {
       },
     );
 
+    testWidgets('MerchantOfferRow displays a price drop with its change date', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildWidget(
+          source: buildProductSource(
+            currentPrice: const Money(minorUnits: 39999, currencyCode: 'EUR'),
+            previousPrice: const Money(minorUnits: 49999, currencyCode: 'EUR'),
+            isAvailable: true,
+            priceChangedAt: DateTime(2026, 8, 3),
+          ),
+        ),
+      );
+
+      expect(find.textContaining('↓ 100.00'), findsOneWidget);
+      expect(
+        find.byKey(const Key('merchant-offer-source-1-price-change')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+      'MerchantOfferRow displays a price increase with its change date',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildWidget(
+            source: buildProductSource(
+              currentPrice: const Money(minorUnits: 59999, currencyCode: 'EUR'),
+              previousPrice: const Money(
+                minorUnits: 49999,
+                currencyCode: 'EUR',
+              ),
+              isAvailable: true,
+              priceChangedAt: DateTime(2026, 8, 5),
+            ),
+          ),
+        );
+
+        expect(find.textContaining('↑ 100.00'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow does not display a price change without compatible history',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildWidget(
+            source: buildProductSource(
+              currentPrice: const Money(minorUnits: 49999, currencyCode: 'EUR'),
+              previousPrice: const Money(
+                minorUnits: 49999,
+                currencyCode: 'USD',
+              ),
+              isAvailable: true,
+              priceChangedAt: DateTime(2026, 8, 3),
+            ),
+          ),
+        );
+
+        expect(
+          find.byKey(const Key('merchant-offer-source-1-price-change')),
+          findsNothing,
+        );
+      },
+    );
+
     testWidgets(
       'MerchantOfferRow displays the unavailable status when source.isAvailable = false',
       (WidgetTester tester) async {
@@ -328,6 +394,55 @@ void main() {
 
         expect(find.byType(CircularProgressIndicator), findsOneWidget);
         expect(find.text('499.99 €'), findsNothing);
+      },
+    );
+  });
+
+  group('MerchantOfferRow price-change edge cases', () {
+    testWidgets(
+      'MerchantOfferRow hides a price change when the prices are equal',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildWidget(
+            source: buildProductSource(
+              currentPrice: const Money(minorUnits: 49999, currencyCode: 'EUR'),
+              previousPrice: const Money(
+                minorUnits: 49999,
+                currencyCode: 'EUR',
+              ),
+              isAvailable: true,
+              priceChangedAt: DateTime(2026, 8, 3),
+            ),
+          ),
+        );
+
+        expect(
+          find.byKey(const Key('merchant-offer-source-1-price-change')),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow hides a price change when its change date is missing',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildWidget(
+            source: buildProductSource(
+              currentPrice: const Money(minorUnits: 39999, currencyCode: 'EUR'),
+              previousPrice: const Money(
+                minorUnits: 49999,
+                currencyCode: 'EUR',
+              ),
+              isAvailable: true,
+            ),
+          ),
+        );
+
+        expect(
+          find.byKey(const Key('merchant-offer-source-1-price-change')),
+          findsNothing,
+        );
       },
     );
   });

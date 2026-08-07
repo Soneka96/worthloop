@@ -18,6 +18,8 @@ home:
   noStore: No store in stock
   storeOffers: "Offers: $count"
   updatedAt: Updated $time
+  priceDrop: "↓ $amount since $date"
+  priceIncrease: "↑ $amount since $date"
   emptyTitle: No tracked products
   emptyDescription: Products you track will appear here with their best available offer.
   addProductTitle: Add a product
@@ -54,6 +56,8 @@ productDetails:
   filterAvailable: Available
   filterUnavailable: Unavailable
   checkedAt: Checked at $time
+  priceDrop: "↓ $amount since $date"
+  priceIncrease: "↑ $amount since $date"
   productNotFound: Product not found
   productNotFoundDescription: Return to your tracked products and choose an item again.
   refreshBlocked: This website blocked the refresh attempt. Try again later.

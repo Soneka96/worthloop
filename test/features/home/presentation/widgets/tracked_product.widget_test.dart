@@ -55,6 +55,96 @@ void main() {
     );
 
     testWidgets(
+      'TrackedProductWidget displays a best-price drop with its change date',
+      (WidgetTester tester) async {
+        final Product product = buildProduct(
+          previousBestPrice: buildMoney(minorUnits: 49999),
+          bestPriceChangedAt: DateTime(2026, 8, 3),
+          sources: [
+            buildProductSource(
+              currentPrice: buildMoney(minorUnits: 39999),
+              isAvailable: true,
+            ),
+          ],
+        );
+
+        await tester.pumpWidget(buildWidget(product));
+
+        expect(find.textContaining('↓ 100.00'), findsOneWidget);
+        expect(
+          find.byKey(const Key('tracked-product-price-change-product-1')),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'TrackedProductWidget does not display a price change without history',
+      (WidgetTester tester) async {
+        final Product product = buildProduct(
+          sources: [
+            buildProductSource(
+              currentPrice: buildMoney(minorUnits: 39999),
+              isAvailable: true,
+            ),
+          ],
+        );
+
+        await tester.pumpWidget(buildWidget(product));
+
+        expect(
+          find.byKey(const Key('tracked-product-price-change-product-1')),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets('TrackedProductWidget displays a best-price increase', (
+      WidgetTester tester,
+    ) async {
+      final Product product = buildProduct(
+        previousBestPrice: buildMoney(minorUnits: 39999),
+        bestPriceChangedAt: DateTime(2026, 8, 5),
+        sources: [
+          buildProductSource(
+            currentPrice: buildMoney(minorUnits: 49999),
+            isAvailable: true,
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(buildWidget(product));
+
+      expect(
+        find.byKey(const Key('tracked-product-price-change-product-1')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+      'TrackedProductWidget hides a price change when the prices are equal',
+      (WidgetTester tester) async {
+        final Product product = buildProduct(
+          previousBestPrice: buildMoney(minorUnits: 39999),
+          bestPriceChangedAt: DateTime(2026, 8, 5),
+          sources: [
+            buildProductSource(
+              currentPrice: buildMoney(minorUnits: 39999),
+              isAvailable: true,
+            ),
+          ],
+        );
+
+        await tester.pumpWidget(buildWidget(product));
+
+        expect(
+          find.byKey(const Key('tracked-product-price-change-product-1')),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets(
       'TrackedProductWidget contains the lowest available price with the correct parameters',
       (WidgetTester tester) async {
         final ProductSource expensive = buildProductSource(

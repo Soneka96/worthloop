@@ -17,6 +17,8 @@ home:
   noAvailablePrice: Sem preço disponível
   noStore: Nenhuma loja com stock
   storeOffers: "Ofertas: $count"
+  priceDrop: "↓ $amount desde $date"
+  priceIncrease: "↑ $amount desde $date"
   updatedAt: Atualizado às $time
   emptyTitle: Nenhum produto acompanhado
   emptyDescription: Os produtos acompanhados aparecem aqui com a melhor oferta disponível.
@@ -33,6 +35,8 @@ home:
   noSearchResultsDescription: Nenhum produto acompanhado corresponde a "$query".
 
 productDetails:
+  priceDrop: "↓ $amount desde $date"
+  priceIncrease: "↑ $amount desde $date"
   title: Detalhes do produto
   backTooltip: Voltar
   refresh: Atualizar

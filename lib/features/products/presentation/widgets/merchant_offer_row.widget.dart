@@ -60,6 +60,7 @@ class MerchantOfferRow extends StatelessWidget {
     );
     final Money? currentPrice = source.currentPrice;
     final DateTime? lastCheckedAt = source.lastCheckedAt;
+    final String? priceChange = _priceChangeLabel(context);
 
     return Slidable(
       key: Key('merchant-offer-${source.id}'),
@@ -155,6 +156,14 @@ class MerchantOfferRow extends StatelessWidget {
                             ),
                             style: textTheme.bodySmall,
                           ),
+                        if (priceChange != null)
+                          Text(
+                            priceChange,
+                            key: Key(
+                              'merchant-offer-${source.id}-price-change',
+                            ),
+                            style: textTheme.bodySmall,
+                          ),
                       ],
                     ),
                   ),
@@ -200,6 +209,34 @@ class MerchantOfferRow extends StatelessWidget {
           ? t.productDetails.unavailable
           : t.productDetails.available,
   };
+
+  String? _priceChangeLabel(BuildContext context) {
+    final Money? currentPrice = source.currentPrice;
+    final Money? previousPrice = source.previousPrice;
+    final DateTime? changedAt = source.priceChangedAt;
+    if (currentPrice == null ||
+        previousPrice == null ||
+        changedAt == null ||
+        currentPrice.currencyCode != previousPrice.currencyCode) {
+      return null;
+    }
+    final int difference = currentPrice.minorUnits - previousPrice.minorUnits;
+    if (difference == 0) {
+      return null;
+    }
+    final String amount = formatPrice(
+      Money(
+        minorUnits: difference.abs(),
+        currencyCode: currentPrice.currencyCode,
+      ),
+    );
+    final String date = MaterialLocalizations.of(
+      context,
+    ).formatMediumDate(changedAt);
+    return difference < 0
+        ? t.productDetails.priceDrop(amount: amount, date: date)
+        : t.productDetails.priceIncrease(amount: amount, date: date);
+  }
 
   Widget _statusIndicator(ColorScheme colorScheme) {
     if (refreshStatus == SourceRefreshStatus.fetching) {

@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 240 (120 per locale)
+/// Strings: 248 (124 per locale)
 ///
-/// Built on 2026-08-07 at 09:30 UTC
+/// Built on 2026-08-07 at 10:34 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -187,6 +187,8 @@ class _StringsHomeEn {
 	String get noStore => 'No store in stock';
 	String storeOffers({required Object count}) => 'Offers: ${count}';
 	String updatedAt({required Object time}) => 'Updated ${time}';
+	String priceDrop({required Object amount, required Object date}) => '↓ ${amount} since ${date}';
+	String priceIncrease({required Object amount, required Object date}) => '↑ ${amount} since ${date}';
 	String get emptyTitle => 'No tracked products';
 	String get emptyDescription => 'Products you track will appear here with their best available offer.';
 	String get addProductTitle => 'Add a product';
@@ -230,6 +232,8 @@ class _StringsProductDetailsEn {
 	String get filterAvailable => 'Available';
 	String get filterUnavailable => 'Unavailable';
 	String checkedAt({required Object time}) => 'Checked at ${time}';
+	String priceDrop({required Object amount, required Object date}) => '↓ ${amount} since ${date}';
+	String priceIncrease({required Object amount, required Object date}) => '↑ ${amount} since ${date}';
 	String get productNotFound => 'Product not found';
 	String get productNotFoundDescription => 'Return to your tracked products and choose an item again.';
 	String get refreshBlocked => 'This website blocked the refresh attempt. Try again later.';
@@ -472,6 +476,8 @@ class _StringsHomePt implements _StringsHomeEn {
 	@override String get noAvailablePrice => 'Sem preço disponível';
 	@override String get noStore => 'Nenhuma loja com stock';
 	@override String storeOffers({required Object count}) => 'Ofertas: ${count}';
+	@override String priceDrop({required Object amount, required Object date}) => '↓ ${amount} desde ${date}';
+	@override String priceIncrease({required Object amount, required Object date}) => '↑ ${amount} desde ${date}';
 	@override String updatedAt({required Object time}) => 'Atualizado às ${time}';
 	@override String get emptyTitle => 'Nenhum produto acompanhado';
 	@override String get emptyDescription => 'Os produtos acompanhados aparecem aqui com a melhor oferta disponível.';
@@ -494,6 +500,8 @@ class _StringsProductDetailsPt implements _StringsProductDetailsEn {
 	@override final _StringsPt _root; // ignore: unused_field
 
 	// Translations
+	@override String priceDrop({required Object amount, required Object date}) => '↓ ${amount} desde ${date}';
+	@override String priceIncrease({required Object amount, required Object date}) => '↑ ${amount} desde ${date}';
 	@override String get title => 'Detalhes do produto';
 	@override String get backTooltip => 'Voltar';
 	@override String get refresh => 'Atualizar';
@@ -718,6 +726,8 @@ extension on Translations {
 			case 'home.noStore': return 'No store in stock';
 			case 'home.storeOffers': return ({required Object count}) => 'Offers: ${count}';
 			case 'home.updatedAt': return ({required Object time}) => 'Updated ${time}';
+			case 'home.priceDrop': return ({required Object amount, required Object date}) => '↓ ${amount} since ${date}';
+			case 'home.priceIncrease': return ({required Object amount, required Object date}) => '↑ ${amount} since ${date}';
 			case 'home.emptyTitle': return 'No tracked products';
 			case 'home.emptyDescription': return 'Products you track will appear here with their best available offer.';
 			case 'home.addProductTitle': return 'Add a product';
@@ -752,6 +762,8 @@ extension on Translations {
 			case 'productDetails.filterAvailable': return 'Available';
 			case 'productDetails.filterUnavailable': return 'Unavailable';
 			case 'productDetails.checkedAt': return ({required Object time}) => 'Checked at ${time}';
+			case 'productDetails.priceDrop': return ({required Object amount, required Object date}) => '↓ ${amount} since ${date}';
+			case 'productDetails.priceIncrease': return ({required Object amount, required Object date}) => '↑ ${amount} since ${date}';
 			case 'productDetails.productNotFound': return 'Product not found';
 			case 'productDetails.productNotFoundDescription': return 'Return to your tracked products and choose an item again.';
 			case 'productDetails.refreshBlocked': return 'This website blocked the refresh attempt. Try again later.';
@@ -845,6 +857,8 @@ extension on _StringsPt {
 			case 'home.noAvailablePrice': return 'Sem preço disponível';
 			case 'home.noStore': return 'Nenhuma loja com stock';
 			case 'home.storeOffers': return ({required Object count}) => 'Ofertas: ${count}';
+			case 'home.priceDrop': return ({required Object amount, required Object date}) => '↓ ${amount} desde ${date}';
+			case 'home.priceIncrease': return ({required Object amount, required Object date}) => '↑ ${amount} desde ${date}';
 			case 'home.updatedAt': return ({required Object time}) => 'Atualizado às ${time}';
 			case 'home.emptyTitle': return 'Nenhum produto acompanhado';
 			case 'home.emptyDescription': return 'Os produtos acompanhados aparecem aqui com a melhor oferta disponível.';
@@ -858,6 +872,8 @@ extension on _StringsPt {
 			case 'home.searchClearTooltip': return 'Limpar pesquisa';
 			case 'home.noSearchResultsTitle': return 'Sem resultados';
 			case 'home.noSearchResultsDescription': return ({required Object query}) => 'Nenhum produto acompanhado corresponde a "${query}".';
+			case 'productDetails.priceDrop': return ({required Object amount, required Object date}) => '↓ ${amount} desde ${date}';
+			case 'productDetails.priceIncrease': return ({required Object amount, required Object date}) => '↑ ${amount} desde ${date}';
 			case 'productDetails.title': return 'Detalhes do produto';
 			case 'productDetails.backTooltip': return 'Voltar';
 			case 'productDetails.refresh': return 'Atualizar';
