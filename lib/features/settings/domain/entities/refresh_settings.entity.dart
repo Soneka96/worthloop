@@ -11,11 +11,19 @@ class RefreshSettings extends Equatable {
   /// Whether browser-backed background refresh is enabled.
   final bool browserRefreshEnabled;
 
+  /// Whether product price-drop notifications are enabled.
+  final bool priceAlertsEnabled;
+
   const RefreshSettings({
     required this.intervalMinutes,
     this.browserRefreshEnabled = false,
+    this.priceAlertsEnabled = false,
   });
 
   @override
-  List<Object?> get props => [intervalMinutes, browserRefreshEnabled];
+  List<Object?> get props => [
+    intervalMinutes,
+    browserRefreshEnabled,
+    priceAlertsEnabled,
+  ];
 }

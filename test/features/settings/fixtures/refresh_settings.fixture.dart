@@ -5,7 +5,9 @@ import 'package:worth_loop/features/settings/domain/entities/refresh_settings.en
 RefreshSettings buildRefreshSettings({
   int intervalMinutes = 60,
   bool browserRefreshEnabled = false,
+  bool priceAlertsEnabled = false,
 }) => RefreshSettings(
   intervalMinutes: intervalMinutes,
   browserRefreshEnabled: browserRefreshEnabled,
+  priceAlertsEnabled: priceAlertsEnabled,
 );

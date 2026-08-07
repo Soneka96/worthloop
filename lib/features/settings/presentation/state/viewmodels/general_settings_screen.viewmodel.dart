@@ -16,6 +16,9 @@ class GeneralSettingsScreenViewModel extends Equatable {
   /// Whether browser-backed background refresh is enabled.
   final bool browserRefreshEnabled;
 
+  /// Whether product price-drop notifications are enabled.
+  final bool priceAlertsEnabled;
+
   /// Whether refresh settings are loading or saving.
   final bool isRefreshIntervalBusy;
 
@@ -31,17 +34,22 @@ class GeneralSettingsScreenViewModel extends Equatable {
   /// Dispatches [SaveBrowserRefreshEnabledAction].
   final void Function(bool enabled) onBrowserRefreshEnabledChanged;
 
+  /// Dispatches [SavePriceAlertsEnabledAction].
+  final void Function(bool enabled) onPriceAlertsEnabledChanged;
+
   /// Dispatches [OpenBackgroundRestrictionsAction].
   final void Function() onOpenBackgroundRestrictions;
 
   const GeneralSettingsScreenViewModel({
     required this.refreshIntervalMinutes,
     required this.browserRefreshEnabled,
+    required this.priceAlertsEnabled,
     required this.isRefreshIntervalBusy,
     required this.onCheckForUpdates,
     required this.onOpenPrivacyPolicy,
     required this.onRefreshIntervalSelected,
     required this.onBrowserRefreshEnabledChanged,
+    required this.onPriceAlertsEnabledChanged,
     required this.onOpenBackgroundRestrictions,
   });
 
@@ -53,6 +61,9 @@ class GeneralSettingsScreenViewModel extends Equatable {
       ),
       browserRefreshEnabled:
           RefreshSettingsSelectors.browserRefreshEnabledSelector(store.state),
+      priceAlertsEnabled: RefreshSettingsSelectors.priceAlertsEnabledSelector(
+        store.state,
+      ),
       isRefreshIntervalBusy: RefreshSettingsSelectors.isBusySelector(
         store.state,
       ),
@@ -63,6 +74,8 @@ class GeneralSettingsScreenViewModel extends Equatable {
           store.dispatch(SaveRefreshIntervalAction(intervalMinutes)),
       onBrowserRefreshEnabledChanged: (bool enabled) =>
           store.dispatch(SaveBrowserRefreshEnabledAction(enabled)),
+      onPriceAlertsEnabledChanged: (bool enabled) =>
+          store.dispatch(SavePriceAlertsEnabledAction(enabled)),
       onOpenBackgroundRestrictions: () =>
           store.dispatch(const OpenBackgroundRestrictionsAction()),
     );
@@ -72,6 +85,7 @@ class GeneralSettingsScreenViewModel extends Equatable {
   List<Object?> get props => [
     refreshIntervalMinutes,
     browserRefreshEnabled,
+    priceAlertsEnabled,
     isRefreshIntervalBusy,
   ];
 }

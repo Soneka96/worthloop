@@ -7,6 +7,7 @@ import 'package:worth_loop/features/settings/data/repositories/refresh_settings.
 import 'package:worth_loop/features/settings/domain/repositories/Irefresh_settings.repository.dart';
 import 'package:worth_loop/features/settings/domain/usecases/load_refresh_settings.usecase.dart';
 import 'package:worth_loop/features/settings/domain/usecases/save_browser_refresh_enabled.usecase.dart';
+import 'package:worth_loop/features/settings/domain/usecases/save_price_alerts_enabled.usecase.dart';
 import 'package:worth_loop/features/settings/domain/usecases/save_refresh_interval.usecase.dart';
 import 'package:worth_loop/features/settings/presentation/state/viewmodels/general_settings_screen.viewmodel.dart';
 import 'package:worth_loop/injection_container.dart';
@@ -30,6 +31,9 @@ void initSettingsDependencies() {
   );
   sl.registerLazySingleton<SaveBrowserRefreshEnabledUseCase>(
     () => SaveBrowserRefreshEnabledUseCase(sl<IRefreshSettingsRepository>()),
+  );
+  sl.registerLazySingleton<SavePriceAlertsEnabledUseCase>(
+    () => SavePriceAlertsEnabledUseCase(sl<IRefreshSettingsRepository>()),
   );
   sl.registerFactoryParam<
     GeneralSettingsScreenViewModel,

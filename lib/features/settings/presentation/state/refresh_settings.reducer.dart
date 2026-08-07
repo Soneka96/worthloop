@@ -62,6 +62,24 @@ refreshSettingsReducer = combineReducers<RefreshSettingsState>([
   TypedReducer<RefreshSettingsState, BrowserRefreshSaveFailedAction>(
     browserRefreshSaveFailedReducer,
   ).call,
+
+  /// Handles [SavePriceAlertsEnabledAction].
+  /// Updates [RefreshSettingsState.isSaving], [RefreshSettingsState.error].
+  TypedReducer<RefreshSettingsState, SavePriceAlertsEnabledAction>(
+    savePriceAlertsEnabledReducer,
+  ).call,
+
+  /// Handles [PriceAlertsEnabledSavedAction].
+  /// Updates [RefreshSettingsState.priceAlertsEnabled], [RefreshSettingsState.isSaving], [RefreshSettingsState.error].
+  TypedReducer<RefreshSettingsState, PriceAlertsEnabledSavedAction>(
+    priceAlertsEnabledSavedReducer,
+  ).call,
+
+  /// Handles [PriceAlertsSaveFailedAction].
+  /// Updates [RefreshSettingsState.isSaving], [RefreshSettingsState.error].
+  TypedReducer<RefreshSettingsState, PriceAlertsSaveFailedAction>(
+    priceAlertsSaveFailedReducer,
+  ).call,
 ]);
 
 /// Handles [LoadRefreshSettingsAction].
@@ -79,6 +97,7 @@ RefreshSettingsState refreshSettingsLoadedReducer(
 ) => state.copyWith(
   intervalMinutes: action.settings.intervalMinutes,
   browserRefreshEnabled: action.settings.browserRefreshEnabled,
+  priceAlertsEnabled: action.settings.priceAlertsEnabled,
   isLoading: false,
   error: const None(),
 );
@@ -138,4 +157,29 @@ RefreshSettingsState browserRefreshEnabledSavedReducer(
 RefreshSettingsState browserRefreshSaveFailedReducer(
   RefreshSettingsState state,
   BrowserRefreshSaveFailedAction action,
+) => state.copyWith(isSaving: false, error: Some(action.message));
+
+/// Handles [SavePriceAlertsEnabledAction].
+/// Updates [RefreshSettingsState.isSaving], [RefreshSettingsState.error].
+RefreshSettingsState savePriceAlertsEnabledReducer(
+  RefreshSettingsState state,
+  SavePriceAlertsEnabledAction action,
+) => state.copyWith(isSaving: true, error: const None());
+
+/// Handles [PriceAlertsEnabledSavedAction].
+/// Updates [RefreshSettingsState.priceAlertsEnabled], [RefreshSettingsState.isSaving], [RefreshSettingsState.error].
+RefreshSettingsState priceAlertsEnabledSavedReducer(
+  RefreshSettingsState state,
+  PriceAlertsEnabledSavedAction action,
+) => state.copyWith(
+  priceAlertsEnabled: action.enabled,
+  isSaving: false,
+  error: const None(),
+);
+
+/// Handles [PriceAlertsSaveFailedAction].
+/// Updates [RefreshSettingsState.isSaving], [RefreshSettingsState.error].
+RefreshSettingsState priceAlertsSaveFailedReducer(
+  RefreshSettingsState state,
+  PriceAlertsSaveFailedAction action,
 ) => state.copyWith(isSaving: false, error: Some(action.message));

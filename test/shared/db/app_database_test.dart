@@ -35,9 +35,9 @@ void main() {
       await db.close();
     });
 
-    test('AppDatabase.forTesting opens with schema version 7', () {
+    test('AppDatabase.forTesting opens with schema version 8', () {
       expect(db.schemaVersion, isA<int>());
-      expect(db.schemaVersion, 7);
+      expect(db.schemaVersion, 8);
     });
 
     test('AppDatabase.forTesting exposes the WorthLoop tables', () async {
@@ -82,7 +82,7 @@ void main() {
           .get();
       expect(
         refreshSettingsColumns.map((QueryRow row) => row.data['name']),
-        contains('browser_refresh_enabled'),
+        containsAll(['browser_refresh_enabled', 'price_alerts_enabled']),
       );
     });
 
@@ -284,6 +284,13 @@ void main() {
       expect(
         columns.map((QueryRow row) => row.data['name']),
         containsAll(['last_refresh_status', 'last_refresh_at']),
+      );
+      final List<QueryRow> refreshSettingsColumns = await migrated
+          .customSelect('PRAGMA table_info(refresh_settings_table)')
+          .get();
+      expect(
+        refreshSettingsColumns.map((QueryRow row) => row.data['name']),
+        contains('price_alerts_enabled'),
       );
       await migrated.close();
     });

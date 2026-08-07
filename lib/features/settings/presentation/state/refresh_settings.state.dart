@@ -15,6 +15,9 @@ class RefreshSettingsState extends Equatable {
   /// Whether browser-backed background refresh is enabled.
   final bool browserRefreshEnabled;
 
+  /// Whether product price-drop notifications are enabled.
+  final bool priceAlertsEnabled;
+
   /// Whether persisted settings are loading.
   final bool isLoading;
 
@@ -27,6 +30,7 @@ class RefreshSettingsState extends Equatable {
   const RefreshSettingsState({
     required this.intervalMinutes,
     required this.browserRefreshEnabled,
+    required this.priceAlertsEnabled,
     required this.isLoading,
     required this.isSaving,
     required this.error,
@@ -36,6 +40,7 @@ class RefreshSettingsState extends Equatable {
   factory RefreshSettingsState.initial() => const RefreshSettingsState(
     intervalMinutes: RefreshIntervalConstants.hourly,
     browserRefreshEnabled: false,
+    priceAlertsEnabled: false,
     isLoading: false,
     isSaving: false,
     error: null,
@@ -45,12 +50,14 @@ class RefreshSettingsState extends Equatable {
   RefreshSettingsState copyWith({
     int? intervalMinutes,
     bool? browserRefreshEnabled,
+    bool? priceAlertsEnabled,
     bool? isLoading,
     bool? isSaving,
     Option<String>? error,
   }) => RefreshSettingsState(
     intervalMinutes: intervalMinutes ?? this.intervalMinutes,
     browserRefreshEnabled: browserRefreshEnabled ?? this.browserRefreshEnabled,
+    priceAlertsEnabled: priceAlertsEnabled ?? this.priceAlertsEnabled,
     isLoading: isLoading ?? this.isLoading,
     isSaving: isSaving ?? this.isSaving,
     error: error == null ? this.error : error.toNullable(),
@@ -60,6 +67,7 @@ class RefreshSettingsState extends Equatable {
   List<Object?> get props => [
     intervalMinutes,
     browserRefreshEnabled,
+    priceAlertsEnabled,
     isLoading,
     isSaving,
     error,

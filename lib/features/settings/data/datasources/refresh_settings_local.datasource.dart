@@ -50,6 +50,7 @@ class RefreshSettingsLocalDatasource {
       final RefreshSettingsModel model = RefreshSettingsModel(
         intervalMinutes: intervalMinutes,
         browserRefreshEnabled: existing?.browserRefreshEnabled ?? false,
+        priceAlertsEnabled: existing?.priceAlertsEnabled ?? false,
       );
       await _db
           .into(_db.refreshSettingsTable)
@@ -73,6 +74,31 @@ class RefreshSettingsLocalDatasource {
         intervalMinutes:
             existing?.intervalMinutes ?? RefreshIntervalConstants.hourly,
         browserRefreshEnabled: enabled,
+        priceAlertsEnabled: existing?.priceAlertsEnabled ?? false,
+      );
+      await _db
+          .into(_db.refreshSettingsTable)
+          .insertOnConflictUpdate(model.toCompanion());
+      return Right(model);
+    } on SqliteException catch (error) {
+      sl<LoggerService>().e(error.toString());
+      return Left(DatabaseFailure(error.toString()));
+    }
+  }
+
+  /// Persists whether product price-drop notifications are enabled.
+  Future<Either<Failure, RefreshSettingsModel>> savePriceAlertsEnabled(
+    bool enabled,
+  ) async {
+    try {
+      final RefreshSettingsRow? existing = await (_db.select(
+        _db.refreshSettingsTable,
+      )..where((table) => table.id.equals(1))).getSingleOrNull();
+      final RefreshSettingsModel model = RefreshSettingsModel(
+        intervalMinutes:
+            existing?.intervalMinutes ?? RefreshIntervalConstants.hourly,
+        browserRefreshEnabled: existing?.browserRefreshEnabled ?? false,
+        priceAlertsEnabled: enabled,
       );
       await _db
           .into(_db.refreshSettingsTable)

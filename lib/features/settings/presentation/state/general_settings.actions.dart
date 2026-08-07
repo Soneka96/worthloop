@@ -128,6 +128,42 @@ class BrowserRefreshSaveFailedAction extends Equatable {
   List<Object?> get props => [message];
 }
 
+/// Requests persisting the price-alert preference.
+@immutable
+class SavePriceAlertsEnabledAction extends Equatable {
+  /// Whether product price-drop notifications should be enabled.
+  final bool enabled;
+
+  const SavePriceAlertsEnabledAction(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+/// Carries a persisted price-alert preference.
+@immutable
+class PriceAlertsEnabledSavedAction extends Equatable {
+  /// Whether product price-drop notifications are enabled.
+  final bool enabled;
+
+  const PriceAlertsEnabledSavedAction(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+/// Carries a price-alert preference persistence failure.
+@immutable
+class PriceAlertsSaveFailedAction extends Equatable {
+  /// Failure message.
+  final String message;
+
+  const PriceAlertsSaveFailedAction(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
 /// Requests opening Android's background-restriction settings.
 @immutable
 class OpenBackgroundRestrictionsAction extends Equatable {

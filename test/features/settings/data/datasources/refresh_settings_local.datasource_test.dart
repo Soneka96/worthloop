@@ -47,6 +47,8 @@ void main() {
       expect(rows.single.intervalMinutes, 60);
       expect(rows.single.browserRefreshEnabled, isA<bool>());
       expect(rows.single.browserRefreshEnabled, isFalse);
+      expect(rows.single.priceAlertsEnabled, isA<bool>());
+      expect(rows.single.priceAlertsEnabled, isFalse);
       verifyZeroInteractions(mockLoggerService);
     });
 
@@ -63,6 +65,7 @@ void main() {
           RefreshSettingsModel(
             intervalMinutes: 180,
             browserRefreshEnabled: true,
+            priceAlertsEnabled: false,
           ),
         ),
       );
@@ -104,6 +107,7 @@ void main() {
       expect(row.intervalMinutes, 360);
       expect(row.browserRefreshEnabled, isA<bool>());
       expect(row.browserRefreshEnabled, isFalse);
+      expect(row.priceAlertsEnabled, isFalse);
       verifyZeroInteractions(mockLoggerService);
     });
 
@@ -143,6 +147,7 @@ void main() {
           RefreshSettingsModel(
             intervalMinutes: 180,
             browserRefreshEnabled: true,
+            priceAlertsEnabled: false,
           ),
         ),
       );
@@ -162,6 +167,53 @@ void main() {
           (Failure failure) => failure,
           (_) =>
               throw StateError('Expected saveBrowserRefreshEnabled() to fail'),
+        );
+
+        expect(result.isLeft(), isA<bool>());
+        expect(result.isLeft(), isTrue);
+        verify(() => mockLoggerService.e(failure.message)).called(1);
+        verifyNoMoreInteractions(mockLoggerService);
+      },
+    );
+  });
+
+  group('Method savePriceAlertsEnabled() returns the correct value', () {
+    test('savePriceAlertsEnabled() preserves the other preferences', () async {
+      await datasource.saveInterval(180);
+      await datasource.saveBrowserRefreshEnabled(true);
+
+      final Either<Failure, RefreshSettingsModel> result = await datasource
+          .savePriceAlertsEnabled(true);
+      final RefreshSettingsRow row = await db
+          .select(db.refreshSettingsTable)
+          .getSingle();
+
+      expect(
+        result,
+        const Right(
+          RefreshSettingsModel(
+            intervalMinutes: 180,
+            browserRefreshEnabled: true,
+            priceAlertsEnabled: true,
+          ),
+        ),
+      );
+      expect(row.intervalMinutes, 180);
+      expect(row.browserRefreshEnabled, isTrue);
+      expect(row.priceAlertsEnabled, isTrue);
+      verifyZeroInteractions(mockLoggerService);
+    });
+
+    test(
+      'savePriceAlertsEnabled() returns Left(DatabaseFailure) when table is missing',
+      () async {
+        await db.customStatement('DROP TABLE refresh_settings_table');
+
+        final Either<Failure, RefreshSettingsModel> result = await datasource
+            .savePriceAlertsEnabled(true);
+        final Failure failure = result.fold(
+          (Failure failure) => failure,
+          (_) => throw StateError('Expected savePriceAlertsEnabled() to fail'),
         );
 
         expect(result.isLeft(), isA<bool>());

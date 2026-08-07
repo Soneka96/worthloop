@@ -1517,11 +1517,26 @@ class $RefreshSettingsTableTable extends RefreshSettingsTable
         ),
         defaultValue: const Constant(false),
       );
+  static const VerificationMeta _priceAlertsEnabledMeta =
+      const VerificationMeta('priceAlertsEnabled');
+  @override
+  late final GeneratedColumn<bool> priceAlertsEnabled = GeneratedColumn<bool>(
+    'price_alerts_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("price_alerts_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
     intervalMinutes,
     browserRefreshEnabled,
+    priceAlertsEnabled,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1556,6 +1571,15 @@ class $RefreshSettingsTableTable extends RefreshSettingsTable
         ),
       );
     }
+    if (data.containsKey('price_alerts_enabled')) {
+      context.handle(
+        _priceAlertsEnabledMeta,
+        priceAlertsEnabled.isAcceptableOrUnknown(
+          data['price_alerts_enabled']!,
+          _priceAlertsEnabledMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1577,6 +1601,10 @@ class $RefreshSettingsTableTable extends RefreshSettingsTable
         DriftSqlType.bool,
         data['${effectivePrefix}browser_refresh_enabled'],
       )!,
+      priceAlertsEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}price_alerts_enabled'],
+      )!,
     );
   }
 
@@ -1596,10 +1624,14 @@ class RefreshSettingsRow extends DataClass
 
   /// Whether browser-backed background refresh is enabled.
   final bool browserRefreshEnabled;
+
+  /// Whether product price-drop notifications are enabled.
+  final bool priceAlertsEnabled;
   const RefreshSettingsRow({
     required this.id,
     required this.intervalMinutes,
     required this.browserRefreshEnabled,
+    required this.priceAlertsEnabled,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1607,6 +1639,7 @@ class RefreshSettingsRow extends DataClass
     map['id'] = Variable<int>(id);
     map['interval_minutes'] = Variable<int>(intervalMinutes);
     map['browser_refresh_enabled'] = Variable<bool>(browserRefreshEnabled);
+    map['price_alerts_enabled'] = Variable<bool>(priceAlertsEnabled);
     return map;
   }
 
@@ -1615,6 +1648,7 @@ class RefreshSettingsRow extends DataClass
       id: Value(id),
       intervalMinutes: Value(intervalMinutes),
       browserRefreshEnabled: Value(browserRefreshEnabled),
+      priceAlertsEnabled: Value(priceAlertsEnabled),
     );
   }
 
@@ -1629,6 +1663,7 @@ class RefreshSettingsRow extends DataClass
       browserRefreshEnabled: serializer.fromJson<bool>(
         json['browserRefreshEnabled'],
       ),
+      priceAlertsEnabled: serializer.fromJson<bool>(json['priceAlertsEnabled']),
     );
   }
   @override
@@ -1638,6 +1673,7 @@ class RefreshSettingsRow extends DataClass
       'id': serializer.toJson<int>(id),
       'intervalMinutes': serializer.toJson<int>(intervalMinutes),
       'browserRefreshEnabled': serializer.toJson<bool>(browserRefreshEnabled),
+      'priceAlertsEnabled': serializer.toJson<bool>(priceAlertsEnabled),
     };
   }
 
@@ -1645,10 +1681,12 @@ class RefreshSettingsRow extends DataClass
     int? id,
     int? intervalMinutes,
     bool? browserRefreshEnabled,
+    bool? priceAlertsEnabled,
   }) => RefreshSettingsRow(
     id: id ?? this.id,
     intervalMinutes: intervalMinutes ?? this.intervalMinutes,
     browserRefreshEnabled: browserRefreshEnabled ?? this.browserRefreshEnabled,
+    priceAlertsEnabled: priceAlertsEnabled ?? this.priceAlertsEnabled,
   );
   RefreshSettingsRow copyWithCompanion(RefreshSettingsTableCompanion data) {
     return RefreshSettingsRow(
@@ -1659,6 +1697,9 @@ class RefreshSettingsRow extends DataClass
       browserRefreshEnabled: data.browserRefreshEnabled.present
           ? data.browserRefreshEnabled.value
           : this.browserRefreshEnabled,
+      priceAlertsEnabled: data.priceAlertsEnabled.present
+          ? data.priceAlertsEnabled.value
+          : this.priceAlertsEnabled,
     );
   }
 
@@ -1667,20 +1708,27 @@ class RefreshSettingsRow extends DataClass
     return (StringBuffer('RefreshSettingsRow(')
           ..write('id: $id, ')
           ..write('intervalMinutes: $intervalMinutes, ')
-          ..write('browserRefreshEnabled: $browserRefreshEnabled')
+          ..write('browserRefreshEnabled: $browserRefreshEnabled, ')
+          ..write('priceAlertsEnabled: $priceAlertsEnabled')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, intervalMinutes, browserRefreshEnabled);
+  int get hashCode => Object.hash(
+    id,
+    intervalMinutes,
+    browserRefreshEnabled,
+    priceAlertsEnabled,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is RefreshSettingsRow &&
           other.id == this.id &&
           other.intervalMinutes == this.intervalMinutes &&
-          other.browserRefreshEnabled == this.browserRefreshEnabled);
+          other.browserRefreshEnabled == this.browserRefreshEnabled &&
+          other.priceAlertsEnabled == this.priceAlertsEnabled);
 }
 
 class RefreshSettingsTableCompanion
@@ -1688,26 +1736,32 @@ class RefreshSettingsTableCompanion
   final Value<int> id;
   final Value<int> intervalMinutes;
   final Value<bool> browserRefreshEnabled;
+  final Value<bool> priceAlertsEnabled;
   const RefreshSettingsTableCompanion({
     this.id = const Value.absent(),
     this.intervalMinutes = const Value.absent(),
     this.browserRefreshEnabled = const Value.absent(),
+    this.priceAlertsEnabled = const Value.absent(),
   });
   RefreshSettingsTableCompanion.insert({
     this.id = const Value.absent(),
     this.intervalMinutes = const Value.absent(),
     this.browserRefreshEnabled = const Value.absent(),
+    this.priceAlertsEnabled = const Value.absent(),
   });
   static Insertable<RefreshSettingsRow> custom({
     Expression<int>? id,
     Expression<int>? intervalMinutes,
     Expression<bool>? browserRefreshEnabled,
+    Expression<bool>? priceAlertsEnabled,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (intervalMinutes != null) 'interval_minutes': intervalMinutes,
       if (browserRefreshEnabled != null)
         'browser_refresh_enabled': browserRefreshEnabled,
+      if (priceAlertsEnabled != null)
+        'price_alerts_enabled': priceAlertsEnabled,
     });
   }
 
@@ -1715,12 +1769,14 @@ class RefreshSettingsTableCompanion
     Value<int>? id,
     Value<int>? intervalMinutes,
     Value<bool>? browserRefreshEnabled,
+    Value<bool>? priceAlertsEnabled,
   }) {
     return RefreshSettingsTableCompanion(
       id: id ?? this.id,
       intervalMinutes: intervalMinutes ?? this.intervalMinutes,
       browserRefreshEnabled:
           browserRefreshEnabled ?? this.browserRefreshEnabled,
+      priceAlertsEnabled: priceAlertsEnabled ?? this.priceAlertsEnabled,
     );
   }
 
@@ -1738,6 +1794,9 @@ class RefreshSettingsTableCompanion
         browserRefreshEnabled.value,
       );
     }
+    if (priceAlertsEnabled.present) {
+      map['price_alerts_enabled'] = Variable<bool>(priceAlertsEnabled.value);
+    }
     return map;
   }
 
@@ -1746,7 +1805,8 @@ class RefreshSettingsTableCompanion
     return (StringBuffer('RefreshSettingsTableCompanion(')
           ..write('id: $id, ')
           ..write('intervalMinutes: $intervalMinutes, ')
-          ..write('browserRefreshEnabled: $browserRefreshEnabled')
+          ..write('browserRefreshEnabled: $browserRefreshEnabled, ')
+          ..write('priceAlertsEnabled: $priceAlertsEnabled')
           ..write(')'))
         .toString();
   }
@@ -2675,12 +2735,14 @@ typedef $$RefreshSettingsTableTableCreateCompanionBuilder =
       Value<int> id,
       Value<int> intervalMinutes,
       Value<bool> browserRefreshEnabled,
+      Value<bool> priceAlertsEnabled,
     });
 typedef $$RefreshSettingsTableTableUpdateCompanionBuilder =
     RefreshSettingsTableCompanion Function({
       Value<int> id,
       Value<int> intervalMinutes,
       Value<bool> browserRefreshEnabled,
+      Value<bool> priceAlertsEnabled,
     });
 
 class $$RefreshSettingsTableTableFilterComposer
@@ -2704,6 +2766,11 @@ class $$RefreshSettingsTableTableFilterComposer
 
   ColumnFilters<bool> get browserRefreshEnabled => $composableBuilder(
     column: $table.browserRefreshEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get priceAlertsEnabled => $composableBuilder(
+    column: $table.priceAlertsEnabled,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2731,6 +2798,11 @@ class $$RefreshSettingsTableTableOrderingComposer
     column: $table.browserRefreshEnabled,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get priceAlertsEnabled => $composableBuilder(
+    column: $table.priceAlertsEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$RefreshSettingsTableTableAnnotationComposer
@@ -2752,6 +2824,11 @@ class $$RefreshSettingsTableTableAnnotationComposer
 
   GeneratedColumn<bool> get browserRefreshEnabled => $composableBuilder(
     column: $table.browserRefreshEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get priceAlertsEnabled => $composableBuilder(
+    column: $table.priceAlertsEnabled,
     builder: (column) => column,
   );
 }
@@ -2802,20 +2879,24 @@ class $$RefreshSettingsTableTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<int> intervalMinutes = const Value.absent(),
                 Value<bool> browserRefreshEnabled = const Value.absent(),
+                Value<bool> priceAlertsEnabled = const Value.absent(),
               }) => RefreshSettingsTableCompanion(
                 id: id,
                 intervalMinutes: intervalMinutes,
                 browserRefreshEnabled: browserRefreshEnabled,
+                priceAlertsEnabled: priceAlertsEnabled,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 Value<int> intervalMinutes = const Value.absent(),
                 Value<bool> browserRefreshEnabled = const Value.absent(),
+                Value<bool> priceAlertsEnabled = const Value.absent(),
               }) => RefreshSettingsTableCompanion.insert(
                 id: id,
                 intervalMinutes: intervalMinutes,
                 browserRefreshEnabled: browserRefreshEnabled,
+                priceAlertsEnabled: priceAlertsEnabled,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

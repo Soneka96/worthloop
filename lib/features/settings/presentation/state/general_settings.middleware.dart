@@ -7,6 +7,8 @@ import 'package:worth_loop/features/settings/domain/usecases/load_refresh_settin
 import 'package:worth_loop/features/settings/domain/usecases/params/save_browser_refresh_enabled.params.dart';
 import 'package:worth_loop/features/settings/domain/usecases/params/save_refresh_interval.params.dart';
 import 'package:worth_loop/features/settings/domain/usecases/save_browser_refresh_enabled.usecase.dart';
+import 'package:worth_loop/features/settings/domain/usecases/params/save_price_alerts_enabled.params.dart';
+import 'package:worth_loop/features/settings/domain/usecases/save_price_alerts_enabled.usecase.dart';
 import 'package:worth_loop/features/settings/domain/usecases/save_refresh_interval.usecase.dart';
 import 'package:worth_loop/features/settings/presentation/state/general_settings.actions.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
@@ -34,6 +36,8 @@ class GeneralSettingsMiddleware extends MiddlewareClass<AppState> {
         _saveRefreshInterval(store, action);
       case SaveBrowserRefreshEnabledAction _:
         _saveBrowserRefreshEnabled(store, action);
+      case SavePriceAlertsEnabledAction _:
+        _savePriceAlertsEnabled(store, action);
       case OpenBackgroundRestrictionsAction _:
         _openBackgroundRestrictions();
     }
@@ -105,6 +109,26 @@ class GeneralSettingsMiddleware extends MiddlewareClass<AppState> {
         _syncBackgroundRefreshService(settings.browserRefreshEnabled);
         store.dispatch(
           BrowserRefreshEnabledSavedAction(settings.browserRefreshEnabled),
+        );
+      },
+    );
+  }
+
+  /// Handles [SavePriceAlertsEnabledAction].
+  Future<void> _savePriceAlertsEnabled(
+    Store<AppState> store,
+    SavePriceAlertsEnabledAction action,
+  ) async {
+    (await sl<SavePriceAlertsEnabledUseCase>()(
+      SavePriceAlertsEnabledParams(enabled: action.enabled),
+    )).fold(
+      (failure) {
+        sl<LoggerService>().e(failure.message, showPopup: true);
+        store.dispatch(PriceAlertsSaveFailedAction(failure.message));
+      },
+      (RefreshSettings settings) {
+        store.dispatch(
+          PriceAlertsEnabledSavedAction(settings.priceAlertsEnabled),
         );
       },
     );

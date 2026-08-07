@@ -14,6 +14,10 @@ class RefreshSettingsTable extends Table {
   BoolColumn get browserRefreshEnabled =>
       boolean().withDefault(const Constant(false))();
 
+  /// Whether product price-drop notifications are enabled.
+  BoolColumn get priceAlertsEnabled =>
+      boolean().withDefault(const Constant(false))();
+
   @override
   Set<Column> get primaryKey => {id};
 

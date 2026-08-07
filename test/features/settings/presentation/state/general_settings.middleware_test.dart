@@ -7,8 +7,10 @@ import 'package:redux/redux.dart';
 // Project imports:
 import 'package:worth_loop/features/settings/domain/usecases/load_refresh_settings.usecase.dart';
 import 'package:worth_loop/features/settings/domain/usecases/params/save_browser_refresh_enabled.params.dart';
+import 'package:worth_loop/features/settings/domain/usecases/params/save_price_alerts_enabled.params.dart';
 import 'package:worth_loop/features/settings/domain/usecases/params/save_refresh_interval.params.dart';
 import 'package:worth_loop/features/settings/domain/usecases/save_browser_refresh_enabled.usecase.dart';
+import 'package:worth_loop/features/settings/domain/usecases/save_price_alerts_enabled.usecase.dart';
 import 'package:worth_loop/features/settings/domain/usecases/save_refresh_interval.usecase.dart';
 import 'package:worth_loop/features/settings/presentation/state/general_settings.actions.dart';
 import 'package:worth_loop/features/settings/presentation/state/general_settings.middleware.dart';
@@ -35,6 +37,9 @@ class MockSaveRefreshIntervalUseCase extends Mock
 class MockSaveBrowserRefreshEnabledUseCase extends Mock
     implements SaveBrowserRefreshEnabledUseCase {}
 
+class MockSavePriceAlertsEnabledUseCase extends Mock
+    implements SavePriceAlertsEnabledUseCase {}
+
 class MockAndroidBackgroundCapabilitiesService extends Mock
     implements AndroidBackgroundCapabilitiesService {}
 
@@ -47,6 +52,9 @@ class FakeSaveRefreshIntervalParams extends Fake
 class FakeSaveBrowserRefreshEnabledParams extends Fake
     implements SaveBrowserRefreshEnabledParams {}
 
+class FakeSavePriceAlertsEnabledParams extends Fake
+    implements SavePriceAlertsEnabledParams {}
+
 void main() {
   late List<dynamic> actionLog;
   late GeneralSettingsMiddleware middleware;
@@ -55,6 +63,7 @@ void main() {
   late MockLoadRefreshSettingsUseCase mockLoadUseCase;
   late MockSaveRefreshIntervalUseCase mockSaveUseCase;
   late MockSaveBrowserRefreshEnabledUseCase mockSaveBrowserRefreshUseCase;
+  late MockSavePriceAlertsEnabledUseCase mockSavePriceAlertsUseCase;
   late MockAndroidBackgroundCapabilitiesService mockCapabilitiesService;
   late MockAndroidBackgroundRefreshService mockBackgroundRefreshService;
 
@@ -64,6 +73,7 @@ void main() {
     registerFallbackValue(NoParams());
     registerFallbackValue(FakeSaveRefreshIntervalParams());
     registerFallbackValue(FakeSaveBrowserRefreshEnabledParams());
+    registerFallbackValue(FakeSavePriceAlertsEnabledParams());
   });
 
   setUp(() {
@@ -74,6 +84,7 @@ void main() {
     mockLoadUseCase = MockLoadRefreshSettingsUseCase();
     mockSaveUseCase = MockSaveRefreshIntervalUseCase();
     mockSaveBrowserRefreshUseCase = MockSaveBrowserRefreshEnabledUseCase();
+    mockSavePriceAlertsUseCase = MockSavePriceAlertsEnabledUseCase();
     mockCapabilitiesService = MockAndroidBackgroundCapabilitiesService();
     mockBackgroundRefreshService = MockAndroidBackgroundRefreshService();
     when(() => mockStore.dispatch(any())).thenAnswer(
@@ -85,6 +96,9 @@ void main() {
     sl.registerSingleton<SaveRefreshIntervalUseCase>(mockSaveUseCase);
     sl.registerSingleton<SaveBrowserRefreshEnabledUseCase>(
       mockSaveBrowserRefreshUseCase,
+    );
+    sl.registerSingleton<SavePriceAlertsEnabledUseCase>(
+      mockSavePriceAlertsUseCase,
     );
     sl.registerSingleton<AndroidBackgroundCapabilitiesService>(
       mockCapabilitiesService,
@@ -240,6 +254,55 @@ void main() {
     });
   });
 
+  group('GeneralSettingsMiddleware processes SavePriceAlertsEnabledAction', () {
+    test('dispatches PriceAlertsEnabledSavedAction when successful', () async {
+      when(() => mockSavePriceAlertsUseCase(any())).thenAnswer(
+        (_) async => Right(buildRefreshSettings(priceAlertsEnabled: true)),
+      );
+
+      middleware.call(
+        mockStore,
+        const SavePriceAlertsEnabledAction(true),
+        next,
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(actionLog[0], isA<SavePriceAlertsEnabledAction>());
+      expect(actionLog[1], const PriceAlertsEnabledSavedAction(true));
+      verify(
+        () => mockSavePriceAlertsUseCase(
+          const SavePriceAlertsEnabledParams(enabled: true),
+        ),
+      ).called(1);
+      verifyNoMoreInteractions(mockSavePriceAlertsUseCase);
+      verifyZeroInteractions(mockLoggerService);
+    });
+
+    test('dispatches PriceAlertsSaveFailedAction when failed', () async {
+      const DatabaseFailure failure = DatabaseFailure('failed');
+      when(
+        () => mockSavePriceAlertsUseCase(any()),
+      ).thenAnswer((_) async => const Left(failure));
+
+      middleware.call(
+        mockStore,
+        const SavePriceAlertsEnabledAction(false),
+        next,
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(actionLog[1], const PriceAlertsSaveFailedAction('failed'));
+      verify(
+        () => mockSavePriceAlertsUseCase(
+          const SavePriceAlertsEnabledParams(enabled: false),
+        ),
+      ).called(1);
+      verifyNoMoreInteractions(mockSavePriceAlertsUseCase);
+      verify(() => mockLoggerService.e('failed', showPopup: true)).called(1);
+      verifyNoMoreInteractions(mockLoggerService);
+    });
+  });
+
   group(
     'GeneralSettingsMiddleware processes SaveBrowserRefreshEnabledAction',
     () {
@@ -298,6 +361,54 @@ void main() {
         verifyNever(() => mockBackgroundRefreshService.start());
         verifyNoMoreInteractions(mockBackgroundRefreshService);
         verify(() => mockLoggerService.e('failed', showPopup: true)).called(1);
+        verifyNoMoreInteractions(mockLoggerService);
+      });
+
+      test('stops background refresh when disabled successfully', () async {
+        when(() => mockSaveBrowserRefreshUseCase(any())).thenAnswer(
+          (_) async =>
+              Right(buildRefreshSettings(browserRefreshEnabled: false)),
+        );
+        when(
+          () => mockBackgroundRefreshService.stop(),
+        ).thenAnswer((_) async => true);
+
+        middleware.call(
+          mockStore,
+          const SaveBrowserRefreshEnabledAction(false),
+          next,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(actionLog[1], const BrowserRefreshEnabledSavedAction(false));
+        verify(() => mockBackgroundRefreshService.stop()).called(1);
+        verifyNoMoreInteractions(mockBackgroundRefreshService);
+        verifyZeroInteractions(mockLoggerService);
+      });
+
+      test('warns when background refresh cannot start', () async {
+        when(() => mockSaveBrowserRefreshUseCase(any())).thenAnswer(
+          (_) async => Right(buildRefreshSettings(browserRefreshEnabled: true)),
+        );
+        when(
+          () => mockBackgroundRefreshService.start(),
+        ).thenAnswer((_) async => false);
+
+        middleware.call(
+          mockStore,
+          const SaveBrowserRefreshEnabledAction(true),
+          next,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        verify(() => mockBackgroundRefreshService.start()).called(1);
+        verify(
+          () => mockLoggerService.w(
+            'Background browser refresh could not start yet',
+            showPopup: true,
+          ),
+        ).called(1);
+        verifyNoMoreInteractions(mockBackgroundRefreshService);
         verifyNoMoreInteractions(mockLoggerService);
       });
     },

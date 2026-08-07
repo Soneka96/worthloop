@@ -22,4 +22,22 @@ void main() {
       expect(const BrowserRefreshSaveFailedAction('failed').props, ['failed']);
     });
   });
+
+  group('General settings price-alert actions', () {
+    test('SavePriceAlertsEnabledAction includes enabled', () {
+      expect(const SavePriceAlertsEnabledAction(true).props, [true]);
+      expect(
+        const SavePriceAlertsEnabledAction(true),
+        isNot(const SavePriceAlertsEnabledAction(false)),
+      );
+    });
+
+    test('PriceAlertsEnabledSavedAction includes enabled', () {
+      expect(const PriceAlertsEnabledSavedAction(true).props, [true]);
+    });
+
+    test('PriceAlertsSaveFailedAction includes message', () {
+      expect(const PriceAlertsSaveFailedAction('failed').props, ['failed']);
+    });
+  });
 }

@@ -76,4 +76,23 @@ void main() {
       );
     });
   });
+
+  group('Method priceAlertsEnabledSelector() returns a bool instance', () {
+    test('priceAlertsEnabledSelector() returns the preference', () {
+      final AppState state = AppState.initial().copyWith(
+        refreshSettings: RefreshSettingsState.initial().copyWith(
+          priceAlertsEnabled: true,
+        ),
+      );
+
+      expect(
+        RefreshSettingsSelectors.priceAlertsEnabledSelector(state),
+        isA<bool>(),
+      );
+      expect(
+        RefreshSettingsSelectors.priceAlertsEnabledSelector(state),
+        isTrue,
+      );
+    });
+  });
 }

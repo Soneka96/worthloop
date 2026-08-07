@@ -11,6 +11,7 @@ class RefreshSettingsModel extends RefreshSettings {
   const RefreshSettingsModel({
     required super.intervalMinutes,
     super.browserRefreshEnabled,
+    super.priceAlertsEnabled,
   });
 
   /// Builds a [RefreshSettingsModel] from a persisted row.
@@ -18,6 +19,7 @@ class RefreshSettingsModel extends RefreshSettings {
       RefreshSettingsModel(
         intervalMinutes: row.intervalMinutes,
         browserRefreshEnabled: row.browserRefreshEnabled,
+        priceAlertsEnabled: row.priceAlertsEnabled,
       );
 
   /// Encodes these settings as a drift companion.
@@ -25,5 +27,6 @@ class RefreshSettingsModel extends RefreshSettings {
     id: const Value(1),
     intervalMinutes: Value(intervalMinutes),
     browserRefreshEnabled: Value(browserRefreshEnabled),
+    priceAlertsEnabled: Value(priceAlertsEnabled),
   );
 }

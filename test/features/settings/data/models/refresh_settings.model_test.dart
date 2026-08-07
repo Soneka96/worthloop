@@ -23,6 +23,7 @@ void main() {
         id: 1,
         intervalMinutes: 180,
         browserRefreshEnabled: true,
+        priceAlertsEnabled: true,
       );
 
       final RefreshSettingsModel model = RefreshSettingsModel.fromRow(row);
@@ -32,6 +33,7 @@ void main() {
       expect(model.intervalMinutes, 180);
       expect(model.browserRefreshEnabled, isA<bool>());
       expect(model.browserRefreshEnabled, isTrue);
+      expect(model.priceAlertsEnabled, isTrue);
     });
 
     test('Method toCompanion() should return persisted values', () {
@@ -45,6 +47,7 @@ void main() {
       expect(companion.intervalMinutes.value, 360);
       expect(companion.browserRefreshEnabled.value, isA<bool>());
       expect(companion.browserRefreshEnabled.value, isFalse);
+      expect(companion.priceAlertsEnabled.value, isFalse);
     });
   });
 }

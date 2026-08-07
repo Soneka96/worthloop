@@ -141,4 +141,46 @@ void main() {
       );
     },
   );
+
+  group(
+    'RefreshSettingsRepository implements savePriceAlertsEnabled() correctly',
+    () {
+      test(
+        'Method savePriceAlertsEnabled() calls datasource savePriceAlertsEnabled()',
+        () async {
+          when(() => mockDatasource.savePriceAlertsEnabled(true)).thenAnswer(
+            (_) async =>
+                Right(buildRefreshSettingsModel(priceAlertsEnabled: true)),
+          );
+
+          final Either<Failure, RefreshSettings> result = await repository
+              .savePriceAlertsEnabled(true);
+
+          expect(
+            result,
+            Right(buildRefreshSettingsModel(priceAlertsEnabled: true)),
+          );
+          verify(() => mockDatasource.savePriceAlertsEnabled(true)).called(1);
+          verifyNoMoreInteractions(mockDatasource);
+        },
+      );
+
+      test(
+        'Method savePriceAlertsEnabled() returns datasource failures',
+        () async {
+          const DatabaseFailure failure = DatabaseFailure('failed');
+          when(
+            () => mockDatasource.savePriceAlertsEnabled(false),
+          ).thenAnswer((_) async => const Left(failure));
+
+          final Either<Failure, RefreshSettings> result = await repository
+              .savePriceAlertsEnabled(false);
+
+          expect(result, const Left(failure));
+          verify(() => mockDatasource.savePriceAlertsEnabled(false)).called(1);
+          verifyNoMoreInteractions(mockDatasource);
+        },
+      );
+    },
+  );
 }

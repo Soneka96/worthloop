@@ -11,6 +11,10 @@ abstract final class RefreshSettingsSelectors {
   static bool browserRefreshEnabledSelector(AppState state) =>
       state.refreshSettings.browserRefreshEnabled;
 
+  /// Returns whether product price-drop notifications are enabled.
+  static bool priceAlertsEnabledSelector(AppState state) =>
+      state.refreshSettings.priceAlertsEnabled;
+
   /// Returns whether refresh settings are loading or saving.
   static bool isBusySelector(AppState state) =>
       state.refreshSettings.isLoading || state.refreshSettings.isSaving;

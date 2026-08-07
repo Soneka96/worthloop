@@ -33,6 +33,8 @@ void main() {
           expect(viewmodel.refreshIntervalMinutes, 60);
           expect(viewmodel.browserRefreshEnabled, isA<bool>());
           expect(viewmodel.browserRefreshEnabled, isFalse);
+          expect(viewmodel.priceAlertsEnabled, isA<bool>());
+          expect(viewmodel.priceAlertsEnabled, isFalse);
           expect(viewmodel.isRefreshIntervalBusy, isA<bool>());
           expect(viewmodel.isRefreshIntervalBusy, isFalse);
           expect(viewmodel.onCheckForUpdates, isA<Function()>());
@@ -43,6 +45,10 @@ void main() {
           );
           expect(
             viewmodel.onBrowserRefreshEnabledChanged,
+            isA<void Function(bool)>(),
+          );
+          expect(
+            viewmodel.onPriceAlertsEnabledChanged,
             isA<void Function(bool)>(),
           );
           expect(viewmodel.onOpenBackgroundRestrictions, isA<Function()>());
@@ -84,6 +90,18 @@ void main() {
           expect(dispatchedActions, [
             const SaveBrowserRefreshEnabledAction(true),
           ]);
+        },
+      );
+
+      test(
+        'Method onPriceAlertsEnabledChanged dispatches SavePriceAlertsEnabledAction when called',
+        () {
+          final GeneralSettingsScreenViewModel viewmodel =
+              GeneralSettingsScreenViewModel.fromStore(store);
+
+          viewmodel.onPriceAlertsEnabledChanged(true);
+
+          expect(dispatchedActions, [const SavePriceAlertsEnabledAction(true)]);
         },
       );
 

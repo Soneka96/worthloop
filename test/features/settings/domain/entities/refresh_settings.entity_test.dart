@@ -7,16 +7,21 @@ import '../../fixtures/refresh_settings.fixture.dart';
 
 void main() {
   group('RefreshSettings equality', () {
-    test('includes intervalMinutes and browserRefreshEnabled', () {
+    test('includes all refresh preferences', () {
       final RefreshSettings refreshSettings = buildRefreshSettings(
         intervalMinutes: 180,
         browserRefreshEnabled: true,
+        priceAlertsEnabled: true,
       );
 
-      expect(refreshSettings.props, [180, true]);
+      expect(refreshSettings.props, [180, true, true]);
       expect(
         refreshSettings,
-        buildRefreshSettings(intervalMinutes: 180, browserRefreshEnabled: true),
+        buildRefreshSettings(
+          intervalMinutes: 180,
+          browserRefreshEnabled: true,
+          priceAlertsEnabled: true,
+        ),
       );
       expect(
         refreshSettings,
@@ -24,6 +29,7 @@ void main() {
           buildRefreshSettings(
             intervalMinutes: 180,
             browserRefreshEnabled: false,
+            priceAlertsEnabled: true,
           ),
         ),
       );
