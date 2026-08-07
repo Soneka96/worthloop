@@ -2,6 +2,9 @@ appTitle: WorthLoop
 
 common:
   cancel: Cancel
+  refreshSuccessful: Refresh successful
+  refreshCompletedWithErrors: Refresh completed with errors
+  refreshFailed: Refresh failed
 
 home:
   subtitle: Your watchlist, with the best current offer first.

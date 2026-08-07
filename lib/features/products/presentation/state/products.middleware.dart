@@ -144,7 +144,7 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
         ),
       )).fold(
         (failure) async {
-          sl<LoggerService>().e(failure.message, showPopup: true);
+          sl<LoggerService>().e(failure.message);
           if (sourceIds.isNotEmpty) {
             final Either<Failure, List<Product>> productsResult =
                 await sl<LoadProductsUseCase>()(NoParams());
@@ -168,7 +168,6 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
         sourceCount: sourceIds.length,
         completedCount: completedCount,
         failedCount: failedCount,
-        isGlobal: false,
       );
     } finally {
       store.dispatch(const SourceRefreshFinishedAction());
@@ -186,6 +185,7 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
     }
     _refreshInProgress = true;
     int completedCount = 0;
+    int failedCount = 0;
     store.dispatch(SourceRefreshStartedAction([action.sourceId]));
     try {
       await (await sl<RefreshSourceUseCase>()(
@@ -195,6 +195,9 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
           onSourceStatusChanged: (String sourceId, SourceRefreshStatus status) {
             if (_isTerminalSourceRefreshStatus(status)) {
               completedCount++;
+            }
+            if (status == SourceRefreshStatus.error) {
+              failedCount++;
             }
             store.dispatch(
               SourceRefreshStatusChangedAction(
@@ -206,8 +209,10 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
         ),
       )).fold(
         (failure) {
-          sl<LoggerService>().e(failure.message, showPopup: true);
+          sl<LoggerService>().e(failure.message);
           if (completedCount == 0) {
+            completedCount++;
+            failedCount++;
             store.dispatch(
               SourceRefreshStatusChangedAction(
                 sourceId: action.sourceId,
@@ -219,6 +224,11 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
         (Product product) {
           store.dispatch(ProductRefreshedAction(product));
         },
+      );
+      _showRefreshCompletion(
+        sourceCount: 1,
+        completedCount: completedCount,
+        failedCount: failedCount,
       );
     } finally {
       store.dispatch(const SourceRefreshFinishedAction());
@@ -258,7 +268,7 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
         },
       )).fold(
         (failure) async {
-          sl<LoggerService>().e(failure.message, showPopup: true);
+          sl<LoggerService>().e(failure.message);
           if (sourceIds.isNotEmpty) {
             final Either<Failure, List<Product>> productsResult =
                 await sl<LoadProductsUseCase>()(NoParams());
@@ -281,7 +291,6 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
         sourceCount: sourceIds.length,
         completedCount: completedCount,
         failedCount: failedCount,
-        isGlobal: true,
       );
     } finally {
       store.dispatch(const SourceRefreshFinishedAction());
@@ -312,22 +321,18 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
     required int sourceCount,
     required int completedCount,
     required int failedCount,
-    required bool isGlobal,
   }) {
-    if (sourceCount == 0 || completedCount != sourceCount) {
+    if (sourceCount == 0) {
       return;
     }
-    final String message = isGlobal
-        ? failedCount == 0
-              ? t.home.refreshAllComplete
-              : t.home.refreshAllPartial(failed: failedCount)
-        : failedCount == 0
-        ? t.productDetails.refreshComplete(total: sourceCount)
-        : t.productDetails.refreshPartial(
-            completed: completedCount,
-            total: sourceCount,
-            failed: failedCount,
-          );
+    final String message;
+    if (completedCount == 0 || failedCount == sourceCount) {
+      message = t.common.refreshFailed;
+    } else if (completedCount != sourceCount || failedCount > 0) {
+      message = t.common.refreshCompletedWithErrors;
+    } else {
+      message = t.common.refreshSuccessful;
+    }
     sl<LoggerService>().i(message, showPopup: true);
   }
 

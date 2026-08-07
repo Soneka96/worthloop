@@ -304,10 +304,8 @@ void main() {
         await Future<void>.delayed(Duration.zero);
 
         verify(
-          () => mockLoggerService.i(
-            t.productDetails.refreshComplete(total: 1),
-            showPopup: true,
-          ),
+          () =>
+              mockLoggerService.i(t.common.refreshSuccessful, showPopup: true),
         ).called(1);
       },
     );
@@ -354,7 +352,7 @@ void main() {
 
         verify(
           () => mockLoggerService.i(
-            t.productDetails.refreshPartial(completed: 2, total: 2, failed: 1),
+            t.common.refreshCompletedWithErrors,
             showPopup: true,
           ),
         ).called(1);
@@ -420,7 +418,36 @@ void main() {
           ),
         ).called(1);
         verifyNoMoreInteractions(mockRefreshProductUseCase);
-        verify(() => mockLoggerService.e('failed', showPopup: true)).called(1);
+        verify(() => mockLoggerService.e('failed', showPopup: false)).called(1);
+        verifyNoMoreInteractions(mockLoggerService);
+      },
+    );
+
+    test(
+      'RefreshProductAction shows failed feedback when no source completes',
+      () async {
+        final Product product = buildProduct(
+          sources: [buildProductSource(id: 'source-1')],
+        );
+        when(() => store.state).thenReturn(
+          AppState.initial().copyWith(
+            products: ProductsState.initial().copyWith(products: [product]),
+          ),
+        );
+        when(
+          () => mockRefreshProductUseCase(any()),
+        ).thenAnswer((_) async => const Left(DatabaseFailure('failed')));
+        when(
+          () => mockLoadProductsUseCase(any()),
+        ).thenAnswer((_) async => Right([product]));
+
+        middleware.call(store, const RefreshProductAction('product-1'), next);
+        await Future<void>.delayed(Duration.zero);
+
+        verify(() => mockLoggerService.e('failed', showPopup: false)).called(1);
+        verify(
+          () => mockLoggerService.i(t.common.refreshFailed, showPopup: true),
+        ).called(1);
         verifyNoMoreInteractions(mockLoggerService);
       },
     );
@@ -492,8 +519,38 @@ void main() {
       expect(captured.single, isA<RefreshSourceParams>());
       expect((captured.single as RefreshSourceParams).sourceId, 'source-1');
       expect((captured.single as RefreshSourceParams).bypassCooldown, isTrue);
-      verifyZeroInteractions(mockLoggerService);
+      verify(
+        () => mockLoggerService.i(t.common.refreshSuccessful, showPopup: true),
+      ).called(1);
+      verifyNoMoreInteractions(mockLoggerService);
     });
+
+    test(
+      'RefreshSourceAction treats an unavailable source as a successful check',
+      () async {
+        final Product product = buildProduct();
+        when(() => mockRefreshSourceUseCase(any())).thenAnswer((
+          invocation,
+        ) async {
+          final RefreshSourceParams params =
+              invocation.positionalArguments.single as RefreshSourceParams;
+          params.onSourceStatusChanged?.call(
+            'source-1',
+            SourceRefreshStatus.unavailable,
+          );
+          return Right(product);
+        });
+
+        middleware.call(store, const RefreshSourceAction('source-1'), next);
+        await Future<void>.delayed(Duration.zero);
+
+        verify(
+          () =>
+              mockLoggerService.i(t.common.refreshSuccessful, showPopup: true),
+        ).called(1);
+        verifyNoMoreInteractions(mockLoggerService);
+      },
+    );
 
     test('RefreshSourceAction reports a failure as a source error', () async {
       const DatabaseFailure failure = DatabaseFailure('failed');
@@ -514,7 +571,10 @@ void main() {
         ),
       );
       expect(actionLog[3], isA<SourceRefreshFinishedAction>());
-      verify(() => mockLoggerService.e('failed', showPopup: true)).called(1);
+      verify(() => mockLoggerService.e('failed', showPopup: false)).called(1);
+      verify(
+        () => mockLoggerService.i(t.common.refreshFailed, showPopup: true),
+      ).called(1);
       verifyNoMoreInteractions(mockLoggerService);
     });
 
@@ -592,7 +652,8 @@ void main() {
         await Future<void>.delayed(Duration.zero);
 
         verify(
-          () => mockLoggerService.i(t.home.refreshAllComplete, showPopup: true),
+          () =>
+              mockLoggerService.i(t.common.refreshSuccessful, showPopup: true),
         ).called(1);
       },
     );
@@ -600,7 +661,12 @@ void main() {
     test(
       'RefreshAllProductsAction shows partial feedback when a source fails',
       () async {
-        final Product product = buildProduct(sources: [buildProductSource()]);
+        final Product product = buildProduct(
+          sources: [
+            buildProductSource(id: 'source-1'),
+            buildProductSource(id: 'source-2'),
+          ],
+        );
         final Product refreshedProduct = buildProduct(
           lastUpdatedAt: DateTime(2026, 2, 1),
           sources: product.sources,
@@ -618,7 +684,8 @@ void main() {
         ).thenAnswer((invocation) async {
           final SourceRefreshListener callback =
               invocation.namedArguments[const Symbol('onSourceStatusChanged')];
-          callback('source-1', SourceRefreshStatus.error);
+          callback('source-1', SourceRefreshStatus.success);
+          callback('source-2', SourceRefreshStatus.error);
           return const Left(DatabaseFailure('failed'));
         });
         when(
@@ -630,19 +697,54 @@ void main() {
 
         verify(
           () => mockLoggerService.i(
-            t.home.refreshAllPartial(failed: 1),
+            t.common.refreshCompletedWithErrors,
             showPopup: true,
           ),
         ).called(1);
-        expect(actionLog[3], isA<ProductsLoadedAction>());
-        expect((actionLog[3] as ProductsLoadedAction).products, [
-          refreshedProduct,
-        ]);
-        expect(actionLog[4], isA<RefreshAllProductsFailedAction>());
+        final ProductsLoadedAction loadedAction = actionLog
+            .whereType<ProductsLoadedAction>()
+            .single;
+        expect(loadedAction.products, [refreshedProduct]);
+        expect(
+          actionLog.whereType<RefreshAllProductsFailedAction>().single,
+          isA<RefreshAllProductsFailedAction>(),
+        );
         final List<dynamic> captured = verify(
           () => mockLoadProductsUseCase(captureAny()),
         ).captured;
         expect(captured.single, isA<NoParams>());
+      },
+    );
+
+    test(
+      'RefreshAllProductsAction shows failed feedback when no source completes',
+      () async {
+        final Product product = buildProduct(
+          sources: [buildProductSource(id: 'source-1')],
+        );
+        when(() => store.state).thenReturn(
+          AppState.initial().copyWith(
+            products: ProductsState.initial().copyWith(products: [product]),
+          ),
+        );
+        when(
+          () => mockRefreshAllProductsUseCase(
+            any(),
+            onSourceStatusChanged: any(named: 'onSourceStatusChanged'),
+          ),
+        ).thenAnswer((_) async => const Left(DatabaseFailure('failed')));
+        when(
+          () => mockLoadProductsUseCase(any()),
+        ).thenAnswer((_) async => Right([product]));
+
+        middleware.call(store, const RefreshAllProductsAction(), next);
+        await Future<void>.delayed(Duration.zero);
+
+        verify(() => mockLoggerService.e('failed', showPopup: false)).called(1);
+        verify(
+          () => mockLoggerService.i(t.common.refreshFailed, showPopup: true),
+        ).called(1);
+        verifyNoMoreInteractions(mockLoggerService);
       },
     );
 
@@ -745,8 +847,6 @@ void main() {
         ).captured;
         expect(captured.single, isA<NoParams>());
         verifyNoMoreInteractions(mockRefreshAllProductsUseCase);
-        verify(() => mockLoggerService.e('failed', showPopup: true)).called(1);
-        verifyNoMoreInteractions(mockLoggerService);
       },
     );
   });

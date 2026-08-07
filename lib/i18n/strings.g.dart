@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 264 (132 per locale)
+/// Strings: 270 (135 per locale)
 ///
-/// Built on 2026-08-07 at 15:04 UTC
+/// Built on 2026-08-07 at 15:08 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -164,6 +164,9 @@ class _StringsCommonEn {
 
 	// Translations
 	String get cancel => 'Cancel';
+	String get refreshSuccessful => 'Refresh successful';
+	String get refreshCompletedWithErrors => 'Refresh completed with errors';
+	String get refreshFailed => 'Refresh failed';
 }
 
 // Path: home
@@ -462,6 +465,9 @@ class _StringsCommonPt implements _StringsCommonEn {
 
 	// Translations
 	@override String get cancel => 'Cancelar';
+	@override String get refreshSuccessful => 'Atualização concluída';
+	@override String get refreshCompletedWithErrors => 'Atualização concluída com erros';
+	@override String get refreshFailed => 'Falha na atualização';
 }
 
 // Path: home
@@ -728,6 +734,9 @@ extension on Translations {
 		switch (path) {
 			case 'appTitle': return 'WorthLoop';
 			case 'common.cancel': return 'Cancel';
+			case 'common.refreshSuccessful': return 'Refresh successful';
+			case 'common.refreshCompletedWithErrors': return 'Refresh completed with errors';
+			case 'common.refreshFailed': return 'Refresh failed';
 			case 'home.subtitle': return 'Your watchlist, with the best current offer first.';
 			case 'home.trackedProducts': return ({required Object count}) => '${count} tracked';
 			case 'home.refreshProgress': return ({required Object completed, required Object total}) => 'Updating prices · ${completed} of ${total} sources checked';
@@ -868,6 +877,9 @@ extension on _StringsPt {
 		switch (path) {
 			case 'appTitle': return 'WorthLoop';
 			case 'common.cancel': return 'Cancelar';
+			case 'common.refreshSuccessful': return 'Atualização concluída';
+			case 'common.refreshCompletedWithErrors': return 'Atualização concluída com erros';
+			case 'common.refreshFailed': return 'Falha na atualização';
 			case 'home.subtitle': return 'A sua lista, com a melhor oferta atual em primeiro lugar.';
 			case 'home.trackedProducts': return ({required Object count}) => '${count} acompanhados';
 			case 'home.refreshProgress': return ({required Object completed, required Object total}) => 'A atualizar preços · ${completed} de ${total} fontes verificadas';

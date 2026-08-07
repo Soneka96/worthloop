@@ -2,6 +2,9 @@ appTitle: WorthLoop
 
 common:
   cancel: Cancelar
+  refreshSuccessful: Atualização concluída
+  refreshCompletedWithErrors: Atualização concluída com erros
+  refreshFailed: Falha na atualização
 
 home:
   subtitle: A sua lista, com a melhor oferta atual em primeiro lugar.
