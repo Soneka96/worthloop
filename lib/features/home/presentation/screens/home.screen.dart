@@ -12,6 +12,7 @@ import 'package:worth_loop/features/home/presentation/widgets/home_header.widget
 import 'package:worth_loop/features/home/presentation/widgets/home_products_header.widget.dart';
 import 'package:worth_loop/features/home/presentation/widgets/tracked_products_list.section.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
+import 'package:worth_loop/features/settings/presentation/state/general_settings.actions.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
@@ -25,7 +26,10 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return StoreConnector<AppState, HomeScreenViewModel>(
       distinct: true,
-      onInit: (store) => store.dispatch(const LoadProductsAction()),
+      onInit: (store) {
+        store.dispatch(const LoadProductsAction());
+        store.dispatch(const LoadRefreshSettingsAction());
+      },
       converter: (store) => sl<HomeScreenViewModel>(param1: store),
       builder: (context, viewmodel) {
         return ForegroundRefreshObserver(

@@ -16,6 +16,7 @@ import 'package:worth_loop/features/home/presentation/widgets/foreground_refresh
 import 'package:worth_loop/features/home/presentation/widgets/tracked_product.widget.dart';
 import 'package:worth_loop/features/home/presentation/widgets/tracked_products_empty.widget.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
+import 'package:worth_loop/features/settings/presentation/state/general_settings.actions.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
@@ -305,18 +306,19 @@ void main() {
     );
   });
 
-  group(
-    "HomeScreen's StoreConnector dispatches LoadProductsAction on init",
-    () {
-      testWidgets('HomeScreen dispatches LoadProductsAction on init', (
-        WidgetTester tester,
-      ) async {
+  group("HomeScreen's StoreConnector dispatches startup actions on init", () {
+    testWidgets(
+      'HomeScreen dispatches product and refresh settings actions on init',
+      (WidgetTester tester) async {
         await tester.pumpWidget(buildWidget());
 
-        expect(dispatchedActions, contains(const LoadProductsAction()));
-      });
-    },
-  );
+        expect(dispatchedActions, [
+          const LoadProductsAction(),
+          const LoadRefreshSettingsAction(),
+        ]);
+      },
+    );
+  });
 
   group("HomeScreen's translations", () {
     testWidgets('HomeScreen displays the Portuguese translations', (
