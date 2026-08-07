@@ -36,9 +36,12 @@ class _SnugToastWrapperState extends State<SnugToastWrapper> {
       child: Stack(
         children: [
           widget.child,
-          ListenableBuilder(
-            listenable: widget.manager,
-            builder: (context, _) => SnugToastLayer(manager: widget.manager),
+          SafeArea(
+            top: false,
+            child: ListenableBuilder(
+              listenable: widget.manager,
+              builder: (context, _) => SnugToastLayer(manager: widget.manager),
+            ),
           ),
         ],
       ),
