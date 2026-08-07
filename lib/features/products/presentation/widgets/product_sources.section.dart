@@ -9,6 +9,7 @@ import 'package:worth_loop/features/products/presentation/widgets/product_source
 import 'package:worth_loop/features/products/presentation/widgets/source_form_dialog.widget.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
+import 'package:worth_loop/shared/constants/layout_constants.dart';
 import 'package:worth_loop/shared/features/confirm_dialog.widget.dart';
 import 'package:worth_loop/shared/theme/app_spacing_theme_extension.dart';
 
@@ -26,6 +27,12 @@ class ProductSourcesSection extends StatefulWidget {
   /// Source identifiers currently being deleted.
   final Set<String> deletingSourceIds;
 
+  /// Refreshes every source for this product.
+  final VoidCallback onRefresh;
+
+  /// Refreshes one source only.
+  final ValueChanged<String> onRefreshSource;
+
   /// Requests deletion of the source with this id.
   final void Function(String sourceId) onDeleteSource;
 
@@ -37,6 +44,8 @@ class ProductSourcesSection extends StatefulWidget {
     this.isRefreshing = false,
     this.sourceRefreshStatuses = const {},
     required this.deletingSourceIds,
+    required this.onRefresh,
+    required this.onRefreshSource,
     required this.onDeleteSource,
     required this.onOpenOffer,
     super.key,
@@ -163,6 +172,21 @@ class _ProductSourcesSectionState extends State<ProductSourcesSection> {
                       style: textTheme.labelSmall,
                     ),
                   ),
+                  OutlinedButton.icon(
+                    key: const Key('product-details-refresh-button'),
+                    onPressed: widget.isRefreshing ? null : widget.onRefresh,
+                    icon: widget.isRefreshing
+                        ? const SizedBox.square(
+                            dimension: IconSizes.md,
+                            child: CircularProgressIndicator(),
+                          )
+                        : const Icon(Icons.refresh),
+                    label: Text(
+                      widget.isRefreshing
+                          ? t.productDetails.refreshing
+                          : t.productDetails.refresh,
+                    ),
+                  ),
                   FilledButton.icon(
                     key: const Key('product-details-add-source-button'),
                     onPressed: () => _openAddDialog(context),
@@ -232,6 +256,7 @@ class _ProductSourcesSectionState extends State<ProductSourcesSection> {
                       isBestPrice: source == bestAvailablePrice,
                       isDeleting: widget.deletingSourceIds.contains(source.id),
                       onTap: () => widget.onOpenOffer(source.url),
+                      onRefresh: () => widget.onRefreshSource(source.id),
                       onEdit: () => _openEditDialog(context, source),
                       onDelete: () => _confirmDelete(context, source),
                     ),

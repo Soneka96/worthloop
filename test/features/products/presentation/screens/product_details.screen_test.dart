@@ -74,6 +74,7 @@ void main() {
     when(() => mockViewModel.isDeletingProduct).thenReturn(false);
     when(() => mockViewModel.deleteProductError).thenReturn(null);
     when(() => mockViewModel.onRefresh).thenReturn(() {});
+    when(() => mockViewModel.onRefreshSource).thenReturn((_) {});
     when(() => mockViewModel.onGoBack).thenReturn(() {});
     when(() => mockViewModel.onAddSource).thenReturn((_) {});
     when(() => mockViewModel.onEditSource).thenReturn((_, _) {});
@@ -296,8 +297,6 @@ void main() {
         );
         expect(header.offerCount, isA<int>());
         expect(header.offerCount, 3);
-        expect(header.isRefreshing, isA<bool>());
-        expect(header.isRefreshing, isFalse);
       },
     );
 
@@ -405,7 +404,7 @@ void main() {
         when(() => mockViewModel.isRefreshing).thenReturn(true);
 
         await pumpScreen(tester);
-        final FilledButton button = tester.widget(
+        final OutlinedButton button = tester.widget(
           find.byKey(const Key('product-details-refresh-button')),
         );
 

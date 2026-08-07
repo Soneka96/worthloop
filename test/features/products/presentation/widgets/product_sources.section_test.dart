@@ -82,6 +82,8 @@ void main() {
     Map<String, SourceRefreshStatus> sourceRefreshStatuses = const {},
     Set<String> deletingSourceIds = const {},
     ValueChanged<String>? onDeleteSource,
+    VoidCallback? onRefresh,
+    ValueChanged<String>? onRefreshSource,
     ValueChanged<String>? onOpenOffer,
   }) => TranslationProvider(
     child: StoreProvider<AppState>(
@@ -95,6 +97,8 @@ void main() {
                 isRefreshing: isRefreshing,
                 sourceRefreshStatuses: sourceRefreshStatuses,
                 deletingSourceIds: deletingSourceIds,
+                onRefresh: onRefresh ?? () {},
+                onRefreshSource: onRefreshSource ?? (_) {},
                 onDeleteSource: onDeleteSource ?? (_) {},
                 onOpenOffer: onOpenOffer ?? (_) {},
               ),
@@ -509,6 +513,75 @@ void main() {
         );
         expect(dialog.productId, 'product-1');
         expect(dialog.source, isNull);
+      },
+    );
+
+    testWidgets(
+      'ProductSourcesSection keeps Refresh and Add Source on the same row',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildWidget());
+
+        final Finder refresh = find.byKey(
+          const Key('product-details-refresh-button'),
+        );
+        final Finder addSource = find.byKey(
+          const Key('product-details-add-source-button'),
+        );
+        expect(refresh, findsOneWidget);
+        expect(addSource, findsOneWidget);
+        expect(tester.getTopLeft(refresh).dy, tester.getTopLeft(addSource).dy);
+      },
+    );
+
+    testWidgets(
+      'ProductSourcesSection calls onRefresh when not already refreshing',
+      (WidgetTester tester) async {
+        bool refreshed = false;
+        await tester.pumpWidget(buildWidget(onRefresh: () => refreshed = true));
+
+        await tester.tap(
+          find.byKey(const Key('product-details-refresh-button')),
+        );
+
+        expect(refreshed, isTrue);
+      },
+    );
+
+    testWidgets('ProductSourcesSection disables Refresh while refreshing', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(buildWidget(isRefreshing: true));
+
+      final OutlinedButton refreshButton = tester.widget(
+        find.byKey(const Key('product-details-refresh-button')),
+      );
+
+      expect(refreshButton.onPressed, isNull);
+      expect(find.text(t.productDetails.refreshing), findsOneWidget);
+    });
+
+    testWidgets(
+      'ProductSourcesSection calls onRefreshSource for a slid source action',
+      (WidgetTester tester) async {
+        String? refreshedId;
+        await tester.pumpWidget(
+          buildWidget(
+            sources: sources,
+            onRefreshSource: (String id) => refreshedId = id,
+          ),
+        );
+
+        await tester.drag(
+          find.byKey(const Key('merchant-offer-source-1')),
+          const Offset(-500, 0),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const Key('merchant-offer-source-1-refresh-action')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(refreshedId, 'source-1');
       },
     );
 

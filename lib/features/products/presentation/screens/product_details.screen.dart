@@ -103,8 +103,6 @@ class ProductDetailsScreen extends StatelessWidget {
                         delegate: SliverChildListDelegate([
                           ProductOffersHeader(
                             offerCount: product.sources.length,
-                            isRefreshing: viewmodel.isRefreshing,
-                            onRefresh: viewmodel.onRefresh,
                           ),
                           SizedBox(height: context.spacing.sm),
                           if (viewmodel.isRefreshing &&
@@ -128,6 +126,8 @@ class ProductDetailsScreen extends StatelessWidget {
                       isRefreshing: viewmodel.isRefreshing,
                       sourceRefreshStatuses: viewmodel.sourceRefreshStatuses,
                       deletingSourceIds: viewmodel.deletingSourceIds,
+                      onRefresh: viewmodel.onRefresh,
+                      onRefreshSource: viewmodel.onRefreshSource,
                       onDeleteSource: viewmodel.onDeleteSource,
                       onOpenOffer: viewmodel.onOpenOffer,
                     ),

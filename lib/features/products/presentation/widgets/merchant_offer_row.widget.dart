@@ -37,6 +37,9 @@ class MerchantOfferRow extends StatelessWidget {
   /// Opens the edit-source dialog for [source].
   final VoidCallback onEdit;
 
+  /// Refreshes this source only.
+  final VoidCallback onRefresh;
+
   /// Requests deletion of [source].
   final VoidCallback onDelete;
 
@@ -47,6 +50,7 @@ class MerchantOfferRow extends StatelessWidget {
     this.refreshStatus = SourceRefreshStatus.idle,
     required this.onTap,
     required this.onEdit,
+    required this.onRefresh,
     required this.onDelete,
     super.key,
   });
@@ -67,8 +71,18 @@ class MerchantOfferRow extends StatelessWidget {
       enabled: !isDeleting,
       endActionPane: ActionPane(
         motion: const ScrollMotion(),
-        extentRatio: 0.5,
+        extentRatio: 0.75,
         children: [
+          SlidableAction(
+            key: Key('merchant-offer-${source.id}-refresh-action'),
+            onPressed: refreshStatus == SourceRefreshStatus.fetching
+                ? null
+                : (_) => onRefresh(),
+            backgroundColor: colorScheme.primaryContainer,
+            foregroundColor: colorScheme.onPrimaryContainer,
+            icon: Icons.refresh,
+            label: t.productDetails.refresh,
+          ),
           SlidableAction(
             key: Key('merchant-offer-${source.id}-edit-action'),
             onPressed: (_) => onEdit(),
@@ -90,10 +104,14 @@ class MerchantOfferRow extends StatelessWidget {
       child: Semantics(
         hint: t.productDetails.openOfferHint,
         customSemanticsActions: {
-          CustomSemanticsAction(label: t.productDetails.editSourceTooltip):
-              onEdit,
-          CustomSemanticsAction(label: t.productDetails.deleteSourceTooltip):
-              onDelete,
+          if (!isDeleting)
+            CustomSemanticsAction(label: t.productDetails.refresh): onRefresh,
+          if (!isDeleting)
+            CustomSemanticsAction(label: t.productDetails.editSourceTooltip):
+                onEdit,
+          if (!isDeleting)
+            CustomSemanticsAction(label: t.productDetails.deleteSourceTooltip):
+                onDelete,
         },
         child: Material(
           color: _surfaceColor(colorScheme),

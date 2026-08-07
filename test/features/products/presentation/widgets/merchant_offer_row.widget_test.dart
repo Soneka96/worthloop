@@ -31,6 +31,7 @@ void main() {
     SourceRefreshStatus refreshStatus = SourceRefreshStatus.idle,
     VoidCallback? onTap,
     VoidCallback? onEdit,
+    VoidCallback? onRefresh,
     VoidCallback? onDelete,
   }) => TranslationProvider(
     child: MaterialApp(
@@ -42,6 +43,7 @@ void main() {
           refreshStatus: refreshStatus,
           onTap: onTap ?? () {},
           onEdit: onEdit ?? () {},
+          onRefresh: onRefresh ?? () {},
           onDelete: onDelete ?? () {},
         ),
       ),
@@ -156,6 +158,30 @@ void main() {
         );
 
         expect(find.text(t.productDetails.checking), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow disables its refresh slide action while checking',
+      (WidgetTester tester) async {
+        bool refreshed = false;
+        await tester.pumpWidget(
+          buildWidget(
+            refreshStatus: SourceRefreshStatus.fetching,
+            onRefresh: () => refreshed = true,
+          ),
+        );
+
+        await tester.drag(
+          find.byKey(const Key('merchant-offer-source-1')),
+          const Offset(-500, 0),
+        );
+        await tester.pump();
+        await tester.tap(
+          find.byKey(const Key('merchant-offer-source-1-refresh-action')),
+        );
+
+        expect(refreshed, isFalse);
       },
     );
 
@@ -480,6 +506,26 @@ void main() {
     });
 
     testWidgets(
+      'MerchantOfferRow contains a "merchant-offer-source-1-refresh-action" SlidableAction with the correct behavior',
+      (WidgetTester tester) async {
+        bool refreshed = false;
+        await tester.pumpWidget(buildWidget(onRefresh: () => refreshed = true));
+
+        await tester.drag(
+          find.byKey(const Key('merchant-offer-source-1')),
+          const Offset(-400, 0),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const Key('merchant-offer-source-1-refresh-action')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(refreshed, isTrue);
+      },
+    );
+
+    testWidgets(
       'MerchantOfferRow contains a "merchant-offer-source-1-edit-action" SlidableAction with the correct behavior',
       (WidgetTester tester) async {
         bool edited = false;
@@ -526,10 +572,12 @@ void main() {
       (WidgetTester tester) async {
         bool edited = false;
         bool deleted = false;
+        bool refreshed = false;
         await tester.pumpWidget(
           buildWidget(
             onEdit: () => edited = true,
             onDelete: () => deleted = true,
+            onRefresh: () => refreshed = true,
           ),
         );
 
@@ -543,6 +591,9 @@ void main() {
         final Map<CustomSemanticsAction, VoidCallback> actions =
             semantics.properties.customSemanticsActions ?? {};
 
+        actions.entries
+            .firstWhere((entry) => entry.key.label == t.productDetails.refresh)
+            .value();
         actions.entries
             .firstWhere(
               (entry) => entry.key.label == t.productDetails.editSourceTooltip,
@@ -559,6 +610,8 @@ void main() {
         expect(edited, isTrue);
         expect(deleted, isA<bool>());
         expect(deleted, isTrue);
+        expect(refreshed, isA<bool>());
+        expect(refreshed, isTrue);
       },
     );
   });
