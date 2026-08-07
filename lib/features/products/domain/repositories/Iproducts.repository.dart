@@ -29,6 +29,12 @@ abstract class IProductsRepository {
     SourceRefreshListener? onSourceStatusChanged,
   });
 
+  /// Refreshes and persists the source identified by [sourceId].
+  Future<Either<Failure, Product>> refreshSource(
+    String sourceId, {
+    SourceRefreshListener? onSourceStatusChanged,
+  });
+
   /// Refreshes and persists every tracked product.
   Future<Either<Failure, List<Product>>> refreshAllProducts({
     SourceRefreshListener? onSourceStatusChanged,

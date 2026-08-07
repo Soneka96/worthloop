@@ -78,6 +78,38 @@ class ProductsRepository implements IProductsRepository {
   }
 
   @override
+  Future<Either<Failure, Product>> refreshSource(
+    String sourceId, {
+    SourceRefreshListener? onSourceStatusChanged,
+  }) async {
+    final Either<Failure, List<ProductSourceModel>> sourcesResult =
+        await _localDatasource.loadProductSources();
+    return sourcesResult.match((Failure failure) async => Left(failure), (
+      List<ProductSourceModel> sources,
+    ) async {
+      ProductSourceModel? source;
+      for (final ProductSourceModel candidate in sources) {
+        if (candidate.id == sourceId) {
+          source = candidate;
+          break;
+        }
+      }
+      if (source == null) {
+        return const Left(NotFoundFailure('Source not found'));
+      }
+      final Either<Failure, ProductSourceModel> result = await _fetchSource(
+        source,
+        onSourceStatusChanged: onSourceStatusChanged,
+      );
+      return result.match(
+        (Failure failure) async => Left(failure),
+        (ProductSourceModel updatedSource) => _localDatasource
+            .updateSourcePrices(updatedSource.productId, [updatedSource]),
+      );
+    });
+  }
+
+  @override
   Future<Either<Failure, List<Product>>> refreshAllProducts({
     SourceRefreshListener? onSourceStatusChanged,
   }) async {

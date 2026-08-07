@@ -1330,6 +1330,172 @@ void main() {
       },
     );
   });
+
+  group('ProductsRepository implements refreshSource() correctly', () {
+    test('fetches and persists the requested source', () async {
+      final ProductModel product = buildProductModel();
+      final ProductSourceModel source = buildProductSourceModel(id: 'source-1');
+      final ProductSourceModel updatedSource = buildProductSourceModel(
+        id: 'source-1',
+        currentPrice: const Money(minorUnits: 1999, currencyCode: 'EUR'),
+        isAvailable: true,
+      );
+      when(
+        () => mockDatasource.loadProductSources(),
+      ).thenAnswer((_) async => Right([source]));
+      when(
+        () => mockRemoteDatasource.fetchPrices(source),
+      ).thenAnswer((_) async => Right(updatedSource));
+      when(
+        () => mockDatasource.updateSourcePrices(product.id, [updatedSource]),
+      ).thenAnswer((_) async => Right(product));
+
+      final List<String> lifecycle = [];
+      final Either<Failure, Product> result = await repository.refreshSource(
+        'source-1',
+        onSourceStatusChanged: (String sourceId, SourceRefreshStatus status) {
+          lifecycle.add('$sourceId:$status');
+        },
+      );
+
+      expect(result, Right(product));
+      expect(lifecycle, [
+        'source-1:SourceRefreshStatus.fetching',
+        'source-1:SourceRefreshStatus.success',
+      ]);
+      verify(() => mockDatasource.loadProductSources()).called(1);
+      verify(() => mockRemoteDatasource.fetchPrices(source)).called(1);
+      verify(
+        () => mockDatasource.updateSourcePrices(product.id, [updatedSource]),
+      ).called(1);
+      verifyNoMoreInteractions(mockDatasource);
+      verifyNoMoreInteractions(mockRemoteDatasource);
+    });
+
+    test('returns NotFoundFailure when the source does not exist', () async {
+      when(
+        () => mockDatasource.loadProductSources(),
+      ).thenAnswer((_) async => const Right(<ProductSourceModel>[]));
+
+      final Either<Failure, Product> result = await repository.refreshSource(
+        'missing-source',
+      );
+
+      expect(result, const Left(NotFoundFailure('Source not found')));
+      verify(() => mockDatasource.loadProductSources()).called(1);
+      verifyZeroInteractions(mockRemoteDatasource);
+      verifyNoMoreInteractions(mockDatasource);
+    });
+
+    test('returns the load failure without fetching a source', () async {
+      const DatabaseFailure failure = DatabaseFailure('database failed');
+      when(
+        () => mockDatasource.loadProductSources(),
+      ).thenAnswer((_) async => const Left(failure));
+
+      final Either<Failure, Product> result = await repository.refreshSource(
+        'source-1',
+      );
+
+      expect(result, const Left(failure));
+      verify(() => mockDatasource.loadProductSources()).called(1);
+      verifyZeroInteractions(mockRemoteDatasource);
+      verifyNoMoreInteractions(mockDatasource);
+    });
+
+    test('returns fetch failure without persisting prices', () async {
+      final ProductSourceModel source = buildProductSourceModel(id: 'source-1');
+      const PriceFetchFailure failure = PriceFetchFailure(
+        status: PriceFetchStatus.blocked,
+        message: 'blocked',
+      );
+      when(
+        () => mockDatasource.loadProductSources(),
+      ).thenAnswer((_) async => Right([source]));
+      when(
+        () => mockRemoteDatasource.fetchPrices(source),
+      ).thenAnswer((_) async => const Left(failure));
+
+      final Either<Failure, Product> result = await repository.refreshSource(
+        'source-1',
+      );
+
+      expect(result, const Left(failure));
+      verify(() => mockDatasource.loadProductSources()).called(1);
+      verify(() => mockRemoteDatasource.fetchPrices(source)).called(1);
+      verifyNever(() => mockDatasource.updateSourcePrices(any(), any()));
+    });
+
+    test('returns persistence failure after a successful fetch', () async {
+      final ProductSourceModel source = buildProductSourceModel(id: 'source-1');
+      final ProductSourceModel updatedSource = buildProductSourceModel(
+        id: 'source-1',
+        isAvailable: true,
+      );
+      const DatabaseFailure failure = DatabaseFailure('database failed');
+      when(
+        () => mockDatasource.loadProductSources(),
+      ).thenAnswer((_) async => Right([source]));
+      when(
+        () => mockRemoteDatasource.fetchPrices(source),
+      ).thenAnswer((_) async => Right(updatedSource));
+      when(
+        () => mockDatasource.updateSourcePrices(source.productId, [
+          updatedSource,
+        ]),
+      ).thenAnswer((_) async => const Left(failure));
+
+      final Either<Failure, Product> result = await repository.refreshSource(
+        'source-1',
+      );
+
+      expect(result, const Left(failure));
+      verify(
+        () => mockDatasource.updateSourcePrices(source.productId, [
+          updatedSource,
+        ]),
+      ).called(1);
+    });
+
+    test(
+      'reports unavailable when the refreshed source is unavailable',
+      () async {
+        final ProductModel product = buildProductModel();
+        final ProductSourceModel source = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final ProductSourceModel updatedSource = buildProductSourceModel(
+          id: 'source-1',
+          isAvailable: false,
+        );
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([source]));
+        when(
+          () => mockRemoteDatasource.fetchPrices(source),
+        ).thenAnswer((_) async => Right(updatedSource));
+        when(
+          () => mockDatasource.updateSourcePrices(source.productId, [
+            updatedSource,
+          ]),
+        ).thenAnswer((_) async => Right(product));
+
+        final List<SourceRefreshStatus> lifecycle = [];
+        final Either<Failure, Product> result = await repository.refreshSource(
+          'source-1',
+          onSourceStatusChanged: (_, SourceRefreshStatus status) {
+            lifecycle.add(status);
+          },
+        );
+
+        expect(result, Right(product));
+        expect(lifecycle, [
+          SourceRefreshStatus.fetching,
+          SourceRefreshStatus.unavailable,
+        ]);
+      },
+    );
+  });
 }
 
 Matcher _isCandidateFor(String sourceId, String url) =>
