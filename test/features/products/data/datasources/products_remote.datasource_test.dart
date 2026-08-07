@@ -114,6 +114,25 @@ void main() {
       },
     );
 
+    test(
+      'forwards an overridden cooldown bypass to the orchestrator',
+      () async {
+        final ProductOffer offer = buildProductOffer();
+        when(
+          () => orchestrator.fetch(source.url, bypassCooldown: true),
+        ).thenAnswer((_) async => buildPriceFetchResult(offer: offer));
+
+        final Either<Failure, ProductSourceModel> result = await datasource
+            .fetchPrices(source, bypassCooldown: true);
+
+        expect(result.isRight(), isTrue);
+        verify(
+          () => orchestrator.fetch(source.url, bypassCooldown: true),
+        ).called(1);
+        verifyNoMoreInteractions(orchestrator);
+      },
+    );
+
     const Map<PriceFetchStatus, Failure> failuresByStatus = {
       PriceFetchStatus.blocked: PriceFetchFailure(
         status: PriceFetchStatus.blocked,

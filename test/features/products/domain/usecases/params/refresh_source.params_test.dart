@@ -24,5 +24,14 @@ void main() {
         isNot(const RefreshSourceParams(sourceId: 'source-2')),
       );
     });
+
+    test('does not compare equal when bypassCooldown differs', () {
+      expect(
+        const RefreshSourceParams(sourceId: 'source-1'),
+        isNot(
+          const RefreshSourceParams(sourceId: 'source-1', bypassCooldown: true),
+        ),
+      );
+    });
   });
 }

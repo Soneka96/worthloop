@@ -20,6 +20,7 @@ class RefreshSourceUseCase
     return _repository.refreshSource(
       params.sourceId,
       onSourceStatusChanged: params.onSourceStatusChanged,
+      bypassCooldown: params.bypassCooldown,
     );
   }
 }

@@ -76,5 +76,30 @@ void main() {
       ).called(1);
       verifyNoMoreInteractions(mockRepository);
     });
+
+    test('forwards an overridden cooldown bypass to the repository', () async {
+      final Product product = buildProduct();
+      when(
+        () => mockRepository.refreshSource(
+          'source-1',
+          onSourceStatusChanged: null,
+          bypassCooldown: true,
+        ),
+      ).thenAnswer((_) async => Right(product));
+
+      final Either<Failure, Product> result = await useCase(
+        const RefreshSourceParams(sourceId: 'source-1', bypassCooldown: true),
+      );
+
+      expect(result, Right(product));
+      verify(
+        () => mockRepository.refreshSource(
+          'source-1',
+          onSourceStatusChanged: null,
+          bypassCooldown: true,
+        ),
+      ).called(1);
+      verifyNoMoreInteractions(mockRepository);
+    });
   });
 }

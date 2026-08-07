@@ -33,6 +33,7 @@ abstract class IProductsRepository {
   Future<Either<Failure, Product>> refreshSource(
     String sourceId, {
     SourceRefreshListener? onSourceStatusChanged,
+    bool bypassCooldown = false,
   });
 
   /// Refreshes and persists every tracked product.

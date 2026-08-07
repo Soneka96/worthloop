@@ -1372,6 +1372,40 @@ void main() {
       verifyNoMoreInteractions(mockRemoteDatasource);
     });
 
+    test(
+      'forwards an overridden cooldown bypass when refreshing a source',
+      () async {
+        final ProductModel product = buildProductModel();
+        final ProductSourceModel source = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final ProductSourceModel updatedSource = buildProductSourceModel(
+          id: 'source-1',
+          isAvailable: true,
+        );
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([source]));
+        when(
+          () => mockRemoteDatasource.fetchPrices(source, bypassCooldown: true),
+        ).thenAnswer((_) async => Right(updatedSource));
+        when(
+          () => mockDatasource.updateSourcePrices(product.id, [updatedSource]),
+        ).thenAnswer((_) async => Right(product));
+
+        final Either<Failure, Product> result = await repository.refreshSource(
+          'source-1',
+          bypassCooldown: true,
+        );
+
+        expect(result, Right(product));
+        verify(
+          () => mockRemoteDatasource.fetchPrices(source, bypassCooldown: true),
+        ).called(1);
+        verifyNoMoreInteractions(mockRemoteDatasource);
+      },
+    );
+
     test('returns NotFoundFailure when the source does not exist', () async {
       when(
         () => mockDatasource.loadProductSources(),

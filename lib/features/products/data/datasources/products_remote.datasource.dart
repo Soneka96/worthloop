@@ -17,8 +17,9 @@ abstract class IProductsRemoteDatasource {
   /// Fetches the latest merchant offer for [source] and returns it applied
   /// to that same source.
   Future<Either<Failure, ProductSourceModel>> fetchPrices(
-    ProductSource source,
-  );
+    ProductSource source, {
+    bool bypassCooldown = false,
+  });
 }
 
 /// Implements [IProductsRemoteDatasource] via
@@ -34,9 +35,13 @@ class ProductsRemoteDatasource implements IProductsRemoteDatasource {
 
   @override
   Future<Either<Failure, ProductSourceModel>> fetchPrices(
-    ProductSource source,
-  ) async {
-    final PriceFetchResult result = await _orchestrator.fetch(source.url);
+    ProductSource source, {
+    bool bypassCooldown = false,
+  }) async {
+    final PriceFetchResult result = await _orchestrator.fetch(
+      source.url,
+      bypassCooldown: bypassCooldown,
+    );
     final ProductOffer? offer = result.offer;
     if (result.status == PriceFetchStatus.success && offer != null) {
       return Right(

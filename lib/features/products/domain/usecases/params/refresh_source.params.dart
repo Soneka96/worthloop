@@ -15,11 +15,15 @@ class RefreshSourceParams extends Equatable {
   /// Receives lifecycle updates for the source refresh.
   final SourceRefreshListener? onSourceStatusChanged;
 
+  /// Whether to bypass an active source price cooldown.
+  final bool bypassCooldown;
+
   const RefreshSourceParams({
     required this.sourceId,
     this.onSourceStatusChanged,
+    this.bypassCooldown = false,
   });
 
   @override
-  List<Object?> get props => [sourceId];
+  List<Object?> get props => [sourceId, bypassCooldown];
 }

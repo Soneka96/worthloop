@@ -81,6 +81,7 @@ class ProductsRepository implements IProductsRepository {
   Future<Either<Failure, Product>> refreshSource(
     String sourceId, {
     SourceRefreshListener? onSourceStatusChanged,
+    bool bypassCooldown = false,
   }) async {
     final Either<Failure, List<ProductSourceModel>> sourcesResult =
         await _localDatasource.loadProductSources();
@@ -100,6 +101,7 @@ class ProductsRepository implements IProductsRepository {
       final Either<Failure, ProductSourceModel> result = await _fetchSource(
         source,
         onSourceStatusChanged: onSourceStatusChanged,
+        bypassCooldown: bypassCooldown,
       );
       return result.match(
         (Failure failure) async => Left(failure),
@@ -199,10 +201,12 @@ class ProductsRepository implements IProductsRepository {
   Future<Either<Failure, ProductSourceModel>> _fetchSource(
     ProductSourceModel source, {
     SourceRefreshListener? onSourceStatusChanged,
+    bool bypassCooldown = false,
   }) async {
     onSourceStatusChanged?.call(source.id, SourceRefreshStatus.fetching);
-    final Either<Failure, ProductSourceModel> result = await _remoteDatasource
-        .fetchPrices(source);
+    final Either<Failure, ProductSourceModel> result = bypassCooldown
+        ? await _remoteDatasource.fetchPrices(source, bypassCooldown: true)
+        : await _remoteDatasource.fetchPrices(source);
     result.match(
       (Failure failure) {
         onSourceStatusChanged?.call(source.id, SourceRefreshStatus.error);
