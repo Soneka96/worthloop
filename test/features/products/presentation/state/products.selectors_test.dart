@@ -9,6 +9,7 @@ import 'package:worth_loop/features/products/presentation/state/products.state.d
 import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import '../../fixtures/product.fixture.dart';
+import '../../fixtures/product_source.fixture.dart';
 
 void main() {
   group('Method productsSelector() returns a List<Product> instance', () {
@@ -159,6 +160,77 @@ void main() {
       );
       expect(
         ProductsSelectors.isRefreshingSelector(AppState.initial()),
+        isFalse,
+      );
+    });
+  });
+
+  group('Product refresh scope selectors', () {
+    final Product product = buildProduct(
+      sources: [
+        buildProductSource(id: 'source-1'),
+        buildProductSource(id: 'source-2'),
+      ],
+    );
+
+    test('detects a refresh on this product', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          products: [product],
+          sourceRefreshStatuses: {'source-1': SourceRefreshStatus.fetching},
+        ),
+      );
+
+      expect(
+        ProductsSelectors.isProductSourceRefreshingSelector(state, product.id),
+        isTrue,
+      );
+    });
+
+    test('counts terminal states for this product only', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          products: [product],
+          sourceRefreshStatuses: {
+            'source-1': SourceRefreshStatus.success,
+            'source-2': SourceRefreshStatus.fetching,
+          },
+        ),
+      );
+
+      expect(
+        ProductsSelectors.productRefreshCompletedCountSelector(
+          state,
+          product.id,
+        ),
+        1,
+      );
+    });
+
+    test('detects active sources belonging to other products', () {
+      final Product otherProduct = buildProduct(
+        id: 'product-2',
+        sources: [buildProductSource(id: 'source-3', productId: 'product-2')],
+      );
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          products: [product, otherProduct],
+          sourceRefreshStatuses: {'source-3': SourceRefreshStatus.queued},
+        ),
+      );
+
+      expect(
+        ProductsSelectors.areOtherSourcesRefreshingSelector(state, product.id),
+        isTrue,
+      );
+    });
+
+    test('returns no other refresh when the state is idle', () {
+      expect(
+        ProductsSelectors.areOtherSourcesRefreshingSelector(
+          AppState.initial(),
+          product.id,
+        ),
         isFalse,
       );
     });

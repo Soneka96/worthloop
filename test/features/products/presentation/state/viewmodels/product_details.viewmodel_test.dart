@@ -11,6 +11,7 @@ import 'package:worth_loop/features/products/presentation/state/viewmodels/produ
 import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import '../../../fixtures/product.fixture.dart';
+import '../../../fixtures/product_source.fixture.dart';
 
 void main() {
   late List<dynamic> dispatchedActions;
@@ -31,7 +32,12 @@ void main() {
       test(
         'Method fromStore() constructs ProductDetailsViewModel correctly',
         () {
-          final Product product = buildProduct();
+          final Product product = buildProduct(
+            sources: [
+              buildProductSource(id: 'source-1'),
+              buildProductSource(id: 'source-2'),
+            ],
+          );
           final AppState state = AppState.initial().copyWith(
             products: ProductsState.initial().copyWith(
               products: [product],
@@ -59,6 +65,10 @@ void main() {
           expect(viewmodel.product, product);
           expect(viewmodel.isRefreshing, isA<bool>());
           expect(viewmodel.isRefreshing, isTrue);
+          expect(viewmodel.isProductRefreshing, isTrue);
+          expect(viewmodel.areOtherSourcesRefreshing, isFalse);
+          expect(viewmodel.productRefreshCompletedCount, 0);
+          expect(viewmodel.productRefreshTotalCount, 2);
           expect(viewmodel.refreshStatus, isA<PriceFetchStatus>());
           expect(viewmodel.refreshStatus, PriceFetchStatus.blocked);
           expect(viewmodel.sourceRefreshStatuses, {
@@ -107,6 +117,35 @@ void main() {
 
           expect(viewmodel.isRefreshing, isA<bool>());
           expect(viewmodel.isRefreshing, isTrue);
+        },
+      );
+
+      test(
+        'Method fromStore() exposes other-product refresh state separately',
+        () {
+          final Product product = buildProduct(
+            sources: [buildProductSource(id: 'source-1')],
+          );
+          final Product otherProduct = buildProduct(
+            id: 'product-2',
+            sources: [
+              buildProductSource(id: 'source-2', productId: 'product-2'),
+            ],
+          );
+          final AppState state = AppState.initial().copyWith(
+            products: ProductsState.initial().copyWith(
+              products: [product, otherProduct],
+              sourceRefreshStatuses: {'source-2': SourceRefreshStatus.fetching},
+            ),
+          );
+
+          final ProductDetailsViewModel viewmodel =
+              ProductDetailsViewModel.fromStore(buildStore(state), product.id);
+
+          expect(viewmodel.isProductRefreshing, isFalse);
+          expect(viewmodel.areOtherSourcesRefreshing, isTrue);
+          expect(viewmodel.productRefreshCompletedCount, 0);
+          expect(viewmodel.productRefreshTotalCount, 1);
         },
       );
 

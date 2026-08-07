@@ -52,6 +52,76 @@ abstract final class ProductsSelectors {
       state.products.refreshingProductIds.isNotEmpty ||
       state.products.refreshTotalCount > 0;
 
+  /// Returns whether [productId]'s sources are currently being refreshed.
+  static bool isProductSourceRefreshingSelector(
+    AppState state,
+    String productId,
+  ) {
+    if (state.products.isRefreshingAll ||
+        state.products.refreshingProductIds.contains(productId)) {
+      return true;
+    }
+
+    final Product? product = productSelector(state, productId);
+    if (product == null) {
+      return false;
+    }
+
+    final Set<String> sourceIds = product.sources
+        .map((source) => source.id)
+        .toSet();
+    return sourceIds.any((String sourceId) {
+      final SourceRefreshStatus status =
+          state.products.sourceRefreshStatuses[sourceId] ??
+          SourceRefreshStatus.idle;
+      return status == SourceRefreshStatus.queued ||
+          status == SourceRefreshStatus.fetching;
+    });
+  }
+
+  /// Returns the number of [productId]'s sources in a terminal refresh state.
+  static int productRefreshCompletedCountSelector(
+    AppState state,
+    String productId,
+  ) {
+    final Product? product = productSelector(state, productId);
+    if (product == null) {
+      return 0;
+    }
+
+    return product.sources.where((source) {
+      final SourceRefreshStatus status =
+          state.products.sourceRefreshStatuses[source.id] ??
+          SourceRefreshStatus.idle;
+      return status == SourceRefreshStatus.success ||
+          status == SourceRefreshStatus.error ||
+          status == SourceRefreshStatus.unavailable;
+    }).length;
+  }
+
+  /// Returns whether sources outside [productId] are currently refreshing.
+  static bool areOtherSourcesRefreshingSelector(
+    AppState state,
+    String productId,
+  ) {
+    final Product? product = productSelector(state, productId);
+    final Set<String> productSourceIds =
+        product?.sources.map((source) => source.id).toSet() ?? <String>{};
+
+    if (state.products.isRefreshingAll) {
+      return state.products.products.any(
+        (Product other) => other.id != productId && other.sources.isNotEmpty,
+      );
+    }
+
+    return state.products.sourceRefreshStatuses.entries.any((entry) {
+      final SourceRefreshStatus status = entry.value;
+      return !productSourceIds.contains(entry.key) &&
+          (status == SourceRefreshStatus.queued ||
+              status == SourceRefreshStatus.fetching);
+    });
+  }
+
   /// Returns the refresh state for [sourceId].
   static SourceRefreshStatus sourceRefreshStatusSelector(
     AppState state,

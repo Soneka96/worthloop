@@ -18,6 +18,18 @@ class ProductDetailsViewModel extends Equatable {
   /// Whether this product is being refreshed.
   final bool isRefreshing;
 
+  /// Whether this product's sources are being refreshed.
+  final bool isProductRefreshing;
+
+  /// Whether sources belonging to other products are being refreshed.
+  final bool areOtherSourcesRefreshing;
+
+  /// Number of this product's sources in a terminal refresh state.
+  final int productRefreshCompletedCount;
+
+  /// Number of sources belonging to this product.
+  final int productRefreshTotalCount;
+
   /// Classified reason for the latest refresh failure, or `null`.
   final PriceFetchStatus? refreshStatus;
 
@@ -90,6 +102,10 @@ class ProductDetailsViewModel extends Equatable {
   const ProductDetailsViewModel({
     required this.product,
     required this.isRefreshing,
+    required this.isProductRefreshing,
+    required this.areOtherSourcesRefreshing,
+    required this.productRefreshCompletedCount,
+    required this.productRefreshTotalCount,
     this.refreshStatus,
     this.sourceRefreshStatuses = const {},
     this.refreshCompletedCount = 0,
@@ -122,6 +138,26 @@ class ProductDetailsViewModel extends Equatable {
   ) => ProductDetailsViewModel(
     product: ProductsSelectors.productSelector(store.state, productId),
     isRefreshing: ProductsSelectors.isRefreshingSelector(store.state),
+    isProductRefreshing: ProductsSelectors.isProductSourceRefreshingSelector(
+      store.state,
+      productId,
+    ),
+    areOtherSourcesRefreshing:
+        ProductsSelectors.areOtherSourcesRefreshingSelector(
+          store.state,
+          productId,
+        ),
+    productRefreshCompletedCount:
+        ProductsSelectors.productRefreshCompletedCountSelector(
+          store.state,
+          productId,
+        ),
+    productRefreshTotalCount:
+        ProductsSelectors.productSelector(
+          store.state,
+          productId,
+        )?.sources.length ??
+        0,
     refreshStatus: ProductsSelectors.refreshStatusForProductSelector(
       store.state,
       productId,
@@ -169,6 +205,10 @@ class ProductDetailsViewModel extends Equatable {
   List<Object?> get props => [
     product,
     isRefreshing,
+    isProductRefreshing,
+    areOtherSourcesRefreshing,
+    productRefreshCompletedCount,
+    productRefreshTotalCount,
     refreshStatus,
     sourceRefreshStatuses,
     refreshCompletedCount,
