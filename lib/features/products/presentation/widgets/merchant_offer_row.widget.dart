@@ -82,6 +82,10 @@ class MerchantOfferRow extends StatelessWidget {
             foregroundColor: colorScheme.onPrimaryContainer,
             icon: Icons.refresh,
             label: t.productDetails.refresh,
+            borderRadius: BorderRadius.only(
+              topLeft: borderRadius.topLeft,
+              bottomLeft: borderRadius.bottomLeft,
+            ),
           ),
           SlidableAction(
             key: Key('merchant-offer-${source.id}-edit-action'),

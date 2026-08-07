@@ -405,7 +405,7 @@ void main() {
     );
 
     testWidgets(
-      'MerchantOfferRow rounds only the trailing edge of its revealed actions',
+      'MerchantOfferRow rounds only the outer edges of its revealed actions',
       (WidgetTester tester) async {
         await tester.pumpWidget(buildWidget());
         await tester.drag(
@@ -422,19 +422,19 @@ void main() {
         );
 
         expect(
-          deleteAction.borderRadius,
-          BorderRadius.only(
-            topRight: roundedRadius,
-            bottomRight: roundedRadius,
-          ),
-        );
-        expect(
           tester
               .widget<SlidableAction>(
                 find.byKey(const Key('merchant-offer-source-1-refresh-action')),
               )
               .borderRadius,
-          BorderRadius.zero,
+          BorderRadius.only(topLeft: roundedRadius, bottomLeft: roundedRadius),
+        );
+        expect(
+          deleteAction.borderRadius,
+          BorderRadius.only(
+            topRight: roundedRadius,
+            bottomRight: roundedRadius,
+          ),
         );
         expect(
           tester
@@ -462,7 +462,17 @@ void main() {
         final SlidableAction deleteAction = tester.widget(
           find.byKey(const Key('merchant-offer-source-1-delete-action')),
         );
+        final SlidableAction refreshAction = tester.widget(
+          find.byKey(const Key('merchant-offer-source-1-refresh-action')),
+        );
 
+        expect(
+          refreshAction.borderRadius,
+          BorderRadius.only(
+            topLeft: Radius.circular(squareRadius),
+            bottomLeft: Radius.circular(squareRadius),
+          ),
+        );
         expect(
           deleteAction.borderRadius,
           BorderRadius.only(
