@@ -97,6 +97,27 @@ void main() {
     );
   });
 
+  group('ProductsRepository implements watchProducts() correctly', () {
+    test('Method watchProducts() returns the datasource stream', () async {
+      final List<ProductModel> products = [buildProductModel()];
+      final List<ProductModel> updatedProducts = [
+        buildProductModel(name: 'Updated Product'),
+      ];
+      when(
+        () => mockDatasource.watchProducts(),
+      ).thenAnswer((_) => Stream.fromIterable([products, updatedProducts]));
+
+      final List<List<Product>> result = await repository
+          .watchProducts()
+          .take(2)
+          .toList();
+
+      expect(result, [products, updatedProducts]);
+      verify(() => mockDatasource.watchProducts()).called(1);
+      verifyNoMoreInteractions(mockDatasource);
+    });
+  });
+
   group('ProductsRepository implements createProduct() correctly', () {
     test('Method createProduct() returns the datasource result', () async {
       final ProductModel product = buildProductModel();

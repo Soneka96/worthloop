@@ -27,6 +27,9 @@ abstract class IProductsRepository {
   /// Loads every tracked product.
   Future<Either<Failure, List<Product>>> loadProducts();
 
+  /// Watches every persisted product and its saved sources.
+  Stream<List<Product>> watchProducts();
+
   /// Refreshes and persists the product identified by [productId].
   Future<Either<Failure, Product>> refreshProduct(
     String productId, {

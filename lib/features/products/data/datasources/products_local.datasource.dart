@@ -93,6 +93,40 @@ class ProductsLocalDatasource {
     }
   }
 
+  /// Watches every persisted product and its saved sources.
+  Stream<List<ProductModel>> watchProducts() {
+    final JoinedSelectStatement query = _db.select(_db.productTable).join([
+      leftOuterJoin(
+        _db.productSourceTable,
+        _db.productSourceTable.productId.equalsExp(_db.productTable.id),
+      ),
+    ]);
+    return query.watch().map((List<TypedResult> rows) {
+      final Map<String, ProductRow> products = {};
+      final Map<String, List<ProductSourceRow>> sourcesByProduct = {};
+      for (final TypedResult row in rows) {
+        final ProductRow product = row.readTable(_db.productTable);
+        products[product.id] = product;
+        final ProductSourceRow? source = row.readTableOrNull(
+          _db.productSourceTable,
+        );
+        if (source != null) {
+          sourcesByProduct
+              .putIfAbsent(product.id, () => <ProductSourceRow>[])
+              .add(source);
+        }
+      }
+      return products.values
+          .map(
+            (ProductRow product) => ProductModel.fromRows(
+              product,
+              sourcesByProduct[product.id] ?? const <ProductSourceRow>[],
+            ),
+          )
+          .toList(growable: false);
+    });
+  }
+
   /// Loads one persisted product by [productId].
   Future<Either<Failure, ProductModel>> loadProduct(String productId) async {
     try {

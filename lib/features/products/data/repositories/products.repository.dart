@@ -38,6 +38,9 @@ class ProductsRepository implements IProductsRepository {
   }
 
   @override
+  Stream<List<Product>> watchProducts() => _localDatasource.watchProducts();
+
+  @override
   Future<Either<Failure, Product>> refreshProduct(
     String productId, {
     SourceRefreshListener? onSourceStatusChanged,

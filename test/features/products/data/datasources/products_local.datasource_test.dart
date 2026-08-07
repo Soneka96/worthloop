@@ -1,3 +1,6 @@
+// Dart imports:
+import 'dart:async';
+
 // Package imports:
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -143,6 +146,95 @@ void main() {
         ]),
       );
       verifyZeroInteractions(mockLoggerService);
+    });
+  });
+
+  group('Method watchProducts() returns the correct value', () {
+    test('emits an empty list when the database is empty', () async {
+      final StreamIterator<List<ProductModel>> products = StreamIterator(
+        datasource.watchProducts(),
+      );
+
+      expect(await products.moveNext(), isTrue);
+      expect(products.current, isEmpty);
+      await products.cancel();
+    });
+
+    test('emits initial and updated persisted products', () async {
+      await db
+          .into(db.productTable)
+          .insert(buildProductTableCompanion(id: 'product-1'));
+      final StreamIterator<List<ProductModel>> products = StreamIterator(
+        datasource.watchProducts(),
+      );
+
+      expect(await products.moveNext(), isTrue);
+      expect(products.current, hasLength(1));
+      expect(products.current.single.id, 'product-1');
+      expect(products.current.single.sources, isEmpty);
+
+      await db
+          .into(db.productSourceTable)
+          .insert(buildProductSourceTableCompanion(productId: 'product-1'));
+
+      expect(await products.moveNext(), isTrue);
+      expect(products.current.single.sources, hasLength(1));
+      await products.cancel();
+    });
+
+    test('groups multiple source rows under their products', () async {
+      await db
+          .into(db.productTable)
+          .insert(buildProductTableCompanion(id: 'product-1'));
+      await db
+          .into(db.productTable)
+          .insert(buildProductTableCompanion(id: 'product-2'));
+      await db
+          .into(db.productSourceTable)
+          .insert(
+            buildProductSourceTableCompanion(
+              id: 'source-1',
+              productId: 'product-1',
+            ),
+          );
+      await db
+          .into(db.productSourceTable)
+          .insert(
+            buildProductSourceTableCompanion(
+              id: 'source-2',
+              productId: 'product-1',
+              url: 'https://example.com/products/2',
+            ),
+          );
+      await db
+          .into(db.productSourceTable)
+          .insert(
+            buildProductSourceTableCompanion(
+              id: 'source-3',
+              productId: 'product-2',
+              url: 'https://example.com/products/3',
+            ),
+          );
+
+      final StreamIterator<List<ProductModel>> products = StreamIterator(
+        datasource.watchProducts(),
+      );
+
+      expect(await products.moveNext(), isTrue);
+      expect(products.current, hasLength(2));
+      expect(
+        products.current
+            .singleWhere((ProductModel item) => item.id == 'product-1')
+            .sources,
+        hasLength(2),
+      );
+      expect(
+        products.current
+            .singleWhere((ProductModel item) => item.id == 'product-2')
+            .sources,
+        hasLength(1),
+      );
+      await products.cancel();
     });
   });
 
