@@ -127,3 +127,12 @@ class BrowserRefreshSaveFailedAction extends Equatable {
   @override
   List<Object?> get props => [message];
 }
+
+/// Requests opening Android's background-restriction settings.
+@immutable
+class OpenBackgroundRestrictionsAction extends Equatable {
+  const OpenBackgroundRestrictionsAction();
+
+  @override
+  List<Object?> get props => [];
+}

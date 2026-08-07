@@ -31,6 +31,9 @@ class GeneralSettingsScreenViewModel extends Equatable {
   /// Dispatches [SaveBrowserRefreshEnabledAction].
   final void Function(bool enabled) onBrowserRefreshEnabledChanged;
 
+  /// Dispatches [OpenBackgroundRestrictionsAction].
+  final void Function() onOpenBackgroundRestrictions;
+
   const GeneralSettingsScreenViewModel({
     required this.refreshIntervalMinutes,
     required this.browserRefreshEnabled,
@@ -39,6 +42,7 @@ class GeneralSettingsScreenViewModel extends Equatable {
     required this.onOpenPrivacyPolicy,
     required this.onRefreshIntervalSelected,
     required this.onBrowserRefreshEnabledChanged,
+    required this.onOpenBackgroundRestrictions,
   });
 
   /// Builds a view model backed by [store].
@@ -59,6 +63,8 @@ class GeneralSettingsScreenViewModel extends Equatable {
           store.dispatch(SaveRefreshIntervalAction(intervalMinutes)),
       onBrowserRefreshEnabledChanged: (bool enabled) =>
           store.dispatch(SaveBrowserRefreshEnabledAction(enabled)),
+      onOpenBackgroundRestrictions: () =>
+          store.dispatch(const OpenBackgroundRestrictionsAction()),
     );
   }
 

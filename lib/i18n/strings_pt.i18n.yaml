@@ -131,6 +131,12 @@ settings:
       everyThreeHours: A cada 3 horas
       everySixHours: A cada 6 horas
       everyTwelveHours: A cada 12 horas
+    browserRefresh:
+      title: Atualização pelo navegador
+      description: Muitas lojas bloqueiam pedidos simples. Ative um navegador em segundo plano para melhorar a cobertura automática de preços.
+      enabledDescription: A atualização pelo navegador pode usar mais bateria e dados ao verificar lojas em segundo plano.
+      status: A atualização pelo navegador está ativa. O Android pode atrasar o trabalho em segundo plano.
+      fixRestrictions: Corrigir restrições de segundo plano
     updates:
       title: Atualizações
       version: Versão $version

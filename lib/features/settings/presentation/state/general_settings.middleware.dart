@@ -13,6 +13,8 @@ import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/usecase/no_params.dart';
+import 'package:worth_loop/shared/utils/android_background_capabilities_service.dart';
+import 'package:worth_loop/shared/utils/android_background_refresh_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 
 /// Handles General settings actions.
@@ -32,6 +34,8 @@ class GeneralSettingsMiddleware extends MiddlewareClass<AppState> {
         _saveRefreshInterval(store, action);
       case SaveBrowserRefreshEnabledAction _:
         _saveBrowserRefreshEnabled(store, action);
+      case OpenBackgroundRestrictionsAction _:
+        _openBackgroundRestrictions();
     }
   }
 
@@ -98,10 +102,29 @@ class GeneralSettingsMiddleware extends MiddlewareClass<AppState> {
         store.dispatch(BrowserRefreshSaveFailedAction(failure.message));
       },
       (RefreshSettings settings) {
+        _syncBackgroundRefreshService(settings.browserRefreshEnabled);
         store.dispatch(
           BrowserRefreshEnabledSavedAction(settings.browserRefreshEnabled),
         );
       },
     );
+  }
+
+  /// Opens Android's battery settings for the browser-refresh repair action.
+  Future<void> _openBackgroundRestrictions() async {
+    await sl<AndroidBackgroundCapabilitiesService>().openBatterySettings();
+  }
+
+  /// Starts or stops the user-visible background refresh host.
+  Future<void> _syncBackgroundRefreshService(bool enabled) async {
+    final bool started = enabled
+        ? await sl<AndroidBackgroundRefreshService>().start()
+        : await sl<AndroidBackgroundRefreshService>().stop();
+    if (enabled && !started) {
+      sl<LoggerService>().w(
+        'Background browser refresh could not start yet',
+        showPopup: true,
+      );
+    }
   }
 }

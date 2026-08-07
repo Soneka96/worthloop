@@ -45,6 +45,7 @@ void main() {
             viewmodel.onBrowserRefreshEnabledChanged,
             isA<void Function(bool)>(),
           );
+          expect(viewmodel.onOpenBackgroundRestrictions, isA<Function()>());
         },
       );
 
@@ -83,6 +84,18 @@ void main() {
           expect(dispatchedActions, [
             const SaveBrowserRefreshEnabledAction(true),
           ]);
+        },
+      );
+
+      test(
+        'Method onOpenBackgroundRestrictions dispatches OpenBackgroundRestrictionsAction when called',
+        () {
+          final GeneralSettingsScreenViewModel viewmodel =
+              GeneralSettingsScreenViewModel.fromStore(store);
+
+          viewmodel.onOpenBackgroundRestrictions();
+
+          expect(dispatchedActions, [const OpenBackgroundRestrictionsAction()]);
         },
       );
 

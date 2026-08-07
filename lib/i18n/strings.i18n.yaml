@@ -130,6 +130,12 @@ settings:
       everyThreeHours: Every 3 hours
       everySixHours: Every 6 hours
       everyTwelveHours: Every 12 hours
+    browserRefresh:
+      title: Browser refresh
+      description: Many stores block simple requests. Enable a browser in the background to improve automatic price coverage.
+      enabledDescription: Browser refresh may use additional battery and data while checking stores in the background.
+      status: Browser refresh is enabled. Android may still delay background work.
+      fixRestrictions: Fix background restrictions
     updates:
       title: Updates
       version: Version $version

@@ -17,6 +17,8 @@ import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/usecase/no_params.dart';
+import 'package:worth_loop/shared/utils/android_background_capabilities_service.dart';
+import 'package:worth_loop/shared/utils/android_background_refresh_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import '../../fixtures/refresh_settings.fixture.dart';
 
@@ -33,6 +35,12 @@ class MockSaveRefreshIntervalUseCase extends Mock
 class MockSaveBrowserRefreshEnabledUseCase extends Mock
     implements SaveBrowserRefreshEnabledUseCase {}
 
+class MockAndroidBackgroundCapabilitiesService extends Mock
+    implements AndroidBackgroundCapabilitiesService {}
+
+class MockAndroidBackgroundRefreshService extends Mock
+    implements AndroidBackgroundRefreshService {}
+
 class FakeSaveRefreshIntervalParams extends Fake
     implements SaveRefreshIntervalParams {}
 
@@ -47,6 +55,8 @@ void main() {
   late MockLoadRefreshSettingsUseCase mockLoadUseCase;
   late MockSaveRefreshIntervalUseCase mockSaveUseCase;
   late MockSaveBrowserRefreshEnabledUseCase mockSaveBrowserRefreshUseCase;
+  late MockAndroidBackgroundCapabilitiesService mockCapabilitiesService;
+  late MockAndroidBackgroundRefreshService mockBackgroundRefreshService;
 
   void next(dynamic action) => actionLog.add(action);
 
@@ -64,6 +74,8 @@ void main() {
     mockLoadUseCase = MockLoadRefreshSettingsUseCase();
     mockSaveUseCase = MockSaveRefreshIntervalUseCase();
     mockSaveBrowserRefreshUseCase = MockSaveBrowserRefreshEnabledUseCase();
+    mockCapabilitiesService = MockAndroidBackgroundCapabilitiesService();
+    mockBackgroundRefreshService = MockAndroidBackgroundRefreshService();
     when(() => mockStore.dispatch(any())).thenAnswer(
       (Invocation invocation) =>
           actionLog.add(invocation.positionalArguments.first),
@@ -73,6 +85,12 @@ void main() {
     sl.registerSingleton<SaveRefreshIntervalUseCase>(mockSaveUseCase);
     sl.registerSingleton<SaveBrowserRefreshEnabledUseCase>(
       mockSaveBrowserRefreshUseCase,
+    );
+    sl.registerSingleton<AndroidBackgroundCapabilitiesService>(
+      mockCapabilitiesService,
+    );
+    sl.registerSingleton<AndroidBackgroundRefreshService>(
+      mockBackgroundRefreshService,
     );
   });
 
@@ -232,6 +250,9 @@ void main() {
             (_) async =>
                 Right(buildRefreshSettings(browserRefreshEnabled: true)),
           );
+          when(
+            () => mockBackgroundRefreshService.start(),
+          ).thenAnswer((_) async => true);
 
           middleware.call(
             mockStore,
@@ -248,6 +269,8 @@ void main() {
             ),
           ).called(1);
           verifyNoMoreInteractions(mockSaveBrowserRefreshUseCase);
+          verify(() => mockBackgroundRefreshService.start()).called(1);
+          verifyNoMoreInteractions(mockBackgroundRefreshService);
           verifyZeroInteractions(mockLoggerService);
         },
       );
@@ -272,8 +295,32 @@ void main() {
           ),
         ).called(1);
         verifyNoMoreInteractions(mockSaveBrowserRefreshUseCase);
+        verifyNever(() => mockBackgroundRefreshService.start());
+        verifyNoMoreInteractions(mockBackgroundRefreshService);
         verify(() => mockLoggerService.e('failed', showPopup: true)).called(1);
         verifyNoMoreInteractions(mockLoggerService);
+      });
+    },
+  );
+
+  group(
+    'GeneralSettingsMiddleware processes OpenBackgroundRestrictionsAction',
+    () {
+      test('opens Android background settings', () async {
+        when(
+          () => mockCapabilitiesService.openBatterySettings(),
+        ).thenAnswer((_) async => true);
+
+        middleware.call(
+          mockStore,
+          const OpenBackgroundRestrictionsAction(),
+          next,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(actionLog, [const OpenBackgroundRestrictionsAction()]);
+        verify(() => mockCapabilitiesService.openBatterySettings()).called(1);
+        verifyNoMoreInteractions(mockCapabilitiesService);
       });
     },
   );
