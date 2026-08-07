@@ -22,6 +22,7 @@ void main() {
       const RefreshSettingsRow row = RefreshSettingsRow(
         id: 1,
         intervalMinutes: 180,
+        browserRefreshEnabled: true,
       );
 
       final RefreshSettingsModel model = RefreshSettingsModel.fromRow(row);
@@ -29,6 +30,8 @@ void main() {
       expect(model, isA<RefreshSettingsModel>());
       expect(model.intervalMinutes, isA<int>());
       expect(model.intervalMinutes, 180);
+      expect(model.browserRefreshEnabled, isA<bool>());
+      expect(model.browserRefreshEnabled, isTrue);
     });
 
     test('Method toCompanion() should return persisted values', () {
@@ -40,6 +43,8 @@ void main() {
       expect(companion.id.value, 1);
       expect(companion.intervalMinutes.value, isA<int>());
       expect(companion.intervalMinutes.value, 360);
+      expect(companion.browserRefreshEnabled.value, isA<bool>());
+      expect(companion.browserRefreshEnabled.value, isFalse);
     });
   });
 }

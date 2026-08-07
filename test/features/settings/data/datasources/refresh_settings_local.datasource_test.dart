@@ -45,16 +45,27 @@ void main() {
       expect(rows.length, 1);
       expect(rows.single.intervalMinutes, isA<int>());
       expect(rows.single.intervalMinutes, 60);
+      expect(rows.single.browserRefreshEnabled, isA<bool>());
+      expect(rows.single.browserRefreshEnabled, isFalse);
       verifyZeroInteractions(mockLoggerService);
     });
 
     test('loadSettings() returns a previously saved interval', () async {
+      await datasource.saveBrowserRefreshEnabled(true);
       await datasource.saveInterval(180);
 
       final Either<Failure, RefreshSettingsModel> result = await datasource
           .loadSettings();
 
-      expect(result, const Right(RefreshSettingsModel(intervalMinutes: 180)));
+      expect(
+        result,
+        const Right(
+          RefreshSettingsModel(
+            intervalMinutes: 180,
+            browserRefreshEnabled: true,
+          ),
+        ),
+      );
       verifyZeroInteractions(mockLoggerService);
     });
 
@@ -91,6 +102,8 @@ void main() {
       expect(result, const Right(RefreshSettingsModel(intervalMinutes: 360)));
       expect(row.intervalMinutes, isA<int>());
       expect(row.intervalMinutes, 360);
+      expect(row.browserRefreshEnabled, isA<bool>());
+      expect(row.browserRefreshEnabled, isFalse);
       verifyZeroInteractions(mockLoggerService);
     });
 
@@ -104,6 +117,51 @@ void main() {
         final Failure failure = result.fold(
           (Failure failure) => failure,
           (_) => throw StateError('Expected saveInterval() to fail'),
+        );
+
+        expect(result.isLeft(), isA<bool>());
+        expect(result.isLeft(), isTrue);
+        verify(() => mockLoggerService.e(failure.message)).called(1);
+        verifyNoMoreInteractions(mockLoggerService);
+      },
+    );
+  });
+
+  group('Method saveBrowserRefreshEnabled() returns the correct value', () {
+    test('saveBrowserRefreshEnabled() preserves the saved interval', () async {
+      await datasource.saveInterval(180);
+
+      final Either<Failure, RefreshSettingsModel> result = await datasource
+          .saveBrowserRefreshEnabled(true);
+      final RefreshSettingsRow row = await db
+          .select(db.refreshSettingsTable)
+          .getSingle();
+
+      expect(
+        result,
+        const Right(
+          RefreshSettingsModel(
+            intervalMinutes: 180,
+            browserRefreshEnabled: true,
+          ),
+        ),
+      );
+      expect(row.intervalMinutes, 180);
+      expect(row.browserRefreshEnabled, isTrue);
+      verifyZeroInteractions(mockLoggerService);
+    });
+
+    test(
+      'saveBrowserRefreshEnabled() returns Left(DatabaseFailure) when table is missing',
+      () async {
+        await db.customStatement('DROP TABLE refresh_settings_table');
+
+        final Either<Failure, RefreshSettingsModel> result = await datasource
+            .saveBrowserRefreshEnabled(true);
+        final Failure failure = result.fold(
+          (Failure failure) => failure,
+          (_) =>
+              throw StateError('Expected saveBrowserRefreshEnabled() to fail'),
         );
 
         expect(result.isLeft(), isA<bool>());

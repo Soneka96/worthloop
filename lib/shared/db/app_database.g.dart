@@ -1502,8 +1502,27 @@ class $RefreshSettingsTableTable extends RefreshSettingsTable
     requiredDuringInsert: false,
     defaultValue: const Constant(60),
   );
+  static const VerificationMeta _browserRefreshEnabledMeta =
+      const VerificationMeta('browserRefreshEnabled');
   @override
-  List<GeneratedColumn> get $columns => [id, intervalMinutes];
+  late final GeneratedColumn<bool> browserRefreshEnabled =
+      GeneratedColumn<bool>(
+        'browser_refresh_enabled',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("browser_refresh_enabled" IN (0, 1))',
+        ),
+        defaultValue: const Constant(false),
+      );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    intervalMinutes,
+    browserRefreshEnabled,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1528,6 +1547,15 @@ class $RefreshSettingsTableTable extends RefreshSettingsTable
         ),
       );
     }
+    if (data.containsKey('browser_refresh_enabled')) {
+      context.handle(
+        _browserRefreshEnabledMeta,
+        browserRefreshEnabled.isAcceptableOrUnknown(
+          data['browser_refresh_enabled']!,
+          _browserRefreshEnabledMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1545,6 +1573,10 @@ class $RefreshSettingsTableTable extends RefreshSettingsTable
         DriftSqlType.int,
         data['${effectivePrefix}interval_minutes'],
       )!,
+      browserRefreshEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}browser_refresh_enabled'],
+      )!,
     );
   }
 
@@ -1561,12 +1593,20 @@ class RefreshSettingsRow extends DataClass
 
   /// Preferred refresh interval in minutes.
   final int intervalMinutes;
-  const RefreshSettingsRow({required this.id, required this.intervalMinutes});
+
+  /// Whether browser-backed background refresh is enabled.
+  final bool browserRefreshEnabled;
+  const RefreshSettingsRow({
+    required this.id,
+    required this.intervalMinutes,
+    required this.browserRefreshEnabled,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['interval_minutes'] = Variable<int>(intervalMinutes);
+    map['browser_refresh_enabled'] = Variable<bool>(browserRefreshEnabled);
     return map;
   }
 
@@ -1574,6 +1614,7 @@ class RefreshSettingsRow extends DataClass
     return RefreshSettingsTableCompanion(
       id: Value(id),
       intervalMinutes: Value(intervalMinutes),
+      browserRefreshEnabled: Value(browserRefreshEnabled),
     );
   }
 
@@ -1585,6 +1626,9 @@ class RefreshSettingsRow extends DataClass
     return RefreshSettingsRow(
       id: serializer.fromJson<int>(json['id']),
       intervalMinutes: serializer.fromJson<int>(json['intervalMinutes']),
+      browserRefreshEnabled: serializer.fromJson<bool>(
+        json['browserRefreshEnabled'],
+      ),
     );
   }
   @override
@@ -1593,20 +1637,28 @@ class RefreshSettingsRow extends DataClass
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'intervalMinutes': serializer.toJson<int>(intervalMinutes),
+      'browserRefreshEnabled': serializer.toJson<bool>(browserRefreshEnabled),
     };
   }
 
-  RefreshSettingsRow copyWith({int? id, int? intervalMinutes}) =>
-      RefreshSettingsRow(
-        id: id ?? this.id,
-        intervalMinutes: intervalMinutes ?? this.intervalMinutes,
-      );
+  RefreshSettingsRow copyWith({
+    int? id,
+    int? intervalMinutes,
+    bool? browserRefreshEnabled,
+  }) => RefreshSettingsRow(
+    id: id ?? this.id,
+    intervalMinutes: intervalMinutes ?? this.intervalMinutes,
+    browserRefreshEnabled: browserRefreshEnabled ?? this.browserRefreshEnabled,
+  );
   RefreshSettingsRow copyWithCompanion(RefreshSettingsTableCompanion data) {
     return RefreshSettingsRow(
       id: data.id.present ? data.id.value : this.id,
       intervalMinutes: data.intervalMinutes.present
           ? data.intervalMinutes.value
           : this.intervalMinutes,
+      browserRefreshEnabled: data.browserRefreshEnabled.present
+          ? data.browserRefreshEnabled.value
+          : this.browserRefreshEnabled,
     );
   }
 
@@ -1614,50 +1666,61 @@ class RefreshSettingsRow extends DataClass
   String toString() {
     return (StringBuffer('RefreshSettingsRow(')
           ..write('id: $id, ')
-          ..write('intervalMinutes: $intervalMinutes')
+          ..write('intervalMinutes: $intervalMinutes, ')
+          ..write('browserRefreshEnabled: $browserRefreshEnabled')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, intervalMinutes);
+  int get hashCode => Object.hash(id, intervalMinutes, browserRefreshEnabled);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is RefreshSettingsRow &&
           other.id == this.id &&
-          other.intervalMinutes == this.intervalMinutes);
+          other.intervalMinutes == this.intervalMinutes &&
+          other.browserRefreshEnabled == this.browserRefreshEnabled);
 }
 
 class RefreshSettingsTableCompanion
     extends UpdateCompanion<RefreshSettingsRow> {
   final Value<int> id;
   final Value<int> intervalMinutes;
+  final Value<bool> browserRefreshEnabled;
   const RefreshSettingsTableCompanion({
     this.id = const Value.absent(),
     this.intervalMinutes = const Value.absent(),
+    this.browserRefreshEnabled = const Value.absent(),
   });
   RefreshSettingsTableCompanion.insert({
     this.id = const Value.absent(),
     this.intervalMinutes = const Value.absent(),
+    this.browserRefreshEnabled = const Value.absent(),
   });
   static Insertable<RefreshSettingsRow> custom({
     Expression<int>? id,
     Expression<int>? intervalMinutes,
+    Expression<bool>? browserRefreshEnabled,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (intervalMinutes != null) 'interval_minutes': intervalMinutes,
+      if (browserRefreshEnabled != null)
+        'browser_refresh_enabled': browserRefreshEnabled,
     });
   }
 
   RefreshSettingsTableCompanion copyWith({
     Value<int>? id,
     Value<int>? intervalMinutes,
+    Value<bool>? browserRefreshEnabled,
   }) {
     return RefreshSettingsTableCompanion(
       id: id ?? this.id,
       intervalMinutes: intervalMinutes ?? this.intervalMinutes,
+      browserRefreshEnabled:
+          browserRefreshEnabled ?? this.browserRefreshEnabled,
     );
   }
 
@@ -1670,6 +1733,11 @@ class RefreshSettingsTableCompanion
     if (intervalMinutes.present) {
       map['interval_minutes'] = Variable<int>(intervalMinutes.value);
     }
+    if (browserRefreshEnabled.present) {
+      map['browser_refresh_enabled'] = Variable<bool>(
+        browserRefreshEnabled.value,
+      );
+    }
     return map;
   }
 
@@ -1677,7 +1745,8 @@ class RefreshSettingsTableCompanion
   String toString() {
     return (StringBuffer('RefreshSettingsTableCompanion(')
           ..write('id: $id, ')
-          ..write('intervalMinutes: $intervalMinutes')
+          ..write('intervalMinutes: $intervalMinutes, ')
+          ..write('browserRefreshEnabled: $browserRefreshEnabled')
           ..write(')'))
         .toString();
   }
@@ -2605,11 +2674,13 @@ typedef $$RefreshSettingsTableTableCreateCompanionBuilder =
     RefreshSettingsTableCompanion Function({
       Value<int> id,
       Value<int> intervalMinutes,
+      Value<bool> browserRefreshEnabled,
     });
 typedef $$RefreshSettingsTableTableUpdateCompanionBuilder =
     RefreshSettingsTableCompanion Function({
       Value<int> id,
       Value<int> intervalMinutes,
+      Value<bool> browserRefreshEnabled,
     });
 
 class $$RefreshSettingsTableTableFilterComposer
@@ -2628,6 +2699,11 @@ class $$RefreshSettingsTableTableFilterComposer
 
   ColumnFilters<int> get intervalMinutes => $composableBuilder(
     column: $table.intervalMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get browserRefreshEnabled => $composableBuilder(
+    column: $table.browserRefreshEnabled,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2650,6 +2726,11 @@ class $$RefreshSettingsTableTableOrderingComposer
     column: $table.intervalMinutes,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get browserRefreshEnabled => $composableBuilder(
+    column: $table.browserRefreshEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$RefreshSettingsTableTableAnnotationComposer
@@ -2666,6 +2747,11 @@ class $$RefreshSettingsTableTableAnnotationComposer
 
   GeneratedColumn<int> get intervalMinutes => $composableBuilder(
     column: $table.intervalMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get browserRefreshEnabled => $composableBuilder(
+    column: $table.browserRefreshEnabled,
     builder: (column) => column,
   );
 }
@@ -2715,17 +2801,21 @@ class $$RefreshSettingsTableTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<int> intervalMinutes = const Value.absent(),
+                Value<bool> browserRefreshEnabled = const Value.absent(),
               }) => RefreshSettingsTableCompanion(
                 id: id,
                 intervalMinutes: intervalMinutes,
+                browserRefreshEnabled: browserRefreshEnabled,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 Value<int> intervalMinutes = const Value.absent(),
+                Value<bool> browserRefreshEnabled = const Value.absent(),
               }) => RefreshSettingsTableCompanion.insert(
                 id: id,
                 intervalMinutes: intervalMinutes,
+                browserRefreshEnabled: browserRefreshEnabled,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

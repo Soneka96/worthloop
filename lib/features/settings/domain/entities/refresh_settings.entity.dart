@@ -8,8 +8,14 @@ class RefreshSettings extends Equatable {
   /// Preferred interval in minutes.
   final int intervalMinutes;
 
-  const RefreshSettings({required this.intervalMinutes});
+  /// Whether browser-backed background refresh is enabled.
+  final bool browserRefreshEnabled;
+
+  const RefreshSettings({
+    required this.intervalMinutes,
+    this.browserRefreshEnabled = false,
+  });
 
   @override
-  List<Object?> get props => [intervalMinutes];
+  List<Object?> get props => [intervalMinutes, browserRefreshEnabled];
 }

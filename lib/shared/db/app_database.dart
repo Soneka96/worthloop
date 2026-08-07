@@ -29,7 +29,7 @@ class AppDatabase extends _$AppDatabase {
   static const String fileName = 'app.sqlite';
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -74,6 +74,12 @@ class AppDatabase extends _$AppDatabase {
         await migrator.addColumn(
           productSourceTable,
           productSourceTable.lastRefreshAt,
+        );
+      }
+      if (from < 7) {
+        await migrator.addColumn(
+          refreshSettingsTable,
+          refreshSettingsTable.browserRefreshEnabled,
         );
       }
     },

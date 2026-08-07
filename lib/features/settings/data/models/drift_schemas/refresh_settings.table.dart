@@ -10,6 +10,10 @@ class RefreshSettingsTable extends Table {
   /// Preferred refresh interval in minutes.
   IntColumn get intervalMinutes => integer().withDefault(const Constant(60))();
 
+  /// Whether browser-backed background refresh is enabled.
+  BoolColumn get browserRefreshEnabled =>
+      boolean().withDefault(const Constant(false))();
+
   @override
   Set<Column> get primaryKey => {id};
 

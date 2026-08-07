@@ -35,9 +35,9 @@ void main() {
       await db.close();
     });
 
-    test('AppDatabase.forTesting opens with schema version 6', () {
+    test('AppDatabase.forTesting opens with schema version 7', () {
       expect(db.schemaVersion, isA<int>());
-      expect(db.schemaVersion, 6);
+      expect(db.schemaVersion, 7);
     });
 
     test('AppDatabase.forTesting exposes the WorthLoop tables', () async {
@@ -76,6 +76,13 @@ void main() {
           'last_refresh_status',
           'last_refresh_at',
         ]),
+      );
+      final List<QueryRow> refreshSettingsColumns = await db
+          .customSelect('PRAGMA table_info(refresh_settings_table)')
+          .get();
+      expect(
+        refreshSettingsColumns.map((QueryRow row) => row.data['name']),
+        contains('browser_refresh_enabled'),
       );
     });
 
@@ -257,6 +264,13 @@ void main() {
           price_changed_at INTEGER,
           created_at INTEGER NOT NULL,
           UNIQUE (product_id, url)
+        )
+      ''');
+      legacy.execute('''
+        CREATE TABLE refresh_settings_table (
+          id INTEGER NOT NULL DEFAULT 1 PRIMARY KEY,
+          interval_minutes INTEGER NOT NULL DEFAULT 60,
+          CHECK (id = 1)
         )
       ''');
       legacy.execute('PRAGMA user_version = 5');
