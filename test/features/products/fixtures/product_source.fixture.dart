@@ -10,8 +10,10 @@ ProductSource buildProductSource({
   String merchantDomain = 'example.com',
   DateTime? createdAt,
   Money? currentPrice,
+  Money? previousPrice,
   bool? isAvailable,
   DateTime? lastCheckedAt,
+  DateTime? priceChangedAt,
 }) => ProductSource(
   id: id,
   productId: productId,
@@ -19,6 +21,8 @@ ProductSource buildProductSource({
   merchantDomain: merchantDomain,
   createdAt: createdAt ?? DateTime(2026, 1, 1, 12),
   currentPrice: currentPrice,
+  previousPrice: previousPrice,
   isAvailable: isAvailable,
   lastCheckedAt: lastCheckedAt,
+  priceChangedAt: priceChangedAt,
 );

@@ -29,7 +29,7 @@ class AppDatabase extends _$AppDatabase {
   static const String fileName = 'app.sqlite';
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -40,6 +40,31 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 4) {
         await migrator.createTable(productSourceTable);
+      }
+      if (from < 5) {
+        await migrator.addColumn(
+          productTable,
+          productTable.previousBestPriceMinorUnits,
+        );
+        await migrator.addColumn(
+          productTable,
+          productTable.previousBestPriceCurrencyCode,
+        );
+        await migrator.addColumn(productTable, productTable.bestPriceChangedAt);
+        if (from >= 4) {
+          await migrator.addColumn(
+            productSourceTable,
+            productSourceTable.previousPriceMinorUnits,
+          );
+          await migrator.addColumn(
+            productSourceTable,
+            productSourceTable.previousPriceCurrencyCode,
+          );
+          await migrator.addColumn(
+            productSourceTable,
+            productSourceTable.priceChangedAt,
+          );
+        }
       }
     },
     beforeOpen: (OpeningDetails details) async {

@@ -50,8 +50,49 @@ class $ProductTableTable extends ProductTable
         type: DriftSqlType.dateTime,
         requiredDuringInsert: true,
       );
+  static const VerificationMeta _previousBestPriceMinorUnitsMeta =
+      const VerificationMeta('previousBestPriceMinorUnits');
   @override
-  List<GeneratedColumn> get $columns => [id, name, imageUrl, lastUpdatedAt];
+  late final GeneratedColumn<int> previousBestPriceMinorUnits =
+      GeneratedColumn<int>(
+        'previous_best_price_minor_units',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _previousBestPriceCurrencyCodeMeta =
+      const VerificationMeta('previousBestPriceCurrencyCode');
+  @override
+  late final GeneratedColumn<String> previousBestPriceCurrencyCode =
+      GeneratedColumn<String>(
+        'previous_best_price_currency_code',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _bestPriceChangedAtMeta =
+      const VerificationMeta('bestPriceChangedAt');
+  @override
+  late final GeneratedColumn<DateTime> bestPriceChangedAt =
+      GeneratedColumn<DateTime>(
+        'best_price_changed_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    imageUrl,
+    lastUpdatedAt,
+    previousBestPriceMinorUnits,
+    previousBestPriceCurrencyCode,
+    bestPriceChangedAt,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -94,6 +135,33 @@ class $ProductTableTable extends ProductTable
     } else if (isInserting) {
       context.missing(_lastUpdatedAtMeta);
     }
+    if (data.containsKey('previous_best_price_minor_units')) {
+      context.handle(
+        _previousBestPriceMinorUnitsMeta,
+        previousBestPriceMinorUnits.isAcceptableOrUnknown(
+          data['previous_best_price_minor_units']!,
+          _previousBestPriceMinorUnitsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('previous_best_price_currency_code')) {
+      context.handle(
+        _previousBestPriceCurrencyCodeMeta,
+        previousBestPriceCurrencyCode.isAcceptableOrUnknown(
+          data['previous_best_price_currency_code']!,
+          _previousBestPriceCurrencyCodeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('best_price_changed_at')) {
+      context.handle(
+        _bestPriceChangedAtMeta,
+        bestPriceChangedAt.isAcceptableOrUnknown(
+          data['best_price_changed_at']!,
+          _bestPriceChangedAtMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -119,6 +187,18 @@ class $ProductTableTable extends ProductTable
         DriftSqlType.dateTime,
         data['${effectivePrefix}last_updated_at'],
       )!,
+      previousBestPriceMinorUnits: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}previous_best_price_minor_units'],
+      ),
+      previousBestPriceCurrencyCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}previous_best_price_currency_code'],
+      ),
+      bestPriceChangedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}best_price_changed_at'],
+      ),
     );
   }
 
@@ -140,11 +220,23 @@ class ProductRow extends DataClass implements Insertable<ProductRow> {
 
   /// When any offer for the product was last updated.
   final DateTime lastUpdatedAt;
+
+  /// Previous best price in the currency's minor unit.
+  final int? previousBestPriceMinorUnits;
+
+  /// ISO 4217 currency code for the previous best price.
+  final String? previousBestPriceCurrencyCode;
+
+  /// When the product's best price last changed.
+  final DateTime? bestPriceChangedAt;
   const ProductRow({
     required this.id,
     required this.name,
     this.imageUrl,
     required this.lastUpdatedAt,
+    this.previousBestPriceMinorUnits,
+    this.previousBestPriceCurrencyCode,
+    this.bestPriceChangedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -155,6 +247,19 @@ class ProductRow extends DataClass implements Insertable<ProductRow> {
       map['image_url'] = Variable<String>(imageUrl);
     }
     map['last_updated_at'] = Variable<DateTime>(lastUpdatedAt);
+    if (!nullToAbsent || previousBestPriceMinorUnits != null) {
+      map['previous_best_price_minor_units'] = Variable<int>(
+        previousBestPriceMinorUnits,
+      );
+    }
+    if (!nullToAbsent || previousBestPriceCurrencyCode != null) {
+      map['previous_best_price_currency_code'] = Variable<String>(
+        previousBestPriceCurrencyCode,
+      );
+    }
+    if (!nullToAbsent || bestPriceChangedAt != null) {
+      map['best_price_changed_at'] = Variable<DateTime>(bestPriceChangedAt);
+    }
     return map;
   }
 
@@ -166,6 +271,17 @@ class ProductRow extends DataClass implements Insertable<ProductRow> {
           ? const Value.absent()
           : Value(imageUrl),
       lastUpdatedAt: Value(lastUpdatedAt),
+      previousBestPriceMinorUnits:
+          previousBestPriceMinorUnits == null && nullToAbsent
+          ? const Value.absent()
+          : Value(previousBestPriceMinorUnits),
+      previousBestPriceCurrencyCode:
+          previousBestPriceCurrencyCode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(previousBestPriceCurrencyCode),
+      bestPriceChangedAt: bestPriceChangedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bestPriceChangedAt),
     );
   }
 
@@ -179,6 +295,15 @@ class ProductRow extends DataClass implements Insertable<ProductRow> {
       name: serializer.fromJson<String>(json['name']),
       imageUrl: serializer.fromJson<String?>(json['imageUrl']),
       lastUpdatedAt: serializer.fromJson<DateTime>(json['lastUpdatedAt']),
+      previousBestPriceMinorUnits: serializer.fromJson<int?>(
+        json['previousBestPriceMinorUnits'],
+      ),
+      previousBestPriceCurrencyCode: serializer.fromJson<String?>(
+        json['previousBestPriceCurrencyCode'],
+      ),
+      bestPriceChangedAt: serializer.fromJson<DateTime?>(
+        json['bestPriceChangedAt'],
+      ),
     );
   }
   @override
@@ -189,6 +314,13 @@ class ProductRow extends DataClass implements Insertable<ProductRow> {
       'name': serializer.toJson<String>(name),
       'imageUrl': serializer.toJson<String?>(imageUrl),
       'lastUpdatedAt': serializer.toJson<DateTime>(lastUpdatedAt),
+      'previousBestPriceMinorUnits': serializer.toJson<int?>(
+        previousBestPriceMinorUnits,
+      ),
+      'previousBestPriceCurrencyCode': serializer.toJson<String?>(
+        previousBestPriceCurrencyCode,
+      ),
+      'bestPriceChangedAt': serializer.toJson<DateTime?>(bestPriceChangedAt),
     };
   }
 
@@ -197,11 +329,23 @@ class ProductRow extends DataClass implements Insertable<ProductRow> {
     String? name,
     Value<String?> imageUrl = const Value.absent(),
     DateTime? lastUpdatedAt,
+    Value<int?> previousBestPriceMinorUnits = const Value.absent(),
+    Value<String?> previousBestPriceCurrencyCode = const Value.absent(),
+    Value<DateTime?> bestPriceChangedAt = const Value.absent(),
   }) => ProductRow(
     id: id ?? this.id,
     name: name ?? this.name,
     imageUrl: imageUrl.present ? imageUrl.value : this.imageUrl,
     lastUpdatedAt: lastUpdatedAt ?? this.lastUpdatedAt,
+    previousBestPriceMinorUnits: previousBestPriceMinorUnits.present
+        ? previousBestPriceMinorUnits.value
+        : this.previousBestPriceMinorUnits,
+    previousBestPriceCurrencyCode: previousBestPriceCurrencyCode.present
+        ? previousBestPriceCurrencyCode.value
+        : this.previousBestPriceCurrencyCode,
+    bestPriceChangedAt: bestPriceChangedAt.present
+        ? bestPriceChangedAt.value
+        : this.bestPriceChangedAt,
   );
   ProductRow copyWithCompanion(ProductTableCompanion data) {
     return ProductRow(
@@ -211,6 +355,15 @@ class ProductRow extends DataClass implements Insertable<ProductRow> {
       lastUpdatedAt: data.lastUpdatedAt.present
           ? data.lastUpdatedAt.value
           : this.lastUpdatedAt,
+      previousBestPriceMinorUnits: data.previousBestPriceMinorUnits.present
+          ? data.previousBestPriceMinorUnits.value
+          : this.previousBestPriceMinorUnits,
+      previousBestPriceCurrencyCode: data.previousBestPriceCurrencyCode.present
+          ? data.previousBestPriceCurrencyCode.value
+          : this.previousBestPriceCurrencyCode,
+      bestPriceChangedAt: data.bestPriceChangedAt.present
+          ? data.bestPriceChangedAt.value
+          : this.bestPriceChangedAt,
     );
   }
 
@@ -220,13 +373,26 @@ class ProductRow extends DataClass implements Insertable<ProductRow> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('imageUrl: $imageUrl, ')
-          ..write('lastUpdatedAt: $lastUpdatedAt')
+          ..write('lastUpdatedAt: $lastUpdatedAt, ')
+          ..write('previousBestPriceMinorUnits: $previousBestPriceMinorUnits, ')
+          ..write(
+            'previousBestPriceCurrencyCode: $previousBestPriceCurrencyCode, ',
+          )
+          ..write('bestPriceChangedAt: $bestPriceChangedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, imageUrl, lastUpdatedAt);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    imageUrl,
+    lastUpdatedAt,
+    previousBestPriceMinorUnits,
+    previousBestPriceCurrencyCode,
+    bestPriceChangedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -234,7 +400,12 @@ class ProductRow extends DataClass implements Insertable<ProductRow> {
           other.id == this.id &&
           other.name == this.name &&
           other.imageUrl == this.imageUrl &&
-          other.lastUpdatedAt == this.lastUpdatedAt);
+          other.lastUpdatedAt == this.lastUpdatedAt &&
+          other.previousBestPriceMinorUnits ==
+              this.previousBestPriceMinorUnits &&
+          other.previousBestPriceCurrencyCode ==
+              this.previousBestPriceCurrencyCode &&
+          other.bestPriceChangedAt == this.bestPriceChangedAt);
 }
 
 class ProductTableCompanion extends UpdateCompanion<ProductRow> {
@@ -242,12 +413,18 @@ class ProductTableCompanion extends UpdateCompanion<ProductRow> {
   final Value<String> name;
   final Value<String?> imageUrl;
   final Value<DateTime> lastUpdatedAt;
+  final Value<int?> previousBestPriceMinorUnits;
+  final Value<String?> previousBestPriceCurrencyCode;
+  final Value<DateTime?> bestPriceChangedAt;
   final Value<int> rowid;
   const ProductTableCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.imageUrl = const Value.absent(),
     this.lastUpdatedAt = const Value.absent(),
+    this.previousBestPriceMinorUnits = const Value.absent(),
+    this.previousBestPriceCurrencyCode = const Value.absent(),
+    this.bestPriceChangedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ProductTableCompanion.insert({
@@ -255,6 +432,9 @@ class ProductTableCompanion extends UpdateCompanion<ProductRow> {
     required String name,
     this.imageUrl = const Value.absent(),
     required DateTime lastUpdatedAt,
+    this.previousBestPriceMinorUnits = const Value.absent(),
+    this.previousBestPriceCurrencyCode = const Value.absent(),
+    this.bestPriceChangedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        name = Value(name),
@@ -264,6 +444,9 @@ class ProductTableCompanion extends UpdateCompanion<ProductRow> {
     Expression<String>? name,
     Expression<String>? imageUrl,
     Expression<DateTime>? lastUpdatedAt,
+    Expression<int>? previousBestPriceMinorUnits,
+    Expression<String>? previousBestPriceCurrencyCode,
+    Expression<DateTime>? bestPriceChangedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -271,6 +454,12 @@ class ProductTableCompanion extends UpdateCompanion<ProductRow> {
       if (name != null) 'name': name,
       if (imageUrl != null) 'image_url': imageUrl,
       if (lastUpdatedAt != null) 'last_updated_at': lastUpdatedAt,
+      if (previousBestPriceMinorUnits != null)
+        'previous_best_price_minor_units': previousBestPriceMinorUnits,
+      if (previousBestPriceCurrencyCode != null)
+        'previous_best_price_currency_code': previousBestPriceCurrencyCode,
+      if (bestPriceChangedAt != null)
+        'best_price_changed_at': bestPriceChangedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -280,6 +469,9 @@ class ProductTableCompanion extends UpdateCompanion<ProductRow> {
     Value<String>? name,
     Value<String?>? imageUrl,
     Value<DateTime>? lastUpdatedAt,
+    Value<int?>? previousBestPriceMinorUnits,
+    Value<String?>? previousBestPriceCurrencyCode,
+    Value<DateTime?>? bestPriceChangedAt,
     Value<int>? rowid,
   }) {
     return ProductTableCompanion(
@@ -287,6 +479,11 @@ class ProductTableCompanion extends UpdateCompanion<ProductRow> {
       name: name ?? this.name,
       imageUrl: imageUrl ?? this.imageUrl,
       lastUpdatedAt: lastUpdatedAt ?? this.lastUpdatedAt,
+      previousBestPriceMinorUnits:
+          previousBestPriceMinorUnits ?? this.previousBestPriceMinorUnits,
+      previousBestPriceCurrencyCode:
+          previousBestPriceCurrencyCode ?? this.previousBestPriceCurrencyCode,
+      bestPriceChangedAt: bestPriceChangedAt ?? this.bestPriceChangedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -306,6 +503,21 @@ class ProductTableCompanion extends UpdateCompanion<ProductRow> {
     if (lastUpdatedAt.present) {
       map['last_updated_at'] = Variable<DateTime>(lastUpdatedAt.value);
     }
+    if (previousBestPriceMinorUnits.present) {
+      map['previous_best_price_minor_units'] = Variable<int>(
+        previousBestPriceMinorUnits.value,
+      );
+    }
+    if (previousBestPriceCurrencyCode.present) {
+      map['previous_best_price_currency_code'] = Variable<String>(
+        previousBestPriceCurrencyCode.value,
+      );
+    }
+    if (bestPriceChangedAt.present) {
+      map['best_price_changed_at'] = Variable<DateTime>(
+        bestPriceChangedAt.value,
+      );
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -319,6 +531,11 @@ class ProductTableCompanion extends UpdateCompanion<ProductRow> {
           ..write('name: $name, ')
           ..write('imageUrl: $imageUrl, ')
           ..write('lastUpdatedAt: $lastUpdatedAt, ')
+          ..write('previousBestPriceMinorUnits: $previousBestPriceMinorUnits, ')
+          ..write(
+            'previousBestPriceCurrencyCode: $previousBestPriceCurrencyCode, ',
+          )
+          ..write('bestPriceChangedAt: $bestPriceChangedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -396,6 +613,28 @@ class $ProductSourceTableTable extends ProductSourceTable
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _previousPriceMinorUnitsMeta =
+      const VerificationMeta('previousPriceMinorUnits');
+  @override
+  late final GeneratedColumn<int> previousPriceMinorUnits =
+      GeneratedColumn<int>(
+        'previous_price_minor_units',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _previousPriceCurrencyCodeMeta =
+      const VerificationMeta('previousPriceCurrencyCode');
+  @override
+  late final GeneratedColumn<String> previousPriceCurrencyCode =
+      GeneratedColumn<String>(
+        'previous_price_currency_code',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _isAvailableMeta = const VerificationMeta(
     'isAvailable',
   );
@@ -422,6 +661,18 @@ class $ProductSourceTableTable extends ProductSourceTable
         type: DriftSqlType.dateTime,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _priceChangedAtMeta = const VerificationMeta(
+    'priceChangedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> priceChangedAt =
+      GeneratedColumn<DateTime>(
+        'price_changed_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -441,8 +692,11 @@ class $ProductSourceTableTable extends ProductSourceTable
     merchantDomain,
     minorUnits,
     currencyCode,
+    previousPriceMinorUnits,
+    previousPriceCurrencyCode,
     isAvailable,
     lastCheckedAt,
+    priceChangedAt,
     createdAt,
   ];
   @override
@@ -504,6 +758,24 @@ class $ProductSourceTableTable extends ProductSourceTable
         ),
       );
     }
+    if (data.containsKey('previous_price_minor_units')) {
+      context.handle(
+        _previousPriceMinorUnitsMeta,
+        previousPriceMinorUnits.isAcceptableOrUnknown(
+          data['previous_price_minor_units']!,
+          _previousPriceMinorUnitsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('previous_price_currency_code')) {
+      context.handle(
+        _previousPriceCurrencyCodeMeta,
+        previousPriceCurrencyCode.isAcceptableOrUnknown(
+          data['previous_price_currency_code']!,
+          _previousPriceCurrencyCodeMeta,
+        ),
+      );
+    }
     if (data.containsKey('is_available')) {
       context.handle(
         _isAvailableMeta,
@@ -519,6 +791,15 @@ class $ProductSourceTableTable extends ProductSourceTable
         lastCheckedAt.isAcceptableOrUnknown(
           data['last_checked_at']!,
           _lastCheckedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('price_changed_at')) {
+      context.handle(
+        _priceChangedAtMeta,
+        priceChangedAt.isAcceptableOrUnknown(
+          data['price_changed_at']!,
+          _priceChangedAtMeta,
         ),
       );
     }
@@ -567,6 +848,14 @@ class $ProductSourceTableTable extends ProductSourceTable
         DriftSqlType.string,
         data['${effectivePrefix}currency_code'],
       ),
+      previousPriceMinorUnits: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}previous_price_minor_units'],
+      ),
+      previousPriceCurrencyCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}previous_price_currency_code'],
+      ),
       isAvailable: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_available'],
@@ -574,6 +863,10 @@ class $ProductSourceTableTable extends ProductSourceTable
       lastCheckedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}last_checked_at'],
+      ),
+      priceChangedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}price_changed_at'],
       ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
@@ -608,12 +901,21 @@ class ProductSourceRow extends DataClass
   /// ISO 4217 currency code, once an offer is fetched.
   final String? currencyCode;
 
+  /// Previous price in the currency's minor unit, after a price change.
+  final int? previousPriceMinorUnits;
+
+  /// ISO 4217 currency code for the previous price.
+  final String? previousPriceCurrencyCode;
+
   /// Whether the merchant currently has the product available, once an
   /// offer is fetched.
   final bool? isAvailable;
 
   /// When this source's offer was last checked, once fetched.
   final DateTime? lastCheckedAt;
+
+  /// When the source price last changed.
+  final DateTime? priceChangedAt;
 
   /// When the source was added.
   final DateTime createdAt;
@@ -624,8 +926,11 @@ class ProductSourceRow extends DataClass
     required this.merchantDomain,
     this.minorUnits,
     this.currencyCode,
+    this.previousPriceMinorUnits,
+    this.previousPriceCurrencyCode,
     this.isAvailable,
     this.lastCheckedAt,
+    this.priceChangedAt,
     required this.createdAt,
   });
   @override
@@ -641,11 +946,24 @@ class ProductSourceRow extends DataClass
     if (!nullToAbsent || currencyCode != null) {
       map['currency_code'] = Variable<String>(currencyCode);
     }
+    if (!nullToAbsent || previousPriceMinorUnits != null) {
+      map['previous_price_minor_units'] = Variable<int>(
+        previousPriceMinorUnits,
+      );
+    }
+    if (!nullToAbsent || previousPriceCurrencyCode != null) {
+      map['previous_price_currency_code'] = Variable<String>(
+        previousPriceCurrencyCode,
+      );
+    }
     if (!nullToAbsent || isAvailable != null) {
       map['is_available'] = Variable<bool>(isAvailable);
     }
     if (!nullToAbsent || lastCheckedAt != null) {
       map['last_checked_at'] = Variable<DateTime>(lastCheckedAt);
+    }
+    if (!nullToAbsent || priceChangedAt != null) {
+      map['price_changed_at'] = Variable<DateTime>(priceChangedAt);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -663,12 +981,22 @@ class ProductSourceRow extends DataClass
       currencyCode: currencyCode == null && nullToAbsent
           ? const Value.absent()
           : Value(currencyCode),
+      previousPriceMinorUnits: previousPriceMinorUnits == null && nullToAbsent
+          ? const Value.absent()
+          : Value(previousPriceMinorUnits),
+      previousPriceCurrencyCode:
+          previousPriceCurrencyCode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(previousPriceCurrencyCode),
       isAvailable: isAvailable == null && nullToAbsent
           ? const Value.absent()
           : Value(isAvailable),
       lastCheckedAt: lastCheckedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(lastCheckedAt),
+      priceChangedAt: priceChangedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(priceChangedAt),
       createdAt: Value(createdAt),
     );
   }
@@ -685,8 +1013,15 @@ class ProductSourceRow extends DataClass
       merchantDomain: serializer.fromJson<String>(json['merchantDomain']),
       minorUnits: serializer.fromJson<int?>(json['minorUnits']),
       currencyCode: serializer.fromJson<String?>(json['currencyCode']),
+      previousPriceMinorUnits: serializer.fromJson<int?>(
+        json['previousPriceMinorUnits'],
+      ),
+      previousPriceCurrencyCode: serializer.fromJson<String?>(
+        json['previousPriceCurrencyCode'],
+      ),
       isAvailable: serializer.fromJson<bool?>(json['isAvailable']),
       lastCheckedAt: serializer.fromJson<DateTime?>(json['lastCheckedAt']),
+      priceChangedAt: serializer.fromJson<DateTime?>(json['priceChangedAt']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -700,8 +1035,15 @@ class ProductSourceRow extends DataClass
       'merchantDomain': serializer.toJson<String>(merchantDomain),
       'minorUnits': serializer.toJson<int?>(minorUnits),
       'currencyCode': serializer.toJson<String?>(currencyCode),
+      'previousPriceMinorUnits': serializer.toJson<int?>(
+        previousPriceMinorUnits,
+      ),
+      'previousPriceCurrencyCode': serializer.toJson<String?>(
+        previousPriceCurrencyCode,
+      ),
       'isAvailable': serializer.toJson<bool?>(isAvailable),
       'lastCheckedAt': serializer.toJson<DateTime?>(lastCheckedAt),
+      'priceChangedAt': serializer.toJson<DateTime?>(priceChangedAt),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -713,8 +1055,11 @@ class ProductSourceRow extends DataClass
     String? merchantDomain,
     Value<int?> minorUnits = const Value.absent(),
     Value<String?> currencyCode = const Value.absent(),
+    Value<int?> previousPriceMinorUnits = const Value.absent(),
+    Value<String?> previousPriceCurrencyCode = const Value.absent(),
     Value<bool?> isAvailable = const Value.absent(),
     Value<DateTime?> lastCheckedAt = const Value.absent(),
+    Value<DateTime?> priceChangedAt = const Value.absent(),
     DateTime? createdAt,
   }) => ProductSourceRow(
     id: id ?? this.id,
@@ -723,10 +1068,19 @@ class ProductSourceRow extends DataClass
     merchantDomain: merchantDomain ?? this.merchantDomain,
     minorUnits: minorUnits.present ? minorUnits.value : this.minorUnits,
     currencyCode: currencyCode.present ? currencyCode.value : this.currencyCode,
+    previousPriceMinorUnits: previousPriceMinorUnits.present
+        ? previousPriceMinorUnits.value
+        : this.previousPriceMinorUnits,
+    previousPriceCurrencyCode: previousPriceCurrencyCode.present
+        ? previousPriceCurrencyCode.value
+        : this.previousPriceCurrencyCode,
     isAvailable: isAvailable.present ? isAvailable.value : this.isAvailable,
     lastCheckedAt: lastCheckedAt.present
         ? lastCheckedAt.value
         : this.lastCheckedAt,
+    priceChangedAt: priceChangedAt.present
+        ? priceChangedAt.value
+        : this.priceChangedAt,
     createdAt: createdAt ?? this.createdAt,
   );
   ProductSourceRow copyWithCompanion(ProductSourceTableCompanion data) {
@@ -743,12 +1097,21 @@ class ProductSourceRow extends DataClass
       currencyCode: data.currencyCode.present
           ? data.currencyCode.value
           : this.currencyCode,
+      previousPriceMinorUnits: data.previousPriceMinorUnits.present
+          ? data.previousPriceMinorUnits.value
+          : this.previousPriceMinorUnits,
+      previousPriceCurrencyCode: data.previousPriceCurrencyCode.present
+          ? data.previousPriceCurrencyCode.value
+          : this.previousPriceCurrencyCode,
       isAvailable: data.isAvailable.present
           ? data.isAvailable.value
           : this.isAvailable,
       lastCheckedAt: data.lastCheckedAt.present
           ? data.lastCheckedAt.value
           : this.lastCheckedAt,
+      priceChangedAt: data.priceChangedAt.present
+          ? data.priceChangedAt.value
+          : this.priceChangedAt,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -762,8 +1125,11 @@ class ProductSourceRow extends DataClass
           ..write('merchantDomain: $merchantDomain, ')
           ..write('minorUnits: $minorUnits, ')
           ..write('currencyCode: $currencyCode, ')
+          ..write('previousPriceMinorUnits: $previousPriceMinorUnits, ')
+          ..write('previousPriceCurrencyCode: $previousPriceCurrencyCode, ')
           ..write('isAvailable: $isAvailable, ')
           ..write('lastCheckedAt: $lastCheckedAt, ')
+          ..write('priceChangedAt: $priceChangedAt, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -777,8 +1143,11 @@ class ProductSourceRow extends DataClass
     merchantDomain,
     minorUnits,
     currencyCode,
+    previousPriceMinorUnits,
+    previousPriceCurrencyCode,
     isAvailable,
     lastCheckedAt,
+    priceChangedAt,
     createdAt,
   );
   @override
@@ -791,8 +1160,11 @@ class ProductSourceRow extends DataClass
           other.merchantDomain == this.merchantDomain &&
           other.minorUnits == this.minorUnits &&
           other.currencyCode == this.currencyCode &&
+          other.previousPriceMinorUnits == this.previousPriceMinorUnits &&
+          other.previousPriceCurrencyCode == this.previousPriceCurrencyCode &&
           other.isAvailable == this.isAvailable &&
           other.lastCheckedAt == this.lastCheckedAt &&
+          other.priceChangedAt == this.priceChangedAt &&
           other.createdAt == this.createdAt);
 }
 
@@ -803,8 +1175,11 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
   final Value<String> merchantDomain;
   final Value<int?> minorUnits;
   final Value<String?> currencyCode;
+  final Value<int?> previousPriceMinorUnits;
+  final Value<String?> previousPriceCurrencyCode;
   final Value<bool?> isAvailable;
   final Value<DateTime?> lastCheckedAt;
+  final Value<DateTime?> priceChangedAt;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
   const ProductSourceTableCompanion({
@@ -814,8 +1189,11 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
     this.merchantDomain = const Value.absent(),
     this.minorUnits = const Value.absent(),
     this.currencyCode = const Value.absent(),
+    this.previousPriceMinorUnits = const Value.absent(),
+    this.previousPriceCurrencyCode = const Value.absent(),
     this.isAvailable = const Value.absent(),
     this.lastCheckedAt = const Value.absent(),
+    this.priceChangedAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -826,8 +1204,11 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
     required String merchantDomain,
     this.minorUnits = const Value.absent(),
     this.currencyCode = const Value.absent(),
+    this.previousPriceMinorUnits = const Value.absent(),
+    this.previousPriceCurrencyCode = const Value.absent(),
     this.isAvailable = const Value.absent(),
     this.lastCheckedAt = const Value.absent(),
+    this.priceChangedAt = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -842,8 +1223,11 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
     Expression<String>? merchantDomain,
     Expression<int>? minorUnits,
     Expression<String>? currencyCode,
+    Expression<int>? previousPriceMinorUnits,
+    Expression<String>? previousPriceCurrencyCode,
     Expression<bool>? isAvailable,
     Expression<DateTime>? lastCheckedAt,
+    Expression<DateTime>? priceChangedAt,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -854,8 +1238,13 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
       if (merchantDomain != null) 'merchant_domain': merchantDomain,
       if (minorUnits != null) 'minor_units': minorUnits,
       if (currencyCode != null) 'currency_code': currencyCode,
+      if (previousPriceMinorUnits != null)
+        'previous_price_minor_units': previousPriceMinorUnits,
+      if (previousPriceCurrencyCode != null)
+        'previous_price_currency_code': previousPriceCurrencyCode,
       if (isAvailable != null) 'is_available': isAvailable,
       if (lastCheckedAt != null) 'last_checked_at': lastCheckedAt,
+      if (priceChangedAt != null) 'price_changed_at': priceChangedAt,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -868,8 +1257,11 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
     Value<String>? merchantDomain,
     Value<int?>? minorUnits,
     Value<String?>? currencyCode,
+    Value<int?>? previousPriceMinorUnits,
+    Value<String?>? previousPriceCurrencyCode,
     Value<bool?>? isAvailable,
     Value<DateTime?>? lastCheckedAt,
+    Value<DateTime?>? priceChangedAt,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
   }) {
@@ -880,8 +1272,13 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
       merchantDomain: merchantDomain ?? this.merchantDomain,
       minorUnits: minorUnits ?? this.minorUnits,
       currencyCode: currencyCode ?? this.currencyCode,
+      previousPriceMinorUnits:
+          previousPriceMinorUnits ?? this.previousPriceMinorUnits,
+      previousPriceCurrencyCode:
+          previousPriceCurrencyCode ?? this.previousPriceCurrencyCode,
       isAvailable: isAvailable ?? this.isAvailable,
       lastCheckedAt: lastCheckedAt ?? this.lastCheckedAt,
+      priceChangedAt: priceChangedAt ?? this.priceChangedAt,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -908,11 +1305,24 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
     if (currencyCode.present) {
       map['currency_code'] = Variable<String>(currencyCode.value);
     }
+    if (previousPriceMinorUnits.present) {
+      map['previous_price_minor_units'] = Variable<int>(
+        previousPriceMinorUnits.value,
+      );
+    }
+    if (previousPriceCurrencyCode.present) {
+      map['previous_price_currency_code'] = Variable<String>(
+        previousPriceCurrencyCode.value,
+      );
+    }
     if (isAvailable.present) {
       map['is_available'] = Variable<bool>(isAvailable.value);
     }
     if (lastCheckedAt.present) {
       map['last_checked_at'] = Variable<DateTime>(lastCheckedAt.value);
+    }
+    if (priceChangedAt.present) {
+      map['price_changed_at'] = Variable<DateTime>(priceChangedAt.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
@@ -932,8 +1342,11 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
           ..write('merchantDomain: $merchantDomain, ')
           ..write('minorUnits: $minorUnits, ')
           ..write('currencyCode: $currencyCode, ')
+          ..write('previousPriceMinorUnits: $previousPriceMinorUnits, ')
+          ..write('previousPriceCurrencyCode: $previousPriceCurrencyCode, ')
           ..write('isAvailable: $isAvailable, ')
           ..write('lastCheckedAt: $lastCheckedAt, ')
+          ..write('priceChangedAt: $priceChangedAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -1185,6 +1598,9 @@ typedef $$ProductTableTableCreateCompanionBuilder =
       required String name,
       Value<String?> imageUrl,
       required DateTime lastUpdatedAt,
+      Value<int?> previousBestPriceMinorUnits,
+      Value<String?> previousBestPriceCurrencyCode,
+      Value<DateTime?> bestPriceChangedAt,
       Value<int> rowid,
     });
 typedef $$ProductTableTableUpdateCompanionBuilder =
@@ -1193,6 +1609,9 @@ typedef $$ProductTableTableUpdateCompanionBuilder =
       Value<String> name,
       Value<String?> imageUrl,
       Value<DateTime> lastUpdatedAt,
+      Value<int?> previousBestPriceMinorUnits,
+      Value<String?> previousBestPriceCurrencyCode,
+      Value<DateTime?> bestPriceChangedAt,
       Value<int> rowid,
     });
 
@@ -1254,6 +1673,21 @@ class $$ProductTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get previousBestPriceMinorUnits => $composableBuilder(
+    column: $table.previousBestPriceMinorUnits,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get previousBestPriceCurrencyCode => $composableBuilder(
+    column: $table.previousBestPriceCurrencyCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get bestPriceChangedAt => $composableBuilder(
+    column: $table.bestPriceChangedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
   Expression<bool> productSourceTableRefs(
     Expression<bool> Function($$ProductSourceTableTableFilterComposer f) f,
   ) {
@@ -1308,6 +1742,22 @@ class $$ProductTableTableOrderingComposer
     column: $table.lastUpdatedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get previousBestPriceMinorUnits => $composableBuilder(
+    column: $table.previousBestPriceMinorUnits,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get previousBestPriceCurrencyCode =>
+      $composableBuilder(
+        column: $table.previousBestPriceCurrencyCode,
+        builder: (column) => ColumnOrderings(column),
+      );
+
+  ColumnOrderings<DateTime> get bestPriceChangedAt => $composableBuilder(
+    column: $table.bestPriceChangedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ProductTableTableAnnotationComposer
@@ -1330,6 +1780,22 @@ class $$ProductTableTableAnnotationComposer
 
   GeneratedColumn<DateTime> get lastUpdatedAt => $composableBuilder(
     column: $table.lastUpdatedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get previousBestPriceMinorUnits => $composableBuilder(
+    column: $table.previousBestPriceMinorUnits,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get previousBestPriceCurrencyCode =>
+      $composableBuilder(
+        column: $table.previousBestPriceCurrencyCode,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<DateTime> get bestPriceChangedAt => $composableBuilder(
+    column: $table.bestPriceChangedAt,
     builder: (column) => column,
   );
 
@@ -1392,12 +1858,19 @@ class $$ProductTableTableTableManager
                 Value<String> name = const Value.absent(),
                 Value<String?> imageUrl = const Value.absent(),
                 Value<DateTime> lastUpdatedAt = const Value.absent(),
+                Value<int?> previousBestPriceMinorUnits = const Value.absent(),
+                Value<String?> previousBestPriceCurrencyCode =
+                    const Value.absent(),
+                Value<DateTime?> bestPriceChangedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProductTableCompanion(
                 id: id,
                 name: name,
                 imageUrl: imageUrl,
                 lastUpdatedAt: lastUpdatedAt,
+                previousBestPriceMinorUnits: previousBestPriceMinorUnits,
+                previousBestPriceCurrencyCode: previousBestPriceCurrencyCode,
+                bestPriceChangedAt: bestPriceChangedAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -1406,12 +1879,19 @@ class $$ProductTableTableTableManager
                 required String name,
                 Value<String?> imageUrl = const Value.absent(),
                 required DateTime lastUpdatedAt,
+                Value<int?> previousBestPriceMinorUnits = const Value.absent(),
+                Value<String?> previousBestPriceCurrencyCode =
+                    const Value.absent(),
+                Value<DateTime?> bestPriceChangedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProductTableCompanion.insert(
                 id: id,
                 name: name,
                 imageUrl: imageUrl,
                 lastUpdatedAt: lastUpdatedAt,
+                previousBestPriceMinorUnits: previousBestPriceMinorUnits,
+                previousBestPriceCurrencyCode: previousBestPriceCurrencyCode,
+                bestPriceChangedAt: bestPriceChangedAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -1480,8 +1960,11 @@ typedef $$ProductSourceTableTableCreateCompanionBuilder =
       required String merchantDomain,
       Value<int?> minorUnits,
       Value<String?> currencyCode,
+      Value<int?> previousPriceMinorUnits,
+      Value<String?> previousPriceCurrencyCode,
       Value<bool?> isAvailable,
       Value<DateTime?> lastCheckedAt,
+      Value<DateTime?> priceChangedAt,
       required DateTime createdAt,
       Value<int> rowid,
     });
@@ -1493,8 +1976,11 @@ typedef $$ProductSourceTableTableUpdateCompanionBuilder =
       Value<String> merchantDomain,
       Value<int?> minorUnits,
       Value<String?> currencyCode,
+      Value<int?> previousPriceMinorUnits,
+      Value<String?> previousPriceCurrencyCode,
       Value<bool?> isAvailable,
       Value<DateTime?> lastCheckedAt,
+      Value<DateTime?> priceChangedAt,
       Value<DateTime> createdAt,
       Value<int> rowid,
     });
@@ -1569,6 +2055,16 @@ class $$ProductSourceTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get previousPriceMinorUnits => $composableBuilder(
+    column: $table.previousPriceMinorUnits,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get previousPriceCurrencyCode => $composableBuilder(
+    column: $table.previousPriceCurrencyCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<bool> get isAvailable => $composableBuilder(
     column: $table.isAvailable,
     builder: (column) => ColumnFilters(column),
@@ -1576,6 +2072,11 @@ class $$ProductSourceTableTableFilterComposer
 
   ColumnFilters<DateTime> get lastCheckedAt => $composableBuilder(
     column: $table.lastCheckedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get priceChangedAt => $composableBuilder(
+    column: $table.priceChangedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1642,6 +2143,16 @@ class $$ProductSourceTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get previousPriceMinorUnits => $composableBuilder(
+    column: $table.previousPriceMinorUnits,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get previousPriceCurrencyCode => $composableBuilder(
+    column: $table.previousPriceCurrencyCode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isAvailable => $composableBuilder(
     column: $table.isAvailable,
     builder: (column) => ColumnOrderings(column),
@@ -1649,6 +2160,11 @@ class $$ProductSourceTableTableOrderingComposer
 
   ColumnOrderings<DateTime> get lastCheckedAt => $composableBuilder(
     column: $table.lastCheckedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get priceChangedAt => $composableBuilder(
+    column: $table.priceChangedAt,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -1711,6 +2227,16 @@ class $$ProductSourceTableTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get previousPriceMinorUnits => $composableBuilder(
+    column: $table.previousPriceMinorUnits,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get previousPriceCurrencyCode => $composableBuilder(
+    column: $table.previousPriceCurrencyCode,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get isAvailable => $composableBuilder(
     column: $table.isAvailable,
     builder: (column) => column,
@@ -1718,6 +2244,11 @@ class $$ProductSourceTableTableAnnotationComposer
 
   GeneratedColumn<DateTime> get lastCheckedAt => $composableBuilder(
     column: $table.lastCheckedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get priceChangedAt => $composableBuilder(
+    column: $table.priceChangedAt,
     builder: (column) => column,
   );
 
@@ -1787,8 +2318,11 @@ class $$ProductSourceTableTableTableManager
                 Value<String> merchantDomain = const Value.absent(),
                 Value<int?> minorUnits = const Value.absent(),
                 Value<String?> currencyCode = const Value.absent(),
+                Value<int?> previousPriceMinorUnits = const Value.absent(),
+                Value<String?> previousPriceCurrencyCode = const Value.absent(),
                 Value<bool?> isAvailable = const Value.absent(),
                 Value<DateTime?> lastCheckedAt = const Value.absent(),
+                Value<DateTime?> priceChangedAt = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProductSourceTableCompanion(
@@ -1798,8 +2332,11 @@ class $$ProductSourceTableTableTableManager
                 merchantDomain: merchantDomain,
                 minorUnits: minorUnits,
                 currencyCode: currencyCode,
+                previousPriceMinorUnits: previousPriceMinorUnits,
+                previousPriceCurrencyCode: previousPriceCurrencyCode,
                 isAvailable: isAvailable,
                 lastCheckedAt: lastCheckedAt,
+                priceChangedAt: priceChangedAt,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -1811,8 +2348,11 @@ class $$ProductSourceTableTableTableManager
                 required String merchantDomain,
                 Value<int?> minorUnits = const Value.absent(),
                 Value<String?> currencyCode = const Value.absent(),
+                Value<int?> previousPriceMinorUnits = const Value.absent(),
+                Value<String?> previousPriceCurrencyCode = const Value.absent(),
                 Value<bool?> isAvailable = const Value.absent(),
                 Value<DateTime?> lastCheckedAt = const Value.absent(),
+                Value<DateTime?> priceChangedAt = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
               }) => ProductSourceTableCompanion.insert(
@@ -1822,8 +2362,11 @@ class $$ProductSourceTableTableTableManager
                 merchantDomain: merchantDomain,
                 minorUnits: minorUnits,
                 currencyCode: currencyCode,
+                previousPriceMinorUnits: previousPriceMinorUnits,
+                previousPriceCurrencyCode: previousPriceCurrencyCode,
                 isAvailable: isAvailable,
                 lastCheckedAt: lastCheckedAt,
+                priceChangedAt: priceChangedAt,
                 createdAt: createdAt,
                 rowid: rowid,
               ),

@@ -27,12 +27,21 @@ class ProductSourceTable extends Table {
   /// ISO 4217 currency code, once an offer is fetched.
   TextColumn get currencyCode => text().nullable()();
 
+  /// Previous price in the currency's minor unit, after a price change.
+  IntColumn get previousPriceMinorUnits => integer().nullable()();
+
+  /// ISO 4217 currency code for the previous price.
+  TextColumn get previousPriceCurrencyCode => text().nullable()();
+
   /// Whether the merchant currently has the product available, once an
   /// offer is fetched.
   BoolColumn get isAvailable => boolean().nullable()();
 
   /// When this source's offer was last checked, once fetched.
   DateTimeColumn get lastCheckedAt => dateTime().nullable()();
+
+  /// When the source price last changed.
+  DateTimeColumn get priceChangedAt => dateTime().nullable()();
 
   /// When the source was added.
   DateTimeColumn get createdAt => dateTime()();

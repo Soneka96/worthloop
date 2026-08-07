@@ -27,6 +27,9 @@ class ProductSource extends Equatable {
   /// Latest checked price, or `null` before the first successful fetch.
   final Money? currentPrice;
 
+  /// Price immediately before the latest price change, or `null` if none.
+  final Money? previousPrice;
+
   /// Whether the merchant currently has the product available, or `null`
   /// before the first successful fetch.
   final bool? isAvailable;
@@ -35,6 +38,9 @@ class ProductSource extends Equatable {
   /// successful fetch.
   final DateTime? lastCheckedAt;
 
+  /// When this source's price last changed, or `null` if it has not changed.
+  final DateTime? priceChangedAt;
+
   const ProductSource({
     required this.id,
     required this.productId,
@@ -42,8 +48,10 @@ class ProductSource extends Equatable {
     required this.merchantDomain,
     required this.createdAt,
     this.currentPrice,
+    this.previousPrice,
     this.isAvailable,
     this.lastCheckedAt,
+    this.priceChangedAt,
   });
 
   /// Creates a source from a validated HTTPS product URL, with no offer yet.
@@ -78,7 +86,9 @@ class ProductSource extends Equatable {
     merchantDomain,
     createdAt,
     currentPrice,
+    previousPrice,
     isAvailable,
     lastCheckedAt,
+    priceChangedAt,
   ];
 }

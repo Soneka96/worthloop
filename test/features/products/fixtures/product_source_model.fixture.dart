@@ -10,8 +10,10 @@ ProductSourceModel buildProductSourceModel({
   String merchantDomain = 'example.com',
   DateTime? createdAt,
   Money? currentPrice,
+  Money? previousPrice,
   bool? isAvailable,
   DateTime? lastCheckedAt,
+  DateTime? priceChangedAt,
 }) => ProductSourceModel(
   id: id,
   productId: productId,
@@ -19,6 +21,8 @@ ProductSourceModel buildProductSourceModel({
   merchantDomain: merchantDomain,
   createdAt: createdAt ?? DateTime(2026, 1, 1, 12),
   currentPrice: currentPrice,
+  previousPrice: previousPrice,
   isAvailable: isAvailable,
   lastCheckedAt: lastCheckedAt,
+  priceChangedAt: priceChangedAt,
 );

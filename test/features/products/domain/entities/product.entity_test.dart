@@ -19,6 +19,8 @@ void main() {
         'https://example.com/product.png',
         [buildProductSource()],
         DateTime(2026, 1, 1, 12),
+        null,
+        null,
       ]);
       expect(product, buildProduct(sources: [buildProductSource()]));
       expect(

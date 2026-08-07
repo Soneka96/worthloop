@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:worth_loop/features/products/data/models/product.model.dart';
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
+import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import '../../fixtures/product_model.fixture.dart';
 
@@ -23,6 +24,9 @@ void main() {
           name: 'Example Product',
           imageUrl: null,
           lastUpdatedAt: DateTime(2026, 1, 1, 12),
+          previousBestPriceMinorUnits: 59999,
+          previousBestPriceCurrencyCode: 'EUR',
+          bestPriceChangedAt: DateTime(2026, 1, 2, 12),
         ),
         [
           ProductSourceRow(
@@ -48,32 +52,34 @@ void main() {
       expect(model.sources.length, 1);
       expect(model.sources.single.currentPrice?.minorUnits, 49999);
       expect(model.lastUpdatedAt, DateTime(2026, 1, 1, 12));
+      expect(
+        model.previousBestPrice,
+        const Money(minorUnits: 59999, currencyCode: 'EUR'),
+      );
+      expect(model.bestPriceChangedAt, DateTime(2026, 1, 2, 12));
     });
 
-    test(
-      'Method fromRows() maps a source row with no offer fetched yet',
-      () {
-        final ProductModel model = ProductModel.fromRows(
-          ProductRow(
-            id: 'product-1',
-            name: 'Example Product',
-            imageUrl: null,
-            lastUpdatedAt: DateTime(2026, 1, 1, 12),
+    test('Method fromRows() maps a source row with no offer fetched yet', () {
+      final ProductModel model = ProductModel.fromRows(
+        ProductRow(
+          id: 'product-1',
+          name: 'Example Product',
+          imageUrl: null,
+          lastUpdatedAt: DateTime(2026, 1, 1, 12),
+        ),
+        [
+          ProductSourceRow(
+            id: 'source-1',
+            productId: 'product-1',
+            url: 'https://example.com/product',
+            merchantDomain: 'example.com',
+            createdAt: DateTime(2026, 1, 1, 12),
           ),
-          [
-            ProductSourceRow(
-              id: 'source-1',
-              productId: 'product-1',
-              url: 'https://example.com/product',
-              merchantDomain: 'example.com',
-              createdAt: DateTime(2026, 1, 1, 12),
-            ),
-          ],
-        );
+        ],
+      );
 
-        expect(model.sources.single.currentPrice, isNull);
-      },
-    );
+      expect(model.sources.single.currentPrice, isNull);
+    });
 
     test('Method fromRows() returns an empty sources list when given none', () {
       final ProductModel model = ProductModel.fromRows(
@@ -89,39 +95,78 @@ void main() {
       expect(model.sources, isEmpty);
     });
 
-    test('Method fromRows() maps every source row when given more than one', () {
-      final ProductModel model = ProductModel.fromRows(
-        ProductRow(
-          id: 'product-1',
-          name: 'Example Product',
-          imageUrl: null,
-          lastUpdatedAt: DateTime(2026, 1, 1, 12),
-        ),
-        [
-          ProductSourceRow(
-            id: 'source-1',
-            productId: 'product-1',
-            url: 'https://example.com/product-1',
-            merchantDomain: 'example.com',
-            createdAt: DateTime(2026, 1, 1, 12),
+    test(
+      'Method fromRows() returns a null previousBestPrice when its currency is missing',
+      () {
+        final ProductModel model = ProductModel.fromRows(
+          ProductRow(
+            id: 'product-1',
+            name: 'Example Product',
+            imageUrl: null,
+            lastUpdatedAt: DateTime(2026, 1, 1, 12),
+            previousBestPriceMinorUnits: 59999,
           ),
-          ProductSourceRow(
-            id: 'source-2',
-            productId: 'product-1',
-            url: 'https://other.com/product-1',
-            merchantDomain: 'other.com',
-            createdAt: DateTime(2026, 1, 1, 12),
-          ),
-        ],
-      );
+          const [],
+        );
 
-      expect(model.sources.length, isA<int>());
-      expect(model.sources.length, 2);
-      expect(model.sources.map((ProductSource source) => source.id), [
-        'source-1',
-        'source-2',
-      ]);
-    });
+        expect(model.previousBestPrice, isNull);
+      },
+    );
+
+    test(
+      'Method fromRows() returns a null previousBestPrice when its amount is missing',
+      () {
+        final ProductModel model = ProductModel.fromRows(
+          ProductRow(
+            id: 'product-1',
+            name: 'Example Product',
+            imageUrl: null,
+            lastUpdatedAt: DateTime(2026, 1, 1, 12),
+            previousBestPriceCurrencyCode: 'EUR',
+          ),
+          const [],
+        );
+
+        expect(model.previousBestPrice, isNull);
+      },
+    );
+
+    test(
+      'Method fromRows() maps every source row when given more than one',
+      () {
+        final ProductModel model = ProductModel.fromRows(
+          ProductRow(
+            id: 'product-1',
+            name: 'Example Product',
+            imageUrl: null,
+            lastUpdatedAt: DateTime(2026, 1, 1, 12),
+          ),
+          [
+            ProductSourceRow(
+              id: 'source-1',
+              productId: 'product-1',
+              url: 'https://example.com/product-1',
+              merchantDomain: 'example.com',
+              createdAt: DateTime(2026, 1, 1, 12),
+            ),
+            ProductSourceRow(
+              id: 'source-2',
+              productId: 'product-1',
+              url: 'https://other.com/product-1',
+              merchantDomain: 'other.com',
+              createdAt: DateTime(2026, 1, 1, 12),
+            ),
+          ],
+        );
+
+        expect(model.sources.length, isA<int>());
+        expect(model.sources.length, 2);
+        expect(model.sources.map((ProductSource source) => source.id), [
+          'source-1',
+          'source-2',
+        ]);
+      },
+    );
 
     test('Method toCompanion() should return the correct companion', () {
       final ProductTableCompanion companion = buildProductModel().toCompanion();
@@ -132,6 +177,17 @@ void main() {
       expect(companion.imageUrl.value, isA<String>());
       expect(companion.imageUrl.value, 'https://example.com/product.png');
       expect(companion.lastUpdatedAt.value, DateTime(2026, 1, 1, 12));
+    });
+
+    test('Method toCompanion() maps product price history', () {
+      final ProductTableCompanion companion = buildProductModel(
+        previousBestPrice: const Money(minorUnits: 59999, currencyCode: 'EUR'),
+        bestPriceChangedAt: DateTime(2026, 1, 2, 12),
+      ).toCompanion();
+
+      expect(companion.previousBestPriceMinorUnits.value, 59999);
+      expect(companion.previousBestPriceCurrencyCode.value, 'EUR');
+      expect(companion.bestPriceChangedAt.value, DateTime(2026, 1, 2, 12));
     });
   });
 }

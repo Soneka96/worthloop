@@ -97,6 +97,7 @@ void main() {
     test('includes every source field', () {
       final DateTime createdAt = DateTime(2026, 1, 1);
       final DateTime checkedAt = DateTime(2026, 1, 2);
+      final DateTime changedAt = DateTime(2026, 1, 3);
       final ProductSource source = ProductSource(
         id: 'source-1',
         productId: 'product-1',
@@ -104,8 +105,10 @@ void main() {
         merchantDomain: 'example.com',
         createdAt: createdAt,
         currentPrice: buildMoney(),
+        previousPrice: buildMoney(minorUnits: 59999),
         isAvailable: true,
         lastCheckedAt: checkedAt,
+        priceChangedAt: changedAt,
       );
 
       expect(source.props, <Object?>[
@@ -115,8 +118,10 @@ void main() {
         'example.com',
         createdAt,
         buildMoney(),
+        buildMoney(minorUnits: 59999),
         true,
         checkedAt,
+        changedAt,
       ]);
       expect(
         source,
@@ -127,8 +132,10 @@ void main() {
           merchantDomain: 'example.com',
           createdAt: createdAt,
           currentPrice: buildMoney(),
+          previousPrice: buildMoney(minorUnits: 59999),
           isAvailable: true,
           lastCheckedAt: checkedAt,
+          priceChangedAt: changedAt,
         ),
       );
       expect(

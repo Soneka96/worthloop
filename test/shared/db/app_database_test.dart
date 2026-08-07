@@ -2,6 +2,7 @@
 import 'dart:io';
 
 // Package imports:
+import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -34,9 +35,9 @@ void main() {
       await db.close();
     });
 
-    test('AppDatabase.forTesting opens with schema version 4', () {
+    test('AppDatabase.forTesting opens with schema version 5', () {
       expect(db.schemaVersion, isA<int>());
-      expect(db.schemaVersion, 4);
+      expect(db.schemaVersion, 5);
     });
 
     test('AppDatabase.forTesting exposes the WorthLoop tables', () async {
@@ -51,6 +52,70 @@ void main() {
       expect(products, isEmpty);
       expect(sources, isEmpty);
       expect(settings, isEmpty);
+
+      final List<QueryRow> productColumns = await db
+          .customSelect('PRAGMA table_info(product_table)')
+          .get();
+      final List<QueryRow> sourceColumns = await db
+          .customSelect('PRAGMA table_info(product_source_table)')
+          .get();
+      expect(
+        productColumns.map((QueryRow row) => row.data['name']),
+        containsAll([
+          'previous_best_price_minor_units',
+          'previous_best_price_currency_code',
+          'best_price_changed_at',
+        ]),
+      );
+      expect(
+        sourceColumns.map((QueryRow row) => row.data['name']),
+        containsAll([
+          'previous_price_minor_units',
+          'previous_price_currency_code',
+          'price_changed_at',
+        ]),
+      );
+    });
+
+    test('AppDatabase persists price-history columns', () async {
+      await db
+          .into(db.productTable)
+          .insert(
+            ProductTableCompanion.insert(
+              id: 'product-1',
+              name: 'Example Product',
+              lastUpdatedAt: DateTime(2026, 1, 1, 12),
+              previousBestPriceMinorUnits: const Value(59999),
+              previousBestPriceCurrencyCode: const Value('EUR'),
+              bestPriceChangedAt: Value(DateTime(2026, 1, 2, 12)),
+            ),
+          );
+      await db
+          .into(db.productSourceTable)
+          .insert(
+            ProductSourceTableCompanion.insert(
+              id: 'source-1',
+              productId: 'product-1',
+              url: 'https://example.com/products/1',
+              merchantDomain: 'example.com',
+              createdAt: DateTime(2026, 1, 1, 12),
+              previousPriceMinorUnits: const Value(59999),
+              previousPriceCurrencyCode: const Value('EUR'),
+              priceChangedAt: Value(DateTime(2026, 1, 2, 12)),
+            ),
+          );
+
+      final ProductRow product =
+          (await db.select(db.productTable).get()).single;
+      final ProductSourceRow source =
+          (await db.select(db.productSourceTable).get()).single;
+
+      expect(product.previousBestPriceMinorUnits, 59999);
+      expect(product.previousBestPriceCurrencyCode, 'EUR');
+      expect(product.bestPriceChangedAt, DateTime(2026, 1, 2, 12));
+      expect(source.previousPriceMinorUnits, 59999);
+      expect(source.previousPriceCurrencyCode, 'EUR');
+      expect(source.priceChangedAt, DateTime(2026, 1, 2, 12));
     });
   });
 

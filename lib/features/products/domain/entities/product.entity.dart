@@ -25,11 +25,19 @@ class Product extends Equatable {
   /// When any offer for this product was last updated.
   final DateTime lastUpdatedAt;
 
+  /// Best price immediately before the latest best-price change, or `null` if none.
+  final Money? previousBestPrice;
+
+  /// When the product's best price last changed, or `null` if it has not changed.
+  final DateTime? bestPriceChangedAt;
+
   const Product({
     required this.id,
     required this.name,
     required this.sources,
     required this.lastUpdatedAt,
+    this.previousBestPrice,
+    this.bestPriceChangedAt,
     this.imageUrl,
   });
 
@@ -106,5 +114,13 @@ class Product extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, name, imageUrl, sources, lastUpdatedAt];
+  List<Object?> get props => [
+    id,
+    name,
+    imageUrl,
+    sources,
+    lastUpdatedAt,
+    previousBestPrice,
+    bestPriceChangedAt,
+  ];
 }
