@@ -26,5 +26,16 @@ void main() {
 
       expect(withListener, const RefreshProductParams(productId: 'product-1'));
     });
+
+    test('stores an onPriceDrop listener without affecting equality', () {
+      Future<void> listener(value) async {}
+      final RefreshProductParams withListener = RefreshProductParams(
+        productId: 'product-1',
+        onPriceDrop: listener,
+      );
+
+      expect(withListener.onPriceDrop, same(listener));
+      expect(withListener, const RefreshProductParams(productId: 'product-1'));
+    });
   });
 }

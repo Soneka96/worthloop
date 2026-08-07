@@ -7,8 +7,10 @@ import 'package:worth_loop/features/products/data/datasources/products_remote.da
 import 'package:worth_loop/features/products/data/models/product.model.dart';
 import 'package:worth_loop/features/products/data/models/product_source.model.dart';
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_price_drop.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
+import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 
@@ -39,7 +41,17 @@ class ProductsRepository implements IProductsRepository {
   Future<Either<Failure, Product>> refreshProduct(
     String productId, {
     SourceRefreshListener? onSourceStatusChanged,
+    ProductPriceDropListener? onPriceDrop,
   }) async {
+    ProductModel? previousProduct;
+    if (onPriceDrop != null) {
+      final Either<Failure, ProductModel> productResult = await _localDatasource
+          .loadProduct(productId);
+      if (productResult.isLeft()) {
+        return productResult.map((ProductModel product) => product);
+      }
+      previousProduct = productResult.getRight().toNullable();
+    }
     final Either<Failure, List<ProductSourceModel>> sourceResult =
         await _localDatasource.loadProductSourcesForProduct(productId);
     return sourceResult.match((Failure failure) async => Left(failure), (
@@ -67,6 +79,11 @@ class ProductsRepository implements IProductsRepository {
       if (savedResult.isLeft()) {
         return savedResult;
       }
+      await _emitPriceDrop(
+        previousProduct,
+        savedResult.getRight().toNullable()!,
+        onPriceDrop,
+      );
       final Failure? sourceFailure = firstFailure;
       return sourceFailure == null ? savedResult : Left(sourceFailure);
     });
@@ -77,6 +94,7 @@ class ProductsRepository implements IProductsRepository {
     String sourceId, {
     SourceRefreshListener? onSourceStatusChanged,
     bool bypassCooldown = false,
+    ProductPriceDropListener? onPriceDrop,
   }) async {
     final Either<Failure, List<ProductSourceModel>> sourcesResult =
         await _localDatasource.loadProductSources();
@@ -94,6 +112,15 @@ class ProductsRepository implements IProductsRepository {
         return const Left(NotFoundFailure('Source not found'));
       }
       final ProductSourceModel loadedSource = source;
+      ProductModel? previousProduct;
+      if (onPriceDrop != null) {
+        final Either<Failure, ProductModel> productResult =
+            await _localDatasource.loadProduct(loadedSource.productId);
+        if (productResult.isLeft()) {
+          return productResult.map((ProductModel product) => product);
+        }
+        previousProduct = productResult.getRight().toNullable();
+      }
       final Either<Failure, ProductSourceModel> result = await _fetchSource(
         loadedSource,
         onSourceStatusChanged: onSourceStatusChanged,
@@ -105,10 +132,23 @@ class ProductsRepository implements IProductsRepository {
               .updateSourcePrices(loadedSource.productId, [
                 _sourceAfterFailure(loadedSource, failure),
               ]);
+          await persisted.match(
+            (_) async {},
+            (Product product) =>
+                _emitPriceDrop(previousProduct, product, onPriceDrop),
+          );
           return persisted.isLeft() ? persisted : Left(failure);
         },
-        (ProductSourceModel updatedSource) => _localDatasource
-            .updateSourcePrices(updatedSource.productId, [updatedSource]),
+        (ProductSourceModel updatedSource) async {
+          final Either<Failure, Product> persisted = await _localDatasource
+              .updateSourcePrices(updatedSource.productId, [updatedSource]);
+          await persisted.match(
+            (_) async {},
+            (Product product) =>
+                _emitPriceDrop(previousProduct, product, onPriceDrop),
+          );
+          return persisted;
+        },
       );
     });
   }
@@ -116,7 +156,21 @@ class ProductsRepository implements IProductsRepository {
   @override
   Future<Either<Failure, List<Product>>> refreshAllProducts({
     SourceRefreshListener? onSourceStatusChanged,
+    ProductPriceDropListener? onPriceDrop,
   }) async {
+    final Map<String, ProductModel> previousProducts = {};
+    if (onPriceDrop != null) {
+      final Either<Failure, List<ProductModel>> productsResult =
+          await _localDatasource.loadProducts();
+      if (productsResult.isLeft()) {
+        return productsResult.map((List<ProductModel> products) => products);
+      }
+      previousProducts.addAll({
+        for (final ProductModel product
+            in productsResult.getRight().toNullable()!)
+          product.id: product,
+      });
+    }
     final Either<Failure, List<ProductSourceModel>> sourcesResult =
         await _localDatasource.loadProductSources();
     return sourcesResult.match((Failure failure) async => Left(failure), (
@@ -154,6 +208,14 @@ class ProductsRepository implements IProductsRepository {
         if (failure != null) {
           return Left(failure);
         }
+        final ProductModel refreshedProduct = savedPrices
+            .getRight()
+            .toNullable()!;
+        await _emitPriceDrop(
+          previousProducts[refreshedProduct.id],
+          refreshedProduct,
+          onPriceDrop,
+        );
       }
       final Either<Failure, List<Product>> refreshedProducts =
           await _localDatasource.refreshAllProducts();
@@ -163,6 +225,34 @@ class ProductsRepository implements IProductsRepository {
       final Failure? sourceFailure = firstFailure;
       return sourceFailure == null ? refreshedProducts : Left(sourceFailure);
     });
+  }
+
+  Future<void> _emitPriceDrop(
+    Product? previousProduct,
+    Product refreshedProduct,
+    ProductPriceDropListener? listener,
+  ) async {
+    if (listener == null || previousProduct == null) {
+      return;
+    }
+    final Money? previousBestPrice =
+        previousProduct.bestAvailablePrice?.currentPrice;
+    final Money? currentBestPrice =
+        refreshedProduct.bestAvailablePrice?.currentPrice;
+    if (previousBestPrice == null || currentBestPrice == null) {
+      return;
+    }
+    if (previousBestPrice.currencyCode != currentBestPrice.currencyCode ||
+        currentBestPrice.minorUnits >= previousBestPrice.minorUnits) {
+      return;
+    }
+    await listener(
+      ProductPriceDrop(
+        product: refreshedProduct,
+        previousBestPrice: previousBestPrice,
+        currentBestPrice: currentBestPrice,
+      ),
+    );
   }
 
   ProductSourceModel _sourceAfterFailure(

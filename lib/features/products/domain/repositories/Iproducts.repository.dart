@@ -4,12 +4,16 @@ import 'package:fpdart/fpdart.dart';
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_price_drop.entity.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 
 /// Receives source refresh lifecycle updates in request order.
 typedef SourceRefreshListener =
     void Function(String sourceId, SourceRefreshStatus status);
+
+/// Receives one event after a product's persisted best price drops.
+typedef ProductPriceDropListener = Future<void> Function(ProductPriceDrop drop);
 
 /// Coordinates persisted products and their latest merchant offers.
 abstract class IProductsRepository {
@@ -27,6 +31,7 @@ abstract class IProductsRepository {
   Future<Either<Failure, Product>> refreshProduct(
     String productId, {
     SourceRefreshListener? onSourceStatusChanged,
+    ProductPriceDropListener? onPriceDrop,
   });
 
   /// Refreshes and persists the source identified by [sourceId].
@@ -34,11 +39,13 @@ abstract class IProductsRepository {
     String sourceId, {
     SourceRefreshListener? onSourceStatusChanged,
     bool bypassCooldown = false,
+    ProductPriceDropListener? onPriceDrop,
   });
 
   /// Refreshes and persists every tracked product.
   Future<Either<Failure, List<Product>>> refreshAllProducts({
     SourceRefreshListener? onSourceStatusChanged,
+    ProductPriceDropListener? onPriceDrop,
   });
 
   /// Fetches an offer for [source], and only when that succeeds, adds it to

@@ -146,6 +146,28 @@ void main() {
     });
   });
 
+  group('Method loadProduct() returns the correct value', () {
+    test('loadProduct() returns the matching product', () async {
+      await db.into(db.productTable).insert(buildProductTableCompanion());
+
+      final Either<Failure, ProductModel> result = await datasource.loadProduct(
+        'product-1',
+      );
+
+      expect(result.getRight().toNullable()?.id, 'product-1');
+      verifyZeroInteractions(mockLoggerService);
+    });
+
+    test('loadProduct() returns Left(NotFoundFailure) when missing', () async {
+      final Either<Failure, ProductModel> result = await datasource.loadProduct(
+        'missing-product',
+      );
+
+      expect(result, const Left(NotFoundFailure('Product not found')));
+      verifyZeroInteractions(mockLoggerService);
+    });
+  });
+
   group('Method refreshProduct() returns the correct value', () {
     test(
       'returns the product with a newer checked timestamp, leaving its sources untouched',

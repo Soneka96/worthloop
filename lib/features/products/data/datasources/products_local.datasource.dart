@@ -93,6 +93,25 @@ class ProductsLocalDatasource {
     }
   }
 
+  /// Loads one persisted product by [productId].
+  Future<Either<Failure, ProductModel>> loadProduct(String productId) async {
+    try {
+      final List<ProductModel> products = await _readProducts();
+      for (final ProductModel product in products) {
+        if (product.id == productId) {
+          return Right(product);
+        }
+      }
+      return const Left(NotFoundFailure('Product not found'));
+    } on SqliteException catch (error) {
+      _loggerService.e(error.toString());
+      return Left(DatabaseFailure(error.toString()));
+    } on StateError catch (error) {
+      _loggerService.e(error.toString());
+      return Left(CurrencyFailure(error.toString()));
+    }
+  }
+
   /// Touches one product's checked timestamp — used when it has no sources
   /// to refresh — and returns its latest value.
   Future<Either<Failure, ProductModel>> refreshProduct(String productId) async {

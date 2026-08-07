@@ -15,9 +15,13 @@ class RefreshProductParams extends Equatable {
   /// Receives lifecycle updates for each source refresh.
   final SourceRefreshListener? onSourceStatusChanged;
 
+  /// Receives a persisted best-price drop after refresh.
+  final ProductPriceDropListener? onPriceDrop;
+
   const RefreshProductParams({
     required this.productId,
     this.onSourceStatusChanged,
+    this.onPriceDrop,
   });
 
   @override

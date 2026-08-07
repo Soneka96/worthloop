@@ -5,6 +5,7 @@ import 'package:mocktail/mocktail.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_price_drop.entity.dart';
 import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/refresh_product.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_product.usecase.dart';
@@ -23,6 +24,32 @@ void main() {
   });
 
   group('Usecase RefreshProductUseCase returns the correct value', () {
+    test('forwards an onPriceDrop listener to the repository', () async {
+      final Product product = buildProduct();
+      Future<void> listener(ProductPriceDrop drop) async {}
+      when(
+        () => mockRepository.refreshProduct(
+          'product-1',
+          onSourceStatusChanged: null,
+          onPriceDrop: listener,
+        ),
+      ).thenAnswer((_) async => Right(product));
+
+      final Either<Failure, Product> result = await useCase(
+        RefreshProductParams(productId: 'product-1', onPriceDrop: listener),
+      );
+
+      expect(result, Right(product));
+      verify(
+        () => mockRepository.refreshProduct(
+          'product-1',
+          onSourceStatusChanged: null,
+          onPriceDrop: listener,
+        ),
+      ).called(1);
+      verifyNoMoreInteractions(mockRepository);
+    });
+
     test('returns Right(Product) when the repository returns Right', () async {
       final Product product = buildProduct();
       when(

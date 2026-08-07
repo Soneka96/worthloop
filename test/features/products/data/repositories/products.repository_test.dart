@@ -13,6 +13,7 @@ import 'package:worth_loop/features/products/data/models/product.model.dart';
 import 'package:worth_loop/features/products/data/models/product_source.model.dart';
 import 'package:worth_loop/features/products/data/repositories/products.repository.dart';
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_price_drop.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
 import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
@@ -445,6 +446,120 @@ void main() {
   });
 
   group('ProductsRepository implements refreshProduct() correctly', () {
+    test(
+      'emits one ProductPriceDrop when the best price becomes lower',
+      () async {
+        final ProductModel previousProduct = buildProductModel(
+          sources: [
+            buildProductSourceModel(
+              currentPrice: const Money(minorUnits: 2999, currencyCode: 'EUR'),
+              isAvailable: true,
+            ),
+          ],
+        );
+        final ProductSourceModel source = buildProductSourceModel(
+          currentPrice: const Money(minorUnits: 2999, currencyCode: 'EUR'),
+          isAvailable: true,
+        );
+        final ProductSourceModel updatedSource = buildProductSourceModel(
+          currentPrice: const Money(minorUnits: 1999, currencyCode: 'EUR'),
+          isAvailable: true,
+        );
+        final ProductModel refreshedProduct = buildProductModel(
+          sources: [updatedSource],
+        );
+        ProductPriceDrop? drop;
+        when(
+          () => mockDatasource.loadProduct(previousProduct.id),
+        ).thenAnswer((_) async => Right(previousProduct));
+        when(
+          () => mockDatasource.loadProductSourcesForProduct(previousProduct.id),
+        ).thenAnswer((_) async => Right([source]));
+        when(
+          () => mockRemoteDatasource.fetchPrices(source),
+        ).thenAnswer((_) async => Right(updatedSource));
+        when(
+          () => mockDatasource.updateSourcePrices(previousProduct.id, [
+            updatedSource,
+          ]),
+        ).thenAnswer((_) async => Right(refreshedProduct));
+
+        final Either<Failure, Product> result = await repository.refreshProduct(
+          previousProduct.id,
+          onPriceDrop: (ProductPriceDrop value) async => drop = value,
+        );
+
+        expect(result, Right(refreshedProduct));
+        expect(drop?.previousBestPrice.minorUnits, 2999);
+        expect(drop?.currentBestPrice.minorUnits, 1999);
+        expect(drop?.product, refreshedProduct);
+      },
+    );
+
+    test('does not emit for an unchanged best price', () async {
+      final ProductModel previousProduct = buildProductModel(
+        sources: [
+          buildProductSourceModel(
+            currentPrice: const Money(minorUnits: 2999, currencyCode: 'EUR'),
+            isAvailable: true,
+          ),
+        ],
+      );
+      final ProductSourceModel source = buildProductSourceModel(
+        currentPrice: const Money(minorUnits: 2999, currencyCode: 'EUR'),
+        isAvailable: true,
+      );
+      final ProductSourceModel updatedSource = buildProductSourceModel(
+        currentPrice: const Money(minorUnits: 2999, currencyCode: 'EUR'),
+        isAvailable: true,
+      );
+      final ProductModel refreshedProduct = buildProductModel(
+        sources: [updatedSource],
+      );
+      bool emitted = false;
+      when(
+        () => mockDatasource.loadProduct(previousProduct.id),
+      ).thenAnswer((_) async => Right(previousProduct));
+      when(
+        () => mockDatasource.loadProductSourcesForProduct(previousProduct.id),
+      ).thenAnswer((_) async => Right([source]));
+      when(
+        () => mockRemoteDatasource.fetchPrices(source),
+      ).thenAnswer((_) async => Right(updatedSource));
+      when(
+        () => mockDatasource.updateSourcePrices(previousProduct.id, [
+          updatedSource,
+        ]),
+      ).thenAnswer((_) async => Right(refreshedProduct));
+
+      await repository.refreshProduct(
+        previousProduct.id,
+        onPriceDrop: (_) async => emitted = true,
+      );
+
+      expect(emitted, isFalse);
+    });
+
+    test(
+      'does not fetch when the listener baseline cannot be loaded',
+      () async {
+        const DatabaseFailure failure = DatabaseFailure('database failed');
+        when(
+          () => mockDatasource.loadProduct('product-1'),
+        ).thenAnswer((_) async => const Left(failure));
+
+        final Either<Failure, Product> result = await repository.refreshProduct(
+          'product-1',
+          onPriceDrop: (_) async {},
+        );
+
+        expect(result, const Left(failure));
+        verify(() => mockDatasource.loadProduct('product-1')).called(1);
+        verifyNoMoreInteractions(mockDatasource);
+        verifyZeroInteractions(mockRemoteDatasource);
+      },
+    );
+
     test('runs different merchants in parallel', () async {
       final ProductSourceModel firstSource = buildProductSourceModel(
         id: 'source-1',

@@ -20,6 +20,7 @@ class RefreshProductUseCase
     return _repository.refreshProduct(
       params.productId,
       onSourceStatusChanged: params.onSourceStatusChanged,
+      onPriceDrop: params.onPriceDrop,
     );
   }
 }
