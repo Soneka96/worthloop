@@ -13,6 +13,7 @@ import 'package:path_provider_platform_interface/path_provider_platform_interfac
 
 // Project imports:
 import 'package:worth_loop/injection_container.dart';
+import 'package:worth_loop/shared/utils/android_background_capabilities_service.dart';
 import 'package:worth_loop/shared/constants/price_fetch_constants.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/navigation/navigator_service.dart';
@@ -59,6 +60,12 @@ void main() {
   tearDown(() async => sl.reset());
 
   group('injection_container — shared registrations', () {
+    test('background capability service is registered', () {
+      expect(
+        sl<AndroidBackgroundCapabilitiesService>(),
+        isA<AndroidBackgroundCapabilitiesService>(),
+      );
+    });
     test('services are registered', () {
       expect(
         sl.isRegistered<GoRouter>(),
