@@ -22,6 +22,34 @@ void main() {
     });
   });
 
+  group('latestUpdatedAtSelector() returns the newest product update', () {
+    test('returns the latest timestamp across products', () {
+      final Product older = buildProduct(
+        id: 'older',
+        lastUpdatedAt: DateTime(2026, 1, 1),
+      );
+      final Product newer = buildProduct(
+        id: 'newer',
+        lastUpdatedAt: DateTime(2026, 1, 2),
+      );
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(products: [older, newer]),
+      );
+
+      expect(
+        ProductsSelectors.latestUpdatedAtSelector(state),
+        DateTime(2026, 1, 2),
+      );
+    });
+
+    test('returns null when no products are tracked', () {
+      expect(
+        ProductsSelectors.latestUpdatedAtSelector(AppState.initial()),
+        isNull,
+      );
+    });
+  });
+
   group('Method productSelector() returns a Product instance', () {
     test('productSelector() returns the matching product', () {
       final Product product = buildProduct();

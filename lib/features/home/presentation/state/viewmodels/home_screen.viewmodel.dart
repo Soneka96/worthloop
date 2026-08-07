@@ -16,11 +16,20 @@ class HomeScreenViewModel extends Equatable {
   /// Tracked products to display.
   final List<Product> products;
 
+  /// Most recent update time across tracked products, or `null` when empty.
+  final DateTime? latestUpdatedAt;
+
   /// Whether the initial product load is active.
   final bool isLoading;
 
   /// Whether every product is being refreshed.
   final bool isRefreshingAll;
+
+  /// Number of sources that have reached a terminal state.
+  final int refreshCompletedCount;
+
+  /// Number of sources included in the active refresh.
+  final int refreshTotalCount;
 
   /// Whether a product is being created.
   final bool isCreatingProduct;
@@ -51,8 +60,11 @@ class HomeScreenViewModel extends Equatable {
 
   const HomeScreenViewModel({
     required this.products,
+    required this.latestUpdatedAt,
     required this.isLoading,
     required this.isRefreshingAll,
+    required this.refreshCompletedCount,
+    required this.refreshTotalCount,
     required this.isCreatingProduct,
     required this.productCreationError,
     this.refreshStatus,
@@ -67,8 +79,15 @@ class HomeScreenViewModel extends Equatable {
   factory HomeScreenViewModel.fromStore(Store<AppState> store) {
     return HomeScreenViewModel(
       products: ProductsSelectors.productsSelector(store.state),
+      latestUpdatedAt: ProductsSelectors.latestUpdatedAtSelector(store.state),
       isLoading: ProductsSelectors.isLoadingSelector(store.state),
       isRefreshingAll: ProductsSelectors.isRefreshingAllSelector(store.state),
+      refreshCompletedCount: ProductsSelectors.refreshCompletedCountSelector(
+        store.state,
+      ),
+      refreshTotalCount: ProductsSelectors.refreshTotalCountSelector(
+        store.state,
+      ),
       isCreatingProduct: ProductsSelectors.isCreatingProductSelector(
         store.state,
       ),
@@ -92,8 +111,11 @@ class HomeScreenViewModel extends Equatable {
   @override
   List<Object?> get props => [
     products,
+    latestUpdatedAt,
     isLoading,
     isRefreshingAll,
+    refreshCompletedCount,
+    refreshTotalCount,
     isCreatingProduct,
     productCreationError,
     refreshStatus,

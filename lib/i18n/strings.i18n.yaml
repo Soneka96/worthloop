@@ -6,6 +6,7 @@ common:
 home:
   subtitle: Your watchlist, with the best current offer first.
   trackedProducts: $count tracked
+  refreshProgress: "Updating prices · $completed of $total sources checked"
   refreshAll: Refresh all
   refreshing: Refreshing
   refreshAllComplete: "All sources checked."

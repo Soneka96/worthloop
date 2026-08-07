@@ -37,6 +37,8 @@ void main() {
             products: [product],
             isLoading: true,
             isRefreshingAll: true,
+            refreshCompletedCount: 18,
+            refreshTotalCount: 42,
             isCreatingProduct: true,
             creationError: const Some('creation failed'),
             createdProductId: const Some('product-1'),
@@ -49,10 +51,15 @@ void main() {
         );
 
         expect(viewmodel.products, [product]);
+        expect(viewmodel.latestUpdatedAt, product.lastUpdatedAt);
         expect(viewmodel.isLoading, isA<bool>());
         expect(viewmodel.isLoading, isTrue);
         expect(viewmodel.isRefreshingAll, isA<bool>());
         expect(viewmodel.isRefreshingAll, isTrue);
+        expect(viewmodel.refreshCompletedCount, isA<int>());
+        expect(viewmodel.refreshCompletedCount, 18);
+        expect(viewmodel.refreshTotalCount, isA<int>());
+        expect(viewmodel.refreshTotalCount, 42);
         expect(viewmodel.isCreatingProduct, isTrue);
         expect(viewmodel.productCreationError, 'creation failed');
         expect(viewmodel.createdProductId, 'product-1');

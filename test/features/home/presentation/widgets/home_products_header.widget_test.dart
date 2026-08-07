@@ -10,162 +10,95 @@ void main() {
   Widget buildWidget({
     int productCount = 2,
     bool isRefreshingAll = false,
-    bool isLoading = false,
-    VoidCallback? onRefreshAll,
+    int refreshCompletedCount = 0,
+    int refreshTotalCount = 0,
+    DateTime? latestUpdatedAt,
+    bool omitUpdatedAt = false,
   }) => TranslationProvider(
     child: MaterialApp(
       home: Scaffold(
         body: HomeProductsHeader(
           productCount: productCount,
           isRefreshingAll: isRefreshingAll,
-          isLoading: isLoading,
-          onRefreshAll: onRefreshAll ?? () {},
+          refreshCompletedCount: refreshCompletedCount,
+          refreshTotalCount: refreshTotalCount,
+          latestUpdatedAt: omitUpdatedAt
+              ? null
+              : latestUpdatedAt ?? DateTime(2026, 8, 7, 21, 51),
         ),
       ),
     ),
   );
 
-  group('HomeProductsHeader contains widgets', () {
-    testWidgets(
-      'HomeProductsHeader contains product count and enabled refresh button when productCount > 0',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(buildWidget());
+  testWidgets('HomeProductsHeader shows count and last updated time', (
+    tester,
+  ) async {
+    await tester.pumpWidget(buildWidget());
 
-        final FilledButton button = tester.widget(
-          find.byKey(const Key('home-refresh-all-button')),
-        );
-
-        expect(find.text(t.home.trackedProducts(count: 2)), findsOneWidget);
-        expect(button.onPressed, isA<VoidCallback>());
-        expect(button.onPressed, isNotNull);
-        expect(find.text(t.home.refreshAll), findsOneWidget);
-      },
+    expect(
+      find.textContaining(t.home.trackedProducts(count: 2)),
+      findsOneWidget,
     );
-
-    testWidgets(
-      'HomeProductsHeader contains disabled refresh button when isLoading = true',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(buildWidget(isLoading: true));
-
-        final FilledButton button = tester.widget(
-          find.byKey(const Key('home-refresh-all-button')),
-        );
-
-        expect(button.onPressed, isNull);
-      },
-    );
-
-    testWidgets(
-      'HomeProductsHeader contains disabled refresh button when productCount = 0',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(buildWidget(productCount: 0));
-
-        final FilledButton button = tester.widget(
-          find.byKey(const Key('home-refresh-all-button')),
-        );
-
-        expect(button.onPressed, isNull);
-      },
-    );
-
-    testWidgets(
-      'HomeProductsHeader contains loading refresh state when isRefreshingAll = true',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(buildWidget(isRefreshingAll: true));
-
-        final FilledButton button = tester.widget(
-          find.byKey(const Key('home-refresh-all-button')),
-        );
-
-        expect(button.onPressed, isNull);
-        expect(find.text(t.home.refreshing), findsOneWidget);
-        expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      },
-    );
+    expect(find.textContaining(t.home.updatedAt(time: '')), findsOneWidget);
+    expect(find.byType(FilledButton), findsNothing);
   });
 
-  group("HomeProductsHeader's elements behavior", () {
-    testWidgets('HomeProductsHeader calls onRefreshAll when productCount > 0', (
-      WidgetTester tester,
-    ) async {
-      bool wasRefreshed = false;
+  testWidgets('HomeProductsHeader shows compact refresh progress', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      buildWidget(
+        isRefreshingAll: true,
+        refreshCompletedCount: 18,
+        refreshTotalCount: 42,
+      ),
+    );
 
+    expect(
+      find.text(t.home.refreshProgress(completed: 18, total: 42)),
+      findsOneWidget,
+    );
+    expect(find.byType(FilledButton), findsNothing);
+  });
+
+  testWidgets(
+    'HomeProductsHeader omits update time when there are no products',
+    (tester) async {
       await tester.pumpWidget(
-        buildWidget(onRefreshAll: () => wasRefreshed = true),
+        buildWidget(productCount: 0, omitUpdatedAt: true),
       );
 
-      await tester.tap(find.byKey(const Key('home-refresh-all-button')));
+      expect(find.text(t.home.trackedProducts(count: 0)), findsOneWidget);
+      expect(find.textContaining(t.home.updatedAt(time: '')), findsNothing);
+    },
+  );
 
-      expect(wasRefreshed, isA<bool>());
-      expect(wasRefreshed, isTrue);
-    });
+  testWidgets('HomeProductsHeader displays Portuguese translations', (
+    tester,
+  ) async {
+    LocaleSettings.setLocale(AppLocale.pt);
 
-    testWidgets(
-      'HomeProductsHeader does not call onRefreshAll when isLoading = true',
-      (WidgetTester tester) async {
-        bool wasRefreshed = false;
+    try {
+      await tester.pumpWidget(buildWidget());
+      expect(
+        find.textContaining(t.home.trackedProducts(count: 2)),
+        findsOneWidget,
+      );
+      expect(find.textContaining(t.home.updatedAt(time: '')), findsOneWidget);
 
-        await tester.pumpWidget(
-          buildWidget(isLoading: true, onRefreshAll: () => wasRefreshed = true),
-        );
-
-        await tester.tap(find.byKey(const Key('home-refresh-all-button')));
-
-        expect(wasRefreshed, isA<bool>());
-        expect(wasRefreshed, isFalse);
-      },
-    );
-
-    testWidgets(
-      'HomeProductsHeader does not call onRefreshAll when productCount = 0',
-      (WidgetTester tester) async {
-        bool wasRefreshed = false;
-
-        await tester.pumpWidget(
-          buildWidget(productCount: 0, onRefreshAll: () => wasRefreshed = true),
-        );
-
-        await tester.tap(find.byKey(const Key('home-refresh-all-button')));
-
-        expect(wasRefreshed, isA<bool>());
-        expect(wasRefreshed, isFalse);
-      },
-    );
-
-    testWidgets(
-      'HomeProductsHeader does not call onRefreshAll when isRefreshingAll = true',
-      (WidgetTester tester) async {
-        bool wasRefreshed = false;
-
-        await tester.pumpWidget(
-          buildWidget(
-            isRefreshingAll: true,
-            onRefreshAll: () => wasRefreshed = true,
-          ),
-        );
-
-        await tester.tap(find.byKey(const Key('home-refresh-all-button')));
-
-        expect(wasRefreshed, isA<bool>());
-        expect(wasRefreshed, isFalse);
-      },
-    );
-  });
-
-  group("HomeProductsHeader's translations", () {
-    testWidgets('HomeProductsHeader displays the Portuguese translations', (
-      WidgetTester tester,
-    ) async {
-      LocaleSettings.setLocale(AppLocale.pt);
-
-      try {
-        await tester.pumpWidget(buildWidget());
-
-        expect(find.text(t.home.trackedProducts(count: 2)), findsOneWidget);
-        expect(find.text(t.home.refreshAll), findsOneWidget);
-      } finally {
-        LocaleSettings.setLocale(AppLocale.en);
-      }
-    });
+      await tester.pumpWidget(
+        buildWidget(
+          isRefreshingAll: true,
+          refreshCompletedCount: 18,
+          refreshTotalCount: 42,
+        ),
+      );
+      expect(
+        find.text(t.home.refreshProgress(completed: 18, total: 42)),
+        findsOneWidget,
+      );
+    } finally {
+      LocaleSettings.setLocale(AppLocale.en);
+    }
   });
 }

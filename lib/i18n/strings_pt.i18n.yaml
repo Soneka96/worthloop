@@ -6,6 +6,7 @@ common:
 home:
   subtitle: A sua lista, com a melhor oferta atual em primeiro lugar.
   trackedProducts: $count acompanhados
+  refreshProgress: "A atualizar preços · $completed de $total fontes verificadas"
   refreshAll: Atualizar todos
   refreshing: A atualizar
   refreshAllComplete: "Todas as fontes foram verificadas."

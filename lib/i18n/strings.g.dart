@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 248 (124 per locale)
+/// Strings: 250 (125 per locale)
 ///
-/// Built on 2026-08-07 at 10:34 UTC
+/// Built on 2026-08-07 at 11:17 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -175,6 +175,7 @@ class _StringsHomeEn {
 	// Translations
 	String get subtitle => 'Your watchlist, with the best current offer first.';
 	String trackedProducts({required Object count}) => '${count} tracked';
+	String refreshProgress({required Object completed, required Object total}) => 'Updating prices · ${completed} of ${total} sources checked';
 	String get refreshAll => 'Refresh all';
 	String get refreshing => 'Refreshing';
 	String get refreshAllComplete => 'All sources checked.';
@@ -465,6 +466,7 @@ class _StringsHomePt implements _StringsHomeEn {
 	// Translations
 	@override String get subtitle => 'A sua lista, com a melhor oferta atual em primeiro lugar.';
 	@override String trackedProducts({required Object count}) => '${count} acompanhados';
+	@override String refreshProgress({required Object completed, required Object total}) => 'A atualizar preços · ${completed} de ${total} fontes verificadas';
 	@override String get refreshAll => 'Atualizar todos';
 	@override String get refreshing => 'A atualizar';
 	@override String get refreshAllComplete => 'Todas as fontes foram verificadas.';
@@ -714,6 +716,7 @@ extension on Translations {
 			case 'common.cancel': return 'Cancel';
 			case 'home.subtitle': return 'Your watchlist, with the best current offer first.';
 			case 'home.trackedProducts': return ({required Object count}) => '${count} tracked';
+			case 'home.refreshProgress': return ({required Object completed, required Object total}) => 'Updating prices · ${completed} of ${total} sources checked';
 			case 'home.refreshAll': return 'Refresh all';
 			case 'home.refreshing': return 'Refreshing';
 			case 'home.refreshAllComplete': return 'All sources checked.';
@@ -846,6 +849,7 @@ extension on _StringsPt {
 			case 'common.cancel': return 'Cancelar';
 			case 'home.subtitle': return 'A sua lista, com a melhor oferta atual em primeiro lugar.';
 			case 'home.trackedProducts': return ({required Object count}) => '${count} acompanhados';
+			case 'home.refreshProgress': return ({required Object completed, required Object total}) => 'A atualizar preços · ${completed} de ${total} fontes verificadas';
 			case 'home.refreshAll': return 'Atualizar todos';
 			case 'home.refreshing': return 'A atualizar';
 			case 'home.refreshAllComplete': return 'Todas as fontes foram verificadas.';

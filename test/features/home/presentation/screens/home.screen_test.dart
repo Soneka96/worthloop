@@ -44,6 +44,11 @@ void main() {
     ]);
     when(() => mockViewModel.isLoading).thenReturn(false);
     when(() => mockViewModel.isRefreshingAll).thenReturn(false);
+    when(() => mockViewModel.refreshCompletedCount).thenReturn(0);
+    when(() => mockViewModel.refreshTotalCount).thenReturn(0);
+    when(
+      () => mockViewModel.latestUpdatedAt,
+    ).thenReturn(DateTime(2026, 8, 7, 21, 51));
     when(() => mockViewModel.isCreatingProduct).thenReturn(false);
     when(() => mockViewModel.productCreationError).thenReturn(null);
     when(() => mockViewModel.createdProductId).thenReturn(null);
@@ -117,13 +122,38 @@ void main() {
       },
     );
 
+    testWidgets('HomeScreen uses pull-to-refresh without a permanent button', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(buildWidget());
+
+      expect(find.byType(RefreshIndicator), findsOneWidget);
+      expect(find.byKey(const Key('home-refresh-all-button')), findsNothing);
+    });
+
+    testWidgets('HomeScreen keeps the list pullable when content is short', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(buildWidget());
+
+      final CustomScrollView scrollView = tester.widget(
+        find.byType(CustomScrollView),
+      );
+
+      expect(scrollView.physics, isA<AlwaysScrollableScrollPhysics>());
+    });
+
     testWidgets(
-      'HomeScreen contains a "home-refresh-all-button" FilledButton with the correct parameters',
+      'HomeScreen displays compact refresh progress from the viewmodel',
       (WidgetTester tester) async {
+        when(() => mockViewModel.isRefreshingAll).thenReturn(true);
+        when(() => mockViewModel.refreshCompletedCount).thenReturn(18);
+        when(() => mockViewModel.refreshTotalCount).thenReturn(42);
+
         await tester.pumpWidget(buildWidget());
 
         expect(
-          find.byKey(const Key('home-refresh-all-button')),
+          find.text(t.home.refreshProgress(completed: 18, total: 42)),
           findsOneWidget,
         );
       },
@@ -211,35 +241,22 @@ void main() {
       },
     );
 
-    testWidgets(
-      'HomeScreen contains a "home-refresh-all-button" FilledButton with the correct behavior',
-      (WidgetTester tester) async {
-        bool refreshed = false;
-        when(() => mockViewModel.onRefreshAll).thenReturn(() {
-          refreshed = true;
-        });
+    testWidgets('HomeScreen triggers refresh from RefreshIndicator', (
+      WidgetTester tester,
+    ) async {
+      bool refreshed = false;
+      when(() => mockViewModel.onRefreshAll).thenReturn(() {
+        refreshed = true;
+      });
 
-        await tester.pumpWidget(buildWidget());
-        await tester.tap(find.byKey(const Key('home-refresh-all-button')));
+      await tester.pumpWidget(buildWidget());
+      final RefreshIndicator indicator = tester.widget(
+        find.byType(RefreshIndicator),
+      );
+      await indicator.onRefresh();
 
-        expect(refreshed, isA<bool>());
-        expect(refreshed, isTrue);
-      },
-    );
-
-    testWidgets(
-      'HomeScreen contains a disabled "home-refresh-all-button" FilledButton when isRefreshingAll = true',
-      (WidgetTester tester) async {
-        when(() => mockViewModel.isRefreshingAll).thenReturn(true);
-
-        await tester.pumpWidget(buildWidget());
-        final FilledButton button = tester.widget(
-          find.byKey(const Key('home-refresh-all-button')),
-        );
-
-        expect(button.onPressed, isNull);
-      },
-    );
+      expect(refreshed, isTrue);
+    });
 
     testWidgets(
       'HomeScreen contains a TrackedProductWidget with the correct behavior',
@@ -293,8 +310,10 @@ void main() {
         await tester.pumpWidget(buildWidget());
 
         expect(find.text(t.home.subtitle), findsOneWidget);
-        expect(find.text(t.home.refreshAll), findsOneWidget);
-        expect(find.text(t.home.trackedProducts(count: 1)), findsOneWidget);
+        expect(
+          find.textContaining(t.home.trackedProducts(count: 1)),
+          findsOneWidget,
+        );
       } finally {
         LocaleSettings.setLocale(AppLocale.en);
       }
@@ -373,7 +392,6 @@ void main() {
       await tester.pumpWidget(buildWidget());
 
       const Key settingsKey = Key('home-settings-button');
-      const Key refreshKey = Key('home-refresh-all-button');
       const Key searchKey = Key('home-search-field');
       const Key productKey = Key('tracked-product-product-1');
       const Key addProductKey = Key('home-add-product-button');
@@ -383,13 +401,6 @@ void main() {
       final bool settingsFocused = hasPrimaryFocusWithin(
         tester,
         find.byKey(settingsKey),
-      );
-
-      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-      await tester.pump();
-      final bool refreshFocused = hasPrimaryFocusWithin(
-        tester,
-        find.byKey(refreshKey),
       );
 
       await tester.sendKeyEvent(LogicalKeyboardKey.tab);
@@ -415,8 +426,6 @@ void main() {
 
       expect(settingsFocused, isA<bool>());
       expect(settingsFocused, isTrue);
-      expect(refreshFocused, isA<bool>());
-      expect(refreshFocused, isTrue);
       expect(searchFocused, isA<bool>());
       expect(searchFocused, isTrue);
       expect(productFocused, isA<bool>());

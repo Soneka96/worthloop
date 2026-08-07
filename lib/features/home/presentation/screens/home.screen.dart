@@ -38,29 +38,37 @@ class HomeScreen extends StatelessWidget {
             child: const Icon(Icons.add),
           ),
           body: SafeArea(
-            child: CustomScrollView(
-              slivers: [
-                SliverPadding(
-                  padding: EdgeInsets.all(context.spacing.md),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      HomeHeader(onOpenSettings: viewmodel.onOpenSettings),
-                      HomeProductsHeader(
-                        productCount: viewmodel.products.length,
-                        isRefreshingAll: viewmodel.isRefreshingAll,
-                        isLoading: viewmodel.isLoading,
-                        onRefreshAll: viewmodel.onRefreshAll,
-                      ),
-                    ]),
+            child: RefreshIndicator(
+              onRefresh: () async {
+                viewmodel.onRefreshAll();
+              },
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverPadding(
+                    padding: EdgeInsets.all(context.spacing.md),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        HomeHeader(onOpenSettings: viewmodel.onOpenSettings),
+                        HomeProductsHeader(
+                          productCount: viewmodel.products.length,
+                          isRefreshingAll: viewmodel.isRefreshingAll,
+                          refreshCompletedCount:
+                              viewmodel.refreshCompletedCount,
+                          refreshTotalCount: viewmodel.refreshTotalCount,
+                          latestUpdatedAt: viewmodel.latestUpdatedAt,
+                        ),
+                      ]),
+                    ),
                   ),
-                ),
-                TrackedProductsListSection(
-                  products: viewmodel.products,
-                  isLoading: viewmodel.isLoading,
-                  sourceRefreshStatuses: viewmodel.sourceRefreshStatuses,
-                  onProductTap: viewmodel.onOpenProduct,
-                ),
-              ],
+                  TrackedProductsListSection(
+                    products: viewmodel.products,
+                    isLoading: viewmodel.isLoading,
+                    sourceRefreshStatuses: viewmodel.sourceRefreshStatuses,
+                    onProductTap: viewmodel.onOpenProduct,
+                  ),
+                ],
+              ),
             ),
           ),
         );

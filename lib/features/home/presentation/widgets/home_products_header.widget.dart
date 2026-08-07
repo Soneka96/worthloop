@@ -3,58 +3,54 @@ import 'package:flutter/material.dart';
 
 // Project imports:
 import 'package:worth_loop/i18n/strings.g.dart';
-import 'package:worth_loop/shared/constants/layout_constants.dart';
 import 'package:worth_loop/shared/theme/app_spacing_theme_extension.dart';
 
-/// Displays the tracked-product count and refresh-all control.
+/// Displays the tracked-product count and compact refresh status.
 class HomeProductsHeader extends StatelessWidget {
   /// Number of tracked products.
   final int productCount;
 
-  /// Whether every product is being refreshed.
+  /// Whether every product is currently being refreshed.
   final bool isRefreshingAll;
 
-  /// Whether the initial product load is active.
-  final bool isLoading;
+  /// Number of sources that have reached a terminal state.
+  final int refreshCompletedCount;
 
-  /// Refreshes every tracked product.
-  final VoidCallback onRefreshAll;
+  /// Number of sources included in the active refresh.
+  final int refreshTotalCount;
+
+  /// Most recent update time across tracked products.
+  final DateTime? latestUpdatedAt;
 
   const HomeProductsHeader({
     required this.productCount,
     required this.isRefreshingAll,
-    required this.isLoading,
-    required this.onRefreshAll,
+    required this.refreshCompletedCount,
+    required this.refreshTotalCount,
+    required this.latestUpdatedAt,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
     final TextTheme textTheme = Theme.of(context).textTheme;
-    final bool canRefresh = !isRefreshingAll && !isLoading && productCount > 0;
+    final String? updatedTime = latestUpdatedAt == null
+        ? null
+        : TimeOfDay.fromDateTime(latestUpdatedAt!).format(context);
 
-    return Wrap(
-      alignment: WrapAlignment.spaceBetween,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: context.spacing.md,
-      runSpacing: context.spacing.sm,
-      children: [
-        Text(
-          t.home.trackedProducts(count: productCount),
-          style: textTheme.labelSmall,
-        ),
-        FilledButton.icon(
-          key: const Key('home-refresh-all-button'),
-          onPressed: canRefresh ? onRefreshAll : null,
-          icon: isRefreshingAll
-              ? const SizedBox.square(
-                  dimension: IconSizes.md,
-                  child: CircularProgressIndicator(),
-                )
-              : const Icon(Icons.refresh),
-          label: Text(isRefreshingAll ? t.home.refreshing : t.home.refreshAll),
-        ),
-      ],
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: context.spacing.xs),
+      child: Text(
+        isRefreshingAll
+            ? t.home.refreshProgress(
+                completed: refreshCompletedCount,
+                total: refreshTotalCount,
+              )
+            : updatedTime == null
+            ? t.home.trackedProducts(count: productCount)
+            : '${t.home.trackedProducts(count: productCount)} · ${t.home.updatedAt(time: updatedTime)}',
+        style: textTheme.labelSmall,
+      ),
     );
   }
 }
