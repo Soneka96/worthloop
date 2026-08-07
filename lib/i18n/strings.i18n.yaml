@@ -31,6 +31,10 @@ productDetails:
   backTooltip: Back
   refresh: Refresh
   refreshing: Refreshing
+  refreshProgress: "$completed of $total sources checked"
+  queued: Queued
+  checking: Checking
+  cannotAccessNow: Cannot access now
   bestPrice: Best price
   offers: "Store offers: $count"
   availableOffers: Available offers

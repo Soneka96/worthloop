@@ -17,6 +17,12 @@ class ProductSourcesSection extends StatefulWidget {
   /// Product whose saved merchant sources are displayed.
   final Product product;
 
+  /// Whether source refresh is active.
+  final bool isRefreshing;
+
+  /// Current refresh state keyed by source identifier.
+  final Map<String, SourceRefreshStatus> sourceRefreshStatuses;
+
   /// Source identifiers currently being deleted.
   final Set<String> deletingSourceIds;
 
@@ -28,6 +34,8 @@ class ProductSourcesSection extends StatefulWidget {
 
   const ProductSourcesSection({
     required this.product,
+    this.isRefreshing = false,
+    this.sourceRefreshStatuses = const {},
     required this.deletingSourceIds,
     required this.onDeleteSource,
     required this.onOpenOffer,
@@ -40,9 +48,55 @@ class ProductSourcesSection extends StatefulWidget {
 
 class _ProductSourcesSectionState extends State<ProductSourcesSection> {
   ProductOfferFilter _filter = ProductOfferFilter.all;
+  List<String> _refreshOrderIds = [];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isRefreshing) {
+      _refreshOrderIds = _sourceIds(widget.product.pricesForDisplay);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant ProductSourcesSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.isRefreshing && widget.isRefreshing) {
+      _refreshOrderIds = _sourceIds(oldWidget.product.pricesForDisplay);
+    } else if (oldWidget.isRefreshing && !widget.isRefreshing) {
+      _refreshOrderIds = [];
+    }
+  }
+
+  List<String> _sourceIds(List<ProductSource> sources) =>
+      sources.map((ProductSource source) => source.id).toList(growable: false);
 
   List<ProductSource> get _filteredSources {
-    final List<ProductSource> orderedSources = widget.product.pricesForDisplay;
+    final List<ProductSource> orderedSources = widget.product.pricesForDisplay
+        .toList();
+    if (!widget.isRefreshing || _refreshOrderIds.isEmpty) {
+      return switch (_filter) {
+        ProductOfferFilter.none || ProductOfferFilter.all => orderedSources,
+        ProductOfferFilter.available =>
+          orderedSources
+              .where((ProductSource source) => source.isAvailable == true)
+              .toList(growable: false),
+        ProductOfferFilter.unavailable =>
+          orderedSources
+              .where((ProductSource source) => source.isAvailable != true)
+              .toList(growable: false),
+      };
+    }
+    final Map<String, int> order = {
+      for (int index = 0; index < _refreshOrderIds.length; index++)
+        _refreshOrderIds[index]: index,
+    };
+    orderedSources.sort(
+      (ProductSource first, ProductSource second) =>
+          (order[first.id] ?? orderedSources.length).compareTo(
+            order[second.id] ?? orderedSources.length,
+          ),
+    );
     return switch (_filter) {
       ProductOfferFilter.none || ProductOfferFilter.all => orderedSources,
       ProductOfferFilter.available =>
@@ -172,6 +226,9 @@ class _ProductSourcesSectionState extends State<ProductSourcesSection> {
                     padding: EdgeInsets.only(bottom: context.spacing.sm),
                     child: MerchantOfferRow(
                       source: source,
+                      refreshStatus:
+                          widget.sourceRefreshStatuses[source.id] ??
+                          SourceRefreshStatus.idle,
                       isBestPrice: source == bestAvailablePrice,
                       isDeleting: widget.deletingSourceIds.contains(source.id),
                       onTap: () => widget.onOpenOffer(source.url),

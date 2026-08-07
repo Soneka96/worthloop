@@ -12,6 +12,7 @@ import 'package:worth_loop/features/products/domain/value_objects/money.value-ob
 import 'package:worth_loop/features/products/presentation/widgets/best_price_stamp.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/merchant_offer_row.widget.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import '../../fixtures/product_source.fixture.dart';
 
 void main() {
@@ -27,6 +28,7 @@ void main() {
     ProductSource? source,
     bool isBestPrice = false,
     bool isDeleting = false,
+    SourceRefreshStatus refreshStatus = SourceRefreshStatus.idle,
     VoidCallback? onTap,
     VoidCallback? onEdit,
     VoidCallback? onDelete,
@@ -37,6 +39,7 @@ void main() {
           source: source ?? buildSource(),
           isBestPrice: isBestPrice,
           isDeleting: isDeleting,
+          refreshStatus: refreshStatus,
           onTap: onTap ?? () {},
           onEdit: onEdit ?? () {},
           onDelete: onDelete ?? () {},
@@ -76,6 +79,37 @@ void main() {
         );
 
         expect(find.text(t.productDetails.unavailable), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow displays the checking status when refreshStatus = SourceRefreshStatus.fetching',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildWidget(refreshStatus: SourceRefreshStatus.fetching),
+        );
+
+        expect(find.text(t.productDetails.checking), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow displays terminal refresh statuses with correct labels',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildWidget(refreshStatus: SourceRefreshStatus.error),
+        );
+        expect(find.text(t.productDetails.cannotAccessNow), findsOneWidget);
+
+        await tester.pumpWidget(
+          buildWidget(refreshStatus: SourceRefreshStatus.unavailable),
+        );
+        expect(find.text(t.productDetails.unavailable), findsOneWidget);
+
+        await tester.pumpWidget(
+          buildWidget(refreshStatus: SourceRefreshStatus.success),
+        );
+        expect(find.text(t.productDetails.available), findsOneWidget);
       },
     );
 

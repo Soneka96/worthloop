@@ -37,6 +37,9 @@ void main() {
               products: [product],
               refreshingProductIds: {product.id},
               productRefreshStatuses: {product.id: PriceFetchStatus.blocked},
+              sourceRefreshStatuses: {'source-1': SourceRefreshStatus.fetching},
+              refreshCompletedCount: 3,
+              refreshTotalCount: 6,
               isAddingSource: true,
               addSourceError: const Some('add failed'),
               editingSourceId: const Some('source-1'),
@@ -58,6 +61,11 @@ void main() {
           expect(viewmodel.isRefreshing, isTrue);
           expect(viewmodel.refreshStatus, isA<PriceFetchStatus>());
           expect(viewmodel.refreshStatus, PriceFetchStatus.blocked);
+          expect(viewmodel.sourceRefreshStatuses, {
+            'source-1': SourceRefreshStatus.fetching,
+          });
+          expect(viewmodel.refreshCompletedCount, 3);
+          expect(viewmodel.refreshTotalCount, 6);
           expect(viewmodel.isAddingSource, isA<bool>());
           expect(viewmodel.isAddingSource, isTrue);
           expect(viewmodel.addSourceError, 'add failed');

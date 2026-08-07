@@ -21,6 +21,15 @@ class ProductDetailsViewModel extends Equatable {
   /// Classified reason for the latest refresh failure, or `null`.
   final PriceFetchStatus? refreshStatus;
 
+  /// Current refresh state for each source.
+  final Map<String, SourceRefreshStatus> sourceRefreshStatuses;
+
+  /// Number of sources that have finished refreshing.
+  final int refreshCompletedCount;
+
+  /// Number of sources in the current refresh.
+  final int refreshTotalCount;
+
   /// Whether a source is being added.
   final bool isAddingSource;
 
@@ -79,6 +88,9 @@ class ProductDetailsViewModel extends Equatable {
     required this.product,
     required this.isRefreshing,
     this.refreshStatus,
+    this.sourceRefreshStatuses = const {},
+    this.refreshCompletedCount = 0,
+    this.refreshTotalCount = 0,
     required this.isAddingSource,
     required this.addSourceError,
     required this.editingSourceId,
@@ -113,6 +125,11 @@ class ProductDetailsViewModel extends Equatable {
       store.state,
       productId,
     ),
+    sourceRefreshStatuses: store.state.products.sourceRefreshStatuses,
+    refreshCompletedCount: ProductsSelectors.refreshCompletedCountSelector(
+      store.state,
+    ),
+    refreshTotalCount: ProductsSelectors.refreshTotalCountSelector(store.state),
     isAddingSource: ProductsSelectors.isAddingSourceSelector(store.state),
     addSourceError: ProductsSelectors.addSourceErrorSelector(store.state),
     editingSourceId: ProductsSelectors.editingSourceIdSelector(store.state),
@@ -150,6 +167,9 @@ class ProductDetailsViewModel extends Equatable {
     product,
     isRefreshing,
     refreshStatus,
+    sourceRefreshStatuses,
+    refreshCompletedCount,
+    refreshTotalCount,
     isAddingSource,
     addSourceError,
     editingSourceId,

@@ -32,6 +32,10 @@ productDetails:
   backTooltip: Voltar
   refresh: Atualizar
   refreshing: A atualizar
+  refreshProgress: "$completed de $total fontes verificadas"
+  queued: Em fila
+  checking: A verificar
+  cannotAccessNow: Não é possível aceder agora
   bestPrice: Melhor preço
   offers: "Ofertas em lojas: $count"
   availableOffers: Ofertas disponíveis

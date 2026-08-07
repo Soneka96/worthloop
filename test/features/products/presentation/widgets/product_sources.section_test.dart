@@ -18,6 +18,7 @@ import 'package:worth_loop/features/products/presentation/widgets/source_form_di
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import '../../fixtures/product.fixture.dart';
 import '../../fixtures/product_source.fixture.dart';
 
@@ -77,6 +78,8 @@ void main() {
 
   Widget buildWidget({
     List<ProductSource> sources = const [],
+    bool isRefreshing = false,
+    Map<String, SourceRefreshStatus> sourceRefreshStatuses = const {},
     Set<String> deletingSourceIds = const {},
     ValueChanged<String>? onDeleteSource,
     ValueChanged<String>? onOpenOffer,
@@ -89,6 +92,8 @@ void main() {
             slivers: [
               ProductSourcesSection(
                 product: buildProduct(sources: sources),
+                isRefreshing: isRefreshing,
+                sourceRefreshStatuses: sourceRefreshStatuses,
                 deletingSourceIds: deletingSourceIds,
                 onDeleteSource: onDeleteSource ?? (_) {},
                 onOpenOffer: onOpenOffer ?? (_) {},
@@ -136,6 +141,13 @@ void main() {
           find.byKey(const Key('merchant-offer-source-2')),
           findsOneWidget,
         );
+        final MerchantOfferRow idleRow = tester.widget(
+          find.byWidgetPredicate(
+            (Widget widget) =>
+                widget is MerchantOfferRow && widget.source.id == 'source-1',
+          ),
+        );
+        expect(idleRow.refreshStatus, SourceRefreshStatus.idle);
       },
     );
 
@@ -238,6 +250,52 @@ void main() {
           unpriced.id,
           secondUnpriced.id,
         ]);
+      },
+    );
+
+    testWidgets(
+      'ProductSourcesSection preserves source order while refreshing',
+      (WidgetTester tester) async {
+        final ProductSource first = buildProductSource(
+          id: 'source-first',
+          currentPrice: const Money(minorUnits: 3000, currencyCode: 'EUR'),
+          isAvailable: true,
+        );
+        final ProductSource second = buildProductSource(
+          id: 'source-second',
+          merchantDomain: 'second.example.com',
+          currentPrice: const Money(minorUnits: 1000, currencyCode: 'EUR'),
+          isAvailable: true,
+        );
+        await tester.pumpWidget(
+          buildWidget(
+            sources: [first, second],
+            isRefreshing: true,
+            sourceRefreshStatuses: {
+              first.id: SourceRefreshStatus.fetching,
+              second.id: SourceRefreshStatus.success,
+            },
+          ),
+        );
+
+        final List<String> visibleSourceIds = tester
+            .widgetList<MerchantOfferRow>(find.byType(MerchantOfferRow))
+            .map((MerchantOfferRow row) => row.source.id)
+            .toList();
+
+        expect(visibleSourceIds, [second.id, first.id]);
+        expect(
+          tester
+              .widget<MerchantOfferRow>(
+                find.byWidgetPredicate(
+                  (Widget widget) =>
+                      widget is MerchantOfferRow &&
+                      widget.source.id == first.id,
+                ),
+              )
+              .refreshStatus,
+          SourceRefreshStatus.fetching,
+        );
       },
     );
 

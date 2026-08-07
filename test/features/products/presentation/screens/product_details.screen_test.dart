@@ -60,6 +60,9 @@ void main() {
       ),
     );
     when(() => mockViewModel.isRefreshing).thenReturn(false);
+    when(() => mockViewModel.sourceRefreshStatuses).thenReturn(const {});
+    when(() => mockViewModel.refreshCompletedCount).thenReturn(0);
+    when(() => mockViewModel.refreshTotalCount).thenReturn(0);
     when(() => mockViewModel.isAddingSource).thenReturn(false);
     when(() => mockViewModel.addSourceError).thenReturn(null);
     when(() => mockViewModel.editingSourceId).thenReturn(null);
@@ -155,6 +158,34 @@ void main() {
         expect(find.text('399.99 €'), findsOneWidget);
         expect(find.text(t.productDetails.available), findsNWidgets(2));
         expect(find.text(t.productDetails.unavailable), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'ProductDetailsScreen displays refresh progress when sources are refreshing',
+      (WidgetTester tester) async {
+        when(() => mockViewModel.isRefreshing).thenReturn(true);
+        when(() => mockViewModel.refreshCompletedCount).thenReturn(3);
+        when(() => mockViewModel.refreshTotalCount).thenReturn(6);
+
+        await pumpScreen(tester);
+
+        expect(
+          find.text(t.productDetails.refreshProgress(completed: 3, total: 6)),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'ProductDetailsScreen hides refresh progress when isRefreshing = false',
+      (WidgetTester tester) async {
+        when(() => mockViewModel.refreshCompletedCount).thenReturn(3);
+        when(() => mockViewModel.refreshTotalCount).thenReturn(6);
+
+        await pumpScreen(tester);
+
+        expect(find.textContaining('3 of 6'), findsNothing);
       },
     );
 

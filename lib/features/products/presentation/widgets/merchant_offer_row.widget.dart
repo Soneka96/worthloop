@@ -12,6 +12,7 @@ import 'package:worth_loop/features/products/presentation/utils/price_formatter.
 import 'package:worth_loop/features/products/presentation/widgets/best_price_stamp.widget.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/shared/constants/layout_constants.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/theme/app_shape_theme_extension.dart';
 import 'package:worth_loop/shared/theme/app_spacing_theme_extension.dart';
 
@@ -27,6 +28,9 @@ class MerchantOfferRow extends StatelessWidget {
   /// Whether this source is currently being deleted.
   final bool isDeleting;
 
+  /// Current refresh state for this source.
+  final SourceRefreshStatus refreshStatus;
+
   /// Opens [source.url] in the device's default browser.
   final VoidCallback onTap;
 
@@ -40,6 +44,7 @@ class MerchantOfferRow extends StatelessWidget {
     required this.source,
     required this.isBestPrice,
     required this.isDeleting,
+    this.refreshStatus = SourceRefreshStatus.idle,
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
@@ -125,12 +130,7 @@ class MerchantOfferRow extends StatelessWidget {
                           ],
                         ),
                         SizedBox(height: context.spacing.xs),
-                        Text(
-                          source.isAvailable == false
-                              ? t.productDetails.unavailable
-                              : t.productDetails.available,
-                          style: textTheme.bodySmall,
-                        ),
+                        Text(_availabilityLabel(), style: textTheme.bodySmall),
                         if (lastCheckedAt != null)
                           Text(
                             t.productDetails.checkedAt(
@@ -171,4 +171,19 @@ class MerchantOfferRow extends StatelessWidget {
       ),
     );
   }
+
+  String _availabilityLabel() => switch (refreshStatus) {
+    SourceRefreshStatus.queued => t.productDetails.queued,
+    SourceRefreshStatus.fetching => t.productDetails.checking,
+    SourceRefreshStatus.error => t.productDetails.cannotAccessNow,
+    SourceRefreshStatus.unavailable => t.productDetails.unavailable,
+    SourceRefreshStatus.success =>
+      source.isAvailable == false
+          ? t.productDetails.unavailable
+          : t.productDetails.available,
+    SourceRefreshStatus.none || SourceRefreshStatus.idle =>
+      source.isAvailable == false
+          ? t.productDetails.unavailable
+          : t.productDetails.available,
+  };
 }

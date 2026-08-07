@@ -112,11 +112,26 @@ class ProductDetailsScreen extends StatelessWidget {
                             onRefresh: viewmodel.onRefresh,
                           ),
                           SizedBox(height: context.spacing.sm),
+                          if (viewmodel.isRefreshing &&
+                              viewmodel.refreshTotalCount > 0)
+                            Padding(
+                              padding: EdgeInsets.only(
+                                bottom: context.spacing.sm,
+                              ),
+                              child: Text(
+                                t.productDetails.refreshProgress(
+                                  completed: viewmodel.refreshCompletedCount,
+                                  total: viewmodel.refreshTotalCount,
+                                ),
+                              ),
+                            ),
                         ]),
                       ),
                     ),
                     ProductSourcesSection(
                       product: product,
+                      isRefreshing: viewmodel.isRefreshing,
+                      sourceRefreshStatuses: viewmodel.sourceRefreshStatuses,
                       deletingSourceIds: viewmodel.deletingSourceIds,
                       onDeleteSource: viewmodel.onDeleteSource,
                       onOpenOffer: viewmodel.onOpenOffer,
