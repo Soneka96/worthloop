@@ -11,7 +11,6 @@ import 'package:worth_loop/features/home/presentation/widgets/home_header.widget
 import 'package:worth_loop/features/home/presentation/widgets/home_products_header.widget.dart';
 import 'package:worth_loop/features/home/presentation/widgets/tracked_products_list.section.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
-import 'package:worth_loop/features/products/presentation/widgets/product_refresh_status_notice.widget.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
@@ -46,10 +45,6 @@ class HomeScreen extends StatelessWidget {
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
                       HomeHeader(onOpenSettings: viewmodel.onOpenSettings),
-                      ProductRefreshStatusNotice(
-                        status: viewmodel.refreshStatus,
-                      ),
-                      SizedBox(height: context.spacing.lg),
                       HomeProductsHeader(
                         productCount: viewmodel.products.length,
                         isRefreshingAll: viewmodel.isRefreshingAll,

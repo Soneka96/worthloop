@@ -102,6 +102,11 @@ void main() {
         expect(find.text(t.productDetails.cannotAccessNow), findsOneWidget);
 
         await tester.pumpWidget(
+          buildWidget(refreshStatus: SourceRefreshStatus.queued),
+        );
+        expect(find.text(t.productDetails.queued), findsOneWidget);
+
+        await tester.pumpWidget(
           buildWidget(refreshStatus: SourceRefreshStatus.unavailable),
         );
         expect(find.text(t.productDetails.unavailable), findsOneWidget);
@@ -110,6 +115,114 @@ void main() {
           buildWidget(refreshStatus: SourceRefreshStatus.success),
         );
         expect(find.text(t.productDetails.available), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow uses a distinct tonal surface for each refresh state',
+      (WidgetTester tester) async {
+        final Map<SourceRefreshStatus, Color Function(ColorScheme)> surfaces = {
+          SourceRefreshStatus.queued: (ColorScheme colors) =>
+              colors.primaryContainer,
+          SourceRefreshStatus.fetching: (ColorScheme colors) =>
+              colors.primaryContainer,
+          SourceRefreshStatus.error: (ColorScheme colors) =>
+              colors.errorContainer,
+          SourceRefreshStatus.unavailable: (ColorScheme colors) =>
+              colors.secondaryContainer,
+          SourceRefreshStatus.success: (ColorScheme colors) =>
+              colors.tertiaryContainer,
+          SourceRefreshStatus.none: (ColorScheme colors) =>
+              colors.surfaceContainerLow,
+          SourceRefreshStatus.idle: (ColorScheme colors) =>
+              colors.surfaceContainerLow,
+        };
+
+        for (final MapEntry<SourceRefreshStatus, Color Function(ColorScheme)>
+            entry
+            in surfaces.entries) {
+          await tester.pumpWidget(buildWidget(refreshStatus: entry.key));
+          final BuildContext context = tester.element(
+            find.byType(MerchantOfferRow),
+          );
+          final ColorScheme colorScheme = Theme.of(context).colorScheme;
+          final Material row = tester.widget(
+            find
+                .ancestor(
+                  of: find.byKey(
+                    const Key('merchant-offer-source-1-refresh-status'),
+                  ),
+                  matching: find.byType(Material),
+                )
+                .first,
+          );
+
+          expect(row.color, entry.value(colorScheme));
+        }
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow shows a neutral help icon for an idle unavailable source',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildWidget(
+            source: buildProductSource(isAvailable: false),
+            refreshStatus: SourceRefreshStatus.idle,
+          ),
+        );
+
+        expect(find.byIcon(Icons.help_outline), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow gives terminal refresh statuses visible icons',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildWidget(refreshStatus: SourceRefreshStatus.queued),
+        );
+        expect(find.byIcon(Icons.hourglass_empty), findsOneWidget);
+
+        await tester.pumpWidget(
+          buildWidget(refreshStatus: SourceRefreshStatus.error),
+        );
+        expect(find.byIcon(Icons.error_outline), findsOneWidget);
+
+        await tester.pumpWidget(
+          buildWidget(refreshStatus: SourceRefreshStatus.unavailable),
+        );
+        expect(find.byIcon(Icons.remove_circle_outline), findsOneWidget);
+
+        await tester.pumpWidget(
+          buildWidget(refreshStatus: SourceRefreshStatus.success),
+        );
+        expect(find.byIcon(Icons.check_circle_outline), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow uses a progress indicator and status surface while checking',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildWidget(refreshStatus: SourceRefreshStatus.fetching),
+        );
+
+        expect(find.byType(CircularProgressIndicator), findsOneWidget);
+        final Material row = tester.widget(
+          find
+              .ancestor(
+                of: find.byKey(
+                  const Key('merchant-offer-source-1-refresh-status'),
+                ),
+                matching: find.byType(Material),
+              )
+              .first,
+        );
+        final ColorScheme colorScheme = Theme.of(
+          tester.element(find.byType(MerchantOfferRow)),
+        ).colorScheme;
+        expect(row.color, colorScheme.primaryContainer);
       },
     );
 

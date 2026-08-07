@@ -9,7 +9,6 @@ import 'package:worth_loop/features/products/domain/entities/product.entity.dart
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_offers_header.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_not_found.widget.dart';
-import 'package:worth_loop/features/products/presentation/widgets/product_refresh_status_notice.widget.dart';
 import 'package:worth_loop/features/products/presentation/widgets/product_sources.section.dart';
 import 'package:worth_loop/features/products/presentation/widgets/rename_product_dialog.widget.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
@@ -102,10 +101,6 @@ class ProductDetailsScreen extends StatelessWidget {
                       padding: EdgeInsets.all(context.spacing.md),
                       sliver: SliverList(
                         delegate: SliverChildListDelegate([
-                          ProductRefreshStatusNotice(
-                            status: viewmodel.refreshStatus,
-                          ),
-                          SizedBox(height: context.spacing.md),
                           ProductOffersHeader(
                             offerCount: product.sources.length,
                             isRefreshing: viewmodel.isRefreshing,

@@ -95,7 +95,7 @@ class MerchantOfferRow extends StatelessWidget {
               onDelete,
         },
         child: Material(
-          color: colorScheme.surfaceContainerLow,
+          color: _surfaceColor(colorScheme),
           borderRadius: borderRadius,
           child: InkWell(
             key: Key('merchant-offer-${source.id}-tap-target'),
@@ -130,7 +130,21 @@ class MerchantOfferRow extends StatelessWidget {
                           ],
                         ),
                         SizedBox(height: context.spacing.xs),
-                        Text(_availabilityLabel(), style: textTheme.bodySmall),
+                        Row(
+                          children: [
+                            _statusIndicator(colorScheme),
+                            SizedBox(width: context.spacing.xs),
+                            Flexible(
+                              child: Text(
+                                _availabilityLabel(),
+                                key: Key(
+                                  'merchant-offer-${source.id}-refresh-status',
+                                ),
+                                style: textTheme.bodySmall,
+                              ),
+                            ),
+                          ],
+                        ),
                         if (lastCheckedAt != null)
                           Text(
                             t.productDetails.checkedAt(
@@ -185,5 +199,55 @@ class MerchantOfferRow extends StatelessWidget {
       source.isAvailable == false
           ? t.productDetails.unavailable
           : t.productDetails.available,
+  };
+
+  Widget _statusIndicator(ColorScheme colorScheme) {
+    if (refreshStatus == SourceRefreshStatus.fetching) {
+      return SizedBox.square(
+        dimension: IconSizes.sm,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: _statusColor(colorScheme),
+        ),
+      );
+    }
+    return Icon(
+      _statusIcon(),
+      key: Key('merchant-offer-${source.id}-refresh-status-icon'),
+      size: IconSizes.sm,
+      color: _statusColor(colorScheme),
+    );
+  }
+
+  IconData _statusIcon() => switch (refreshStatus) {
+    SourceRefreshStatus.queued => Icons.hourglass_empty,
+    SourceRefreshStatus.fetching => Icons.sync,
+    SourceRefreshStatus.error => Icons.error_outline,
+    SourceRefreshStatus.unavailable => Icons.remove_circle_outline,
+    SourceRefreshStatus.success => Icons.check_circle_outline,
+    SourceRefreshStatus.none || SourceRefreshStatus.idle =>
+      source.isAvailable == true
+          ? Icons.check_circle_outline
+          : Icons.help_outline,
+  };
+
+  Color _statusColor(ColorScheme colorScheme) => switch (refreshStatus) {
+    SourceRefreshStatus.queued ||
+    SourceRefreshStatus.fetching => colorScheme.primary,
+    SourceRefreshStatus.error => colorScheme.error,
+    SourceRefreshStatus.unavailable => colorScheme.secondary,
+    SourceRefreshStatus.success => colorScheme.tertiary,
+    SourceRefreshStatus.none || SourceRefreshStatus.idle =>
+      source.isAvailable == true ? colorScheme.tertiary : colorScheme.outline,
+  };
+
+  Color _surfaceColor(ColorScheme colorScheme) => switch (refreshStatus) {
+    SourceRefreshStatus.queued ||
+    SourceRefreshStatus.fetching => colorScheme.primaryContainer,
+    SourceRefreshStatus.error => colorScheme.errorContainer,
+    SourceRefreshStatus.unavailable => colorScheme.secondaryContainer,
+    SourceRefreshStatus.success => colorScheme.tertiaryContainer,
+    SourceRefreshStatus.none ||
+    SourceRefreshStatus.idle => colorScheme.surfaceContainerLow,
   };
 }
