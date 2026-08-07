@@ -1,3 +1,6 @@
+// Dart imports:
+import 'dart:async';
+
 // Package imports:
 import 'package:fpdart/fpdart.dart';
 import 'package:redux/redux.dart';
@@ -11,6 +14,7 @@ import 'package:worth_loop/features/products/domain/usecases/delete_product.usec
 import 'package:worth_loop/features/products/domain/usecases/delete_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/edit_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/load_products.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/watch_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/add_source.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/create_product.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/delete_product.params.dart';
@@ -40,6 +44,7 @@ import 'package:worth_loop/shared/utils/android_background_refresh_service.dart'
 /// Handles tracked-product actions.
 class ProductsMiddleware extends MiddlewareClass<AppState> {
   bool _refreshInProgress = false;
+  StreamSubscription<List<Product>>? _productsSubscription;
 
   @override
   void call(Store<AppState> store, dynamic action, NextDispatcher next) {
@@ -51,6 +56,7 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
 
     switch (action) {
       case LoadProductsAction _:
+        _ensureProductsSubscription(store);
         _loadProducts(store, action);
       case ReconcileBackgroundRefreshAction _:
         _reconcileBackgroundRefresh(store);
@@ -79,6 +85,20 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
       case DeleteProductAction _:
         _deleteProduct(store, action);
     }
+  }
+
+  void _ensureProductsSubscription(Store<AppState> store) {
+    if (_productsSubscription != null) {
+      return;
+    }
+    _productsSubscription = sl<WatchProductsUseCase>()(NoParams()).listen(
+      (List<Product> products) {
+        store.dispatch(ProductsLoadedAction(products));
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        sl<LoggerService>().e(error.toString());
+      },
+    );
   }
 
   /// Handles [CreateProductAction].

@@ -15,6 +15,7 @@ import 'package:worth_loop/features/products/domain/usecases/delete_product.usec
 import 'package:worth_loop/features/products/domain/usecases/delete_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/edit_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/load_products.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/watch_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_all_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_product.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/rename_product.usecase.dart';
@@ -76,6 +77,8 @@ void main() {
     test('usecases are registered', () {
       expect(sl.isRegistered<LoadProductsUseCase>(), isA<bool>());
       expect(sl.isRegistered<LoadProductsUseCase>(), isTrue);
+      expect(sl.isRegistered<WatchProductsUseCase>(), isA<bool>());
+      expect(sl.isRegistered<WatchProductsUseCase>(), isTrue);
       expect(sl.isRegistered<CreateProductUseCase>(), isA<bool>());
       expect(sl.isRegistered<CreateProductUseCase>(), isTrue);
       expect(sl.isRegistered<AddSourceUseCase>(), isA<bool>());
@@ -95,6 +98,7 @@ void main() {
       expect(sl.isRegistered<ComparePricesUseCase>(), isA<bool>());
       expect(sl.isRegistered<ComparePricesUseCase>(), isTrue);
       expect(sl<LoadProductsUseCase>(), isA<LoadProductsUseCase>());
+      expect(sl<WatchProductsUseCase>(), isA<WatchProductsUseCase>());
       expect(sl<CreateProductUseCase>(), isA<CreateProductUseCase>());
       expect(sl<AddSourceUseCase>(), isA<AddSourceUseCase>());
       expect(sl<EditSourceUseCase>(), isA<EditSourceUseCase>());

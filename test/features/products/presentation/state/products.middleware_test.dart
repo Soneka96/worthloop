@@ -14,6 +14,7 @@ import 'package:worth_loop/features/products/domain/usecases/delete_product.usec
 import 'package:worth_loop/features/products/domain/usecases/delete_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/edit_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/load_products.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/watch_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/create_product.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/add_source.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/create_product.params.dart';
@@ -49,6 +50,8 @@ import '../../fixtures/product_source.fixture.dart';
 class MockStore extends Mock implements Store<AppState> {}
 
 class MockLoadProductsUseCase extends Mock implements LoadProductsUseCase {}
+
+class MockWatchProductsUseCase extends Mock implements WatchProductsUseCase {}
 
 class MockCreateProductUseCase extends Mock implements CreateProductUseCase {}
 
@@ -103,6 +106,7 @@ void main() {
   late ProductsMiddleware middleware;
   late MockStore store;
   late MockLoadProductsUseCase mockLoadProductsUseCase;
+  late MockWatchProductsUseCase mockWatchProductsUseCase;
   late MockCreateProductUseCase mockCreateProductUseCase;
   late MockRefreshProductUseCase mockRefreshProductUseCase;
   late MockRefreshSourceUseCase mockRefreshSourceUseCase;
@@ -138,6 +142,7 @@ void main() {
     middleware = ProductsMiddleware();
     store = MockStore();
     mockLoadProductsUseCase = MockLoadProductsUseCase();
+    mockWatchProductsUseCase = MockWatchProductsUseCase();
     mockCreateProductUseCase = MockCreateProductUseCase();
     mockRefreshProductUseCase = MockRefreshProductUseCase();
     mockRefreshSourceUseCase = MockRefreshSourceUseCase();
@@ -162,6 +167,7 @@ void main() {
           actionLog.add(invocation.positionalArguments[0]),
     );
     sl.registerSingleton<LoadProductsUseCase>(mockLoadProductsUseCase);
+    sl.registerSingleton<WatchProductsUseCase>(mockWatchProductsUseCase);
     sl.registerSingleton<CreateProductUseCase>(mockCreateProductUseCase);
     sl.registerSingleton<RefreshProductUseCase>(mockRefreshProductUseCase);
     sl.registerSingleton<RefreshSourceUseCase>(mockRefreshSourceUseCase);
@@ -183,6 +189,9 @@ void main() {
     sl.registerSingleton<ProductPriceAlertNotificationCoordinator>(
       mockPriceAlertCoordinator,
     );
+    when(
+      () => mockWatchProductsUseCase(any()),
+    ).thenAnswer((_) => const Stream<List<Product>>.empty());
   });
 
   tearDown(() async {
@@ -242,6 +251,78 @@ void main() {
         verifyNoMoreInteractions(mockLoggerService);
       },
     );
+
+    test(
+      'LoadProductsAction starts the product subscription only once',
+      () async {
+        when(
+          () => mockLoadProductsUseCase(any()),
+        ).thenAnswer((_) async => const Right([]));
+
+        middleware.call(store, const LoadProductsAction(), next);
+        middleware.call(store, const LoadProductsAction(), next);
+        await Future<void>.delayed(Duration.zero);
+
+        verify(() => mockWatchProductsUseCase(any())).called(1);
+        verify(() => mockLoadProductsUseCase(any())).called(2);
+      },
+    );
+
+    test(
+      'LoadProductsAction dispatches a streamed ProductsLoadedAction',
+      () async {
+        final Product product = buildProduct(name: 'Streamed Product');
+        final Product updatedProduct = buildProduct(name: 'Updated Stream');
+        when(() => mockWatchProductsUseCase(any())).thenAnswer(
+          (_) => Stream.fromIterable([
+            [product],
+            [updatedProduct],
+          ]),
+        );
+        when(
+          () => mockLoadProductsUseCase(any()),
+        ).thenAnswer((_) async => const Right([]));
+
+        middleware.call(store, const LoadProductsAction(), next);
+        await Future<void>.delayed(Duration.zero);
+
+        final List<ProductsLoadedAction> streamedActions = actionLog
+            .whereType<ProductsLoadedAction>()
+            .where((ProductsLoadedAction action) => action.products.isNotEmpty)
+            .toList();
+        expect(streamedActions, hasLength(2));
+        expect(streamedActions[0].products, [product]);
+        expect(streamedActions[1].products, [updatedProduct]);
+      },
+    );
+
+    test(
+      'LoadProductsAction logs a stream error without dispatching a failure',
+      () async {
+        when(
+          () => mockWatchProductsUseCase(any()),
+        ).thenAnswer((_) => Stream<List<Product>>.error('watch failed'));
+        when(
+          () => mockLoadProductsUseCase(any()),
+        ).thenAnswer((_) async => const Right([]));
+
+        middleware.call(store, const LoadProductsAction(), next);
+        await Future<void>.delayed(Duration.zero);
+
+        verify(() => mockLoggerService.e('watch failed')).called(1);
+        expect(actionLog.whereType<ProductsLoadFailedAction>(), isEmpty);
+      },
+    );
+  });
+
+  group('ProductsMiddleware ignores unrelated actions', () {
+    test('does not start the product subscription', () async {
+      middleware.call(store, const GoBackFromProductDetailsAction(), next);
+      await Future<void>.delayed(Duration.zero);
+
+      verifyNever(() => mockWatchProductsUseCase(any()));
+      verify(() => mockNavigatorService.pop()).called(1);
+    });
   });
 
   group('ProductsMiddleware processes CreateProductAction', () {
