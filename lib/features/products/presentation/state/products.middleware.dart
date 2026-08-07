@@ -184,7 +184,7 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
     final List<String> sourceIds = _sourceIdsForAllProducts(store);
     int completedCount = 0;
     int failedCount = 0;
-    store.dispatch(SourceRefreshStartedAction(sourceIds));
+    store.dispatch(SourceRefreshStartedAction(sourceIds, isGlobal: true));
     try {
       await (await sl<RefreshAllProductsUseCase>()(
         NoParams(),

@@ -275,37 +275,92 @@ void main() {
   });
 
   group('productsReducer processes SourceRefreshStartedAction correctly', () {
-    test('SourceRefreshStartedAction queues sources in order', () {
+    test(
+      'SourceRefreshStartedAction queues product sources and preserves others',
+      () {
+        final ProductsState state = ProductsState.initial().copyWith(
+          sourceRefreshStatuses: {
+            'old-source': SourceRefreshStatus.success,
+            'source-1': SourceRefreshStatus.error,
+          },
+          refreshCompletedCount: 4,
+          refreshTotalCount: 4,
+        );
+
+        final ProductsState reducedState = productsReducer(
+          state,
+          const SourceRefreshStartedAction(['source-1', 'source-2']),
+        );
+
+        expect(
+          state.refreshCompletedCount,
+          4,
+          reason: 'previous progress exists',
+        );
+        expect(
+          reducedState.sourceRefreshStatuses,
+          {
+            'old-source': SourceRefreshStatus.success,
+            'source-1': SourceRefreshStatus.queued,
+            'source-2': SourceRefreshStatus.queued,
+          },
+          reason:
+              'refreshed sources are queued without dropping other statuses',
+        );
+        expect(
+          reducedState.refreshCompletedCount,
+          0,
+          reason: 'new refresh starts with no completed sources',
+        );
+        expect(
+          reducedState.refreshTotalCount,
+          2,
+          reason: 'total matches the new source list',
+        );
+      },
+    );
+
+    test(
+      'SourceRefreshStartedAction resets all statuses for a global refresh',
+      () {
+        final ProductsState state = ProductsState.initial().copyWith(
+          sourceRefreshStatuses: {'old-source': SourceRefreshStatus.error},
+        );
+
+        final ProductsState reducedState = productsReducer(
+          state,
+          const SourceRefreshStartedAction(['source-1'], isGlobal: true),
+        );
+
+        expect(
+          reducedState.sourceRefreshStatuses,
+          {'source-1': SourceRefreshStatus.queued},
+          reason: 'global refresh replaces stale statuses',
+        );
+        expect(
+          reducedState.refreshCompletedCount,
+          0,
+          reason: 'global refresh resets completed progress',
+        );
+        expect(
+          reducedState.refreshTotalCount,
+          1,
+          reason: 'global refresh tracks the new source count',
+        );
+      },
+    );
+
+    test('empty global SourceRefreshStartedAction clears stale statuses', () {
       final ProductsState state = ProductsState.initial().copyWith(
-        sourceRefreshStatuses: {'old-source': SourceRefreshStatus.success},
-        refreshCompletedCount: 4,
-        refreshTotalCount: 4,
+        sourceRefreshStatuses: {'old-source': SourceRefreshStatus.error},
       );
 
       final ProductsState reducedState = productsReducer(
         state,
-        const SourceRefreshStartedAction(['source-1', 'source-2']),
+        const SourceRefreshStartedAction([], isGlobal: true),
       );
 
-      expect(
-        state.refreshCompletedCount,
-        4,
-        reason: 'previous progress exists',
-      );
-      expect(reducedState.sourceRefreshStatuses, {
-        'source-1': SourceRefreshStatus.queued,
-        'source-2': SourceRefreshStatus.queued,
-      }, reason: 'all sources are queued');
-      expect(
-        reducedState.refreshCompletedCount,
-        0,
-        reason: 'new refresh starts with no completed sources',
-      );
-      expect(
-        reducedState.refreshTotalCount,
-        2,
-        reason: 'total matches the new source list',
-      );
+      expect(reducedState.sourceRefreshStatuses, isEmpty);
     });
   });
 

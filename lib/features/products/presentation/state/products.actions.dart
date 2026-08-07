@@ -93,10 +93,13 @@ class SourceRefreshStartedAction extends Equatable {
   /// Identifiers of the sources being refreshed in display order.
   final List<String> sourceIds;
 
-  const SourceRefreshStartedAction(this.sourceIds);
+  /// Whether this refresh covers every tracked product.
+  final bool isGlobal;
+
+  const SourceRefreshStartedAction(this.sourceIds, {this.isGlobal = false});
 
   @override
-  List<Object?> get props => [sourceIds];
+  List<Object?> get props => [sourceIds, isGlobal];
 }
 
 /// Updates the refresh state of one source.

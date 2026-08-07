@@ -373,6 +373,7 @@ void main() {
 
         expect(actionLog[0], isA<RefreshProductAction>());
         expect(actionLog[1], isA<SourceRefreshStartedAction>());
+        expect((actionLog[1] as SourceRefreshStartedAction).isGlobal, isFalse);
         expect(actionLog[2], isA<ProductRefreshedAction>());
         expect((actionLog[2] as ProductRefreshedAction).product, product);
         expect(actionLog[3], isA<SourceRefreshFinishedAction>());
@@ -565,6 +566,7 @@ void main() {
 
         expect(actionLog[0], isA<RefreshAllProductsAction>());
         expect(actionLog[1], isA<SourceRefreshStartedAction>());
+        expect((actionLog[1] as SourceRefreshStartedAction).isGlobal, isTrue);
         expect(actionLog[2], isA<ProductsLoadedAction>());
         expect((actionLog[2] as ProductsLoadedAction).products, [product]);
         expect(actionLog[3], isA<SourceRefreshFinishedAction>());

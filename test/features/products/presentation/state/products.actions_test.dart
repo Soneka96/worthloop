@@ -15,6 +15,15 @@ void main() {
 
       expect(action.sourceIds, isA<List<String>>());
       expect(action.sourceIds, ['source-1', 'source-2']);
+      expect(action.isGlobal, isFalse);
+    });
+
+    test('SourceRefreshStartedAction carries global scope', () {
+      const SourceRefreshStartedAction action = SourceRefreshStartedAction([
+        'source-1',
+      ], isGlobal: true);
+
+      expect(action.isGlobal, isTrue);
     });
 
     test('SourceRefreshStatusChangedAction carries source status', () {

@@ -250,6 +250,7 @@ ProductsState sourceRefreshStartedReducer(
   SourceRefreshStartedAction action,
 ) {
   final Map<String, SourceRefreshStatus> sourceRefreshStatuses = {
+    if (!action.isGlobal) ...state.sourceRefreshStatuses,
     for (final String sourceId in action.sourceIds)
       sourceId: SourceRefreshStatus.queued,
   };
