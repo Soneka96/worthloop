@@ -27,6 +27,18 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            "io.github.soneka96.worthloop/background_refresh",
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "start" -> result.success(startBackgroundRefresh())
+                "stop" -> result.success(stopBackgroundRefresh())
+                "isRunning" -> result.success(BackgroundRefreshService.isRunning)
+                else -> result.notImplemented()
+            }
+        }
     }
 
     private fun readCapabilities(): Map<String, Any?> {
@@ -57,5 +69,23 @@ class MainActivity : FlutterActivity() {
         } catch (_: Exception) {
             false
         }
+    }
+
+    private fun startBackgroundRefresh(): Boolean {
+        return try {
+            val intent = Intent(this, BackgroundRefreshService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent)
+            } else {
+                startService(intent)
+            }
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun stopBackgroundRefresh(): Boolean {
+        return stopService(Intent(this, BackgroundRefreshService::class.java))
     }
 }
