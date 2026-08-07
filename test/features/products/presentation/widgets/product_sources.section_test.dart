@@ -385,6 +385,12 @@ void main() {
       (WidgetTester tester) async {
         await tester.pumpWidget(buildWidget(sources: sources));
 
+        final SingleChildScrollView filters = tester.widget(
+          find.byKey(const Key('product-details-source-filters-scroll')),
+        );
+        expect(filters.scrollDirection, Axis.horizontal);
+        expect(filters.child, isA<Row>());
+
         expect(
           find.byKey(const Key('product-details-source-filter-all')),
           findsOneWidget,
@@ -401,6 +407,32 @@ void main() {
           find.byKey(const Key('product-details-source-filter-issues')),
           findsOneWidget,
         );
+      },
+    );
+
+    testWidgets(
+      'ProductSourcesSection lets users slide to the trailing filter chip on a narrow viewport',
+      (WidgetTester tester) async {
+        await tester.binding.setSurfaceSize(const Size(360, 800));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(buildWidget(sources: sources));
+
+        final Finder filters = find.byKey(
+          const Key('product-details-source-filters-scroll'),
+        );
+        await tester.drag(filters, const Offset(-300, 0));
+        await tester.pumpAndSettle();
+        final Finder issuesFilter = find.byKey(
+          const Key('product-details-source-filter-issues'),
+        );
+        await tester.ensureVisible(issuesFilter);
+        await tester.tap(issuesFilter);
+        await tester.pumpAndSettle();
+
+        final FilterChip issuesChip = tester.widget(
+          find.byKey(const Key('product-details-source-filter-issues')),
+        );
+        expect(issuesChip.selected, isTrue);
       },
     );
 

@@ -192,42 +192,51 @@ class _ProductSourcesSectionState extends State<ProductSourcesSection> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.only(bottom: context.spacing.sm),
-                child: Wrap(
-                  spacing: context.spacing.xs,
-                  children: [
-                    FilterChip(
-                      key: const Key('product-details-source-filter-all'),
-                      label: Text(t.productDetails.filterAll),
-                      selected: _filter == ProductOfferFilter.all,
-                      onSelected: (_) =>
-                          setState(() => _filter = ProductOfferFilter.all),
-                    ),
-                    FilterChip(
-                      key: const Key('product-details-source-filter-available'),
-                      label: Text(t.productDetails.filterAvailable),
-                      selected: _filter == ProductOfferFilter.available,
-                      onSelected: (_) => setState(
-                        () => _filter = ProductOfferFilter.available,
+                child: SingleChildScrollView(
+                  key: const Key('product-details-source-filters-scroll'),
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      FilterChip(
+                        key: const Key('product-details-source-filter-all'),
+                        label: Text(t.productDetails.filterAll),
+                        selected: _filter == ProductOfferFilter.all,
+                        onSelected: (_) =>
+                            setState(() => _filter = ProductOfferFilter.all),
                       ),
-                    ),
-                    FilterChip(
-                      key: const Key(
-                        'product-details-source-filter-unavailable',
+                      SizedBox(width: context.spacing.xs),
+                      FilterChip(
+                        key: const Key(
+                          'product-details-source-filter-available',
+                        ),
+                        label: Text(t.productDetails.filterAvailable),
+                        selected: _filter == ProductOfferFilter.available,
+                        onSelected: (_) => setState(
+                          () => _filter = ProductOfferFilter.available,
+                        ),
                       ),
-                      label: Text(t.productDetails.filterUnavailable),
-                      selected: _filter == ProductOfferFilter.unavailable,
-                      onSelected: (_) => setState(
-                        () => _filter = ProductOfferFilter.unavailable,
+                      SizedBox(width: context.spacing.xs),
+                      FilterChip(
+                        key: const Key(
+                          'product-details-source-filter-unavailable',
+                        ),
+                        label: Text(t.productDetails.filterUnavailable),
+                        selected: _filter == ProductOfferFilter.unavailable,
+                        onSelected: (_) => setState(
+                          () => _filter = ProductOfferFilter.unavailable,
+                        ),
                       ),
-                    ),
-                    FilterChip(
-                      key: const Key('product-details-source-filter-issues'),
-                      label: Text(t.productDetails.filterIssues),
-                      selected: _filter == ProductOfferFilter.issues,
-                      onSelected: (_) =>
-                          setState(() => _filter = ProductOfferFilter.issues),
-                    ),
-                  ],
+                      SizedBox(width: context.spacing.xs),
+                      FilterChip(
+                        key: const Key('product-details-source-filter-issues'),
+                        label: Text(t.productDetails.filterIssues),
+                        selected: _filter == ProductOfferFilter.issues,
+                        onSelected: (_) =>
+                            setState(() => _filter = ProductOfferFilter.issues),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
