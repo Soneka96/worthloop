@@ -268,17 +268,41 @@ void main() {
       },
     );
 
+    test('LoadProductsAction dispatches streamed database updates', () async {
+      final Product product = buildProduct(name: 'Streamed Product');
+      final Product updatedProduct = buildProduct(name: 'Updated Stream');
+      when(() => mockWatchProductsUseCase(any())).thenAnswer(
+        (_) => Stream.fromIterable([
+          [product],
+          [updatedProduct],
+        ]),
+      );
+      when(
+        () => mockLoadProductsUseCase(any()),
+      ).thenAnswer((_) async => const Right([]));
+
+      middleware.call(store, const LoadProductsAction(), next);
+      await Future<void>.delayed(Duration.zero);
+
+      final List<ProductsUpdatedFromDatabaseAction> streamedActions = actionLog
+          .whereType<ProductsUpdatedFromDatabaseAction>()
+          .where(
+            (ProductsUpdatedFromDatabaseAction action) =>
+                action.products.isNotEmpty,
+          )
+          .toList();
+      expect(streamedActions, hasLength(2));
+      expect(streamedActions[0].products, [product]);
+      expect(streamedActions[1].products, [updatedProduct]);
+      verifyZeroInteractions(mockLoggerService);
+    });
+
     test(
-      'LoadProductsAction dispatches a streamed ProductsLoadedAction',
+      'LoadProductsAction dispatches an empty database stream emission',
       () async {
-        final Product product = buildProduct(name: 'Streamed Product');
-        final Product updatedProduct = buildProduct(name: 'Updated Stream');
-        when(() => mockWatchProductsUseCase(any())).thenAnswer(
-          (_) => Stream.fromIterable([
-            [product],
-            [updatedProduct],
-          ]),
-        );
+        when(
+          () => mockWatchProductsUseCase(any()),
+        ).thenAnswer((_) => Stream.value(const <Product>[]));
         when(
           () => mockLoadProductsUseCase(any()),
         ).thenAnswer((_) async => const Right([]));
@@ -286,13 +310,17 @@ void main() {
         middleware.call(store, const LoadProductsAction(), next);
         await Future<void>.delayed(Duration.zero);
 
-        final List<ProductsLoadedAction> streamedActions = actionLog
-            .whereType<ProductsLoadedAction>()
-            .where((ProductsLoadedAction action) => action.products.isNotEmpty)
-            .toList();
-        expect(streamedActions, hasLength(2));
-        expect(streamedActions[0].products, [product]);
-        expect(streamedActions[1].products, [updatedProduct]);
+        expect(
+          actionLog.whereType<ProductsUpdatedFromDatabaseAction>(),
+          hasLength(1),
+        );
+        expect(
+          actionLog
+              .whereType<ProductsUpdatedFromDatabaseAction>()
+              .single
+              .products,
+          isEmpty,
+        );
       },
     );
 

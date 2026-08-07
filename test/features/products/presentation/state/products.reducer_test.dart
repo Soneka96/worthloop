@@ -147,6 +147,105 @@ void main() {
     });
   });
 
+  group(
+    'productsReducer processes ProductsUpdatedFromDatabaseAction correctly',
+    () {
+      test(
+        'ProductsUpdatedFromDatabaseAction updates products and persisted progress',
+        () {
+          final Product product = buildProduct(
+            sources: [
+              buildProductSource(
+                id: 'source-1',
+                isAvailable: true,
+                lastRefreshStatus: PriceFetchStatus.success,
+              ),
+              buildProductSource(id: 'source-2'),
+              buildProductSource(
+                id: 'source-3',
+                isAvailable: false,
+                lastRefreshStatus: PriceFetchStatus.success,
+              ),
+              buildProductSource(
+                id: 'source-4',
+                lastRefreshStatus: PriceFetchStatus.blocked,
+              ),
+            ],
+          );
+          final ProductsState state = ProductsState.initial().copyWith(
+            isRefreshingAll: true,
+            sourceRefreshStatuses: {
+              'source-1': SourceRefreshStatus.fetching,
+              'source-2': SourceRefreshStatus.queued,
+              'stale-source': SourceRefreshStatus.error,
+            },
+            refreshTotalCount: 2,
+          );
+
+          final ProductsState reducedState = productsReducer(
+            state,
+            ProductsUpdatedFromDatabaseAction([product]),
+          );
+
+          expect(state.products, isEmpty, reason: 'products start empty');
+          expect(reducedState.products, [product], reason: 'products update');
+          expect(
+            reducedState.isRefreshingAll,
+            isTrue,
+            reason: 'active refresh remains active',
+          );
+          expect(
+            reducedState.sourceRefreshStatuses['source-1'],
+            SourceRefreshStatus.success,
+          );
+          expect(
+            reducedState.sourceRefreshStatuses['source-2'],
+            SourceRefreshStatus.queued,
+          );
+          expect(
+            reducedState.sourceRefreshStatuses['source-3'],
+            SourceRefreshStatus.unavailable,
+          );
+          expect(
+            reducedState.sourceRefreshStatuses['source-4'],
+            SourceRefreshStatus.error,
+          );
+          expect(
+            reducedState.sourceRefreshStatuses.containsKey('stale-source'),
+            isFalse,
+          );
+          expect(
+            reducedState.refreshCompletedCount,
+            1,
+            reason: 'one persisted source is complete',
+          );
+          expect(reducedState.refreshTotalCount, 2);
+        },
+      );
+
+      test(
+        'ProductsUpdatedFromDatabaseAction preserves progress when no refresh is active',
+        () {
+          final Product product = buildProduct();
+          final ProductsState state = ProductsState.initial().copyWith(
+            refreshCompletedCount: 2,
+          );
+
+          final ProductsState reducedState = productsReducer(
+            state,
+            ProductsUpdatedFromDatabaseAction([product]),
+          );
+
+          expect(
+            reducedState.refreshCompletedCount,
+            2,
+            reason: 'no active refresh owns the counter',
+          );
+        },
+      );
+    },
+  );
+
   group('productsReducer processes ProductsLoadFailedAction correctly', () {
     test('ProductsLoadFailedAction modifies loading and error', () {
       final ProductsState state = ProductsState.initial().copyWith(

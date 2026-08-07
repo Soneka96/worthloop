@@ -36,6 +36,18 @@ class ProductsLoadedAction extends Equatable {
   List<Object?> get props => [products];
 }
 
+/// Carries products emitted by the persisted database stream.
+@immutable
+class ProductsUpdatedFromDatabaseAction extends Equatable {
+  /// The latest persisted tracked products.
+  final List<Product> products;
+
+  const ProductsUpdatedFromDatabaseAction(this.products);
+
+  @override
+  List<Object?> get props => [products];
+}
+
 /// Carries a product-loading failure.
 @immutable
 class ProductsLoadFailedAction extends Equatable {

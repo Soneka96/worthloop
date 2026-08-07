@@ -93,7 +93,7 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
     }
     _productsSubscription = sl<WatchProductsUseCase>()(NoParams()).listen(
       (List<Product> products) {
-        store.dispatch(ProductsLoadedAction(products));
+        store.dispatch(ProductsUpdatedFromDatabaseAction(products));
       },
       onError: (Object error, StackTrace stackTrace) {
         sl<LoggerService>().e(error.toString());

@@ -18,6 +18,9 @@ Reducer<ProductsState> productsReducer = combineReducers<ProductsState>([
   /// Handles [ProductsLoadedAction].
   /// Updates [ProductsState.products], [ProductsState.isLoading], [ProductsState.error].
   TypedReducer<ProductsState, ProductsLoadedAction>(productsLoadedReducer).call,
+  TypedReducer<ProductsState, ProductsUpdatedFromDatabaseAction>(
+    productsUpdatedFromDatabaseReducer,
+  ).call,
 
   /// Handles [ProductsLoadFailedAction].
   /// Updates [ProductsState.isLoading], [ProductsState.error].
@@ -185,6 +188,30 @@ ProductsState productsLoadedReducer(
     refreshStatus: const None(),
     sourceRefreshStatuses: _sourceRefreshStatusesForProducts(action.products),
     productRefreshStatuses: {},
+  );
+}
+
+/// Handles [ProductsUpdatedFromDatabaseAction].
+/// Updates [ProductsState.products], [ProductsState.sourceRefreshStatuses], [ProductsState.refreshCompletedCount].
+ProductsState productsUpdatedFromDatabaseReducer(
+  ProductsState state,
+  ProductsUpdatedFromDatabaseAction action,
+) {
+  final Map<String, SourceRefreshStatus> sourceRefreshStatuses =
+      _sourceRefreshStatusesForProducts(
+        action.products,
+        state.sourceRefreshStatuses,
+      );
+  final int completedCount = state.sourceRefreshStatuses.keys
+      .map((String sourceId) => sourceRefreshStatuses[sourceId])
+      .where(_isTerminalSourceRefreshStatus)
+      .length;
+  return state.copyWith(
+    products: action.products,
+    sourceRefreshStatuses: sourceRefreshStatuses,
+    refreshCompletedCount: state.refreshTotalCount == 0
+        ? state.refreshCompletedCount
+        : completedCount,
   );
 }
 
