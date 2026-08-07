@@ -311,6 +311,10 @@ void main() {
             buildProductSource(id: 'source-2'),
           ],
         );
+        final Product refreshedProduct = buildProduct(
+          lastUpdatedAt: DateTime(2026, 2, 1),
+          sources: product.sources,
+        );
         when(() => store.state).thenReturn(
           AppState.initial().copyWith(
             products: ProductsState.initial().copyWith(products: [product]),
@@ -331,6 +335,9 @@ void main() {
           );
           return const Left(DatabaseFailure('partial'));
         });
+        when(
+          () => mockLoadProductsUseCase(any()),
+        ).thenAnswer((_) async => Right([refreshedProduct]));
 
         middleware.call(store, const RefreshProductAction('product-1'), next);
         await Future<void>.delayed(Duration.zero);
@@ -341,6 +348,15 @@ void main() {
             showPopup: true,
           ),
         ).called(1);
+        expect(actionLog[4], isA<ProductsLoadedAction>());
+        expect((actionLog[4] as ProductsLoadedAction).products, [
+          refreshedProduct,
+        ]);
+        expect(actionLog[5], isA<ProductRefreshFailedAction>());
+        final List<dynamic> captured = verify(
+          () => mockLoadProductsUseCase(captureAny()),
+        ).captured;
+        expect(captured.single, isA<NoParams>());
       },
     );
 
@@ -423,6 +439,10 @@ void main() {
       'RefreshAllProductsAction shows partial feedback when a source fails',
       () async {
         final Product product = buildProduct(sources: [buildProductSource()]);
+        final Product refreshedProduct = buildProduct(
+          lastUpdatedAt: DateTime(2026, 2, 1),
+          sources: product.sources,
+        );
         when(() => store.state).thenReturn(
           AppState.initial().copyWith(
             products: ProductsState.initial().copyWith(products: [product]),
@@ -439,6 +459,9 @@ void main() {
           callback('source-1', SourceRefreshStatus.error);
           return const Left(DatabaseFailure('failed'));
         });
+        when(
+          () => mockLoadProductsUseCase(any()),
+        ).thenAnswer((_) async => Right([refreshedProduct]));
 
         middleware.call(store, const RefreshAllProductsAction(), next);
         await Future<void>.delayed(Duration.zero);
@@ -449,6 +472,50 @@ void main() {
             showPopup: true,
           ),
         ).called(1);
+        expect(actionLog[3], isA<ProductsLoadedAction>());
+        expect((actionLog[3] as ProductsLoadedAction).products, [
+          refreshedProduct,
+        ]);
+        expect(actionLog[4], isA<RefreshAllProductsFailedAction>());
+        final List<dynamic> captured = verify(
+          () => mockLoadProductsUseCase(captureAny()),
+        ).captured;
+        expect(captured.single, isA<NoParams>());
+      },
+    );
+
+    test(
+      'RefreshProductAction keeps the failure when reloading persisted products fails',
+      () async {
+        final Product product = buildProduct(sources: [buildProductSource()]);
+        const DatabaseFailure refreshFailure = DatabaseFailure(
+          'refresh failed',
+        );
+        const DatabaseFailure reloadFailure = DatabaseFailure('reload failed');
+        when(() => store.state).thenReturn(
+          AppState.initial().copyWith(
+            products: ProductsState.initial().copyWith(products: [product]),
+          ),
+        );
+        when(
+          () => mockRefreshProductUseCase(any()),
+        ).thenAnswer((_) async => const Left(refreshFailure));
+        when(
+          () => mockLoadProductsUseCase(any()),
+        ).thenAnswer((_) async => const Left(reloadFailure));
+
+        middleware.call(store, const RefreshProductAction('product-1'), next);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(actionLog.whereType<ProductsLoadedAction>(), isEmpty);
+        final ProductRefreshFailedAction failureAction = actionLog
+            .whereType<ProductRefreshFailedAction>()
+            .single;
+        expect(failureAction.message, refreshFailure.message);
+        final List<dynamic> captured = verify(
+          () => mockLoadProductsUseCase(captureAny()),
+        ).captured;
+        expect(captured.single, isA<NoParams>());
       },
     );
 

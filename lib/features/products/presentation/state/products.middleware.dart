@@ -1,4 +1,5 @@
 // Package imports:
+import 'package:fpdart/fpdart.dart';
 import 'package:redux/redux.dart';
 
 // Project imports:
@@ -119,7 +120,7 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
     int failedCount = 0;
     store.dispatch(SourceRefreshStartedAction(sourceIds));
     try {
-      (await sl<RefreshProductUseCase>()(
+      await (await sl<RefreshProductUseCase>()(
         RefreshProductParams(
           productId: action.productId,
           onSourceStatusChanged: (String sourceId, SourceRefreshStatus status) {
@@ -138,8 +139,15 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
           },
         ),
       )).fold(
-        (failure) {
+        (failure) async {
           sl<LoggerService>().e(failure.message, showPopup: true);
+          if (sourceIds.isNotEmpty) {
+            final Either<Failure, List<Product>> productsResult =
+                await sl<LoadProductsUseCase>()(NoParams());
+            productsResult.fold((_) {}, (List<Product> products) {
+              store.dispatch(ProductsLoadedAction(products));
+            });
+          }
           store.dispatch(
             ProductRefreshFailedAction(
               productId: action.productId,
@@ -177,7 +185,7 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
     int failedCount = 0;
     store.dispatch(SourceRefreshStartedAction(sourceIds));
     try {
-      (await sl<RefreshAllProductsUseCase>()(
+      await (await sl<RefreshAllProductsUseCase>()(
         NoParams(),
         onSourceStatusChanged: (String sourceId, SourceRefreshStatus status) {
           if (_isTerminalSourceRefreshStatus(status)) {
@@ -194,8 +202,15 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
           );
         },
       )).fold(
-        (failure) {
+        (failure) async {
           sl<LoggerService>().e(failure.message, showPopup: true);
+          if (sourceIds.isNotEmpty) {
+            final Either<Failure, List<Product>> productsResult =
+                await sl<LoadProductsUseCase>()(NoParams());
+            productsResult.fold((_) {}, (List<Product> products) {
+              store.dispatch(ProductsLoadedAction(products));
+            });
+          }
           store.dispatch(
             RefreshAllProductsFailedAction(
               failure.message,
