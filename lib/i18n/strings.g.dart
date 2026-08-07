@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 262 (131 per locale)
+/// Strings: 264 (132 per locale)
 ///
-/// Built on 2026-08-07 at 14:27 UTC
+/// Built on 2026-08-07 at 15:04 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -243,6 +243,7 @@ class _StringsProductDetailsEn {
 	String priceIncrease({required Object amount, required Object date}) => '↑ ${amount} since ${date}';
 	String get productNotFound => 'Product not found';
 	String get productNotFoundDescription => 'Return to your tracked products and choose an item again.';
+	String get filterIssues => 'Issues';
 	String get refreshBlocked => 'This website blocked the refresh attempt. Try again later.';
 	String get refreshUnsupported => 'This website does not provide a readable price yet.';
 	String get refreshNetworkError => 'The website could not be reached. Your last price is still shown.';
@@ -537,6 +538,7 @@ class _StringsProductDetailsPt implements _StringsProductDetailsEn {
 	@override String get filterAll => 'Todas';
 	@override String get filterAvailable => 'Disponível';
 	@override String get filterUnavailable => 'Indisponível';
+	@override String get filterIssues => 'Problemas';
 	@override String checkedAt({required Object time}) => 'Verificado às ${time}';
 	@override String get productNotFound => 'Produto não encontrado';
 	@override String get productNotFoundDescription => 'Volte aos produtos acompanhados e escolha novamente um artigo.';
@@ -787,6 +789,7 @@ extension on Translations {
 			case 'productDetails.priceIncrease': return ({required Object amount, required Object date}) => '↑ ${amount} since ${date}';
 			case 'productDetails.productNotFound': return 'Product not found';
 			case 'productDetails.productNotFoundDescription': return 'Return to your tracked products and choose an item again.';
+			case 'productDetails.filterIssues': return 'Issues';
 			case 'productDetails.refreshBlocked': return 'This website blocked the refresh attempt. Try again later.';
 			case 'productDetails.refreshUnsupported': return 'This website does not provide a readable price yet.';
 			case 'productDetails.refreshNetworkError': return 'The website could not be reached. Your last price is still shown.';
@@ -923,6 +926,7 @@ extension on _StringsPt {
 			case 'productDetails.filterAll': return 'Todas';
 			case 'productDetails.filterAvailable': return 'Disponível';
 			case 'productDetails.filterUnavailable': return 'Indisponível';
+			case 'productDetails.filterIssues': return 'Problemas';
 			case 'productDetails.checkedAt': return ({required Object time}) => 'Verificado às ${time}';
 			case 'productDetails.productNotFound': return 'Produto não encontrado';
 			case 'productDetails.productNotFoundDescription': return 'Volte aos produtos acompanhados e escolha novamente um artigo.';

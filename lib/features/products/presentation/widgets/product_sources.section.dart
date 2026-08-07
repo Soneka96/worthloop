@@ -89,6 +89,14 @@ class _ProductSourcesSectionState extends State<ProductSourcesSection> {
           orderedSources
               .where((ProductSource source) => source.isAvailable != true)
               .toList(growable: false),
+        ProductOfferFilter.issues =>
+          orderedSources
+              .where(
+                (ProductSource source) =>
+                    widget.sourceRefreshStatuses[source.id] ==
+                    SourceRefreshStatus.error,
+              )
+              .toList(growable: false),
       };
     }
     final Map<String, int> order = {
@@ -110,6 +118,14 @@ class _ProductSourcesSectionState extends State<ProductSourcesSection> {
       ProductOfferFilter.unavailable =>
         orderedSources
             .where((ProductSource source) => source.isAvailable != true)
+            .toList(growable: false),
+      ProductOfferFilter.issues =>
+        orderedSources
+            .where(
+              (ProductSource source) =>
+                  widget.sourceRefreshStatuses[source.id] ==
+                  SourceRefreshStatus.error,
+            )
             .toList(growable: false),
     };
   }
@@ -183,6 +199,13 @@ class _ProductSourcesSectionState extends State<ProductSourcesSection> {
                       onSelected: (_) => setState(
                         () => _filter = ProductOfferFilter.unavailable,
                       ),
+                    ),
+                    FilterChip(
+                      key: const Key('product-details-source-filter-issues'),
+                      label: Text(t.productDetails.filterIssues),
+                      selected: _filter == ProductOfferFilter.issues,
+                      onSelected: (_) =>
+                          setState(() => _filter = ProductOfferFilter.issues),
                     ),
                   ],
                 ),

@@ -113,7 +113,7 @@ void main() {
       (WidgetTester tester) async {
         await tester.pumpWidget(buildWidget(sources: sources));
 
-        expect(find.byType(FilterChip), findsNWidgets(3));
+        expect(find.byType(FilterChip), findsNWidgets(4));
         expect(find.byType(OutlinedButton), findsNothing);
         expect(find.byType(FilledButton), findsNothing);
         expect(find.textContaining('sources checked'), findsNothing);
@@ -397,6 +397,10 @@ void main() {
           find.byKey(const Key('product-details-source-filter-unavailable')),
           findsOneWidget,
         );
+        expect(
+          find.byKey(const Key('product-details-source-filter-issues')),
+          findsOneWidget,
+        );
       },
     );
 
@@ -456,6 +460,63 @@ void main() {
           find.byKey(const Key('merchant-offer-source-3')),
           findsOneWidget,
         );
+      },
+    );
+
+    testWidgets(
+      'ProductSourcesSection displays only sources with refresh errors when the issues filter is selected',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildWidget(
+            sources: sources,
+            isRefreshing: true,
+            sourceRefreshStatuses: {
+              availableSource.id: SourceRefreshStatus.error,
+              unavailableSource.id: SourceRefreshStatus.success,
+              unknownAvailabilitySource.id: SourceRefreshStatus.error,
+            },
+          ),
+        );
+
+        await tester.tap(
+          find.byKey(const Key('product-details-source-filter-issues')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(MerchantOfferRow), findsNWidgets(2));
+        expect(
+          find.byKey(const Key('merchant-offer-source-1')),
+          findsOneWidget,
+        );
+        expect(find.byKey(const Key('merchant-offer-source-2')), findsNothing);
+        expect(
+          find.byKey(const Key('merchant-offer-source-3')),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'ProductSourcesSection displays no-offers copy when the issues filter has no errors',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildWidget(
+            sources: sources,
+            sourceRefreshStatuses: {
+              availableSource.id: SourceRefreshStatus.success,
+              unavailableSource.id: SourceRefreshStatus.unavailable,
+              unknownAvailabilitySource.id: SourceRefreshStatus.success,
+            },
+          ),
+        );
+
+        await tester.tap(
+          find.byKey(const Key('product-details-source-filter-issues')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(MerchantOfferRow), findsNothing);
+        expect(find.text(t.productDetails.noOffers), findsOneWidget);
       },
     );
 

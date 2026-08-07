@@ -400,6 +400,9 @@ enum ProductOfferFilter {
 
   /// Displays offers not currently marked available.
   unavailable,
+
+  /// Displays offers whose latest refresh failed.
+  issues,
 }
 
 /// Display helpers for [WidgetLocation] — kept off the enum itself so the

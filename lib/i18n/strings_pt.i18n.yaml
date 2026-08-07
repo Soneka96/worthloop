@@ -65,6 +65,7 @@ productDetails:
   filterAll: Todas
   filterAvailable: Disponível
   filterUnavailable: Indisponível
+  filterIssues: Problemas
   checkedAt: Verificado às $time
   productNotFound: Produto não encontrado
   productNotFoundDescription: Volte aos produtos acompanhados e escolha novamente um artigo.
