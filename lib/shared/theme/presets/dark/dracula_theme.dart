@@ -9,30 +9,30 @@ const ColorScheme draculaColorScheme = ColorScheme(
   brightness: Brightness.dark,
   primary: Color(0xFFBD93F9), // Purple
   onPrimary: Color(0xFF282A36), // Background
-  primaryContainer: Color(0xFF44475A), // Current Line
+  primaryContainer: Color(0xFF3D315A), // Lifted purple surface
   onPrimaryContainer: Color(0xFFF8F8F2), // Foreground
   secondary: Color(0xFFFF79C6), // Pink
   onSecondary: Color(0xFF282A36), // Background
-  secondaryContainer: Color(0xFF44475A), // Current Line
+  secondaryContainer: Color(0xFF4A2B45), // Lifted pink surface
   onSecondaryContainer: Color(0xFFF8F8F2), // Foreground
   tertiary: Color(0xFF8BE9FD), // Cyan
   onTertiary: Color(0xFF282A36), // Background
-  tertiaryContainer: Color(0xFF44475A), // Current Line
+  tertiaryContainer: Color(0xFF244453), // Lifted cyan surface
   onTertiaryContainer: Color(0xFFF8F8F2), // Foreground
   error: Color(0xFFFF5555), // Red
   onError: Color(0xFF282A36), // Background
-  errorContainer: Color(0xFF44475A), // Current Line
+  errorContainer: Color(0xFF5A2B35), // Lifted red surface
   onErrorContainer: Color(0xFFF8F8F2), // Foreground
   surface: Color(0xFF282A36), // Background
   onSurface: Color(0xFFF8F8F2), // Foreground
-  onSurfaceVariant: Color(0xFF6272A4), // Comment
+  onSurfaceVariant: Color(0xFFB8C1E0), // Accessible muted lavender
   surfaceContainerHighest: Color(0xFF44475A), // Current Line
-  outline: Color(0xFF6272A4), // Comment
-  outlineVariant: Color(0xFF44475A), // Current Line
+  outline: Color(0xFFB8C1E0), // Accessible muted lavender
+  outlineVariant: Color(0xFF817EA8), // Visible lifted border
   shadow: Color(0xFF000000),
   scrim: Color(0xFF000000),
   inverseSurface: Color(0xFFF8F8F2), // Foreground
   onInverseSurface: Color(0xFF282A36), // Background
-  inversePrimary: Color(0xFF44475A), // Current Line
+  inversePrimary: Color(0xFF8064C7), // Darker purple for inverse surfaces
   surfaceTint: Color(0xFFBD93F9), // Purple
 );
