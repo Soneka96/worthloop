@@ -21,6 +21,7 @@ class RefreshSourceUseCase
       params.sourceId,
       onSourceStatusChanged: params.onSourceStatusChanged,
       bypassCooldown: params.bypassCooldown,
+      onPriceDrop: params.onPriceDrop,
     );
   }
 }

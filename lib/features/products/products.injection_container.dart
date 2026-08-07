@@ -25,6 +25,10 @@ import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/product_price_fetch_orchestrator_service.dart';
 import 'package:worth_loop/shared/utils/product_url_cleaner_service.dart';
+import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
+import 'package:worth_loop/shared/utils/android_price_alert_notification_service.dart';
+import 'package:worth_loop/shared/utils/product_price_alert_notification_coordinator.dart';
+import 'package:worth_loop/features/settings/domain/usecases/load_refresh_settings.usecase.dart';
 
 /// Registers tracked-product dependencies.
 void initProductsDependencies() {
@@ -71,6 +75,13 @@ void initProductsDependencies() {
   );
   sl.registerLazySingleton<RefreshAllProductsUseCase>(
     () => RefreshAllProductsUseCase(sl<IProductsRepository>()),
+  );
+  sl.registerLazySingleton<ProductPriceAlertNotificationCoordinator>(
+    () => ProductPriceAlertNotificationCoordinator(
+      sl<LoadRefreshSettingsUseCase>(),
+      sl<AppPreferencesStore>(),
+      sl<AndroidPriceAlertNotificationService>(),
+    ),
   );
   sl.registerLazySingleton<RenameProductUseCase>(
     () => RenameProductUseCase(sl<IProductsRepository>()),

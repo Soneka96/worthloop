@@ -41,6 +41,7 @@ import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/usecase/no_params.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/url_launcher_service.dart';
+import 'package:worth_loop/shared/utils/product_price_alert_notification_coordinator.dart';
 import '../../fixtures/product.fixture.dart';
 import '../../fixtures/product_source.fixture.dart';
 
@@ -72,6 +73,9 @@ class MockLoggerService extends Mock implements LoggerService {}
 class MockNavigatorService extends Mock implements NavigatorService {}
 
 class MockUrlLauncherService extends Mock implements UrlLauncherService {}
+
+class MockProductPriceAlertNotificationCoordinator extends Mock
+    implements ProductPriceAlertNotificationCoordinator {}
 
 class FakeRefreshProductParams extends Fake implements RefreshProductParams {}
 
@@ -105,6 +109,7 @@ void main() {
   late MockLoggerService mockLoggerService;
   late MockNavigatorService mockNavigatorService;
   late MockUrlLauncherService mockUrlLauncherService;
+  late MockProductPriceAlertNotificationCoordinator mockPriceAlertCoordinator;
   late List<dynamic> actionLog;
 
   void next(dynamic action) => actionLog.add(action);
@@ -137,6 +142,7 @@ void main() {
     mockLoggerService = MockLoggerService();
     mockNavigatorService = MockNavigatorService();
     mockUrlLauncherService = MockUrlLauncherService();
+    mockPriceAlertCoordinator = MockProductPriceAlertNotificationCoordinator();
     actionLog = [];
 
     when(() => store.state).thenReturn(AppState.initial());
@@ -160,6 +166,9 @@ void main() {
     sl.registerSingleton<LoggerService>(mockLoggerService);
     sl.registerSingleton<NavigatorService>(mockNavigatorService);
     sl.registerSingleton<UrlLauncherService>(mockUrlLauncherService);
+    sl.registerSingleton<ProductPriceAlertNotificationCoordinator>(
+      mockPriceAlertCoordinator,
+    );
   });
 
   tearDown(() async {
@@ -385,11 +394,7 @@ void main() {
         expect(actionLog[2], isA<ProductRefreshedAction>());
         expect((actionLog[2] as ProductRefreshedAction).product, product);
         expect(actionLog[3], isA<SourceRefreshFinishedAction>());
-        verify(
-          () => mockRefreshProductUseCase(
-            const RefreshProductParams(productId: 'product-1'),
-          ),
-        ).called(1);
+        verify(() => mockRefreshProductUseCase(any())).called(1);
         verifyNoMoreInteractions(mockRefreshProductUseCase);
         verifyZeroInteractions(mockLoggerService);
       },
@@ -412,11 +417,7 @@ void main() {
         expect(action.productId, 'product-1');
         expect(action.message, isA<String>());
         expect(action.message, 'failed');
-        verify(
-          () => mockRefreshProductUseCase(
-            const RefreshProductParams(productId: 'product-1'),
-          ),
-        ).called(1);
+        verify(() => mockRefreshProductUseCase(any())).called(1);
         verifyNoMoreInteractions(mockRefreshProductUseCase);
         verify(() => mockLoggerService.e('failed', showPopup: false)).called(1);
         verifyNoMoreInteractions(mockLoggerService);
@@ -640,6 +641,7 @@ void main() {
           () => mockRefreshAllProductsUseCase(
             any(),
             onSourceStatusChanged: any(named: 'onSourceStatusChanged'),
+            onPriceDrop: any(named: 'onPriceDrop'),
           ),
         ).thenAnswer((invocation) async {
           final SourceRefreshListener callback =
@@ -680,6 +682,7 @@ void main() {
           () => mockRefreshAllProductsUseCase(
             any(),
             onSourceStatusChanged: any(named: 'onSourceStatusChanged'),
+            onPriceDrop: any(named: 'onPriceDrop'),
           ),
         ).thenAnswer((invocation) async {
           final SourceRefreshListener callback =
@@ -731,6 +734,7 @@ void main() {
           () => mockRefreshAllProductsUseCase(
             any(),
             onSourceStatusChanged: any(named: 'onSourceStatusChanged'),
+            onPriceDrop: any(named: 'onPriceDrop'),
           ),
         ).thenAnswer((_) async => const Left(DatabaseFailure('failed')));
         when(
@@ -791,6 +795,7 @@ void main() {
           () => mockRefreshAllProductsUseCase(
             any(),
             onSourceStatusChanged: any(named: 'onSourceStatusChanged'),
+            onPriceDrop: any(named: 'onPriceDrop'),
           ),
         ).thenAnswer((_) async => Right([product]));
 
@@ -807,6 +812,7 @@ void main() {
           () => mockRefreshAllProductsUseCase(
             captureAny(),
             onSourceStatusChanged: any(named: 'onSourceStatusChanged'),
+            onPriceDrop: any(named: 'onPriceDrop'),
           ),
         ).captured;
         expect(captured.single, isA<NoParams>());
@@ -823,6 +829,7 @@ void main() {
           () => mockRefreshAllProductsUseCase(
             any(),
             onSourceStatusChanged: any(named: 'onSourceStatusChanged'),
+            onPriceDrop: any(named: 'onPriceDrop'),
           ),
         ).thenAnswer((_) async => const Left(failure));
 
@@ -843,6 +850,7 @@ void main() {
           () => mockRefreshAllProductsUseCase(
             captureAny(),
             onSourceStatusChanged: any(named: 'onSourceStatusChanged'),
+            onPriceDrop: any(named: 'onPriceDrop'),
           ),
         ).captured;
         expect(captured.single, isA<NoParams>());

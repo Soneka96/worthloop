@@ -4,6 +4,8 @@ import 'package:fpdart/fpdart.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_price_drop.entity.dart';
+import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 import 'package:worth_loop/features/settings/domain/entities/refresh_settings.entity.dart';
 import 'package:worth_loop/shared/constants/refresh_interval_constants.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
@@ -24,7 +26,7 @@ void main() {
         loadSettings: () async => const Right(
           RefreshSettings(intervalMinutes: 180, browserRefreshEnabled: true),
         ),
-        refreshAllProducts: () async {
+        refreshAllProducts: ({onPriceDrop}) async {
           refreshCalls++;
           return Right(<Product>[product]);
         },
@@ -41,7 +43,7 @@ void main() {
       final BackgroundRefreshRunner runner = BackgroundRefreshRunner(
         loadSettings: () async =>
             const Right(RefreshSettings(intervalMinutes: 60)),
-        refreshAllProducts: () async {
+        refreshAllProducts: ({onPriceDrop}) async {
           refreshCalls++;
           return Right(<Product>[product]);
         },
@@ -57,7 +59,7 @@ void main() {
       int refreshCalls = 0;
       final BackgroundRefreshRunner runner = BackgroundRefreshRunner(
         loadSettings: () async => const Left(DatabaseFailure('failed')),
-        refreshAllProducts: () async {
+        refreshAllProducts: ({onPriceDrop}) async {
           refreshCalls++;
           return Right(<Product>[product]);
         },
@@ -79,7 +81,8 @@ void main() {
           loadSettings: () async => const Right(
             RefreshSettings(intervalMinutes: 0, browserRefreshEnabled: true),
           ),
-          refreshAllProducts: () async => Right(<Product>[product]),
+          refreshAllProducts: ({onPriceDrop}) async =>
+              Right(<Product>[product]),
         );
 
         expect(
@@ -88,5 +91,28 @@ void main() {
         );
       },
     );
+
+    test('forwards the price-drop listener to refreshes', () async {
+      ProductPriceDrop? receivedDrop;
+      final ProductPriceDrop drop = ProductPriceDrop(
+        product: product,
+        previousBestPrice: const Money(minorUnits: 200, currencyCode: 'EUR'),
+        currentBestPrice: const Money(minorUnits: 100, currencyCode: 'EUR'),
+      );
+      final BackgroundRefreshRunner runner = BackgroundRefreshRunner(
+        loadSettings: () async => const Right(
+          RefreshSettings(intervalMinutes: 60, browserRefreshEnabled: true),
+        ),
+        refreshAllProducts: ({onPriceDrop}) async {
+          await onPriceDrop?.call(drop);
+          return Right(<Product>[product]);
+        },
+        onPriceDrop: (ProductPriceDrop value) async => receivedDrop = value,
+      );
+
+      await runner.runOnce();
+
+      expect(receivedDrop, drop);
+    });
   });
 }

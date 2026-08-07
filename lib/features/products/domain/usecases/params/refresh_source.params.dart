@@ -15,12 +15,16 @@ class RefreshSourceParams extends Equatable {
   /// Receives lifecycle updates for the source refresh.
   final SourceRefreshListener? onSourceStatusChanged;
 
+  /// Receives a persisted best-price drop after refresh.
+  final ProductPriceDropListener? onPriceDrop;
+
   /// Whether to bypass an active source price cooldown.
   final bool bypassCooldown;
 
   const RefreshSourceParams({
     required this.sourceId,
     this.onSourceStatusChanged,
+    this.onPriceDrop,
     this.bypassCooldown = false,
   });
 

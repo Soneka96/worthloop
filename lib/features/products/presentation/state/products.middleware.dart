@@ -34,6 +34,7 @@ import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/usecase/no_params.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/url_launcher_service.dart';
+import 'package:worth_loop/shared/utils/product_price_alert_notification_coordinator.dart';
 
 /// Handles tracked-product actions.
 class ProductsMiddleware extends MiddlewareClass<AppState> {
@@ -127,6 +128,7 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
       await (await sl<RefreshProductUseCase>()(
         RefreshProductParams(
           productId: action.productId,
+          onPriceDrop: sl<ProductPriceAlertNotificationCoordinator>().notify,
           onSourceStatusChanged: (String sourceId, SourceRefreshStatus status) {
             if (_isTerminalSourceRefreshStatus(status)) {
               completedCount++;
@@ -206,6 +208,7 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
               ),
             );
           },
+          onPriceDrop: sl<ProductPriceAlertNotificationCoordinator>().notify,
         ),
       )).fold(
         (failure) {
@@ -252,6 +255,7 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
     try {
       await (await sl<RefreshAllProductsUseCase>()(
         NoParams(),
+        onPriceDrop: sl<ProductPriceAlertNotificationCoordinator>().notify,
         onSourceStatusChanged: (String sourceId, SourceRefreshStatus status) {
           if (_isTerminalSourceRefreshStatus(status)) {
             completedCount++;
