@@ -9,6 +9,7 @@ import 'package:redux/redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
 import 'package:worth_loop/features/products/domain/usecases/add_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/delete_product.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/delete_source.usecase.dart';
@@ -27,8 +28,10 @@ import 'package:worth_loop/features/products/domain/usecases/refresh_product.use
 import 'package:worth_loop/features/products/domain/usecases/rename_product.usecase.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/products.middleware.dart';
+import 'package:worth_loop/features/products/presentation/state/products.state.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/navigation/app_routes.dart';
 import 'package:worth_loop/shared/navigation/navigator_service.dart';
@@ -37,6 +40,7 @@ import 'package:worth_loop/shared/usecase/no_params.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/url_launcher_service.dart';
 import '../../fixtures/product.fixture.dart';
+import '../../fixtures/product_source.fixture.dart';
 
 class MockStore extends Mock implements Store<AppState> {}
 
@@ -262,6 +266,85 @@ void main() {
 
   group('ProductsMiddleware processes RefreshProductAction', () {
     test(
+      'RefreshProductAction shows completion feedback after all sources check',
+      () async {
+        final Product product = buildProduct(sources: [buildProductSource()]);
+        when(() => store.state).thenReturn(
+          AppState.initial().copyWith(
+            products: ProductsState.initial().copyWith(products: [product]),
+          ),
+        );
+        when(() => mockRefreshProductUseCase(any())).thenAnswer((
+          invocation,
+        ) async {
+          final RefreshProductParams params =
+              invocation.positionalArguments.single as RefreshProductParams;
+          params.onSourceStatusChanged?.call(
+            'source-1',
+            SourceRefreshStatus.fetching,
+          );
+          params.onSourceStatusChanged?.call(
+            'source-1',
+            SourceRefreshStatus.success,
+          );
+          return Right(product);
+        });
+
+        middleware.call(store, const RefreshProductAction('product-1'), next);
+        await Future<void>.delayed(Duration.zero);
+
+        verify(
+          () => mockLoggerService.i(
+            t.productDetails.refreshComplete(total: 1),
+            showPopup: true,
+          ),
+        ).called(1);
+      },
+    );
+
+    test(
+      'RefreshProductAction counts unavailable sources as checked',
+      () async {
+        final Product product = buildProduct(
+          sources: [
+            buildProductSource(id: 'source-1'),
+            buildProductSource(id: 'source-2'),
+          ],
+        );
+        when(() => store.state).thenReturn(
+          AppState.initial().copyWith(
+            products: ProductsState.initial().copyWith(products: [product]),
+          ),
+        );
+        when(() => mockRefreshProductUseCase(any())).thenAnswer((
+          invocation,
+        ) async {
+          final RefreshProductParams params =
+              invocation.positionalArguments.single as RefreshProductParams;
+          params.onSourceStatusChanged?.call(
+            'source-1',
+            SourceRefreshStatus.unavailable,
+          );
+          params.onSourceStatusChanged?.call(
+            'source-2',
+            SourceRefreshStatus.error,
+          );
+          return const Left(DatabaseFailure('partial'));
+        });
+
+        middleware.call(store, const RefreshProductAction('product-1'), next);
+        await Future<void>.delayed(Duration.zero);
+
+        verify(
+          () => mockLoggerService.i(
+            t.productDetails.refreshPartial(completed: 2, total: 2, failed: 1),
+            showPopup: true,
+          ),
+        ).called(1);
+      },
+    );
+
+    test(
       'RefreshProductAction dispatches ProductRefreshedAction when successful',
       () async {
         final Product product = buildProduct();
@@ -336,6 +419,39 @@ void main() {
   });
 
   group('ProductsMiddleware processes RefreshAllProductsAction', () {
+    test(
+      'RefreshAllProductsAction shows partial feedback when a source fails',
+      () async {
+        final Product product = buildProduct(sources: [buildProductSource()]);
+        when(() => store.state).thenReturn(
+          AppState.initial().copyWith(
+            products: ProductsState.initial().copyWith(products: [product]),
+          ),
+        );
+        when(
+          () => mockRefreshAllProductsUseCase(
+            any(),
+            onSourceStatusChanged: any(named: 'onSourceStatusChanged'),
+          ),
+        ).thenAnswer((invocation) async {
+          final SourceRefreshListener callback =
+              invocation.namedArguments[const Symbol('onSourceStatusChanged')];
+          callback('source-1', SourceRefreshStatus.error);
+          return const Left(DatabaseFailure('failed'));
+        });
+
+        middleware.call(store, const RefreshAllProductsAction(), next);
+        await Future<void>.delayed(Duration.zero);
+
+        verify(
+          () => mockLoggerService.i(
+            t.productDetails.refreshPartial(completed: 1, total: 1, failed: 1),
+            showPopup: true,
+          ),
+        ).called(1);
+      },
+    );
+
     test(
       'RefreshAllProductsAction dispatches ProductsLoadedAction when successful',
       () async {

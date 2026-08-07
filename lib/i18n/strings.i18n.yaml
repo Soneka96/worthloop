@@ -35,6 +35,8 @@ productDetails:
   queued: Queued
   checking: Checking
   cannotAccessNow: Cannot access now
+  refreshComplete: "All $total sources checked."
+  refreshPartial: "$completed of $total sources checked; $failed could not be accessed."
   bestPrice: Best price
   offers: "Store offers: $count"
   availableOffers: Available offers

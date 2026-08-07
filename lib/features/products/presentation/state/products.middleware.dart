@@ -111,14 +111,24 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
       return;
     }
     _refreshInProgress = true;
-    store.dispatch(
-      SourceRefreshStartedAction(_sourceIdsForProduct(store, action.productId)),
+    final List<String> sourceIds = _sourceIdsForProduct(
+      store,
+      action.productId,
     );
+    int completedCount = 0;
+    int failedCount = 0;
+    store.dispatch(SourceRefreshStartedAction(sourceIds));
     try {
       (await sl<RefreshProductUseCase>()(
         RefreshProductParams(
           productId: action.productId,
           onSourceStatusChanged: (String sourceId, SourceRefreshStatus status) {
+            if (_isTerminalSourceRefreshStatus(status)) {
+              completedCount++;
+            }
+            if (status == SourceRefreshStatus.error) {
+              failedCount++;
+            }
             store.dispatch(
               SourceRefreshStatusChangedAction(
                 sourceId: sourceId,
@@ -142,6 +152,11 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
           store.dispatch(ProductRefreshedAction(product));
         },
       );
+      _showRefreshCompletion(
+        sourceCount: sourceIds.length,
+        completedCount: completedCount,
+        failedCount: failedCount,
+      );
     } finally {
       store.dispatch(const SourceRefreshFinishedAction());
       _refreshInProgress = false;
@@ -157,11 +172,20 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
       return;
     }
     _refreshInProgress = true;
-    store.dispatch(SourceRefreshStartedAction(_sourceIdsForAllProducts(store)));
+    final List<String> sourceIds = _sourceIdsForAllProducts(store);
+    int completedCount = 0;
+    int failedCount = 0;
+    store.dispatch(SourceRefreshStartedAction(sourceIds));
     try {
       (await sl<RefreshAllProductsUseCase>()(
         NoParams(),
         onSourceStatusChanged: (String sourceId, SourceRefreshStatus status) {
+          if (_isTerminalSourceRefreshStatus(status)) {
+            completedCount++;
+          }
+          if (status == SourceRefreshStatus.error) {
+            failedCount++;
+          }
           store.dispatch(
             SourceRefreshStatusChangedAction(
               sourceId: sourceId,
@@ -182,6 +206,11 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
         (List<Product> products) {
           store.dispatch(ProductsLoadedAction(products));
         },
+      );
+      _showRefreshCompletion(
+        sourceCount: sourceIds.length,
+        completedCount: completedCount,
+        failedCount: failedCount,
       );
     } finally {
       store.dispatch(const SourceRefreshFinishedAction());
@@ -207,6 +236,29 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
       .expand((Product product) => product.sources)
       .map((ProductSource source) => source.id)
       .toList();
+
+  void _showRefreshCompletion({
+    required int sourceCount,
+    required int completedCount,
+    required int failedCount,
+  }) {
+    if (sourceCount == 0 || completedCount != sourceCount) {
+      return;
+    }
+    final String message = failedCount == 0
+        ? t.productDetails.refreshComplete(total: sourceCount)
+        : t.productDetails.refreshPartial(
+            completed: completedCount,
+            total: sourceCount,
+            failed: failedCount,
+          );
+    sl<LoggerService>().i(message, showPopup: true);
+  }
+
+  bool _isTerminalSourceRefreshStatus(SourceRefreshStatus status) =>
+      status == SourceRefreshStatus.success ||
+      status == SourceRefreshStatus.error ||
+      status == SourceRefreshStatus.unavailable;
 
   /// Handles [GoToProductDetailsAction].
   Future<void> _goToProductDetails(

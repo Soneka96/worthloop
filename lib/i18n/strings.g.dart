@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 226 (113 per locale)
+/// Strings: 230 (115 per locale)
 ///
-/// Built on 2026-08-07 at 08:33 UTC
+/// Built on 2026-08-07 at 08:42 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -211,6 +211,8 @@ class _StringsProductDetailsEn {
 	String get queued => 'Queued';
 	String get checking => 'Checking';
 	String get cannotAccessNow => 'Cannot access now';
+	String refreshComplete({required Object total}) => 'All ${total} sources checked.';
+	String refreshPartial({required Object completed, required Object total, required Object failed}) => '${completed} of ${total} sources checked; ${failed} could not be accessed.';
 	String get bestPrice => 'Best price';
 	String offers({required Object count}) => 'Store offers: ${count}';
 	String get availableOffers => 'Available offers';
@@ -490,6 +492,8 @@ class _StringsProductDetailsPt implements _StringsProductDetailsEn {
 	@override String get queued => 'Em fila';
 	@override String get checking => 'A verificar';
 	@override String get cannotAccessNow => 'Não é possível aceder agora';
+	@override String refreshComplete({required Object total}) => 'As ${total} fontes foram verificadas.';
+	@override String refreshPartial({required Object completed, required Object total, required Object failed}) => '${completed} de ${total} fontes verificadas; não foi possível aceder a ${failed}.';
 	@override String get bestPrice => 'Melhor preço';
 	@override String offers({required Object count}) => 'Ofertas em lojas: ${count}';
 	@override String get availableOffers => 'Ofertas disponíveis';
@@ -719,6 +723,8 @@ extension on Translations {
 			case 'productDetails.queued': return 'Queued';
 			case 'productDetails.checking': return 'Checking';
 			case 'productDetails.cannotAccessNow': return 'Cannot access now';
+			case 'productDetails.refreshComplete': return ({required Object total}) => 'All ${total} sources checked.';
+			case 'productDetails.refreshPartial': return ({required Object completed, required Object total, required Object failed}) => '${completed} of ${total} sources checked; ${failed} could not be accessed.';
 			case 'productDetails.bestPrice': return 'Best price';
 			case 'productDetails.offers': return ({required Object count}) => 'Store offers: ${count}';
 			case 'productDetails.availableOffers': return 'Available offers';
@@ -840,6 +846,8 @@ extension on _StringsPt {
 			case 'productDetails.queued': return 'Em fila';
 			case 'productDetails.checking': return 'A verificar';
 			case 'productDetails.cannotAccessNow': return 'Não é possível aceder agora';
+			case 'productDetails.refreshComplete': return ({required Object total}) => 'As ${total} fontes foram verificadas.';
+			case 'productDetails.refreshPartial': return ({required Object completed, required Object total, required Object failed}) => '${completed} de ${total} fontes verificadas; não foi possível aceder a ${failed}.';
 			case 'productDetails.bestPrice': return 'Melhor preço';
 			case 'productDetails.offers': return ({required Object count}) => 'Ofertas em lojas: ${count}';
 			case 'productDetails.availableOffers': return 'Ofertas disponíveis';

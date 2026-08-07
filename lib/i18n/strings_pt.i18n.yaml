@@ -36,6 +36,8 @@ productDetails:
   queued: Em fila
   checking: A verificar
   cannotAccessNow: Não é possível aceder agora
+  refreshComplete: "As $total fontes foram verificadas."
+  refreshPartial: "$completed de $total fontes verificadas; não foi possível aceder a $failed."
   bestPrice: Melhor preço
   offers: "Ofertas em lojas: $count"
   availableOffers: Ofertas disponíveis
