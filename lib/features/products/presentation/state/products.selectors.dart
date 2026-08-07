@@ -38,6 +38,11 @@ abstract final class ProductsSelectors {
       state.products.sourceRefreshStatuses[sourceId] ??
       SourceRefreshStatus.idle;
 
+  /// Returns the current refresh state for every source.
+  static Map<String, SourceRefreshStatus> sourceRefreshStatusesSelector(
+    AppState state,
+  ) => state.products.sourceRefreshStatuses;
+
   /// Returns the number of sources that have reached a terminal state.
   static int refreshCompletedCountSelector(AppState state) =>
       state.products.refreshCompletedCount;

@@ -9,19 +9,27 @@ import 'package:worth_loop/features/home/presentation/widgets/tracked_product.wi
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import '../../../products/fixtures/money.fixture.dart';
 import '../../../products/fixtures/product.fixture.dart';
 import '../../../products/fixtures/product_source.fixture.dart';
 
 void main() {
-  Widget buildWidget(Product product, {void Function()? onTap}) =>
-      TranslationProvider(
-        child: MaterialApp(
-          home: Scaffold(
-            body: TrackedProductWidget(product: product, onTap: onTap ?? () {}),
-          ),
+  Widget buildWidget(
+    Product product, {
+    void Function()? onTap,
+    Map<String, SourceRefreshStatus> sourceRefreshStatuses = const {},
+  }) => TranslationProvider(
+    child: MaterialApp(
+      home: Scaffold(
+        body: TrackedProductWidget(
+          product: product,
+          sourceRefreshStatuses: sourceRefreshStatuses,
+          onTap: onTap ?? () {},
         ),
-      );
+      ),
+    ),
+  );
 
   group('TrackedProductWidget contains widgets', () {
     testWidgets(
@@ -93,6 +101,64 @@ void main() {
 
         expect(find.text('No available price'), findsOneWidget);
         expect(find.text('No store in stock'), findsOneWidget);
+      },
+    );
+
+    testWidgets('TrackedProductWidget identifies one failed merchant source', (
+      WidgetTester tester,
+    ) async {
+      final Product product = buildProduct(
+        sources: [buildProductSource(merchantDomain: 'blocked.example.com')],
+      );
+
+      await tester.pumpWidget(
+        buildWidget(
+          product,
+          sourceRefreshStatuses: {'source-1': SourceRefreshStatus.error},
+        ),
+      );
+
+      expect(find.text("Couldn't check blocked.example.com"), findsOneWidget);
+      expect(find.byIcon(Icons.error_outline), findsOneWidget);
+    });
+
+    testWidgets('TrackedProductWidget summarizes multiple failed sources', (
+      WidgetTester tester,
+    ) async {
+      final Product product = buildProduct(
+        sources: [
+          buildProductSource(id: 'source-1'),
+          buildProductSource(id: 'source-2', url: 'https://other.com/1'),
+        ],
+      );
+
+      await tester.pumpWidget(
+        buildWidget(
+          product,
+          sourceRefreshStatuses: {
+            'source-1': SourceRefreshStatus.error,
+            'source-2': SourceRefreshStatus.error,
+          },
+        ),
+      );
+
+      expect(find.text("2 sources couldn't be checked"), findsOneWidget);
+    });
+
+    testWidgets(
+      'TrackedProductWidget shows checking progress for active sources',
+      (WidgetTester tester) async {
+        final Product product = buildProduct(sources: [buildProductSource()]);
+
+        await tester.pumpWidget(
+          buildWidget(
+            product,
+            sourceRefreshStatuses: {'source-1': SourceRefreshStatus.fetching},
+          ),
+        );
+
+        expect(find.text('Checking 1 sources'), findsOneWidget);
+        expect(find.byIcon(Icons.sync), findsOneWidget);
       },
     );
   });

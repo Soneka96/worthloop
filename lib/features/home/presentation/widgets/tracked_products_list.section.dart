@@ -7,6 +7,7 @@ import 'package:worth_loop/features/home/presentation/widgets/tracked_product.wi
 import 'package:worth_loop/features/home/presentation/widgets/tracked_products_empty.widget.dart';
 import 'package:worth_loop/features/home/presentation/widgets/tracked_products_no_matches.widget.dart';
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/theme/app_spacing_theme_extension.dart';
 
 /// Search field + filtered sliver list of tracked products, or the loading
@@ -21,12 +22,16 @@ class TrackedProductsListSection extends StatefulWidget {
   /// Whether [products] is still being loaded.
   final bool isLoading;
 
+  /// Current refresh state for every product source.
+  final Map<String, SourceRefreshStatus> sourceRefreshStatuses;
+
   /// Called with the tapped product's id.
   final ValueChanged<String> onProductTap;
 
   const TrackedProductsListSection({
     required this.products,
     required this.isLoading,
+    this.sourceRefreshStatuses = const {},
     required this.onProductTap,
     super.key,
   });
@@ -91,6 +96,7 @@ class _TrackedProductsListSectionState
                   padding: EdgeInsets.only(bottom: context.spacing.sm),
                   child: TrackedProductWidget(
                     product: filtered[index],
+                    sourceRefreshStatuses: widget.sourceRefreshStatuses,
                     onTap: () => widget.onProductTap(filtered[index].id),
                   ),
                 ),

@@ -10,6 +10,9 @@ home:
   refreshing: A atualizar
   refreshAllComplete: "Todas as fontes foram verificadas."
   refreshAllPartial: "Atualização concluída; não foi possível verificar $failed fontes."
+  sourceRefreshChecking: "A verificar $count fontes"
+  sourceRefreshFailed: "Não foi possível verificar $merchant"
+  sourceRefreshFailedCount: "Não foi possível verificar $count fontes"
   bestPrice: Melhor preço
   noAvailablePrice: Sem preço disponível
   noStore: Nenhuma loja com stock

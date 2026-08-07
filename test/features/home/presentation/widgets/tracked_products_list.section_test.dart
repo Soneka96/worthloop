@@ -12,7 +12,9 @@ import 'package:worth_loop/features/home/presentation/widgets/tracked_products_l
 import 'package:worth_loop/features/home/presentation/widgets/tracked_products_no_matches.widget.dart';
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import '../../../products/fixtures/product.fixture.dart';
+import '../../../products/fixtures/product_source.fixture.dart';
 
 void main() {
   final List<Product> products = [
@@ -24,6 +26,7 @@ void main() {
     List<Product> products = const [],
     bool isLoading = false,
     ValueChanged<String>? onProductTap,
+    Map<String, SourceRefreshStatus> sourceRefreshStatuses = const {},
   }) => TranslationProvider(
     child: MaterialApp(
       home: Scaffold(
@@ -32,6 +35,7 @@ void main() {
             TrackedProductsListSection(
               products: products,
               isLoading: isLoading,
+              sourceRefreshStatuses: sourceRefreshStatuses,
               onProductTap: onProductTap ?? (_) {},
             ),
           ],
@@ -105,6 +109,25 @@ void main() {
         expect(find.byType(TrackedProductsNoMatchesWidget), findsOneWidget);
         expect(find.byType(TrackedProductWidget), findsNothing);
         expect(find.byType(HomeSearchField), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'TrackedProductsListSection passes source refresh statuses to the product card',
+      (WidgetTester tester) async {
+        final Product product = buildProduct(sources: [buildProductSource()]);
+
+        await tester.pumpWidget(
+          buildWidget(
+            products: [product],
+            sourceRefreshStatuses: {'source-1': SourceRefreshStatus.error},
+          ),
+        );
+
+        expect(
+          find.byKey(const Key('tracked-product-product-1-refresh-status')),
+          findsOneWidget,
+        );
       },
     );
   });

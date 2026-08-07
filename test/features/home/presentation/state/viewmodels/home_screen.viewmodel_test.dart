@@ -10,6 +10,7 @@ import 'package:worth_loop/features/products/domain/entities/product.entity.dart
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/products.state.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import '../../../../products/fixtures/product.fixture.dart';
 
 void main() {
@@ -39,6 +40,7 @@ void main() {
             isCreatingProduct: true,
             creationError: const Some('creation failed'),
             createdProductId: const Some('product-1'),
+            sourceRefreshStatuses: {'source-1': SourceRefreshStatus.error},
           ),
         );
 
@@ -54,6 +56,9 @@ void main() {
         expect(viewmodel.isCreatingProduct, isTrue);
         expect(viewmodel.productCreationError, 'creation failed');
         expect(viewmodel.createdProductId, 'product-1');
+        expect(viewmodel.sourceRefreshStatuses, {
+          'source-1': SourceRefreshStatus.error,
+        });
         expect(viewmodel.onRefreshAll, isA<Function()>());
         expect(viewmodel.onOpenSettings, isA<Function()>());
         expect(viewmodel.onOpenProduct, isA<void Function(String)>());

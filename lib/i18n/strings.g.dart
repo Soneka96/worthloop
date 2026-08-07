@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 234 (117 per locale)
+/// Strings: 240 (120 per locale)
 ///
-/// Built on 2026-08-07 at 09:26 UTC
+/// Built on 2026-08-07 at 09:30 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -179,6 +179,9 @@ class _StringsHomeEn {
 	String get refreshing => 'Refreshing';
 	String get refreshAllComplete => 'All sources checked.';
 	String refreshAllPartial({required Object failed}) => 'Refresh finished; ${failed} sources couldn\'t be checked.';
+	String sourceRefreshChecking({required Object count}) => 'Checking ${count} sources';
+	String sourceRefreshFailed({required Object merchant}) => 'Couldn\'t check ${merchant}';
+	String sourceRefreshFailedCount({required Object count}) => '${count} sources couldn\'t be checked';
 	String get bestPrice => 'Best price';
 	String get noAvailablePrice => 'No available price';
 	String get noStore => 'No store in stock';
@@ -462,6 +465,9 @@ class _StringsHomePt implements _StringsHomeEn {
 	@override String get refreshing => 'A atualizar';
 	@override String get refreshAllComplete => 'Todas as fontes foram verificadas.';
 	@override String refreshAllPartial({required Object failed}) => 'Atualização concluída; não foi possível verificar ${failed} fontes.';
+	@override String sourceRefreshChecking({required Object count}) => 'A verificar ${count} fontes';
+	@override String sourceRefreshFailed({required Object merchant}) => 'Não foi possível verificar ${merchant}';
+	@override String sourceRefreshFailedCount({required Object count}) => 'Não foi possível verificar ${count} fontes';
 	@override String get bestPrice => 'Melhor preço';
 	@override String get noAvailablePrice => 'Sem preço disponível';
 	@override String get noStore => 'Nenhuma loja com stock';
@@ -704,6 +710,9 @@ extension on Translations {
 			case 'home.refreshing': return 'Refreshing';
 			case 'home.refreshAllComplete': return 'All sources checked.';
 			case 'home.refreshAllPartial': return ({required Object failed}) => 'Refresh finished; ${failed} sources couldn\'t be checked.';
+			case 'home.sourceRefreshChecking': return ({required Object count}) => 'Checking ${count} sources';
+			case 'home.sourceRefreshFailed': return ({required Object merchant}) => 'Couldn\'t check ${merchant}';
+			case 'home.sourceRefreshFailedCount': return ({required Object count}) => '${count} sources couldn\'t be checked';
 			case 'home.bestPrice': return 'Best price';
 			case 'home.noAvailablePrice': return 'No available price';
 			case 'home.noStore': return 'No store in stock';
@@ -829,6 +838,9 @@ extension on _StringsPt {
 			case 'home.refreshing': return 'A atualizar';
 			case 'home.refreshAllComplete': return 'Todas as fontes foram verificadas.';
 			case 'home.refreshAllPartial': return ({required Object failed}) => 'Atualização concluída; não foi possível verificar ${failed} fontes.';
+			case 'home.sourceRefreshChecking': return ({required Object count}) => 'A verificar ${count} fontes';
+			case 'home.sourceRefreshFailed': return ({required Object merchant}) => 'Não foi possível verificar ${merchant}';
+			case 'home.sourceRefreshFailedCount': return ({required Object count}) => 'Não foi possível verificar ${count} fontes';
 			case 'home.bestPrice': return 'Melhor preço';
 			case 'home.noAvailablePrice': return 'Sem preço disponível';
 			case 'home.noStore': return 'Nenhuma loja com stock';
