@@ -19,11 +19,30 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
+    private var pendingPriceAlertProductId: String? = null
+    private var priceAlertChannel: MethodChannel? = null
+    private var pendingNotificationPermissionResult: MethodChannel.Result? = null
+
     companion object {
         private const val CHANNEL =
             "io.github.soneka96.worthloop/background_capabilities"
         private const val PRICE_ALERT_CHANNEL = "price_alerts"
         private const val PRICE_ALERT_PERMISSION_REQUEST = 4001
+    }
+
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        super.onCreate(savedInstanceState)
+        pendingPriceAlertProductId = intent?.getStringExtra("price_alert_product_id")
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val productId = intent.getStringExtra("price_alert_product_id")
+        if (productId != null) {
+            pendingPriceAlertProductId = productId
+            priceAlertChannel?.invokeMethod("priceAlertTapped", productId)
+        }
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -50,14 +69,20 @@ class MainActivity : FlutterActivity() {
                 }
             }
 
-        MethodChannel(
+        val configuredPriceAlertChannel = MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
             "io.github.soneka96.worthloop/price_alert_notifications",
-        ).setMethodCallHandler { call, result ->
+        )
+        priceAlertChannel = configuredPriceAlertChannel
+        configuredPriceAlertChannel.setMethodCallHandler { call, result ->
             when (call.method) {
+                "getInitialPriceAlertProductId" -> {
+                    result.success(pendingPriceAlertProductId)
+                    pendingPriceAlertProductId = null
+                }
                 "areNotificationsEnabled" ->
                     result.success(areNotificationsEnabled())
-                "requestPermission" -> result.success(requestNotificationPermission())
+                "requestPermission" -> requestNotificationPermission(result)
                 "showPriceDrop" -> {
                     val productId = call.argument<String>("productId")
                     val title = call.argument<String>("title")
@@ -124,21 +149,38 @@ class MainActivity : FlutterActivity() {
     private fun areNotificationsEnabled(): Boolean =
         NotificationManagerCompat.from(this).areNotificationsEnabled()
 
-    private fun requestNotificationPermission(): Boolean {
+    private fun requestNotificationPermission(result: MethodChannel.Result) {
+        if (areNotificationsEnabled()) {
+            result.success(true)
+            return
+        }
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
             ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.POST_NOTIFICATIONS,
             ) == PackageManager.PERMISSION_GRANTED
         ) {
-            return true
+            result.success(false)
+            return
         }
+        pendingNotificationPermissionResult = result
         ActivityCompat.requestPermissions(
             this,
             arrayOf(Manifest.permission.POST_NOTIFICATIONS),
             PRICE_ALERT_PERMISSION_REQUEST,
         )
-        return true
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray,
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != PRICE_ALERT_PERMISSION_REQUEST) return
+        val granted = grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED
+        pendingNotificationPermissionResult?.success(granted)
+        pendingNotificationPermissionResult = null
     }
 
     private fun showPriceDrop(productId: String, title: String, body: String): Boolean {

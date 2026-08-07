@@ -1,3 +1,6 @@
+// Dart imports:
+import 'dart:async';
+
 // Flutter imports:
 import 'package:flutter/services.dart';
 
@@ -37,6 +40,30 @@ class AndroidPriceAlertNotificationService {
     } on PlatformException {
       return false;
     }
+  }
+
+  /// Consumes the product ID that launched the app from a price alert.
+  Future<String?> getInitialPriceAlertProductId() async {
+    try {
+      return await _methodChannel.invokeMethod<String>(
+        'getInitialPriceAlertProductId',
+      );
+    } on MissingPluginException {
+      return null;
+    } on PlatformException {
+      return null;
+    }
+  }
+
+  /// Listens for taps on price alerts while the app is already open.
+  void listenForPriceAlertTaps(
+    FutureOr<void> Function(String productId) onTap,
+  ) {
+    _methodChannel.setMethodCallHandler((MethodCall call) async {
+      if (call.method == 'priceAlertTapped' && call.arguments is String) {
+        await onTap(call.arguments as String);
+      }
+    });
   }
 
   /// Shows a notification for a newly lower product price.

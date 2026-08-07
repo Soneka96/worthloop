@@ -22,6 +22,7 @@ import 'package:worth_loop/shared/usecase/no_params.dart';
 import 'package:worth_loop/shared/utils/android_background_capabilities_service.dart';
 import 'package:worth_loop/shared/utils/android_background_refresh_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
+import 'package:worth_loop/shared/utils/android_price_alert_notification_service.dart';
 import '../../fixtures/refresh_settings.fixture.dart';
 
 class MockStore extends Mock implements Store<AppState> {}
@@ -46,6 +47,9 @@ class MockAndroidBackgroundCapabilitiesService extends Mock
 class MockAndroidBackgroundRefreshService extends Mock
     implements AndroidBackgroundRefreshService {}
 
+class MockAndroidPriceAlertNotificationService extends Mock
+    implements AndroidPriceAlertNotificationService {}
+
 class FakeSaveRefreshIntervalParams extends Fake
     implements SaveRefreshIntervalParams {}
 
@@ -66,6 +70,7 @@ void main() {
   late MockSavePriceAlertsEnabledUseCase mockSavePriceAlertsUseCase;
   late MockAndroidBackgroundCapabilitiesService mockCapabilitiesService;
   late MockAndroidBackgroundRefreshService mockBackgroundRefreshService;
+  late MockAndroidPriceAlertNotificationService mockNotificationService;
 
   void next(dynamic action) => actionLog.add(action);
 
@@ -87,6 +92,10 @@ void main() {
     mockSavePriceAlertsUseCase = MockSavePriceAlertsEnabledUseCase();
     mockCapabilitiesService = MockAndroidBackgroundCapabilitiesService();
     mockBackgroundRefreshService = MockAndroidBackgroundRefreshService();
+    mockNotificationService = MockAndroidPriceAlertNotificationService();
+    when(
+      () => mockNotificationService.requestPermission(),
+    ).thenAnswer((_) async => true);
     when(() => mockStore.dispatch(any())).thenAnswer(
       (Invocation invocation) =>
           actionLog.add(invocation.positionalArguments.first),
@@ -105,6 +114,9 @@ void main() {
     );
     sl.registerSingleton<AndroidBackgroundRefreshService>(
       mockBackgroundRefreshService,
+    );
+    sl.registerSingleton<AndroidPriceAlertNotificationService>(
+      mockNotificationService,
     );
   });
 
@@ -269,6 +281,7 @@ void main() {
 
       expect(actionLog[0], isA<SavePriceAlertsEnabledAction>());
       expect(actionLog[1], const PriceAlertsEnabledSavedAction(true));
+      verify(() => mockNotificationService.requestPermission()).called(1);
       verify(
         () => mockSavePriceAlertsUseCase(
           const SavePriceAlertsEnabledParams(enabled: true),
@@ -276,6 +289,28 @@ void main() {
       ).called(1);
       verifyNoMoreInteractions(mockSavePriceAlertsUseCase);
       verifyZeroInteractions(mockLoggerService);
+    });
+
+    test('does not save when notification permission is denied', () async {
+      when(
+        () => mockNotificationService.requestPermission(),
+      ).thenAnswer((_) async => false);
+
+      middleware.call(
+        mockStore,
+        const SavePriceAlertsEnabledAction(true),
+        next,
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(actionLog, [const SavePriceAlertsEnabledAction(true)]);
+      verifyNever(() => mockSavePriceAlertsUseCase(any()));
+      verify(
+        () => mockLoggerService.w(
+          t.settings.general.priceAlerts.permissionDenied,
+          showPopup: true,
+        ),
+      ).called(1);
     });
 
     test('dispatches PriceAlertsSaveFailedAction when failed', () async {
@@ -292,6 +327,7 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       expect(actionLog[1], const PriceAlertsSaveFailedAction('failed'));
+      verifyNever(() => mockNotificationService.requestPermission());
       verify(
         () => mockSavePriceAlertsUseCase(
           const SavePriceAlertsEnabledParams(enabled: false),

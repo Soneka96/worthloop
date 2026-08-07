@@ -36,11 +36,13 @@ void main() {
     mockViewModel = MockGeneralSettingsScreenViewModel();
     when(() => mockViewModel.refreshIntervalMinutes).thenReturn(60);
     when(() => mockViewModel.browserRefreshEnabled).thenReturn(false);
+    when(() => mockViewModel.priceAlertsEnabled).thenReturn(false);
     when(() => mockViewModel.isRefreshIntervalBusy).thenReturn(false);
     when(() => mockViewModel.onCheckForUpdates).thenReturn(() {});
     when(() => mockViewModel.onOpenPrivacyPolicy).thenReturn(() {});
     when(() => mockViewModel.onRefreshIntervalSelected).thenReturn((_) {});
     when(() => mockViewModel.onBrowserRefreshEnabledChanged).thenReturn((_) {});
+    when(() => mockViewModel.onPriceAlertsEnabledChanged).thenReturn((_) {});
     when(() => mockViewModel.onOpenBackgroundRestrictions).thenReturn(() {});
 
     sl.registerLazySingleton<AppTheme>(AppTheme.new);
@@ -248,6 +250,7 @@ void main() {
         Key('language-picker-dropdown'),
         Key('refresh-interval-dropdown'),
         Key('browser-refresh-switch'),
+        Key('price-alerts-switch'),
         Key('general-settings-check-for-updates-button'),
         Key('general-settings-privacy-policy-button'),
       ];

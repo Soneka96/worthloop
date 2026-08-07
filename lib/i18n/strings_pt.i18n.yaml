@@ -137,6 +137,13 @@ settings:
       enabledDescription: A atualização pelo navegador pode usar mais bateria e dados ao verificar lojas em segundo plano.
       status: A atualização pelo navegador está ativa. O Android pode atrasar o trabalho em segundo plano.
       fixRestrictions: Corrigir restrições de segundo plano
+    priceAlerts:
+      title: Notificações de descida de preço
+      description: Receba uma notificação quando um produto atingir um novo melhor preço.
+      enabledDescription: As notificações estão ativas para novos melhores preços. É necessária permissão do Android.
+      notificationTitle: "$name está mais barato"
+      notificationBody: "Agora $current, antes $previous."
+      permissionDenied: A permissão de notificações do Android não foi concedida, por isso os alertas permanecem desligados.
     updates:
       title: Atualizações
       version: Versão $version

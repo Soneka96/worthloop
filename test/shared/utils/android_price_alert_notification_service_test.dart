@@ -45,6 +45,19 @@ void main() {
       expect(await service.requestPermission(), isTrue);
     });
 
+    test(
+      'getInitialPriceAlertProductId returns the native product ID',
+      () async {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(channel, (MethodCall call) async {
+              expect(call.method, 'getInitialPriceAlertProductId');
+              return 'product-1';
+            });
+
+        expect(await service.getInitialPriceAlertProductId(), 'product-1');
+      },
+    );
+
     test('returns false when native returns false or null', () async {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(channel, (MethodCall call) async => null);

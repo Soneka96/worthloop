@@ -12,6 +12,7 @@ import 'package:worth_loop/features/settings/presentation/widgets/general/about.
 import 'package:worth_loop/features/settings/presentation/widgets/general/browser_refresh.section.dart';
 import 'package:worth_loop/features/settings/presentation/widgets/general/language.section.dart';
 import 'package:worth_loop/features/settings/presentation/widgets/general/refresh_interval.section.dart';
+import 'package:worth_loop/features/settings/presentation/widgets/general/price_alerts.section.dart';
 import 'package:worth_loop/features/settings/presentation/widgets/general/updates.section.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
@@ -51,6 +52,12 @@ class GeneralSettingsScreen extends StatelessWidget {
               onChanged: viewmodel.onBrowserRefreshEnabledChanged,
               onOpenBackgroundRestrictions:
                   viewmodel.onOpenBackgroundRestrictions,
+            ),
+            Divider(height: context.spacing.xl),
+            PriceAlertsSection(
+              enabled: viewmodel.priceAlertsEnabled,
+              isBusy: viewmodel.isRefreshIntervalBusy,
+              onChanged: viewmodel.onPriceAlertsEnabledChanged,
             ),
             Divider(height: context.spacing.xl),
             UpdatesSection(

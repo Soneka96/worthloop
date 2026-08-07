@@ -18,6 +18,7 @@ import 'package:worth_loop/shared/usecase/no_params.dart';
 import 'package:worth_loop/shared/utils/android_background_capabilities_service.dart';
 import 'package:worth_loop/shared/utils/android_background_refresh_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
+import 'package:worth_loop/shared/utils/android_price_alert_notification_service.dart';
 
 /// Handles General settings actions.
 class GeneralSettingsMiddleware extends MiddlewareClass<AppState> {
@@ -119,6 +120,17 @@ class GeneralSettingsMiddleware extends MiddlewareClass<AppState> {
     Store<AppState> store,
     SavePriceAlertsEnabledAction action,
   ) async {
+    if (action.enabled) {
+      final bool granted = await sl<AndroidPriceAlertNotificationService>()
+          .requestPermission();
+      if (!granted) {
+        sl<LoggerService>().w(
+          t.settings.general.priceAlerts.permissionDenied,
+          showPopup: true,
+        );
+        return;
+      }
+    }
     (await sl<SavePriceAlertsEnabledUseCase>()(
       SavePriceAlertsEnabledParams(enabled: action.enabled),
     )).fold(

@@ -2,6 +2,7 @@
 import 'package:worth_loop/features/products/domain/entities/product_price_drop.entity.dart';
 import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 import 'package:worth_loop/features/settings/domain/usecases/load_refresh_settings.usecase.dart';
+import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
 import 'package:worth_loop/shared/usecase/no_params.dart';
 import 'package:worth_loop/shared/utils/android_price_alert_notification_service.dart';
@@ -45,9 +46,13 @@ class ProductPriceAlertNotificationCoordinator {
       if (!claimed) return;
       final bool shown = await _notifications.showPriceDrop(
         productId: drop.product.id,
-        title: '${drop.product.name} is cheaper',
-        body:
-            'Now ${_format(drop.currentBestPrice)}, down from ${_format(drop.previousBestPrice)}.',
+        title: t.settings.general.priceAlerts.notificationTitle(
+          name: drop.product.name,
+        ),
+        body: t.settings.general.priceAlerts.notificationBody(
+          current: _format(drop.currentBestPrice),
+          previous: _format(drop.previousBestPrice),
+        ),
       );
       if (!shown) {
         try {
