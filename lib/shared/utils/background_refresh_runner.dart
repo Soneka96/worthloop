@@ -13,6 +13,8 @@ class BackgroundRefreshRunner {
   final Future<Either<Failure, RefreshSettings>> Function() _loadSettings;
   final Future<Either<Failure, List<Product>>> Function({
     ProductPriceDropListener? onPriceDrop,
+    SourceRefreshListener? onSourceStatusChanged,
+    RefreshSourcesLoadedListener? onSourcesLoaded,
   })
   _refreshAllProducts;
   final ProductPriceDropListener? _onPriceDrop;
@@ -22,6 +24,8 @@ class BackgroundRefreshRunner {
     required Future<Either<Failure, RefreshSettings>> Function() loadSettings,
     required Future<Either<Failure, List<Product>>> Function({
       ProductPriceDropListener? onPriceDrop,
+      SourceRefreshListener? onSourceStatusChanged,
+      RefreshSourcesLoadedListener? onSourcesLoaded,
     })
     refreshAllProducts,
     ProductPriceDropListener? onPriceDrop,
@@ -35,6 +39,8 @@ class BackgroundRefreshRunner {
   Future<Duration?> runOnce({
     bool force = false,
     Future<void> Function()? onRefreshStarted,
+    RefreshSourcesLoadedListener? onSourcesLoaded,
+    SourceRefreshListener? onSourceStatusChanged,
     Future<void> Function(bool succeeded)? onRefreshOutcome,
   }) async {
     final Either<Failure, RefreshSettings> settingsResult =
@@ -43,7 +49,11 @@ class BackgroundRefreshRunner {
       (_) async {
         await onRefreshStarted?.call();
         final Either<Failure, List<Product>> refreshResult =
-            await _refreshAllProducts(onPriceDrop: _onPriceDrop);
+            await _refreshAllProducts(
+              onPriceDrop: _onPriceDrop,
+              onSourceStatusChanged: onSourceStatusChanged,
+              onSourcesLoaded: onSourcesLoaded,
+            );
         await onRefreshOutcome?.call(
           refreshResult.fold((_) => false, (_) => true),
         );
@@ -55,7 +65,11 @@ class BackgroundRefreshRunner {
         }
         await onRefreshStarted?.call();
         final Either<Failure, List<Product>> refreshResult =
-            await _refreshAllProducts(onPriceDrop: _onPriceDrop);
+            await _refreshAllProducts(
+              onPriceDrop: _onPriceDrop,
+              onSourceStatusChanged: onSourceStatusChanged,
+              onSourcesLoaded: onSourcesLoaded,
+            );
         await onRefreshOutcome?.call(
           refreshResult.fold((_) => false, (_) => true),
         );

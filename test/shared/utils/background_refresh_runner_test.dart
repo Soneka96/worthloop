@@ -9,6 +9,7 @@ import 'package:worth_loop/features/products/domain/value_objects/money.value-ob
 import 'package:worth_loop/features/settings/domain/entities/refresh_settings.entity.dart';
 import 'package:worth_loop/shared/constants/refresh_interval_constants.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/utils/background_refresh_runner.dart';
 
 void main() {
@@ -26,10 +27,11 @@ void main() {
         loadSettings: () async => const Right(
           RefreshSettings(intervalMinutes: 180, browserRefreshEnabled: true),
         ),
-        refreshAllProducts: ({onPriceDrop}) async {
-          refreshCalls++;
-          return Right(<Product>[product]);
-        },
+        refreshAllProducts:
+            ({onPriceDrop, onSourceStatusChanged, onSourcesLoaded}) async {
+              refreshCalls++;
+              return Right(<Product>[product]);
+            },
       );
 
       final Duration? nextDelay = await runner.runOnce();
@@ -44,8 +46,9 @@ void main() {
         loadSettings: () async => const Right(
           RefreshSettings(intervalMinutes: 60, browserRefreshEnabled: true),
         ),
-        refreshAllProducts: ({onPriceDrop}) async =>
-            const Left(DatabaseFailure('fetch failed')),
+        refreshAllProducts:
+            ({onPriceDrop, onSourceStatusChanged, onSourcesLoaded}) async =>
+                const Left(DatabaseFailure('fetch failed')),
       );
 
       await runner.runOnce(
@@ -55,15 +58,37 @@ void main() {
       expect(succeeded, isFalse);
     });
 
+    test('reports start and successful outcome around a refresh', () async {
+      bool started = false;
+      bool? succeeded;
+      final BackgroundRefreshRunner runner = BackgroundRefreshRunner(
+        loadSettings: () async => const Right(
+          RefreshSettings(intervalMinutes: 60, browserRefreshEnabled: true),
+        ),
+        refreshAllProducts:
+            ({onPriceDrop, onSourceStatusChanged, onSourcesLoaded}) async =>
+                Right(<Product>[product]),
+      );
+
+      await runner.runOnce(
+        onRefreshStarted: () async => started = true,
+        onRefreshOutcome: (bool value) async => succeeded = value,
+      );
+
+      expect(started, isTrue);
+      expect(succeeded, isTrue);
+    });
+
     test('stops without refreshing when browser refresh is disabled', () async {
       int refreshCalls = 0;
       final BackgroundRefreshRunner runner = BackgroundRefreshRunner(
         loadSettings: () async =>
             const Right(RefreshSettings(intervalMinutes: 60)),
-        refreshAllProducts: ({onPriceDrop}) async {
-          refreshCalls++;
-          return Right(<Product>[product]);
-        },
+        refreshAllProducts:
+            ({onPriceDrop, onSourceStatusChanged, onSourcesLoaded}) async {
+              refreshCalls++;
+              return Right(<Product>[product]);
+            },
       );
 
       final Duration? nextDelay = await runner.runOnce();
@@ -77,10 +102,11 @@ void main() {
       final BackgroundRefreshRunner runner = BackgroundRefreshRunner(
         loadSettings: () async =>
             const Right(RefreshSettings(intervalMinutes: 60)),
-        refreshAllProducts: ({onPriceDrop}) async {
-          refreshCalls++;
-          return Right(<Product>[product]);
-        },
+        refreshAllProducts:
+            ({onPriceDrop, onSourceStatusChanged, onSourcesLoaded}) async {
+              refreshCalls++;
+              return Right(<Product>[product]);
+            },
       );
 
       final Duration? nextDelay = await runner.runOnce(force: true);
@@ -93,10 +119,11 @@ void main() {
       int refreshCalls = 0;
       final BackgroundRefreshRunner runner = BackgroundRefreshRunner(
         loadSettings: () async => const Left(DatabaseFailure('failed')),
-        refreshAllProducts: ({onPriceDrop}) async {
-          refreshCalls++;
-          return Right(<Product>[product]);
-        },
+        refreshAllProducts:
+            ({onPriceDrop, onSourceStatusChanged, onSourcesLoaded}) async {
+              refreshCalls++;
+              return Right(<Product>[product]);
+            },
       );
 
       final Duration? nextDelay = await runner.runOnce();
@@ -115,8 +142,9 @@ void main() {
           loadSettings: () async => const Right(
             RefreshSettings(intervalMinutes: 0, browserRefreshEnabled: true),
           ),
-          refreshAllProducts: ({onPriceDrop}) async =>
-              Right(<Product>[product]),
+          refreshAllProducts:
+              ({onPriceDrop, onSourceStatusChanged, onSourcesLoaded}) async =>
+                  Right(<Product>[product]),
         );
 
         expect(
@@ -137,16 +165,50 @@ void main() {
         loadSettings: () async => const Right(
           RefreshSettings(intervalMinutes: 60, browserRefreshEnabled: true),
         ),
-        refreshAllProducts: ({onPriceDrop}) async {
-          await onPriceDrop?.call(drop);
-          return Right(<Product>[product]);
-        },
+        refreshAllProducts:
+            ({onPriceDrop, onSourceStatusChanged, onSourcesLoaded}) async {
+              await onPriceDrop?.call(drop);
+              return Right(<Product>[product]);
+            },
         onPriceDrop: (ProductPriceDrop value) async => receivedDrop = value,
       );
 
       await runner.runOnce();
 
       expect(receivedDrop, drop);
+    });
+
+    test('forwards source progress listeners to refreshes', () async {
+      int? totalSources;
+      final List<String> statuses = <String>[];
+      final BackgroundRefreshRunner runner = BackgroundRefreshRunner(
+        loadSettings: () async => const Right(
+          RefreshSettings(intervalMinutes: 60, browserRefreshEnabled: true),
+        ),
+        refreshAllProducts:
+            ({onPriceDrop, onSourceStatusChanged, onSourcesLoaded}) async {
+              await onSourcesLoaded?.call(2);
+              await onSourceStatusChanged?.call(
+                'source-1',
+                SourceRefreshStatus.fetching,
+              );
+              await onSourceStatusChanged?.call(
+                'source-1',
+                SourceRefreshStatus.success,
+              );
+              return Right(<Product>[product]);
+            },
+      );
+
+      await runner.runOnce(
+        onSourcesLoaded: (int value) async => totalSources = value,
+        onSourceStatusChanged: (String sourceId, SourceRefreshStatus status) {
+          statuses.add('$sourceId:${status.name}');
+        },
+      );
+
+      expect(totalSources, 2);
+      expect(statuses, ['source-1:fetching', 'source-1:success']);
     });
   });
 }

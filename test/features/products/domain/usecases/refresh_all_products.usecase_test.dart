@@ -7,6 +7,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_all_products.usecase.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/usecase/no_params.dart';
 import '../../fixtures/product.fixture.dart';
@@ -23,19 +24,55 @@ void main() {
   });
 
   group('Usecase RefreshAllProductsUseCase returns the correct value', () {
+    test('forwards refresh progress callbacks', () async {
+      void sourceListener(String sourceId, SourceRefreshStatus status) {}
+
+      void loadedListener(int count) {}
+      when(
+        () => mockRepository.refreshAllProducts(
+          onSourceStatusChanged: sourceListener,
+          onSourcesLoaded: loadedListener,
+          onPriceDrop: null,
+        ),
+      ).thenAnswer((_) async => Right(<Product>[buildProduct()]));
+
+      await useCase(
+        NoParams(),
+        onSourceStatusChanged: sourceListener,
+        onSourcesLoaded: loadedListener,
+      );
+
+      verify(
+        () => mockRepository.refreshAllProducts(
+          onSourceStatusChanged: sourceListener,
+          onSourcesLoaded: loadedListener,
+          onPriceDrop: null,
+        ),
+      ).called(1);
+      verifyNoMoreInteractions(mockRepository);
+    });
+
     test(
       'returns Right(List<Product>) when the repository returns Right',
       () async {
         final List<Product> products = [buildProduct()];
         when(
-          () => mockRepository.refreshAllProducts(onSourceStatusChanged: null),
+          () => mockRepository.refreshAllProducts(
+            onSourceStatusChanged: null,
+            onSourcesLoaded: null,
+            onPriceDrop: null,
+          ),
         ).thenAnswer((_) async => Right(products));
 
         final Either<Failure, List<Product>> result = await useCase(NoParams());
 
         expect(result, Right(products));
         verify(
-          () => mockRepository.refreshAllProducts(onSourceStatusChanged: null),
+          () => mockRepository.refreshAllProducts(
+            onSourceStatusChanged: null,
+            onSourcesLoaded: null,
+            onPriceDrop: null,
+          ),
         ).called(1);
         verifyNoMoreInteractions(mockRepository);
       },
@@ -46,7 +83,11 @@ void main() {
       () async {
         const DatabaseFailure failure = DatabaseFailure('database failed');
         when(
-          () => mockRepository.refreshAllProducts(onSourceStatusChanged: null),
+          () => mockRepository.refreshAllProducts(
+            onSourceStatusChanged: null,
+            onSourcesLoaded: null,
+            onPriceDrop: null,
+          ),
         ).thenAnswer((_) async => const Left(failure));
 
         final Either<Failure, List<Product>> result = await useCase(NoParams());

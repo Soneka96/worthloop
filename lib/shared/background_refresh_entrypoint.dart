@@ -8,7 +8,9 @@ import 'package:worth_loop/features/products/domain/repositories/Iproducts.repos
 import 'package:worth_loop/features/settings/domain/usecases/load_refresh_settings.usecase.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/usecase/no_params.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
+import 'package:worth_loop/shared/preferences/background_refresh_progress.dart';
 import 'package:worth_loop/shared/utils/background_refresh_loop.dart';
 import 'package:worth_loop/shared/utils/background_refresh_runner.dart';
 import 'package:worth_loop/shared/utils/product_price_alert_notification_coordinator.dart';
@@ -21,8 +23,17 @@ Future<void> backgroundRefreshEntrypoint() async {
 
   final BackgroundRefreshRunner runner = BackgroundRefreshRunner(
     loadSettings: () => sl<LoadRefreshSettingsUseCase>()(NoParams()),
-    refreshAllProducts: ({ProductPriceDropListener? onPriceDrop}) =>
-        sl<RefreshAllProductsUseCase>()(NoParams(), onPriceDrop: onPriceDrop),
+    refreshAllProducts:
+        ({
+          ProductPriceDropListener? onPriceDrop,
+          SourceRefreshListener? onSourceStatusChanged,
+          RefreshSourcesLoadedListener? onSourcesLoaded,
+        }) => sl<RefreshAllProductsUseCase>()(
+          NoParams(),
+          onPriceDrop: onPriceDrop,
+          onSourceStatusChanged: onSourceStatusChanged,
+          onSourcesLoaded: onSourcesLoaded,
+        ),
     onPriceDrop: sl<ProductPriceAlertNotificationCoordinator>().notify,
   );
 
@@ -41,6 +52,52 @@ Future<void> backgroundRefreshEntrypoint() async {
 
   Future<Duration?> runRefresh({required bool force}) async {
     bool? refreshSucceeded;
+    int totalSources = 0;
+    int completedSources = 0;
+    DateTime? startedAt;
+
+    Future<void> persistProgress({
+      required BackgroundRefreshStatus status,
+      String? currentSourceId,
+      String? errorMessage,
+    }) async {
+      try {
+        final DateTime effectiveStartedAt = startedAt ?? DateTime.now();
+        await sl<AppPreferencesStore>().writeBackgroundRefreshProgress(
+          BackgroundRefreshProgress(
+            status: status,
+            totalSources: totalSources,
+            completedSources: completedSources,
+            currentSourceId: currentSourceId,
+            startedAt: effectiveStartedAt,
+            lastProgressAt: DateTime.now(),
+            errorMessage: errorMessage,
+          ),
+        );
+      } catch (_) {
+        // Progress reporting is best effort and must not stop a refresh.
+      }
+    }
+
+    Future<void> onSourceStatusChanged(
+      String sourceId,
+      SourceRefreshStatus status,
+    ) async {
+      final bool isTerminal =
+          status == SourceRefreshStatus.success ||
+          status == SourceRefreshStatus.error ||
+          status == SourceRefreshStatus.unavailable;
+      if (isTerminal) {
+        completedSources++;
+      }
+      await persistProgress(
+        status: BackgroundRefreshStatus.running,
+        currentSourceId: status == SourceRefreshStatus.fetching
+            ? sourceId
+            : null,
+      );
+    }
+
     Future<void> markCompletion(bool succeeded) async {
       try {
         await sl<AppPreferencesStore>().markBackgroundRefreshCompleted(
@@ -54,9 +111,26 @@ Future<void> backgroundRefreshEntrypoint() async {
     try {
       final Duration? nextDelay = await runner.runOnce(
         force: force,
-        onRefreshStarted: () => notifyRefreshStatus('refreshStarted'),
+        onRefreshStarted: () async {
+          startedAt = DateTime.now();
+          totalSources = 0;
+          completedSources = 0;
+          await persistProgress(status: BackgroundRefreshStatus.starting);
+          await notifyRefreshStatus('refreshStarted');
+        },
+        onSourcesLoaded: (int count) async {
+          totalSources = count;
+          await persistProgress(status: BackgroundRefreshStatus.running);
+        },
+        onSourceStatusChanged: onSourceStatusChanged,
         onRefreshOutcome: (bool succeeded) async {
           refreshSucceeded = succeeded;
+          await persistProgress(
+            status: succeeded
+                ? BackgroundRefreshStatus.completed
+                : BackgroundRefreshStatus.failed,
+            errorMessage: succeeded ? null : 'Some sources failed to refresh',
+          );
         },
       );
       if (nextDelay != null) {
@@ -67,6 +141,10 @@ Future<void> backgroundRefreshEntrypoint() async {
       }
       return nextDelay;
     } catch (_) {
+      await persistProgress(
+        status: BackgroundRefreshStatus.failed,
+        errorMessage: 'Refresh failed unexpectedly',
+      );
       await markCompletion(false);
       await notifyRefreshStatus('refreshFailed');
       rethrow;

@@ -1,3 +1,6 @@
+// Dart imports:
+import 'dart:async';
+
 // Package imports:
 import 'package:fpdart/fpdart.dart';
 
@@ -10,7 +13,11 @@ import 'package:worth_loop/shared/failures/failures.dart';
 
 /// Receives source refresh lifecycle updates in request order.
 typedef SourceRefreshListener =
-    void Function(String sourceId, SourceRefreshStatus status);
+    FutureOr<void> Function(String sourceId, SourceRefreshStatus status);
+
+/// Receives the total source count after a refresh loads its sources.
+typedef RefreshSourcesLoadedListener =
+    FutureOr<void> Function(int totalSources);
 
 /// Receives one event after a product's persisted best price drops.
 typedef ProductPriceDropListener = Future<void> Function(ProductPriceDrop drop);
@@ -48,6 +55,7 @@ abstract class IProductsRepository {
   /// Refreshes and persists every tracked product.
   Future<Either<Failure, List<Product>>> refreshAllProducts({
     SourceRefreshListener? onSourceStatusChanged,
+    RefreshSourcesLoadedListener? onSourcesLoaded,
     ProductPriceDropListener? onPriceDrop,
   });
 

@@ -19,10 +19,12 @@ class RefreshAllProductsUseCase
   Future<Either<Failure, List<Product>>> call(
     NoParams params, {
     SourceRefreshListener? onSourceStatusChanged,
+    RefreshSourcesLoadedListener? onSourcesLoaded,
     ProductPriceDropListener? onPriceDrop,
   }) {
     return _repository.refreshAllProducts(
       onSourceStatusChanged: onSourceStatusChanged,
+      onSourcesLoaded: onSourcesLoaded,
       onPriceDrop: onPriceDrop,
     );
   }

@@ -159,6 +159,7 @@ class ProductsRepository implements IProductsRepository {
   @override
   Future<Either<Failure, List<Product>>> refreshAllProducts({
     SourceRefreshListener? onSourceStatusChanged,
+    RefreshSourcesLoadedListener? onSourcesLoaded,
     ProductPriceDropListener? onPriceDrop,
   }) async {
     final Map<String, ProductModel> previousProducts = {};
@@ -179,6 +180,7 @@ class ProductsRepository implements IProductsRepository {
     return sourcesResult.match((Failure failure) async => Left(failure), (
       List<ProductSourceModel> sources,
     ) async {
+      await onSourcesLoaded?.call(sources.length);
       final List<Either<Failure, ProductSourceModel>> results =
           await _fetchSources(
             sources,
@@ -323,16 +325,16 @@ class ProductsRepository implements IProductsRepository {
     SourceRefreshListener? onSourceStatusChanged,
     bool bypassCooldown = false,
   }) async {
-    onSourceStatusChanged?.call(source.id, SourceRefreshStatus.fetching);
+    await onSourceStatusChanged?.call(source.id, SourceRefreshStatus.fetching);
     final Either<Failure, ProductSourceModel> result = bypassCooldown
         ? await _remoteDatasource.fetchPrices(source, bypassCooldown: true)
         : await _remoteDatasource.fetchPrices(source);
-    result.match(
-      (Failure failure) {
-        onSourceStatusChanged?.call(source.id, SourceRefreshStatus.error);
+    await result.match(
+      (Failure failure) async {
+        await onSourceStatusChanged?.call(source.id, SourceRefreshStatus.error);
       },
-      (ProductSourceModel updated) {
-        onSourceStatusChanged?.call(
+      (ProductSourceModel updated) async {
+        await onSourceStatusChanged?.call(
           source.id,
           updated.isAvailable == true
               ? SourceRefreshStatus.success

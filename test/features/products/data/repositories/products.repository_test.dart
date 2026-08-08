@@ -1353,8 +1353,12 @@ void main() {
         ).thenAnswer((_) async => Right([product]));
 
         final List<String> lifecycle = [];
+        int? loadedSourceCount;
         final Either<Failure, List<Product>> result = await repository
             .refreshAllProducts(
+              onSourcesLoaded: (int count) {
+                loadedSourceCount = count;
+              },
               onSourceStatusChanged:
                   (String sourceId, SourceRefreshStatus status) {
                     lifecycle.add('$sourceId:$status');
@@ -1362,6 +1366,7 @@ void main() {
             );
 
         expect(result, const Left(failure));
+        expect(loadedSourceCount, 2);
         expect(
           lifecycle,
           containsAll([
