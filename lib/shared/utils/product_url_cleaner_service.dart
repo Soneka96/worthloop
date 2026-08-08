@@ -18,6 +18,10 @@ class ProductUrlCleanerService {
     'sv1',
     'sv_campaign_id',
     'awc',
+    'gbraid',
+    'gad_campaingid',
+    'gad_source',
+    'srsltid',
   };
 
   /// Trims [url] and strips known tracking/affiliate query params
