@@ -4,6 +4,7 @@ import 'package:meta/meta.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/shared/preferences/background_refresh_progress.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
 
 /// Requests loading every tracked product.
@@ -151,6 +152,18 @@ class SourceRefreshStatusChangedAction extends Equatable {
 
   @override
   List<Object?> get props => [sourceId, status];
+}
+
+/// Carries progress persisted by the background refresh engine.
+@immutable
+class BackgroundRefreshProgressUpdatedAction extends Equatable {
+  /// Latest background refresh snapshot.
+  final BackgroundRefreshProgress progress;
+
+  const BackgroundRefreshProgressUpdatedAction(this.progress);
+
+  @override
+  List<Object?> get props => [progress.toJson()];
 }
 
 /// Clears the active source refresh progress.

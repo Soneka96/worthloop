@@ -36,6 +36,7 @@ import 'package:worth_loop/shared/navigation/navigator_service.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/usecase/no_params.dart';
 import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
+import 'package:worth_loop/shared/preferences/background_refresh_progress.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/url_launcher_service.dart';
 import 'package:worth_loop/shared/utils/product_price_alert_notification_coordinator.dart';
@@ -43,8 +44,12 @@ import 'package:worth_loop/shared/utils/android_background_refresh_service.dart'
 
 /// Handles tracked-product actions.
 class ProductsMiddleware extends MiddlewareClass<AppState> {
+  static const Duration _progressPollInterval = Duration(seconds: 1);
+  static const Duration _progressStaleAfter = Duration(seconds: 45);
+
   bool _refreshInProgress = false;
   StreamSubscription<List<Product>>? _productsSubscription;
+  Timer? _backgroundProgressTimer;
 
   @override
   void call(Store<AppState> store, dynamic action, NextDispatcher next) {
@@ -52,6 +57,7 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
 
     if (action is SourceRefreshFinishedAction) {
       _refreshInProgress = false;
+      _stopBackgroundProgressPolling();
     }
 
     switch (action) {
@@ -99,6 +105,72 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
         sl<LoggerService>().e(error.toString());
       },
     );
+  }
+
+  void _startBackgroundProgressPolling(Store<AppState> store) {
+    _stopBackgroundProgressPolling();
+    unawaited(_pollBackgroundRefreshProgress(store));
+    _backgroundProgressTimer = Timer.periodic(
+      _progressPollInterval,
+      (_) => unawaited(_pollBackgroundRefreshProgress(store)),
+    );
+  }
+
+  void _stopBackgroundProgressPolling() {
+    _backgroundProgressTimer?.cancel();
+    _backgroundProgressTimer = null;
+  }
+
+  Future<void> _pollBackgroundRefreshProgress(Store<AppState> store) async {
+    final BackgroundRefreshProgress? progress;
+    try {
+      progress = await sl<AppPreferencesStore>()
+          .readBackgroundRefreshProgress();
+    } catch (error) {
+      sl<LoggerService>().e(error.toString());
+      return;
+    }
+    if (progress == null || !_refreshInProgress) {
+      return;
+    }
+    store.dispatch(BackgroundRefreshProgressUpdatedAction(progress));
+    final bool isTerminal =
+        progress.status == BackgroundRefreshStatus.completed ||
+        progress.status == BackgroundRefreshStatus.failed;
+    if (isTerminal) {
+      _stopBackgroundProgressPolling();
+      await _finishBackgroundRefresh(
+        store,
+        progress.status == BackgroundRefreshStatus.completed,
+      );
+      return;
+    }
+    if (DateTime.now().difference(progress.lastProgressAt) >
+        _progressStaleAfter) {
+      _stopBackgroundProgressPolling();
+      sl<LoggerService>().e(t.common.refreshFailed);
+      store.dispatch(RefreshAllProductsFailedAction(t.common.refreshFailed));
+      store.dispatch(const SourceRefreshFinishedAction());
+    }
+  }
+
+  Future<void> _finishBackgroundRefresh(
+    Store<AppState> store,
+    bool succeeded,
+  ) async {
+    await (await sl<LoadProductsUseCase>()(NoParams())).fold(
+      (failure) {
+        sl<LoggerService>().e(failure.message, showPopup: true);
+        store.dispatch(ProductsLoadFailedAction(failure.message));
+      },
+      (List<Product> products) {
+        store.dispatch(ProductsLoadedAction(products));
+      },
+    );
+    if (!succeeded) {
+      store.dispatch(RefreshAllProductsFailedAction(t.common.refreshFailed));
+    }
+    store.dispatch(const SourceRefreshFinishedAction());
   }
 
   /// Handles [CreateProductAction].
@@ -314,6 +386,7 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
         store.dispatch(const SourceRefreshFinishedAction());
       } else {
         backgroundRefreshPending = true;
+        _startBackgroundProgressPolling(store);
       }
     } finally {
       if (!backgroundRefreshPending) {

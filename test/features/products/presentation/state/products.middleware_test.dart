@@ -44,6 +44,7 @@ import 'package:worth_loop/shared/utils/url_launcher_service.dart';
 import 'package:worth_loop/shared/utils/product_price_alert_notification_coordinator.dart';
 import 'package:worth_loop/shared/utils/android_background_refresh_service.dart';
 import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
+import 'package:worth_loop/shared/preferences/background_refresh_progress.dart';
 import '../../fixtures/product.fixture.dart';
 import '../../fixtures/product_source.fixture.dart';
 
@@ -192,6 +193,9 @@ void main() {
     when(
       () => mockWatchProductsUseCase(any()),
     ).thenAnswer((_) => const Stream<List<Product>>.empty());
+    when(
+      () => mockPreferencesStore.readBackgroundRefreshProgress(),
+    ).thenAnswer((_) async => null);
   });
 
   tearDown(() async {
@@ -801,6 +805,47 @@ void main() {
       );
       verifyZeroInteractions(mockLoggerService);
       expect(actionLog.whereType<SourceRefreshFinishedAction>(), isEmpty);
+    });
+
+    test('updates progress from the background snapshot', () async {
+      final Product product = buildProduct(
+        sources: [buildProductSource(id: 'source-1')],
+      );
+      final DateTime now = DateTime.now();
+      when(() => store.state).thenReturn(
+        AppState.initial().copyWith(
+          products: ProductsState.initial().copyWith(products: [product]),
+        ),
+      );
+      when(
+        () => mockBackgroundRefreshService.requestRefresh(),
+      ).thenAnswer((_) async => true);
+      when(
+        () => mockPreferencesStore.readBackgroundRefreshProgress(),
+      ).thenAnswer(
+        (_) async => BackgroundRefreshProgress(
+          status: BackgroundRefreshStatus.completed,
+          totalSources: 1,
+          completedSources: 1,
+          currentSourceId: null,
+          startedAt: now,
+          lastProgressAt: now,
+          errorMessage: null,
+        ),
+      );
+      when(
+        () => mockLoadProductsUseCase(any()),
+      ).thenAnswer((_) async => Right([product]));
+
+      middleware.call(store, const RefreshAllProductsAction(), next);
+      await Future<void>.delayed(Duration.zero);
+
+      final BackgroundRefreshProgressUpdatedAction progressAction = actionLog
+          .whereType<BackgroundRefreshProgressUpdatedAction>()
+          .single;
+      expect(progressAction.progress.completedSources, 1);
+      expect(actionLog.last, isA<SourceRefreshFinishedAction>());
+      verify(() => mockLoadProductsUseCase(any())).called(1);
     });
 
     test(

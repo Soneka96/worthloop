@@ -8,6 +8,7 @@ import 'package:worth_loop/features/products/presentation/state/products.actions
 import 'package:worth_loop/features/products/presentation/state/products.reducer.dart';
 import 'package:worth_loop/features/products/presentation/state/products.state.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
+import 'package:worth_loop/shared/preferences/background_refresh_progress.dart';
 import '../../fixtures/product.fixture.dart';
 import '../../fixtures/product_source.fixture.dart';
 
@@ -677,6 +678,46 @@ void main() {
           );
         },
       );
+    },
+  );
+
+  group(
+    'productsReducer processes BackgroundRefreshProgressUpdatedAction correctly',
+    () {
+      test('updates persisted background source counts', () {
+        final ProductsState state = ProductsState.initial().copyWith(
+          refreshCompletedCount: 0,
+          refreshTotalCount: 6,
+        );
+        final DateTime now = DateTime(2026, 8, 8, 12);
+        final ProductsState reducedState = productsReducer(
+          state,
+          BackgroundRefreshProgressUpdatedAction(
+            BackgroundRefreshProgress(
+              status: BackgroundRefreshStatus.running,
+              totalSources: 6,
+              completedSources: 3,
+              currentSourceId: 'source-4',
+              startedAt: now,
+              lastProgressAt: now,
+              errorMessage: null,
+            ),
+          ),
+        );
+
+        expect(state.refreshCompletedCount, 0, reason: 'before progress');
+        expect(state.refreshTotalCount, 6, reason: 'before progress');
+        expect(
+          reducedState.refreshCompletedCount,
+          3,
+          reason: 'background progress completed count',
+        );
+        expect(
+          reducedState.refreshTotalCount,
+          6,
+          reason: 'background progress total count',
+        );
+      });
     },
   );
 

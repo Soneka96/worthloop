@@ -58,6 +58,11 @@ Reducer<ProductsState> productsReducer = combineReducers<ProductsState>([
     sourceRefreshStatusChangedReducer,
   ).call,
 
+  /// Updates counts from the background refresh engine.
+  TypedReducer<ProductsState, BackgroundRefreshProgressUpdatedAction>(
+    backgroundRefreshProgressUpdatedReducer,
+  ).call,
+
   /// Handles [SourceRefreshFinishedAction].
   /// Updates [ProductsState.refreshTotalCount], [ProductsState.refreshCompletedCount].
   TypedReducer<ProductsState, SourceRefreshFinishedAction>(
@@ -342,6 +347,16 @@ ProductsState sourceRefreshStatusChangedReducer(
         : state.refreshCompletedCount,
   );
 }
+
+/// Updates [ProductsState.refreshTotalCount] and [ProductsState.refreshCompletedCount]
+/// from progress written by the background engine.
+ProductsState backgroundRefreshProgressUpdatedReducer(
+  ProductsState state,
+  BackgroundRefreshProgressUpdatedAction action,
+) => state.copyWith(
+  refreshCompletedCount: action.progress.completedSources,
+  refreshTotalCount: action.progress.totalSources,
+);
 
 /// Handles [SourceRefreshFinishedAction].
 /// Updates [ProductsState.refreshTotalCount], [ProductsState.refreshCompletedCount].

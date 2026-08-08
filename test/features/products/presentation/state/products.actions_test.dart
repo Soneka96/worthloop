@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 // Project imports:
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
+import 'package:worth_loop/shared/preferences/background_refresh_progress.dart';
 import '../../fixtures/product.fixture.dart';
 
 void main() {
@@ -57,6 +58,25 @@ void main() {
       expect(action.sourceId, 'source-1');
       expect(action.status, isA<SourceRefreshStatus>());
       expect(action.status, SourceRefreshStatus.unavailable);
+    });
+
+    test('BackgroundRefreshProgressUpdatedAction carries progress', () {
+      final DateTime now = DateTime(2026, 8, 8, 12);
+      final BackgroundRefreshProgress progress = BackgroundRefreshProgress(
+        status: BackgroundRefreshStatus.running,
+        totalSources: 4,
+        completedSources: 1,
+        currentSourceId: 'source-2',
+        startedAt: now,
+        lastProgressAt: now,
+        errorMessage: null,
+      );
+
+      final BackgroundRefreshProgressUpdatedAction action =
+          BackgroundRefreshProgressUpdatedAction(progress);
+
+      expect(action.progress, progress);
+      expect(action.props, [progress.toJson()]);
     });
 
     test('SourceRefreshFinishedAction has no values', () {
