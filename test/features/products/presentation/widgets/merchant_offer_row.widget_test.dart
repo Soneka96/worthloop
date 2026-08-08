@@ -221,6 +221,50 @@ void main() {
     );
 
     testWidgets(
+      'MerchantOfferRow uses muted colors for a blocked refresh action',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildWidget(isRefreshBlocked: true));
+        await tester.drag(
+          find.byKey(const Key('merchant-offer-source-1')),
+          const Offset(-500, 0),
+        );
+        await tester.pump();
+
+        final SlidableAction action = tester.widget(
+          find.byKey(const Key('merchant-offer-source-1-refresh-action')),
+        );
+        final ColorScheme colorScheme = Theme.of(
+          tester.element(find.byType(MerchantOfferRow)),
+        ).colorScheme;
+
+        expect(action.backgroundColor, colorScheme.surfaceContainerHighest);
+        expect(action.foregroundColor, colorScheme.onSurfaceVariant);
+      },
+    );
+
+    testWidgets(
+      'MerchantOfferRow uses primary colors for an enabled refresh action',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildWidget());
+        await tester.drag(
+          find.byKey(const Key('merchant-offer-source-1')),
+          const Offset(-500, 0),
+        );
+        await tester.pump();
+
+        final SlidableAction action = tester.widget(
+          find.byKey(const Key('merchant-offer-source-1-refresh-action')),
+        );
+        final ColorScheme colorScheme = Theme.of(
+          tester.element(find.byType(MerchantOfferRow)),
+        ).colorScheme;
+
+        expect(action.backgroundColor, colorScheme.primaryContainer);
+        expect(action.foregroundColor, colorScheme.onPrimaryContainer);
+      },
+    );
+
+    testWidgets(
       'MerchantOfferRow disables its refresh slide action while queued',
       (WidgetTester tester) async {
         bool refreshed = false;

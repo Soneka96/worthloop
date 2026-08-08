@@ -69,6 +69,10 @@ class MerchantOfferRow extends StatelessWidget {
     final Money? currentPrice = source.currentPrice;
     final DateTime? lastCheckedAt = source.lastCheckedAt;
     final String? priceChange = _priceChangeLabel(context);
+    final bool refreshDisabled =
+        isRefreshBlocked ||
+        refreshStatus == SourceRefreshStatus.queued ||
+        refreshStatus == SourceRefreshStatus.fetching;
 
     return Slidable(
       key: Key('merchant-offer-${source.id}'),
@@ -79,14 +83,13 @@ class MerchantOfferRow extends StatelessWidget {
         children: [
           SlidableAction(
             key: Key('merchant-offer-${source.id}-refresh-action'),
-            onPressed:
-                isRefreshBlocked ||
-                    refreshStatus == SourceRefreshStatus.queued ||
-                    refreshStatus == SourceRefreshStatus.fetching
-                ? null
-                : (_) => onRefresh(),
-            backgroundColor: colorScheme.primaryContainer,
-            foregroundColor: colorScheme.onPrimaryContainer,
+            onPressed: refreshDisabled ? null : (_) => onRefresh(),
+            backgroundColor: refreshDisabled
+                ? colorScheme.surfaceContainerHighest
+                : colorScheme.primaryContainer,
+            foregroundColor: refreshDisabled
+                ? colorScheme.onSurfaceVariant
+                : colorScheme.onPrimaryContainer,
             icon: Icons.refresh,
             label: t.productDetails.refresh,
             borderRadius: BorderRadius.only(
