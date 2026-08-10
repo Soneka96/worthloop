@@ -48,6 +48,9 @@ class ProductSource extends Equatable {
   /// When the most recently completed refresh attempt finished.
   final DateTime? lastRefreshAt;
 
+  /// Live progress of a refresh currently in flight; null when none is.
+  final SourceRefreshStatus? liveStatus;
+
   const ProductSource({
     required this.id,
     required this.productId,
@@ -61,6 +64,7 @@ class ProductSource extends Equatable {
     this.priceChangedAt,
     this.lastRefreshStatus,
     this.lastRefreshAt,
+    this.liveStatus,
   });
 
   /// Creates a source from a validated HTTPS product URL, with no offer yet.
@@ -101,5 +105,6 @@ class ProductSource extends Equatable {
     priceChangedAt,
     lastRefreshStatus,
     lastRefreshAt,
+    liveStatus,
   ];
 }

@@ -17,6 +17,7 @@ ProductSource buildProductSource({
   DateTime? priceChangedAt,
   PriceFetchStatus? lastRefreshStatus,
   DateTime? lastRefreshAt,
+  SourceRefreshStatus? liveStatus,
 }) => ProductSource(
   id: id,
   productId: productId,
@@ -30,4 +31,5 @@ ProductSource buildProductSource({
   priceChangedAt: priceChangedAt,
   lastRefreshStatus: lastRefreshStatus,
   lastRefreshAt: lastRefreshAt,
+  liveStatus: liveStatus,
 );

@@ -17,6 +17,7 @@ ProductSourceModel buildProductSourceModel({
   DateTime? priceChangedAt,
   PriceFetchStatus? lastRefreshStatus,
   DateTime? lastRefreshAt,
+  SourceRefreshStatus? liveStatus,
 }) => ProductSourceModel(
   id: id,
   productId: productId,
@@ -30,4 +31,5 @@ ProductSourceModel buildProductSourceModel({
   priceChangedAt: priceChangedAt,
   lastRefreshStatus: lastRefreshStatus,
   lastRefreshAt: lastRefreshAt,
+  liveStatus: liveStatus,
 );

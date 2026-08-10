@@ -48,6 +48,7 @@ void main() {
         expect(model.currentPrice, isNull);
         expect(model.isAvailable, isNull);
         expect(model.lastCheckedAt, isNull);
+        expect(model.liveStatus, isNull);
       },
     );
 
@@ -69,6 +70,7 @@ void main() {
             priceChangedAt: DateTime(2026, 1, 2, 12),
             lastRefreshStatus: 'blocked',
             lastRefreshAt: DateTime(2026, 1, 3, 12),
+            liveStatus: 'fetching',
             createdAt: DateTime(2026, 1, 1),
           ),
         );
@@ -87,6 +89,8 @@ void main() {
         expect(model.priceChangedAt, DateTime(2026, 1, 2, 12));
         expect(model.lastRefreshStatus, PriceFetchStatus.blocked);
         expect(model.lastRefreshAt, DateTime(2026, 1, 3, 12));
+        expect(model.liveStatus, isA<SourceRefreshStatus>());
+        expect(model.liveStatus, SourceRefreshStatus.fetching);
       },
     );
 
@@ -118,6 +122,36 @@ void main() {
       );
 
       expect(unknownModel.lastRefreshStatus, isNull);
+    });
+
+    test('Method fromRow() maps every known and unknown live status', () {
+      for (final SourceRefreshStatus status in SourceRefreshStatus.values) {
+        final ProductSourceModel model = ProductSourceModel.fromRow(
+          ProductSourceRow(
+            id: 'source-1',
+            productId: 'product-1',
+            url: 'https://example.com/products/1',
+            merchantDomain: 'example.com',
+            liveStatus: status.name,
+            createdAt: DateTime(2026, 1, 1),
+          ),
+        );
+
+        expect(model.liveStatus, status);
+      }
+
+      final ProductSourceModel unknownModel = ProductSourceModel.fromRow(
+        ProductSourceRow(
+          id: 'source-1',
+          productId: 'product-1',
+          url: 'https://example.com/products/1',
+          merchantDomain: 'example.com',
+          liveStatus: 'futureStatus',
+          createdAt: DateTime(2026, 1, 1),
+        ),
+      );
+
+      expect(unknownModel.liveStatus, isNull);
     });
 
     test(
@@ -247,6 +281,7 @@ void main() {
       expect(model.lastCheckedAt, isNull);
       expect(model.lastRefreshStatus, isNull);
       expect(model.lastRefreshAt, isNull);
+      expect(model.liveStatus, isNull);
     });
 
     test(
@@ -261,6 +296,7 @@ void main() {
             priceChangedAt: DateTime(2026, 1, 2, 12),
             lastRefreshStatus: PriceFetchStatus.success,
             lastRefreshAt: DateTime(2026, 1, 3, 12),
+            liveStatus: SourceRefreshStatus.fetching,
           ),
         );
 
@@ -277,6 +313,8 @@ void main() {
         expect(model.priceChangedAt, DateTime(2026, 1, 2, 12));
         expect(model.lastRefreshStatus, PriceFetchStatus.success);
         expect(model.lastRefreshAt, DateTime(2026, 1, 3, 12));
+        expect(model.liveStatus, isA<SourceRefreshStatus>());
+        expect(model.liveStatus, SourceRefreshStatus.fetching);
       },
     );
 
@@ -300,6 +338,7 @@ void main() {
         expect(companion.lastCheckedAt.value, isNull);
         expect(companion.lastRefreshStatus.value, isNull);
         expect(companion.lastRefreshAt.value, isNull);
+        expect(companion.liveStatus.value, isNull);
       },
     );
 
@@ -315,6 +354,7 @@ void main() {
           priceChangedAt: DateTime(2026, 1, 2, 12),
           lastRefreshStatus: PriceFetchStatus.success,
           lastRefreshAt: DateTime(2026, 1, 3, 12),
+          liveStatus: SourceRefreshStatus.fetching,
         );
 
         final ProductSourceTableCompanion companion = model.toCompanion();
@@ -331,6 +371,8 @@ void main() {
         expect(companion.priceChangedAt.value, DateTime(2026, 1, 2, 12));
         expect(companion.lastRefreshStatus.value, 'success');
         expect(companion.lastRefreshAt.value, DateTime(2026, 1, 3, 12));
+        expect(companion.liveStatus.value, isA<String>());
+        expect(companion.liveStatus.value, 'fetching');
       },
     );
   });

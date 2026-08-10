@@ -23,6 +23,7 @@ class ProductSourceModel extends ProductSource {
     super.priceChangedAt,
     super.lastRefreshStatus,
     super.lastRefreshAt,
+    super.liveStatus,
   });
 
   /// Copies a domain source into its persisted model type.
@@ -40,6 +41,7 @@ class ProductSourceModel extends ProductSource {
         priceChangedAt: source.priceChangedAt,
         lastRefreshStatus: source.lastRefreshStatus,
         lastRefreshAt: source.lastRefreshAt,
+        liveStatus: source.liveStatus,
       );
 
   /// Builds a [ProductSourceModel] from a persisted source row.
@@ -69,6 +71,7 @@ class ProductSourceModel extends ProductSource {
       priceChangedAt: row.priceChangedAt,
       lastRefreshStatus: _statusFromName(row.lastRefreshStatus),
       lastRefreshAt: row.lastRefreshAt,
+      liveStatus: _liveStatusFromName(row.liveStatus),
     );
   }
 
@@ -89,10 +92,20 @@ class ProductSourceModel extends ProductSource {
         priceChangedAt: Value(priceChangedAt),
         lastRefreshStatus: Value(lastRefreshStatus?.name),
         lastRefreshAt: Value(lastRefreshAt),
+        liveStatus: Value(liveStatus?.name),
       );
 
   static PriceFetchStatus? _statusFromName(String? name) {
     for (final PriceFetchStatus status in PriceFetchStatus.values) {
+      if (status.name == name) {
+        return status;
+      }
+    }
+    return null;
+  }
+
+  static SourceRefreshStatus? _liveStatusFromName(String? name) {
+    for (final SourceRefreshStatus status in SourceRefreshStatus.values) {
       if (status.name == name) {
         return status;
       }

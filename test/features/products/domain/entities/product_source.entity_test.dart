@@ -34,6 +34,7 @@ void main() {
       expect(source.currentPrice, isNull);
       expect(source.isAvailable, isNull);
       expect(source.lastCheckedAt, isNull);
+      expect(source.liveStatus, isNull);
     });
 
     test('rejects non-HTTPS URLs', () {
@@ -113,6 +114,7 @@ void main() {
         priceChangedAt: changedAt,
         lastRefreshStatus: PriceFetchStatus.success,
         lastRefreshAt: refreshedAt,
+        liveStatus: SourceRefreshStatus.fetching,
       );
 
       expect(source.props, <Object?>[
@@ -128,6 +130,7 @@ void main() {
         changedAt,
         PriceFetchStatus.success,
         refreshedAt,
+        SourceRefreshStatus.fetching,
       ]);
       expect(
         source,
@@ -144,6 +147,7 @@ void main() {
           priceChangedAt: changedAt,
           lastRefreshStatus: PriceFetchStatus.success,
           lastRefreshAt: refreshedAt,
+          liveStatus: SourceRefreshStatus.fetching,
         ),
       );
       expect(
@@ -263,6 +267,22 @@ void main() {
             currentPrice: buildMoney(),
             isAvailable: true,
             lastCheckedAt: DateTime(2026, 1, 4),
+          ),
+        ),
+      );
+      expect(
+        source,
+        isNot(
+          ProductSource(
+            id: 'source-1',
+            productId: 'product-1',
+            url: 'https://example.com/products/1',
+            merchantDomain: 'example.com',
+            createdAt: createdAt,
+            currentPrice: buildMoney(),
+            isAvailable: true,
+            lastCheckedAt: checkedAt,
+            liveStatus: SourceRefreshStatus.queued,
           ),
         ),
       );
