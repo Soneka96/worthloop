@@ -6,16 +6,11 @@ import 'package:worth_loop/features/products/domain/usecases/params/refresh_sour
 
 void main() {
   group('RefreshSourceParams behaves correctly', () {
-    test('compares by sourceId and ignores the listener', () {
-      const RefreshSourceParams first = RefreshSourceParams(
-        sourceId: 'source-1',
+    test('compares equal by sourceId and bypassCooldown', () {
+      expect(
+        const RefreshSourceParams(sourceId: 'source-1'),
+        const RefreshSourceParams(sourceId: 'source-1'),
       );
-      final RefreshSourceParams second = RefreshSourceParams(
-        sourceId: 'source-1',
-        onSourceStatusChanged: (_, _) {},
-      );
-
-      expect(first, second);
     });
 
     test('does not compare equal when sourceId differs', () {

@@ -28,7 +28,7 @@ class ProductsRepository implements IProductsRepository {
   /// Creates a repository backed by local and remote datasources.
   ProductsRepository(this._localDatasource, this._remoteDatasource);
 
-  final Map<String, Queue<ProductSourceModel>> _pendingByMerchant = {};
+  final Map<String, Queue<(ProductSourceModel, bool)>> _pendingByMerchant = {};
   final Set<String> _merchantsInFlight = {};
   final Set<String> _sourceIdsQueuedOrInFlight = {};
   Completer<void>? _wakeSignal;
@@ -412,8 +412,9 @@ class ProductsRepository implements IProductsRepository {
 
   @override
   Future<Either<Failure, Unit>> enqueueSourceRefresh(
-    List<String> sourceIds,
-  ) async {
+    List<String> sourceIds, {
+    bool bypassCooldown = false,
+  }) async {
     if (sourceIds.isEmpty) {
       return const Right(unit);
     }
@@ -433,9 +434,9 @@ class ProductsRepository implements IProductsRepository {
       _pendingByMerchant
           .putIfAbsent(
             source.merchantDomain.toLowerCase(),
-            () => Queue<ProductSourceModel>(),
+            () => Queue<(ProductSourceModel, bool)>(),
           )
-          .add(source);
+          .add((source, bypassCooldown));
       await _localDatasource.writeSourceLiveStatus(
         source.id,
         SourceRefreshStatus.queued,
@@ -463,10 +464,12 @@ class ProductsRepository implements IProductsRepository {
         await _waitForQueuedWork();
         continue;
       }
-      final Queue<ProductSourceModel> queue = _pendingByMerchant[merchant]!;
+      final Queue<(ProductSourceModel, bool)> queue =
+          _pendingByMerchant[merchant]!;
       while (queue.isNotEmpty) {
-        final ProductSourceModel source = queue.removeFirst();
-        await _fetchAndPersistSource(source);
+        final (ProductSourceModel source, bool bypassCooldown) = queue
+            .removeFirst();
+        await _fetchAndPersistSource(source, bypassCooldown: bypassCooldown);
         _sourceIdsQueuedOrInFlight.remove(source.id);
       }
       _pendingByMerchant.remove(merchant);
@@ -497,13 +500,17 @@ class ProductsRepository implements IProductsRepository {
     }
   }
 
-  Future<void> _fetchAndPersistSource(ProductSourceModel source) async {
+  Future<void> _fetchAndPersistSource(
+    ProductSourceModel source, {
+    required bool bypassCooldown,
+  }) async {
     final Either<Failure, ProductSourceModel> result = await _fetchSource(
       source,
       onSourceStatusChanged:
           (String sourceId, SourceRefreshStatus status) async {
             await _localDatasource.writeSourceLiveStatus(sourceId, status);
           },
+      bypassCooldown: bypassCooldown,
     );
     final ProductSourceModel updatedSource = result.match(
       (Failure failure) => _sourceAfterFailure(source, failure),

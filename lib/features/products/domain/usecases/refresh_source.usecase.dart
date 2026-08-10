@@ -2,26 +2,22 @@
 import 'package:fpdart/fpdart.dart';
 
 // Project imports:
-import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/refresh_source.params.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/usecase/usecase.dart';
 
-/// Refreshes one source through [IProductsRepository].
+/// Queues one source for refresh through [IProductsRepository].
 class RefreshSourceUseCase
-    extends UseCase<Either<Failure, Product>, RefreshSourceParams> {
+    extends UseCase<Either<Failure, Unit>, RefreshSourceParams> {
   final IProductsRepository _repository;
 
   RefreshSourceUseCase(this._repository);
 
   @override
-  Future<Either<Failure, Product>> call(RefreshSourceParams params) {
-    return _repository.refreshSource(
+  Future<Either<Failure, Unit>> call(RefreshSourceParams params) {
+    return _repository.enqueueSourceRefresh([
       params.sourceId,
-      onSourceStatusChanged: params.onSourceStatusChanged,
-      bypassCooldown: params.bypassCooldown,
-      onPriceDrop: params.onPriceDrop,
-    );
+    ], bypassCooldown: params.bypassCooldown);
   }
 }

@@ -4,13 +4,10 @@ import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 
 // Project imports:
-import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/refresh_source.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_source.usecase.dart';
-import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
-import '../../fixtures/product.fixture.dart';
 
 class MockIProductsRepository extends Mock implements IProductsRepository {}
 
@@ -25,30 +22,23 @@ void main() {
 
   group('Usecase RefreshSourceUseCase returns the correct value', () {
     test(
-      'delegates sourceId and listener and returns Right(Product)',
+      'queues the source with bypassCooldown = false by default and returns Right(unit)',
       () async {
-        final Product product = buildProduct();
-        void listener(String sourceId, SourceRefreshStatus status) {}
         when(
-          () => mockRepository.refreshSource(
+          () => mockRepository.enqueueSourceRefresh([
             'source-1',
-            onSourceStatusChanged: listener,
-          ),
-        ).thenAnswer((_) async => Right(product));
+          ], bypassCooldown: false),
+        ).thenAnswer((_) async => const Right(unit));
 
-        final Either<Failure, Product> result = await useCase(
-          RefreshSourceParams(
-            sourceId: 'source-1',
-            onSourceStatusChanged: listener,
-          ),
+        final Either<Failure, Unit> result = await useCase(
+          const RefreshSourceParams(sourceId: 'source-1'),
         );
 
-        expect(result, Right(product));
+        expect(result, const Right(unit));
         verify(
-          () => mockRepository.refreshSource(
+          () => mockRepository.enqueueSourceRefresh([
             'source-1',
-            onSourceStatusChanged: listener,
-          ),
+          ], bypassCooldown: false),
         ).called(1);
         verifyNoMoreInteractions(mockRepository);
       },
@@ -57,47 +47,40 @@ void main() {
     test('returns the repository failure unchanged', () async {
       const NetworkFailure failure = NetworkFailure('network failed');
       when(
-        () => mockRepository.refreshSource(
+        () => mockRepository.enqueueSourceRefresh([
           'source-1',
-          onSourceStatusChanged: null,
-        ),
+        ], bypassCooldown: false),
       ).thenAnswer((_) async => const Left(failure));
 
-      final Either<Failure, Product> result = await useCase(
+      final Either<Failure, Unit> result = await useCase(
         const RefreshSourceParams(sourceId: 'source-1'),
       );
 
       expect(result, const Left(failure));
       verify(
-        () => mockRepository.refreshSource(
+        () => mockRepository.enqueueSourceRefresh([
           'source-1',
-          onSourceStatusChanged: null,
-        ),
+        ], bypassCooldown: false),
       ).called(1);
       verifyNoMoreInteractions(mockRepository);
     });
 
     test('forwards an overridden cooldown bypass to the repository', () async {
-      final Product product = buildProduct();
       when(
-        () => mockRepository.refreshSource(
+        () => mockRepository.enqueueSourceRefresh([
           'source-1',
-          onSourceStatusChanged: null,
-          bypassCooldown: true,
-        ),
-      ).thenAnswer((_) async => Right(product));
+        ], bypassCooldown: true),
+      ).thenAnswer((_) async => const Right(unit));
 
-      final Either<Failure, Product> result = await useCase(
+      final Either<Failure, Unit> result = await useCase(
         const RefreshSourceParams(sourceId: 'source-1', bypassCooldown: true),
       );
 
-      expect(result, Right(product));
+      expect(result, const Right(unit));
       verify(
-        () => mockRepository.refreshSource(
+        () => mockRepository.enqueueSourceRefresh([
           'source-1',
-          onSourceStatusChanged: null,
-          bypassCooldown: true,
-        ),
+        ], bypassCooldown: true),
       ).called(1);
       verifyNoMoreInteractions(mockRepository);
     });

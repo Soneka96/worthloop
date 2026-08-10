@@ -595,6 +595,63 @@ void main() {
       },
     );
 
+    test(
+      'forwards bypassCooldown = true to every source in the call',
+      () async {
+        final ProductSourceModel source = buildProductSourceModel(
+          id: 'source-1',
+        );
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([source]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(
+          () => mockRemoteDatasource.fetchPrices(source, bypassCooldown: true),
+        ).thenAnswer((_) async => Right(source));
+        when(
+          () => mockDatasource.updateSourcePrices(source.productId, any()),
+        ).thenAnswer((_) async => Right(buildProductModel()));
+
+        await repository.enqueueSourceRefresh([
+          'source-1',
+        ], bypassCooldown: true);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        verify(
+          () => mockRemoteDatasource.fetchPrices(source, bypassCooldown: true),
+        ).called(1);
+        verifyNever(() => mockRemoteDatasource.fetchPrices(source));
+      },
+    );
+
+    test('defaults bypassCooldown to false when omitted', () async {
+      final ProductSourceModel source = buildProductSourceModel(id: 'source-1');
+      when(
+        () => mockDatasource.loadProductSources(),
+      ).thenAnswer((_) async => Right([source]));
+      when(
+        () => mockDatasource.writeSourceLiveStatus(any(), any()),
+      ).thenAnswer((_) async => const Right(unit));
+      when(
+        () => mockRemoteDatasource.fetchPrices(source),
+      ).thenAnswer((_) async => Right(source));
+      when(
+        () => mockDatasource.updateSourcePrices(source.productId, any()),
+      ).thenAnswer((_) async => Right(buildProductModel()));
+
+      await repository.enqueueSourceRefresh(['source-1']);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+
+      verify(() => mockRemoteDatasource.fetchPrices(source)).called(1);
+      verifyNever(
+        () => mockRemoteDatasource.fetchPrices(source, bypassCooldown: true),
+      );
+    });
+
     test('persists a failed fetch and still clears the live status', () async {
       final ProductSourceModel source = buildProductSourceModel(id: 'source-1');
       const NetworkFailure failure = NetworkFailure('unreachable');

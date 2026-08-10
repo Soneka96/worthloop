@@ -81,9 +81,12 @@ abstract class IProductsRepository {
   Future<Either<Failure, Unit>> resetStaleSourceStatuses();
 
   /// Queues [sourceIds] onto their merchant-specific fetch queues, starting
-  /// worker processing if it isn't already running. Returns once every
-  /// source is queued and its live status is persisted — the actual fetch
-  /// results are not awaited here, they flow through the database as each
-  /// source completes.
-  Future<Either<Failure, Unit>> enqueueSourceRefresh(List<String> sourceIds);
+  /// worker processing if it isn't already running. [bypassCooldown] applies
+  /// to every source in this call. Returns once every source is queued and
+  /// its live status is persisted — the actual fetch results are not
+  /// awaited here, they flow through the database as each source completes.
+  Future<Either<Failure, Unit>> enqueueSourceRefresh(
+    List<String> sourceIds, {
+    bool bypassCooldown,
+  });
 }
