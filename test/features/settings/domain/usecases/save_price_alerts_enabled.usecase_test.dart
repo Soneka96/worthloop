@@ -25,23 +25,23 @@ void main() {
 
   group('Usecase SavePriceAlertsEnabledUseCase returns the correct value', () {
     test('returns Right when repository succeeds', () async {
-      when(() => mockRepository.savePriceAlertsEnabled(true)).thenAnswer(
-        (_) async => Right(buildRefreshSettings(priceAlertsEnabled: true)),
+      when(() => mockRepository.savePriceDropAlertsEnabled(true)).thenAnswer(
+        (_) async => Right(buildRefreshSettings(priceDropAlertsEnabled: true)),
       );
 
       final Either<Failure, RefreshSettings> result = await useCase(
         const SavePriceAlertsEnabledParams(enabled: true),
       );
 
-      expect(result, Right(buildRefreshSettings(priceAlertsEnabled: true)));
-      verify(() => mockRepository.savePriceAlertsEnabled(true)).called(1);
+      expect(result, Right(buildRefreshSettings(priceDropAlertsEnabled: true)));
+      verify(() => mockRepository.savePriceDropAlertsEnabled(true)).called(1);
       verifyNoMoreInteractions(mockRepository);
     });
 
     test('returns Left when repository fails', () async {
       const DatabaseFailure failure = DatabaseFailure('failed');
       when(
-        () => mockRepository.savePriceAlertsEnabled(false),
+        () => mockRepository.savePriceDropAlertsEnabled(false),
       ).thenAnswer((_) async => const Left(failure));
 
       final Either<Failure, RefreshSettings> result = await useCase(
@@ -49,7 +49,7 @@ void main() {
       );
 
       expect(result, const Left(failure));
-      verify(() => mockRepository.savePriceAlertsEnabled(false)).called(1);
+      verify(() => mockRepository.savePriceDropAlertsEnabled(false)).called(1);
       verifyNoMoreInteractions(mockRepository);
     });
   });

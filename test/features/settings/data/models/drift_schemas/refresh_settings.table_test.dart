@@ -31,6 +31,14 @@ void main() {
       expect(row.id, 1);
       expect(row.intervalMinutes, isA<int>());
       expect(row.intervalMinutes, 60);
+      expect(row.priceDropAlertsEnabled, isA<bool>());
+      expect(row.priceDropAlertsEnabled, isFalse);
+      expect(row.priceIncreaseAlertsEnabled, isA<bool>());
+      expect(row.priceIncreaseAlertsEnabled, isFalse);
+      expect(row.refreshCompletedAlertsEnabled, isA<bool>());
+      expect(row.refreshCompletedAlertsEnabled, isFalse);
+      expect(row.showRefreshProgress, isA<bool>());
+      expect(row.showRefreshProgress, isFalse);
     });
 
     test('rejects a non-singleton row identifier', () async {

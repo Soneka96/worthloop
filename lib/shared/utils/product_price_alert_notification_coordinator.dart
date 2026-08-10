@@ -25,7 +25,7 @@ class ProductPriceAlertNotificationCoordinator {
     final settingsResult = await _loadSettings(NoParams());
     final bool enabled = settingsResult.fold(
       (_) => false,
-      (settings) => settings.priceAlertsEnabled,
+      (settings) => settings.priceDropAlertsEnabled,
     );
     if (!enabled) return;
     final String eventKey = _eventKey(drop);

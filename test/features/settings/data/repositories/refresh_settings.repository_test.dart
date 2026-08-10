@@ -143,41 +143,41 @@ void main() {
   );
 
   group(
-    'RefreshSettingsRepository implements savePriceAlertsEnabled() correctly',
+    'RefreshSettingsRepository implements savePriceDropAlertsEnabled() correctly',
     () {
       test(
-        'Method savePriceAlertsEnabled() calls datasource savePriceAlertsEnabled()',
+        'Method savePriceDropAlertsEnabled() calls datasource savePriceDropAlertsEnabled()',
         () async {
-          when(() => mockDatasource.savePriceAlertsEnabled(true)).thenAnswer(
+          when(() => mockDatasource.savePriceDropAlertsEnabled(true)).thenAnswer(
             (_) async =>
-                Right(buildRefreshSettingsModel(priceAlertsEnabled: true)),
+                Right(buildRefreshSettingsModel(priceDropAlertsEnabled: true)),
           );
 
           final Either<Failure, RefreshSettings> result = await repository
-              .savePriceAlertsEnabled(true);
+              .savePriceDropAlertsEnabled(true);
 
           expect(
             result,
-            Right(buildRefreshSettingsModel(priceAlertsEnabled: true)),
+            Right(buildRefreshSettingsModel(priceDropAlertsEnabled: true)),
           );
-          verify(() => mockDatasource.savePriceAlertsEnabled(true)).called(1);
+          verify(() => mockDatasource.savePriceDropAlertsEnabled(true)).called(1);
           verifyNoMoreInteractions(mockDatasource);
         },
       );
 
       test(
-        'Method savePriceAlertsEnabled() returns datasource failures',
+        'Method savePriceDropAlertsEnabled() returns datasource failures',
         () async {
           const DatabaseFailure failure = DatabaseFailure('failed');
           when(
-            () => mockDatasource.savePriceAlertsEnabled(false),
+            () => mockDatasource.savePriceDropAlertsEnabled(false),
           ).thenAnswer((_) async => const Left(failure));
 
           final Either<Failure, RefreshSettings> result = await repository
-              .savePriceAlertsEnabled(false);
+              .savePriceDropAlertsEnabled(false);
 
           expect(result, const Left(failure));
-          verify(() => mockDatasource.savePriceAlertsEnabled(false)).called(1);
+          verify(() => mockDatasource.savePriceDropAlertsEnabled(false)).called(1);
           verifyNoMoreInteractions(mockDatasource);
         },
       );

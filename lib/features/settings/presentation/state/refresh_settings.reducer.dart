@@ -97,7 +97,7 @@ RefreshSettingsState refreshSettingsLoadedReducer(
 ) => state.copyWith(
   intervalMinutes: action.settings.intervalMinutes,
   browserRefreshEnabled: action.settings.browserRefreshEnabled,
-  priceAlertsEnabled: action.settings.priceAlertsEnabled,
+  priceAlertsEnabled: action.settings.priceDropAlertsEnabled,
   isLoading: false,
   error: const None(),
 );

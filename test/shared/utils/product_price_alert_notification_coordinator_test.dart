@@ -56,7 +56,7 @@ void main() {
     );
     when(() => loadSettings(any())).thenAnswer(
       (_) async => const Right(
-        RefreshSettings(intervalMinutes: 60, priceAlertsEnabled: true),
+        RefreshSettings(intervalMinutes: 60, priceDropAlertsEnabled: true),
       ),
     );
   });

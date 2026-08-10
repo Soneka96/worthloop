@@ -5,9 +5,15 @@ import 'package:worth_loop/features/settings/domain/entities/refresh_settings.en
 RefreshSettings buildRefreshSettings({
   int intervalMinutes = 60,
   bool browserRefreshEnabled = false,
-  bool priceAlertsEnabled = false,
+  bool priceDropAlertsEnabled = false,
+  bool priceIncreaseAlertsEnabled = false,
+  bool refreshCompletedAlertsEnabled = false,
+  bool showRefreshProgress = false,
 }) => RefreshSettings(
   intervalMinutes: intervalMinutes,
   browserRefreshEnabled: browserRefreshEnabled,
-  priceAlertsEnabled: priceAlertsEnabled,
+  priceDropAlertsEnabled: priceDropAlertsEnabled,
+  priceIncreaseAlertsEnabled: priceIncreaseAlertsEnabled,
+  refreshCompletedAlertsEnabled: refreshCompletedAlertsEnabled,
+  showRefreshProgress: showRefreshProgress,
 );

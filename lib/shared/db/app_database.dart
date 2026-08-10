@@ -29,7 +29,7 @@ class AppDatabase extends _$AppDatabase {
   static const String fileName = 'app.sqlite';
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -76,22 +76,43 @@ class AppDatabase extends _$AppDatabase {
           productSourceTable.lastRefreshAt,
         );
       }
-      if (from < 7) {
+      if (from < 7 && from >= 2) {
         await migrator.addColumn(
           refreshSettingsTable,
           refreshSettingsTable.browserRefreshEnabled,
         );
       }
-      if (from < 8) {
+      if (from < 8 && from >= 2) {
         await migrator.addColumn(
           refreshSettingsTable,
-          refreshSettingsTable.priceAlertsEnabled,
+          refreshSettingsTable.priceDropAlertsEnabled,
         );
       }
       if (from < 9 && from >= 4) {
         await migrator.addColumn(
           productSourceTable,
           productSourceTable.liveStatus,
+        );
+      }
+      if (from < 10 && from >= 8) {
+        await migrator.renameColumn(
+          refreshSettingsTable,
+          'price_alerts_enabled',
+          refreshSettingsTable.priceDropAlertsEnabled,
+        );
+      }
+      if (from < 10 && from >= 2) {
+        await migrator.addColumn(
+          refreshSettingsTable,
+          refreshSettingsTable.priceIncreaseAlertsEnabled,
+        );
+        await migrator.addColumn(
+          refreshSettingsTable,
+          refreshSettingsTable.refreshCompletedAlertsEnabled,
+        );
+        await migrator.addColumn(
+          refreshSettingsTable,
+          refreshSettingsTable.showRefreshProgress,
         );
       }
     },

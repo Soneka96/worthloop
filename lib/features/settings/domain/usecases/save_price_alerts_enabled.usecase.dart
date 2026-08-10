@@ -23,5 +23,5 @@ class SavePriceAlertsEnabledUseCase
   @override
   Future<Either<Failure, RefreshSettings>> call(
     SavePriceAlertsEnabledParams params,
-  ) => _repository.savePriceAlertsEnabled(params.enabled);
+  ) => _repository.savePriceDropAlertsEnabled(params.enabled);
 }

@@ -19,5 +19,7 @@ abstract class IRefreshSettingsRepository {
   );
 
   /// Persists whether product price-drop notifications are enabled.
-  Future<Either<Failure, RefreshSettings>> savePriceAlertsEnabled(bool enabled);
+  Future<Either<Failure, RefreshSettings>> savePriceDropAlertsEnabled(
+    bool enabled,
+  );
 }

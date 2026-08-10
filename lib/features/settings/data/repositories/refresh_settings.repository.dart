@@ -28,7 +28,7 @@ class RefreshSettingsRepository implements IRefreshSettingsRepository {
   ) => _localDatasource.saveBrowserRefreshEnabled(enabled);
 
   @override
-  Future<Either<Failure, RefreshSettings>> savePriceAlertsEnabled(
+  Future<Either<Failure, RefreshSettings>> savePriceDropAlertsEnabled(
     bool enabled,
-  ) => _localDatasource.savePriceAlertsEnabled(enabled);
+  ) => _localDatasource.savePriceDropAlertsEnabled(enabled);
 }

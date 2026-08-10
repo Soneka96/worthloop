@@ -269,7 +269,7 @@ void main() {
   group('GeneralSettingsMiddleware processes SavePriceAlertsEnabledAction', () {
     test('dispatches PriceAlertsEnabledSavedAction when successful', () async {
       when(() => mockSavePriceAlertsUseCase(any())).thenAnswer(
-        (_) async => Right(buildRefreshSettings(priceAlertsEnabled: true)),
+        (_) async => Right(buildRefreshSettings(priceDropAlertsEnabled: true)),
       );
 
       middleware.call(

@@ -1570,17 +1570,62 @@ class $RefreshSettingsTableTable extends RefreshSettingsTable
         ),
         defaultValue: const Constant(false),
       );
-  static const VerificationMeta _priceAlertsEnabledMeta =
-      const VerificationMeta('priceAlertsEnabled');
+  static const VerificationMeta _priceDropAlertsEnabledMeta =
+      const VerificationMeta('priceDropAlertsEnabled');
   @override
-  late final GeneratedColumn<bool> priceAlertsEnabled = GeneratedColumn<bool>(
-    'price_alerts_enabled',
+  late final GeneratedColumn<bool> priceDropAlertsEnabled =
+      GeneratedColumn<bool>(
+        'price_drop_alerts_enabled',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("price_drop_alerts_enabled" IN (0, 1))',
+        ),
+        defaultValue: const Constant(false),
+      );
+  static const VerificationMeta _priceIncreaseAlertsEnabledMeta =
+      const VerificationMeta('priceIncreaseAlertsEnabled');
+  @override
+  late final GeneratedColumn<bool> priceIncreaseAlertsEnabled =
+      GeneratedColumn<bool>(
+        'price_increase_alerts_enabled',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("price_increase_alerts_enabled" IN (0, 1))',
+        ),
+        defaultValue: const Constant(false),
+      );
+  static const VerificationMeta _refreshCompletedAlertsEnabledMeta =
+      const VerificationMeta('refreshCompletedAlertsEnabled');
+  @override
+  late final GeneratedColumn<bool> refreshCompletedAlertsEnabled =
+      GeneratedColumn<bool>(
+        'refresh_completed_alerts_enabled',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("refresh_completed_alerts_enabled" IN (0, 1))',
+        ),
+        defaultValue: const Constant(false),
+      );
+  static const VerificationMeta _showRefreshProgressMeta =
+      const VerificationMeta('showRefreshProgress');
+  @override
+  late final GeneratedColumn<bool> showRefreshProgress = GeneratedColumn<bool>(
+    'show_refresh_progress',
     aliasedName,
     false,
     type: DriftSqlType.bool,
     requiredDuringInsert: false,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("price_alerts_enabled" IN (0, 1))',
+      'CHECK ("show_refresh_progress" IN (0, 1))',
     ),
     defaultValue: const Constant(false),
   );
@@ -1589,7 +1634,10 @@ class $RefreshSettingsTableTable extends RefreshSettingsTable
     id,
     intervalMinutes,
     browserRefreshEnabled,
-    priceAlertsEnabled,
+    priceDropAlertsEnabled,
+    priceIncreaseAlertsEnabled,
+    refreshCompletedAlertsEnabled,
+    showRefreshProgress,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1624,12 +1672,39 @@ class $RefreshSettingsTableTable extends RefreshSettingsTable
         ),
       );
     }
-    if (data.containsKey('price_alerts_enabled')) {
+    if (data.containsKey('price_drop_alerts_enabled')) {
       context.handle(
-        _priceAlertsEnabledMeta,
-        priceAlertsEnabled.isAcceptableOrUnknown(
-          data['price_alerts_enabled']!,
-          _priceAlertsEnabledMeta,
+        _priceDropAlertsEnabledMeta,
+        priceDropAlertsEnabled.isAcceptableOrUnknown(
+          data['price_drop_alerts_enabled']!,
+          _priceDropAlertsEnabledMeta,
+        ),
+      );
+    }
+    if (data.containsKey('price_increase_alerts_enabled')) {
+      context.handle(
+        _priceIncreaseAlertsEnabledMeta,
+        priceIncreaseAlertsEnabled.isAcceptableOrUnknown(
+          data['price_increase_alerts_enabled']!,
+          _priceIncreaseAlertsEnabledMeta,
+        ),
+      );
+    }
+    if (data.containsKey('refresh_completed_alerts_enabled')) {
+      context.handle(
+        _refreshCompletedAlertsEnabledMeta,
+        refreshCompletedAlertsEnabled.isAcceptableOrUnknown(
+          data['refresh_completed_alerts_enabled']!,
+          _refreshCompletedAlertsEnabledMeta,
+        ),
+      );
+    }
+    if (data.containsKey('show_refresh_progress')) {
+      context.handle(
+        _showRefreshProgressMeta,
+        showRefreshProgress.isAcceptableOrUnknown(
+          data['show_refresh_progress']!,
+          _showRefreshProgressMeta,
         ),
       );
     }
@@ -1654,9 +1729,21 @@ class $RefreshSettingsTableTable extends RefreshSettingsTable
         DriftSqlType.bool,
         data['${effectivePrefix}browser_refresh_enabled'],
       )!,
-      priceAlertsEnabled: attachedDatabase.typeMapping.read(
+      priceDropAlertsEnabled: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
-        data['${effectivePrefix}price_alerts_enabled'],
+        data['${effectivePrefix}price_drop_alerts_enabled'],
+      )!,
+      priceIncreaseAlertsEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}price_increase_alerts_enabled'],
+      )!,
+      refreshCompletedAlertsEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}refresh_completed_alerts_enabled'],
+      )!,
+      showRefreshProgress: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_refresh_progress'],
       )!,
     );
   }
@@ -1679,12 +1766,25 @@ class RefreshSettingsRow extends DataClass
   final bool browserRefreshEnabled;
 
   /// Whether product price-drop notifications are enabled.
-  final bool priceAlertsEnabled;
+  final bool priceDropAlertsEnabled;
+
+  /// Whether product price-increase notifications are enabled.
+  final bool priceIncreaseAlertsEnabled;
+
+  /// Whether a notification is shown for every completed background refresh.
+  final bool refreshCompletedAlertsEnabled;
+
+  /// Whether the background refresh shows a progress bar on its
+  /// notification while sources are being fetched.
+  final bool showRefreshProgress;
   const RefreshSettingsRow({
     required this.id,
     required this.intervalMinutes,
     required this.browserRefreshEnabled,
-    required this.priceAlertsEnabled,
+    required this.priceDropAlertsEnabled,
+    required this.priceIncreaseAlertsEnabled,
+    required this.refreshCompletedAlertsEnabled,
+    required this.showRefreshProgress,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1692,7 +1792,14 @@ class RefreshSettingsRow extends DataClass
     map['id'] = Variable<int>(id);
     map['interval_minutes'] = Variable<int>(intervalMinutes);
     map['browser_refresh_enabled'] = Variable<bool>(browserRefreshEnabled);
-    map['price_alerts_enabled'] = Variable<bool>(priceAlertsEnabled);
+    map['price_drop_alerts_enabled'] = Variable<bool>(priceDropAlertsEnabled);
+    map['price_increase_alerts_enabled'] = Variable<bool>(
+      priceIncreaseAlertsEnabled,
+    );
+    map['refresh_completed_alerts_enabled'] = Variable<bool>(
+      refreshCompletedAlertsEnabled,
+    );
+    map['show_refresh_progress'] = Variable<bool>(showRefreshProgress);
     return map;
   }
 
@@ -1701,7 +1808,10 @@ class RefreshSettingsRow extends DataClass
       id: Value(id),
       intervalMinutes: Value(intervalMinutes),
       browserRefreshEnabled: Value(browserRefreshEnabled),
-      priceAlertsEnabled: Value(priceAlertsEnabled),
+      priceDropAlertsEnabled: Value(priceDropAlertsEnabled),
+      priceIncreaseAlertsEnabled: Value(priceIncreaseAlertsEnabled),
+      refreshCompletedAlertsEnabled: Value(refreshCompletedAlertsEnabled),
+      showRefreshProgress: Value(showRefreshProgress),
     );
   }
 
@@ -1716,7 +1826,18 @@ class RefreshSettingsRow extends DataClass
       browserRefreshEnabled: serializer.fromJson<bool>(
         json['browserRefreshEnabled'],
       ),
-      priceAlertsEnabled: serializer.fromJson<bool>(json['priceAlertsEnabled']),
+      priceDropAlertsEnabled: serializer.fromJson<bool>(
+        json['priceDropAlertsEnabled'],
+      ),
+      priceIncreaseAlertsEnabled: serializer.fromJson<bool>(
+        json['priceIncreaseAlertsEnabled'],
+      ),
+      refreshCompletedAlertsEnabled: serializer.fromJson<bool>(
+        json['refreshCompletedAlertsEnabled'],
+      ),
+      showRefreshProgress: serializer.fromJson<bool>(
+        json['showRefreshProgress'],
+      ),
     );
   }
   @override
@@ -1726,7 +1847,14 @@ class RefreshSettingsRow extends DataClass
       'id': serializer.toJson<int>(id),
       'intervalMinutes': serializer.toJson<int>(intervalMinutes),
       'browserRefreshEnabled': serializer.toJson<bool>(browserRefreshEnabled),
-      'priceAlertsEnabled': serializer.toJson<bool>(priceAlertsEnabled),
+      'priceDropAlertsEnabled': serializer.toJson<bool>(priceDropAlertsEnabled),
+      'priceIncreaseAlertsEnabled': serializer.toJson<bool>(
+        priceIncreaseAlertsEnabled,
+      ),
+      'refreshCompletedAlertsEnabled': serializer.toJson<bool>(
+        refreshCompletedAlertsEnabled,
+      ),
+      'showRefreshProgress': serializer.toJson<bool>(showRefreshProgress),
     };
   }
 
@@ -1734,12 +1862,21 @@ class RefreshSettingsRow extends DataClass
     int? id,
     int? intervalMinutes,
     bool? browserRefreshEnabled,
-    bool? priceAlertsEnabled,
+    bool? priceDropAlertsEnabled,
+    bool? priceIncreaseAlertsEnabled,
+    bool? refreshCompletedAlertsEnabled,
+    bool? showRefreshProgress,
   }) => RefreshSettingsRow(
     id: id ?? this.id,
     intervalMinutes: intervalMinutes ?? this.intervalMinutes,
     browserRefreshEnabled: browserRefreshEnabled ?? this.browserRefreshEnabled,
-    priceAlertsEnabled: priceAlertsEnabled ?? this.priceAlertsEnabled,
+    priceDropAlertsEnabled:
+        priceDropAlertsEnabled ?? this.priceDropAlertsEnabled,
+    priceIncreaseAlertsEnabled:
+        priceIncreaseAlertsEnabled ?? this.priceIncreaseAlertsEnabled,
+    refreshCompletedAlertsEnabled:
+        refreshCompletedAlertsEnabled ?? this.refreshCompletedAlertsEnabled,
+    showRefreshProgress: showRefreshProgress ?? this.showRefreshProgress,
   );
   RefreshSettingsRow copyWithCompanion(RefreshSettingsTableCompanion data) {
     return RefreshSettingsRow(
@@ -1750,9 +1887,18 @@ class RefreshSettingsRow extends DataClass
       browserRefreshEnabled: data.browserRefreshEnabled.present
           ? data.browserRefreshEnabled.value
           : this.browserRefreshEnabled,
-      priceAlertsEnabled: data.priceAlertsEnabled.present
-          ? data.priceAlertsEnabled.value
-          : this.priceAlertsEnabled,
+      priceDropAlertsEnabled: data.priceDropAlertsEnabled.present
+          ? data.priceDropAlertsEnabled.value
+          : this.priceDropAlertsEnabled,
+      priceIncreaseAlertsEnabled: data.priceIncreaseAlertsEnabled.present
+          ? data.priceIncreaseAlertsEnabled.value
+          : this.priceIncreaseAlertsEnabled,
+      refreshCompletedAlertsEnabled: data.refreshCompletedAlertsEnabled.present
+          ? data.refreshCompletedAlertsEnabled.value
+          : this.refreshCompletedAlertsEnabled,
+      showRefreshProgress: data.showRefreshProgress.present
+          ? data.showRefreshProgress.value
+          : this.showRefreshProgress,
     );
   }
 
@@ -1762,7 +1908,12 @@ class RefreshSettingsRow extends DataClass
           ..write('id: $id, ')
           ..write('intervalMinutes: $intervalMinutes, ')
           ..write('browserRefreshEnabled: $browserRefreshEnabled, ')
-          ..write('priceAlertsEnabled: $priceAlertsEnabled')
+          ..write('priceDropAlertsEnabled: $priceDropAlertsEnabled, ')
+          ..write('priceIncreaseAlertsEnabled: $priceIncreaseAlertsEnabled, ')
+          ..write(
+            'refreshCompletedAlertsEnabled: $refreshCompletedAlertsEnabled, ',
+          )
+          ..write('showRefreshProgress: $showRefreshProgress')
           ..write(')'))
         .toString();
   }
@@ -1772,7 +1923,10 @@ class RefreshSettingsRow extends DataClass
     id,
     intervalMinutes,
     browserRefreshEnabled,
-    priceAlertsEnabled,
+    priceDropAlertsEnabled,
+    priceIncreaseAlertsEnabled,
+    refreshCompletedAlertsEnabled,
+    showRefreshProgress,
   );
   @override
   bool operator ==(Object other) =>
@@ -1781,7 +1935,11 @@ class RefreshSettingsRow extends DataClass
           other.id == this.id &&
           other.intervalMinutes == this.intervalMinutes &&
           other.browserRefreshEnabled == this.browserRefreshEnabled &&
-          other.priceAlertsEnabled == this.priceAlertsEnabled);
+          other.priceDropAlertsEnabled == this.priceDropAlertsEnabled &&
+          other.priceIncreaseAlertsEnabled == this.priceIncreaseAlertsEnabled &&
+          other.refreshCompletedAlertsEnabled ==
+              this.refreshCompletedAlertsEnabled &&
+          other.showRefreshProgress == this.showRefreshProgress);
 }
 
 class RefreshSettingsTableCompanion
@@ -1789,32 +1947,50 @@ class RefreshSettingsTableCompanion
   final Value<int> id;
   final Value<int> intervalMinutes;
   final Value<bool> browserRefreshEnabled;
-  final Value<bool> priceAlertsEnabled;
+  final Value<bool> priceDropAlertsEnabled;
+  final Value<bool> priceIncreaseAlertsEnabled;
+  final Value<bool> refreshCompletedAlertsEnabled;
+  final Value<bool> showRefreshProgress;
   const RefreshSettingsTableCompanion({
     this.id = const Value.absent(),
     this.intervalMinutes = const Value.absent(),
     this.browserRefreshEnabled = const Value.absent(),
-    this.priceAlertsEnabled = const Value.absent(),
+    this.priceDropAlertsEnabled = const Value.absent(),
+    this.priceIncreaseAlertsEnabled = const Value.absent(),
+    this.refreshCompletedAlertsEnabled = const Value.absent(),
+    this.showRefreshProgress = const Value.absent(),
   });
   RefreshSettingsTableCompanion.insert({
     this.id = const Value.absent(),
     this.intervalMinutes = const Value.absent(),
     this.browserRefreshEnabled = const Value.absent(),
-    this.priceAlertsEnabled = const Value.absent(),
+    this.priceDropAlertsEnabled = const Value.absent(),
+    this.priceIncreaseAlertsEnabled = const Value.absent(),
+    this.refreshCompletedAlertsEnabled = const Value.absent(),
+    this.showRefreshProgress = const Value.absent(),
   });
   static Insertable<RefreshSettingsRow> custom({
     Expression<int>? id,
     Expression<int>? intervalMinutes,
     Expression<bool>? browserRefreshEnabled,
-    Expression<bool>? priceAlertsEnabled,
+    Expression<bool>? priceDropAlertsEnabled,
+    Expression<bool>? priceIncreaseAlertsEnabled,
+    Expression<bool>? refreshCompletedAlertsEnabled,
+    Expression<bool>? showRefreshProgress,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (intervalMinutes != null) 'interval_minutes': intervalMinutes,
       if (browserRefreshEnabled != null)
         'browser_refresh_enabled': browserRefreshEnabled,
-      if (priceAlertsEnabled != null)
-        'price_alerts_enabled': priceAlertsEnabled,
+      if (priceDropAlertsEnabled != null)
+        'price_drop_alerts_enabled': priceDropAlertsEnabled,
+      if (priceIncreaseAlertsEnabled != null)
+        'price_increase_alerts_enabled': priceIncreaseAlertsEnabled,
+      if (refreshCompletedAlertsEnabled != null)
+        'refresh_completed_alerts_enabled': refreshCompletedAlertsEnabled,
+      if (showRefreshProgress != null)
+        'show_refresh_progress': showRefreshProgress,
     });
   }
 
@@ -1822,14 +1998,23 @@ class RefreshSettingsTableCompanion
     Value<int>? id,
     Value<int>? intervalMinutes,
     Value<bool>? browserRefreshEnabled,
-    Value<bool>? priceAlertsEnabled,
+    Value<bool>? priceDropAlertsEnabled,
+    Value<bool>? priceIncreaseAlertsEnabled,
+    Value<bool>? refreshCompletedAlertsEnabled,
+    Value<bool>? showRefreshProgress,
   }) {
     return RefreshSettingsTableCompanion(
       id: id ?? this.id,
       intervalMinutes: intervalMinutes ?? this.intervalMinutes,
       browserRefreshEnabled:
           browserRefreshEnabled ?? this.browserRefreshEnabled,
-      priceAlertsEnabled: priceAlertsEnabled ?? this.priceAlertsEnabled,
+      priceDropAlertsEnabled:
+          priceDropAlertsEnabled ?? this.priceDropAlertsEnabled,
+      priceIncreaseAlertsEnabled:
+          priceIncreaseAlertsEnabled ?? this.priceIncreaseAlertsEnabled,
+      refreshCompletedAlertsEnabled:
+          refreshCompletedAlertsEnabled ?? this.refreshCompletedAlertsEnabled,
+      showRefreshProgress: showRefreshProgress ?? this.showRefreshProgress,
     );
   }
 
@@ -1847,8 +2032,23 @@ class RefreshSettingsTableCompanion
         browserRefreshEnabled.value,
       );
     }
-    if (priceAlertsEnabled.present) {
-      map['price_alerts_enabled'] = Variable<bool>(priceAlertsEnabled.value);
+    if (priceDropAlertsEnabled.present) {
+      map['price_drop_alerts_enabled'] = Variable<bool>(
+        priceDropAlertsEnabled.value,
+      );
+    }
+    if (priceIncreaseAlertsEnabled.present) {
+      map['price_increase_alerts_enabled'] = Variable<bool>(
+        priceIncreaseAlertsEnabled.value,
+      );
+    }
+    if (refreshCompletedAlertsEnabled.present) {
+      map['refresh_completed_alerts_enabled'] = Variable<bool>(
+        refreshCompletedAlertsEnabled.value,
+      );
+    }
+    if (showRefreshProgress.present) {
+      map['show_refresh_progress'] = Variable<bool>(showRefreshProgress.value);
     }
     return map;
   }
@@ -1859,7 +2059,12 @@ class RefreshSettingsTableCompanion
           ..write('id: $id, ')
           ..write('intervalMinutes: $intervalMinutes, ')
           ..write('browserRefreshEnabled: $browserRefreshEnabled, ')
-          ..write('priceAlertsEnabled: $priceAlertsEnabled')
+          ..write('priceDropAlertsEnabled: $priceDropAlertsEnabled, ')
+          ..write('priceIncreaseAlertsEnabled: $priceIncreaseAlertsEnabled, ')
+          ..write(
+            'refreshCompletedAlertsEnabled: $refreshCompletedAlertsEnabled, ',
+          )
+          ..write('showRefreshProgress: $showRefreshProgress')
           ..write(')'))
         .toString();
   }
@@ -2801,14 +3006,20 @@ typedef $$RefreshSettingsTableTableCreateCompanionBuilder =
       Value<int> id,
       Value<int> intervalMinutes,
       Value<bool> browserRefreshEnabled,
-      Value<bool> priceAlertsEnabled,
+      Value<bool> priceDropAlertsEnabled,
+      Value<bool> priceIncreaseAlertsEnabled,
+      Value<bool> refreshCompletedAlertsEnabled,
+      Value<bool> showRefreshProgress,
     });
 typedef $$RefreshSettingsTableTableUpdateCompanionBuilder =
     RefreshSettingsTableCompanion Function({
       Value<int> id,
       Value<int> intervalMinutes,
       Value<bool> browserRefreshEnabled,
-      Value<bool> priceAlertsEnabled,
+      Value<bool> priceDropAlertsEnabled,
+      Value<bool> priceIncreaseAlertsEnabled,
+      Value<bool> refreshCompletedAlertsEnabled,
+      Value<bool> showRefreshProgress,
     });
 
 class $$RefreshSettingsTableTableFilterComposer
@@ -2835,8 +3046,23 @@ class $$RefreshSettingsTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<bool> get priceAlertsEnabled => $composableBuilder(
-    column: $table.priceAlertsEnabled,
+  ColumnFilters<bool> get priceDropAlertsEnabled => $composableBuilder(
+    column: $table.priceDropAlertsEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get priceIncreaseAlertsEnabled => $composableBuilder(
+    column: $table.priceIncreaseAlertsEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get refreshCompletedAlertsEnabled => $composableBuilder(
+    column: $table.refreshCompletedAlertsEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showRefreshProgress => $composableBuilder(
+    column: $table.showRefreshProgress,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2865,8 +3091,23 @@ class $$RefreshSettingsTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<bool> get priceAlertsEnabled => $composableBuilder(
-    column: $table.priceAlertsEnabled,
+  ColumnOrderings<bool> get priceDropAlertsEnabled => $composableBuilder(
+    column: $table.priceDropAlertsEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get priceIncreaseAlertsEnabled => $composableBuilder(
+    column: $table.priceIncreaseAlertsEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get refreshCompletedAlertsEnabled => $composableBuilder(
+    column: $table.refreshCompletedAlertsEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showRefreshProgress => $composableBuilder(
+    column: $table.showRefreshProgress,
     builder: (column) => ColumnOrderings(column),
   );
 }
@@ -2893,8 +3134,23 @@ class $$RefreshSettingsTableTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<bool> get priceAlertsEnabled => $composableBuilder(
-    column: $table.priceAlertsEnabled,
+  GeneratedColumn<bool> get priceDropAlertsEnabled => $composableBuilder(
+    column: $table.priceDropAlertsEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get priceIncreaseAlertsEnabled => $composableBuilder(
+    column: $table.priceIncreaseAlertsEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get refreshCompletedAlertsEnabled => $composableBuilder(
+    column: $table.refreshCompletedAlertsEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showRefreshProgress => $composableBuilder(
+    column: $table.showRefreshProgress,
     builder: (column) => column,
   );
 }
@@ -2945,24 +3201,38 @@ class $$RefreshSettingsTableTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<int> intervalMinutes = const Value.absent(),
                 Value<bool> browserRefreshEnabled = const Value.absent(),
-                Value<bool> priceAlertsEnabled = const Value.absent(),
+                Value<bool> priceDropAlertsEnabled = const Value.absent(),
+                Value<bool> priceIncreaseAlertsEnabled = const Value.absent(),
+                Value<bool> refreshCompletedAlertsEnabled =
+                    const Value.absent(),
+                Value<bool> showRefreshProgress = const Value.absent(),
               }) => RefreshSettingsTableCompanion(
                 id: id,
                 intervalMinutes: intervalMinutes,
                 browserRefreshEnabled: browserRefreshEnabled,
-                priceAlertsEnabled: priceAlertsEnabled,
+                priceDropAlertsEnabled: priceDropAlertsEnabled,
+                priceIncreaseAlertsEnabled: priceIncreaseAlertsEnabled,
+                refreshCompletedAlertsEnabled: refreshCompletedAlertsEnabled,
+                showRefreshProgress: showRefreshProgress,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 Value<int> intervalMinutes = const Value.absent(),
                 Value<bool> browserRefreshEnabled = const Value.absent(),
-                Value<bool> priceAlertsEnabled = const Value.absent(),
+                Value<bool> priceDropAlertsEnabled = const Value.absent(),
+                Value<bool> priceIncreaseAlertsEnabled = const Value.absent(),
+                Value<bool> refreshCompletedAlertsEnabled =
+                    const Value.absent(),
+                Value<bool> showRefreshProgress = const Value.absent(),
               }) => RefreshSettingsTableCompanion.insert(
                 id: id,
                 intervalMinutes: intervalMinutes,
                 browserRefreshEnabled: browserRefreshEnabled,
-                priceAlertsEnabled: priceAlertsEnabled,
+                priceDropAlertsEnabled: priceDropAlertsEnabled,
+                priceIncreaseAlertsEnabled: priceIncreaseAlertsEnabled,
+                refreshCompletedAlertsEnabled: refreshCompletedAlertsEnabled,
+                showRefreshProgress: showRefreshProgress,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

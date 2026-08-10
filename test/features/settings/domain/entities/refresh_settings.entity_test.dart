@@ -11,16 +11,22 @@ void main() {
       final RefreshSettings refreshSettings = buildRefreshSettings(
         intervalMinutes: 180,
         browserRefreshEnabled: true,
-        priceAlertsEnabled: true,
+        priceDropAlertsEnabled: true,
+        priceIncreaseAlertsEnabled: true,
+        refreshCompletedAlertsEnabled: true,
+        showRefreshProgress: true,
       );
 
-      expect(refreshSettings.props, [180, true, true]);
+      expect(refreshSettings.props, [180, true, true, true, true, true]);
       expect(
         refreshSettings,
         buildRefreshSettings(
           intervalMinutes: 180,
           browserRefreshEnabled: true,
-          priceAlertsEnabled: true,
+          priceDropAlertsEnabled: true,
+          priceIncreaseAlertsEnabled: true,
+          refreshCompletedAlertsEnabled: true,
+          showRefreshProgress: true,
         ),
       );
       expect(
@@ -29,7 +35,62 @@ void main() {
           buildRefreshSettings(
             intervalMinutes: 180,
             browserRefreshEnabled: false,
-            priceAlertsEnabled: true,
+            priceDropAlertsEnabled: true,
+            priceIncreaseAlertsEnabled: true,
+            refreshCompletedAlertsEnabled: true,
+            showRefreshProgress: true,
+          ),
+        ),
+      );
+      expect(
+        refreshSettings,
+        isNot(
+          buildRefreshSettings(
+            intervalMinutes: 180,
+            browserRefreshEnabled: true,
+            priceDropAlertsEnabled: false,
+            priceIncreaseAlertsEnabled: true,
+            refreshCompletedAlertsEnabled: true,
+            showRefreshProgress: true,
+          ),
+        ),
+      );
+      expect(
+        refreshSettings,
+        isNot(
+          buildRefreshSettings(
+            intervalMinutes: 180,
+            browserRefreshEnabled: true,
+            priceDropAlertsEnabled: true,
+            priceIncreaseAlertsEnabled: false,
+            refreshCompletedAlertsEnabled: true,
+            showRefreshProgress: true,
+          ),
+        ),
+      );
+      expect(
+        refreshSettings,
+        isNot(
+          buildRefreshSettings(
+            intervalMinutes: 180,
+            browserRefreshEnabled: true,
+            priceDropAlertsEnabled: true,
+            priceIncreaseAlertsEnabled: true,
+            refreshCompletedAlertsEnabled: false,
+            showRefreshProgress: true,
+          ),
+        ),
+      );
+      expect(
+        refreshSettings,
+        isNot(
+          buildRefreshSettings(
+            intervalMinutes: 180,
+            browserRefreshEnabled: true,
+            priceDropAlertsEnabled: true,
+            priceIncreaseAlertsEnabled: true,
+            refreshCompletedAlertsEnabled: true,
+            showRefreshProgress: false,
           ),
         ),
       );

@@ -140,7 +140,7 @@ class GeneralSettingsMiddleware extends MiddlewareClass<AppState> {
       },
       (RefreshSettings settings) {
         store.dispatch(
-          PriceAlertsEnabledSavedAction(settings.priceAlertsEnabled),
+          PriceAlertsEnabledSavedAction(settings.priceDropAlertsEnabled),
         );
       },
     );

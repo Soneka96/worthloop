@@ -50,7 +50,12 @@ class RefreshSettingsLocalDatasource {
       final RefreshSettingsModel model = RefreshSettingsModel(
         intervalMinutes: intervalMinutes,
         browserRefreshEnabled: existing?.browserRefreshEnabled ?? false,
-        priceAlertsEnabled: existing?.priceAlertsEnabled ?? false,
+        priceDropAlertsEnabled: existing?.priceDropAlertsEnabled ?? false,
+        priceIncreaseAlertsEnabled:
+            existing?.priceIncreaseAlertsEnabled ?? false,
+        refreshCompletedAlertsEnabled:
+            existing?.refreshCompletedAlertsEnabled ?? false,
+        showRefreshProgress: existing?.showRefreshProgress ?? false,
       );
       await _db
           .into(_db.refreshSettingsTable)
@@ -74,7 +79,12 @@ class RefreshSettingsLocalDatasource {
         intervalMinutes:
             existing?.intervalMinutes ?? RefreshIntervalConstants.hourly,
         browserRefreshEnabled: enabled,
-        priceAlertsEnabled: existing?.priceAlertsEnabled ?? false,
+        priceDropAlertsEnabled: existing?.priceDropAlertsEnabled ?? false,
+        priceIncreaseAlertsEnabled:
+            existing?.priceIncreaseAlertsEnabled ?? false,
+        refreshCompletedAlertsEnabled:
+            existing?.refreshCompletedAlertsEnabled ?? false,
+        showRefreshProgress: existing?.showRefreshProgress ?? false,
       );
       await _db
           .into(_db.refreshSettingsTable)
@@ -87,7 +97,7 @@ class RefreshSettingsLocalDatasource {
   }
 
   /// Persists whether product price-drop notifications are enabled.
-  Future<Either<Failure, RefreshSettingsModel>> savePriceAlertsEnabled(
+  Future<Either<Failure, RefreshSettingsModel>> savePriceDropAlertsEnabled(
     bool enabled,
   ) async {
     try {
@@ -98,7 +108,12 @@ class RefreshSettingsLocalDatasource {
         intervalMinutes:
             existing?.intervalMinutes ?? RefreshIntervalConstants.hourly,
         browserRefreshEnabled: existing?.browserRefreshEnabled ?? false,
-        priceAlertsEnabled: enabled,
+        priceDropAlertsEnabled: enabled,
+        priceIncreaseAlertsEnabled:
+            existing?.priceIncreaseAlertsEnabled ?? false,
+        refreshCompletedAlertsEnabled:
+            existing?.refreshCompletedAlertsEnabled ?? false,
+        showRefreshProgress: existing?.showRefreshProgress ?? false,
       );
       await _db
           .into(_db.refreshSettingsTable)
