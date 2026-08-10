@@ -197,56 +197,66 @@ ProductsState productsLoadedReducer(
 }
 
 /// Handles [ProductsUpdatedFromDatabaseAction].
-/// Updates [ProductsState.products], [ProductsState.sourceRefreshStatuses], [ProductsState.refreshCompletedCount].
+/// Updates [ProductsState.products], [ProductsState.sourceRefreshStatuses],
+/// [ProductsState.isRefreshingAll], [ProductsState.refreshingProductIds].
 ProductsState productsUpdatedFromDatabaseReducer(
   ProductsState state,
   ProductsUpdatedFromDatabaseAction action,
 ) {
   final Map<String, SourceRefreshStatus> sourceRefreshStatuses =
-      _sourceRefreshStatusesForProducts(
-        action.products,
-        state.sourceRefreshStatuses,
-      );
-  final int completedCount = state.sourceRefreshStatuses.keys
-      .map((String sourceId) => sourceRefreshStatuses[sourceId])
-      .where(_isTerminalSourceRefreshStatus)
-      .length;
+      _sourceRefreshStatusesForProducts(action.products);
+  final bool anySourceActive = sourceRefreshStatuses.values.any(
+    _isActiveSourceRefreshStatus,
+  );
   return state.copyWith(
     products: action.products,
     sourceRefreshStatuses: sourceRefreshStatuses,
-    refreshCompletedCount: state.refreshTotalCount == 0
-        ? state.refreshCompletedCount
-        : completedCount,
+    isRefreshingAll: state.isRefreshingAll && anySourceActive,
+    refreshingProductIds: anySourceActive
+        ? state.refreshingProductIds
+        : const {},
   );
 }
 
+/// Derives each source's [SourceRefreshStatus] from its persisted DB state:
+/// [ProductSource.liveStatus] when a refresh is actively in flight, else a
+/// terminal status derived from [ProductSource.lastRefreshStatus]. The DB
+/// row is the sole source of truth — nothing here is carried over from the
+/// previous Redux state.
 Map<String, SourceRefreshStatus> _sourceRefreshStatusesForProducts(
-  List<Product> products, [
-  Map<String, SourceRefreshStatus> existing = const {},
-]) {
-  final Set<String> sourceIds = products
-      .expand((Product product) => product.sources)
-      .map((ProductSource source) => source.id)
-      .toSet();
-  final Map<String, SourceRefreshStatus> statuses = {
-    for (final MapEntry<String, SourceRefreshStatus> entry in existing.entries)
-      if (sourceIds.contains(entry.key)) entry.key: entry.value,
-  };
+  List<Product> products,
+) {
+  final Map<String, SourceRefreshStatus> statuses = {};
   for (final Product product in products) {
     for (final ProductSource source in product.sources) {
-      final PriceFetchStatus? refreshStatus = source.lastRefreshStatus;
-      if (refreshStatus == null || refreshStatus == PriceFetchStatus.none) {
-        continue;
+      final SourceRefreshStatus? status = _sourceRefreshStatusFor(source);
+      if (status != null) {
+        statuses[source.id] = status;
       }
-      statuses[source.id] = refreshStatus == PriceFetchStatus.success
-          ? source.isAvailable == true
-                ? SourceRefreshStatus.success
-                : SourceRefreshStatus.unavailable
-          : SourceRefreshStatus.error;
     }
   }
   return statuses;
 }
+
+SourceRefreshStatus? _sourceRefreshStatusFor(ProductSource source) {
+  final SourceRefreshStatus? liveStatus = source.liveStatus;
+  if (liveStatus != null) {
+    return liveStatus;
+  }
+  final PriceFetchStatus? refreshStatus = source.lastRefreshStatus;
+  if (refreshStatus == null || refreshStatus == PriceFetchStatus.none) {
+    return null;
+  }
+  return refreshStatus == PriceFetchStatus.success
+      ? source.isAvailable == true
+            ? SourceRefreshStatus.success
+            : SourceRefreshStatus.unavailable
+      : SourceRefreshStatus.error;
+}
+
+bool _isActiveSourceRefreshStatus(SourceRefreshStatus status) =>
+    status == SourceRefreshStatus.queued ||
+    status == SourceRefreshStatus.fetching;
 
 /// Handles [ProductsLoadFailedAction].
 /// Updates [ProductsState.isLoading], [ProductsState.error].
@@ -391,7 +401,7 @@ ProductsState productRefreshedReducer(
     ...state.productRefreshStatuses,
   }..remove(action.product.id);
   final Map<String, SourceRefreshStatus> sourceRefreshStatuses =
-      _sourceRefreshStatusesForProducts(products, state.sourceRefreshStatuses);
+      _sourceRefreshStatusesForProducts(products);
   return state.copyWith(
     products: products,
     refreshingProductIds: refreshingProductIds,
@@ -472,7 +482,7 @@ ProductsState sourceAddedReducer(
       )
       .toList(growable: false);
   final Map<String, SourceRefreshStatus> sourceRefreshStatuses =
-      _sourceRefreshStatusesForProducts(products, state.sourceRefreshStatuses);
+      _sourceRefreshStatusesForProducts(products);
   return state.copyWith(
     products: products,
     sourceRefreshStatuses: sourceRefreshStatuses,
@@ -510,7 +520,7 @@ ProductsState sourceEditedReducer(
       )
       .toList(growable: false);
   final Map<String, SourceRefreshStatus> sourceRefreshStatuses =
-      _sourceRefreshStatusesForProducts(products, state.sourceRefreshStatuses);
+      _sourceRefreshStatusesForProducts(products);
   return state.copyWith(
     products: products,
     sourceRefreshStatuses: sourceRefreshStatuses,
@@ -554,7 +564,7 @@ ProductsState sourceDeletedReducer(
   final Set<String> deletingSourceIds = {...state.deletingSourceIds}
     ..remove(action.sourceId);
   final Map<String, SourceRefreshStatus> sourceRefreshStatuses =
-      _sourceRefreshStatusesForProducts(products, state.sourceRefreshStatuses);
+      _sourceRefreshStatusesForProducts(products);
   return state.copyWith(
     products: products,
     deletingSourceIds: deletingSourceIds,

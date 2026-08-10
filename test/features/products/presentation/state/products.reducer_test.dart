@@ -152,35 +152,41 @@ void main() {
     'productsReducer processes ProductsUpdatedFromDatabaseAction correctly',
     () {
       test(
-        'ProductsUpdatedFromDatabaseAction updates products and persisted progress',
+        "ProductsUpdatedFromDatabaseAction derives each source's status from its DB row",
         () {
           final Product product = buildProduct(
             sources: [
               buildProductSource(
                 id: 'source-1',
-                isAvailable: true,
-                lastRefreshStatus: PriceFetchStatus.success,
+                liveStatus: SourceRefreshStatus.fetching,
               ),
-              buildProductSource(id: 'source-2'),
+              buildProductSource(
+                id: 'source-2',
+                liveStatus: SourceRefreshStatus.queued,
+              ),
               buildProductSource(
                 id: 'source-3',
-                isAvailable: false,
+                isAvailable: true,
                 lastRefreshStatus: PriceFetchStatus.success,
               ),
               buildProductSource(
                 id: 'source-4',
+                isAvailable: false,
+                lastRefreshStatus: PriceFetchStatus.success,
+              ),
+              buildProductSource(
+                id: 'source-5',
                 lastRefreshStatus: PriceFetchStatus.blocked,
+              ),
+              buildProductSource(id: 'source-6'),
+              buildProductSource(
+                id: 'source-7',
+                lastRefreshStatus: PriceFetchStatus.success,
               ),
             ],
           );
           final ProductsState state = ProductsState.initial().copyWith(
-            isRefreshingAll: true,
-            sourceRefreshStatuses: {
-              'source-1': SourceRefreshStatus.fetching,
-              'source-2': SourceRefreshStatus.queued,
-              'stale-source': SourceRefreshStatus.error,
-            },
-            refreshTotalCount: 2,
+            sourceRefreshStatuses: {'stale-source': SourceRefreshStatus.error},
           );
 
           final ProductsState reducedState = productsReducer(
@@ -191,59 +197,173 @@ void main() {
           expect(state.products, isEmpty, reason: 'products start empty');
           expect(reducedState.products, [product], reason: 'products update');
           expect(
-            reducedState.isRefreshingAll,
-            isTrue,
-            reason: 'active refresh remains active',
-          );
-          expect(
             reducedState.sourceRefreshStatuses['source-1'],
-            SourceRefreshStatus.success,
+            SourceRefreshStatus.fetching,
+            reason: 'liveStatus wins when present',
           );
           expect(
             reducedState.sourceRefreshStatuses['source-2'],
             SourceRefreshStatus.queued,
+            reason: 'liveStatus wins when present',
           );
           expect(
             reducedState.sourceRefreshStatuses['source-3'],
-            SourceRefreshStatus.unavailable,
+            SourceRefreshStatus.success,
+            reason: 'falls back to lastRefreshStatus when liveStatus is null',
           );
           expect(
             reducedState.sourceRefreshStatuses['source-4'],
+            SourceRefreshStatus.unavailable,
+            reason: 'an unavailable offer is not a success',
+          );
+          expect(
+            reducedState.sourceRefreshStatuses['source-5'],
             SourceRefreshStatus.error,
+            reason: 'a non-success PriceFetchStatus maps to error',
+          );
+          expect(
+            reducedState.sourceRefreshStatuses.containsKey('source-6'),
+            isFalse,
+            reason: 'a source with no live or persisted status is idle',
+          );
+          expect(
+            reducedState.sourceRefreshStatuses['source-7'],
+            SourceRefreshStatus.unavailable,
+            reason: 'a null isAvailable is not treated as a success',
           );
           expect(
             reducedState.sourceRefreshStatuses.containsKey('stale-source'),
             isFalse,
+            reason: 'the DB row is authoritative, stale Redux state is dropped',
           );
           expect(
             reducedState.refreshCompletedCount,
-            1,
-            reason: 'one persisted source is complete',
+            state.refreshCompletedCount,
+            reason: 'this reducer does not own the legacy progress counters',
           );
-          expect(reducedState.refreshTotalCount, 2);
-        },
-      );
-
-      test(
-        'ProductsUpdatedFromDatabaseAction preserves progress when no refresh is active',
-        () {
-          final Product product = buildProduct();
-          final ProductsState state = ProductsState.initial().copyWith(
-            refreshCompletedCount: 2,
-          );
-
-          final ProductsState reducedState = productsReducer(
-            state,
-            ProductsUpdatedFromDatabaseAction([product]),
-          );
-
           expect(
-            reducedState.refreshCompletedCount,
-            2,
-            reason: 'no active refresh owns the counter',
+            reducedState.refreshTotalCount,
+            state.refreshTotalCount,
+            reason: 'this reducer does not own the legacy progress counters',
           );
         },
       );
+
+      test('ProductsUpdatedFromDatabaseAction keeps isRefreshingAll and '
+          'refreshingProductIds while a source is still active', () {
+        final Product first = buildProduct(
+          id: 'product-1',
+          sources: [
+            buildProductSource(
+              id: 'source-1',
+              liveStatus: SourceRefreshStatus.fetching,
+            ),
+          ],
+        );
+        final Product second = buildProduct(
+          id: 'product-2',
+          sources: [
+            buildProductSource(
+              id: 'source-2',
+              productId: 'product-2',
+              url: 'https://example.com/2',
+              liveStatus: SourceRefreshStatus.queued,
+            ),
+          ],
+        );
+        final ProductsState state = ProductsState.initial().copyWith(
+          isRefreshingAll: true,
+          refreshingProductIds: {'product-1'},
+        );
+
+        final ProductsState reducedState = productsReducer(
+          state,
+          ProductsUpdatedFromDatabaseAction([first, second]),
+        );
+
+        expect(
+          state.isRefreshingAll,
+          isTrue,
+          reason: 'a refresh-all was already in progress',
+        );
+        expect(
+          reducedState.isRefreshingAll,
+          isTrue,
+          reason: 'a source across products is still fetching or queued',
+        );
+        expect(
+          reducedState.refreshingProductIds,
+          {'product-1'},
+          reason: 'unchanged while any source remains active',
+        );
+      });
+
+      test('ProductsUpdatedFromDatabaseAction leaves isRefreshingAll false '
+          'even while a source is active', () {
+        final Product product = buildProduct(
+          sources: [
+            buildProductSource(
+              id: 'source-1',
+              liveStatus: SourceRefreshStatus.fetching,
+            ),
+          ],
+        );
+        final ProductsState state = ProductsState.initial();
+
+        final ProductsState reducedState = productsReducer(
+          state,
+          ProductsUpdatedFromDatabaseAction([product]),
+        );
+
+        expect(
+          state.isRefreshingAll,
+          isFalse,
+          reason: 'no refresh-all was in progress before this update',
+        );
+        expect(
+          reducedState.isRefreshingAll,
+          isFalse,
+          reason: 'a source being active does not start a refresh-all',
+        );
+      });
+
+      test('ProductsUpdatedFromDatabaseAction clears isRefreshingAll and '
+          'refreshingProductIds once no source is active', () {
+        final Product product = buildProduct(
+          sources: [
+            buildProductSource(
+              id: 'source-1',
+              isAvailable: true,
+              lastRefreshStatus: PriceFetchStatus.success,
+            ),
+          ],
+        );
+        final ProductsState state = ProductsState.initial().copyWith(
+          isRefreshingAll: true,
+          refreshingProductIds: {'product-1'},
+        );
+
+        final ProductsState reducedState = productsReducer(
+          state,
+          ProductsUpdatedFromDatabaseAction([product]),
+        );
+
+        expect(
+          state.isRefreshingAll,
+          isTrue,
+          reason: 'a refresh-all was already in progress',
+        );
+        expect(
+          reducedState.isRefreshingAll,
+          isFalse,
+          reason: 'no source is active anymore',
+        );
+        expect(
+          reducedState.refreshingProductIds,
+          isEmpty,
+          reason: 'no source is active anymore',
+        );
+      });
     },
   );
 
