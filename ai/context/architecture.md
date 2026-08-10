@@ -213,6 +213,14 @@ one as soon as presentation needs a typed shape, even with no repository/usecase
 - No generic "service layer" inside a feature.
 - App-wide plumbing with no business rule behind it → `lib/shared/utils/`, DI-registered — never
   wrapped in a usecase.
+- **Feature-specific orchestration/engine classes** (a worker pool, a queue runner, a scheduling
+  loop) still go in `lib/shared/utils/`, never inside `features/<name>/`, even when their whole
+  purpose is one feature's business logic and they import that feature's own domain types
+  directly. The feature folder is reserved for the five named layers only (datasources,
+  models/entities, repositories, usecases, screens/sections/widgets/state) — anything else is
+  shared, owned/instantiated by whichever layer needs it (usually the repository). Precedent:
+  `background_refresh_runner.dart`/`background_refresh_loop.dart` — pure products-refresh
+  orchestration, still in `shared/utils/`, not `features/products/`.
 - **Who can call a service**: middleware, usecases, repositories, datasources, and other services
   may call a service directly. Presentation (a widget, Section, Screen, or ViewModel) may never
   call a service directly — no exceptions beyond the one documented below (`ChangeNotifier`-based
