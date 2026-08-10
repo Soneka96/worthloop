@@ -9,7 +9,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
-import 'package:worth_loop/shared/preferences/background_refresh_progress.dart';
 
 void main() {
   late Directory tempDirectory;
@@ -49,81 +48,6 @@ void main() {
 
       expect(await store.consumeBackgroundRefreshCompletion(), isFalse);
       expect(await store.consumeBackgroundRefreshCompletion(), isNull);
-    });
-
-    test('persists and reads background refresh progress separately', () async {
-      expect(await store.readBackgroundRefreshProgress(), isNull);
-
-      final DateTime startedAt = DateTime(2026, 8, 8, 12);
-      await store.writeBackgroundRefreshProgress(
-        BackgroundRefreshProgress(
-          status: BackgroundRefreshStatus.running,
-          totalSources: 5,
-          completedSources: 2,
-          currentSourceId: 'source-3',
-          startedAt: startedAt,
-          lastProgressAt: startedAt.add(const Duration(seconds: 8)),
-          errorMessage: null,
-        ),
-      );
-
-      final BackgroundRefreshProgress? progress = await store
-          .readBackgroundRefreshProgress();
-      expect(progress?.status, BackgroundRefreshStatus.running);
-      expect(progress?.totalSources, 5);
-      expect(progress?.completedSources, 2);
-      expect(progress?.currentSourceId, 'source-3');
-      expect(progress?.startedAt, startedAt);
-    });
-
-    test(
-      'replaces stale progress fields without changing preferences',
-      () async {
-        await store.writeZoomLevel(125);
-        final DateTime startedAt = DateTime(2026, 8, 8, 12);
-        await store.writeBackgroundRefreshProgress(
-          BackgroundRefreshProgress(
-            status: BackgroundRefreshStatus.running,
-            totalSources: 5,
-            completedSources: 2,
-            currentSourceId: 'source-3',
-            startedAt: startedAt,
-            lastProgressAt: startedAt,
-            errorMessage: 'old error',
-          ),
-        );
-        await store.writeBackgroundRefreshProgress(
-          BackgroundRefreshProgress(
-            status: BackgroundRefreshStatus.completed,
-            totalSources: 5,
-            completedSources: 5,
-            currentSourceId: null,
-            startedAt: startedAt,
-            lastProgressAt: startedAt.add(const Duration(minutes: 1)),
-            errorMessage: null,
-          ),
-        );
-
-        final BackgroundRefreshProgress? progress = await store
-            .readBackgroundRefreshProgress();
-        expect(progress?.status, BackgroundRefreshStatus.completed);
-        expect(progress?.completedSources, 5);
-        expect(progress?.currentSourceId, isNull);
-        expect(progress?.errorMessage, isNull);
-        expect(await store.readZoomLevel(), 125.0);
-      },
-    );
-
-    test('returns null for malformed background progress', () async {
-      final File file = File(
-        '${tempDirectory.path}/background-refresh-progress.json',
-      );
-      await file.writeAsString('{"status":"invalid"}');
-
-      expect(await store.readBackgroundRefreshProgress(), isNull);
-
-      await file.writeAsString('[]');
-      expect(await store.readBackgroundRefreshProgress(), isNull);
     });
 
     test('persists every supported preference', () async {

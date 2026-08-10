@@ -9,7 +9,6 @@ import 'package:path_provider/path_provider.dart';
 // Project imports:
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
-import 'package:worth_loop/shared/preferences/background_refresh_progress.dart';
 
 /// Persists app-wide display preferences as one JSON file.
 class AppPreferencesStore {
@@ -32,29 +31,6 @@ class AppPreferencesStore {
   static const String _priceAlertEventsKey = 'priceAlertEvents';
   static const String _backgroundRefreshCompletionKey =
       'backgroundRefreshCompletion';
-  static const String _backgroundProgressFileName =
-      'background-refresh-progress.json';
-
-  /// Reads the latest progress snapshot written by the background engine.
-  Future<BackgroundRefreshProgress?> readBackgroundRefreshProgress() async {
-    final File file = await _resolveProgressFile();
-    return _readFileLocked<BackgroundRefreshProgress?>(
-      file,
-      (Object? value) => BackgroundRefreshProgress.fromJson(value),
-    );
-  }
-
-  /// Replaces the progress snapshot atomically for both Flutter engines.
-  Future<void> writeBackgroundRefreshProgress(
-    BackgroundRefreshProgress progress,
-  ) async {
-    final File file = await _resolveProgressFile();
-    await _updateFileLocked<void>(file, (Map<String, dynamic> data) {
-      data
-        ..clear()
-        ..addAll(progress.toJson());
-    });
-  }
 
   /// Records that a background refresh finished, including its outcome.
   Future<void> markBackgroundRefreshCompleted({required bool succeeded}) async {
@@ -254,12 +230,6 @@ class AppPreferencesStore {
     return File('${directory.path}/$_fileName');
   }
 
-  Future<File> _resolveProgressFile() async {
-    final Directory directory =
-        _directoryOverride ?? await getApplicationSupportDirectory();
-    return File('${directory.path}/$_backgroundProgressFileName');
-  }
-
   Future<Map<String, dynamic>> _readAll() async {
     final File file = await _resolveFile();
     if (!await file.exists()) {
@@ -318,28 +288,6 @@ class AppPreferencesStore {
       final T result = update(data);
       await file.writeAsString(jsonEncode(data));
       return result;
-    } finally {
-      await handle.unlock();
-      await handle.close();
-    }
-  }
-
-  Future<T> _readFileLocked<T>(
-    File file,
-    T Function(Object? value) read,
-  ) async {
-    if (!await file.exists()) return read(null);
-    final RandomAccessFile handle = await File(
-      '${file.path}.lock',
-    ).open(mode: FileMode.write);
-    await handle.lock();
-    try {
-      try {
-        final Object? value = jsonDecode(await file.readAsString());
-        return read(value);
-      } on FormatException {
-        return read(null);
-      }
     } finally {
       await handle.unlock();
       await handle.close();

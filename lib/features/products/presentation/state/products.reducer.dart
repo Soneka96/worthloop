@@ -46,23 +46,6 @@ Reducer<ProductsState> productsReducer = combineReducers<ProductsState>([
   /// Updates [ProductsState.refreshingProductIds], [ProductsState.error].
   TypedReducer<ProductsState, RefreshProductAction>(refreshProductReducer).call,
 
-  /// Handles [SourceRefreshStartedAction].
-  /// Updates [ProductsState.sourceRefreshStatuses], [ProductsState.refreshTotalCount], [ProductsState.refreshCompletedCount].
-  TypedReducer<ProductsState, SourceRefreshStartedAction>(
-    sourceRefreshStartedReducer,
-  ).call,
-
-  /// Handles [SourceRefreshStatusChangedAction].
-  /// Updates [ProductsState.sourceRefreshStatuses], [ProductsState.refreshCompletedCount].
-  TypedReducer<ProductsState, SourceRefreshStatusChangedAction>(
-    sourceRefreshStatusChangedReducer,
-  ).call,
-
-  /// Updates counts from the background refresh engine.
-  TypedReducer<ProductsState, BackgroundRefreshProgressUpdatedAction>(
-    backgroundRefreshProgressUpdatedReducer,
-  ).call,
-
   /// Handles [SourceRefreshFinishedAction].
   /// Updates [ProductsState.refreshTotalCount], [ProductsState.refreshCompletedCount].
   TypedReducer<ProductsState, SourceRefreshFinishedAction>(
@@ -317,57 +300,6 @@ ProductsState refreshProductReducer(
   );
 }
 
-/// Handles [SourceRefreshStartedAction].
-/// Updates [ProductsState.sourceRefreshStatuses], [ProductsState.refreshTotalCount], [ProductsState.refreshCompletedCount].
-ProductsState sourceRefreshStartedReducer(
-  ProductsState state,
-  SourceRefreshStartedAction action,
-) {
-  final Map<String, SourceRefreshStatus> sourceRefreshStatuses = {
-    if (!action.isGlobal) ...state.sourceRefreshStatuses,
-    for (final String sourceId in action.sourceIds)
-      sourceId: SourceRefreshStatus.queued,
-  };
-  return state.copyWith(
-    sourceRefreshStatuses: sourceRefreshStatuses,
-    refreshCompletedCount: 0,
-    refreshTotalCount: action.sourceIds.length,
-  );
-}
-
-/// Handles [SourceRefreshStatusChangedAction].
-/// Updates [ProductsState.sourceRefreshStatuses], [ProductsState.refreshCompletedCount].
-ProductsState sourceRefreshStatusChangedReducer(
-  ProductsState state,
-  SourceRefreshStatusChangedAction action,
-) {
-  final SourceRefreshStatus? previousStatus =
-      state.sourceRefreshStatuses[action.sourceId];
-  final Map<String, SourceRefreshStatus> sourceRefreshStatuses = {
-    ...state.sourceRefreshStatuses,
-    action.sourceId: action.status,
-  };
-  final bool becameTerminal =
-      _isTerminalSourceRefreshStatus(action.status) &&
-      !_isTerminalSourceRefreshStatus(previousStatus);
-  return state.copyWith(
-    sourceRefreshStatuses: sourceRefreshStatuses,
-    refreshCompletedCount: becameTerminal
-        ? state.refreshCompletedCount + 1
-        : state.refreshCompletedCount,
-  );
-}
-
-/// Updates [ProductsState.refreshTotalCount] and [ProductsState.refreshCompletedCount]
-/// from progress written by the background engine.
-ProductsState backgroundRefreshProgressUpdatedReducer(
-  ProductsState state,
-  BackgroundRefreshProgressUpdatedAction action,
-) => state.copyWith(
-  refreshCompletedCount: action.progress.completedSources,
-  refreshTotalCount: action.progress.totalSources,
-);
-
 /// Handles [SourceRefreshFinishedAction].
 /// Updates [ProductsState.refreshTotalCount], [ProductsState.refreshCompletedCount].
 ///
@@ -377,11 +309,6 @@ ProductsState sourceRefreshFinishedReducer(
   ProductsState state,
   SourceRefreshFinishedAction action,
 ) => state.copyWith(refreshCompletedCount: 0, refreshTotalCount: 0);
-
-bool _isTerminalSourceRefreshStatus(SourceRefreshStatus? status) =>
-    status == SourceRefreshStatus.success ||
-    status == SourceRefreshStatus.error ||
-    status == SourceRefreshStatus.unavailable;
 
 /// Handles [ProductRefreshedAction].
 /// Updates [ProductsState.products], [ProductsState.refreshingProductIds], [ProductsState.error].

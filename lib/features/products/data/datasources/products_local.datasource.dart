@@ -146,39 +146,6 @@ class ProductsLocalDatasource {
     }
   }
 
-  /// Touches one product's checked timestamp — used when it has no sources
-  /// to refresh — and returns its latest value.
-  Future<Either<Failure, ProductModel>> refreshProduct(String productId) async {
-    try {
-      final ProductModel? product = await _touchProduct(productId);
-      return product == null
-          ? const Left(NotFoundFailure('Product not found'))
-          : Right(product);
-    } on SqliteException catch (error) {
-      _loggerService.e(error.toString());
-      return Left(DatabaseFailure(error.toString()));
-    } on StateError catch (error) {
-      _loggerService.e(error.toString());
-      return Left(CurrencyFailure(error.toString()));
-    }
-  }
-
-  /// Touches every product's checked timestamp and returns all products.
-  Future<Either<Failure, List<ProductModel>>> refreshAllProducts() async {
-    try {
-      await (_db.update(
-        _db.productTable,
-      )).write(ProductTableCompanion(lastUpdatedAt: Value(DateTime.now())));
-      return Right(await _readProducts());
-    } on SqliteException catch (error) {
-      _loggerService.e(error.toString());
-      return Left(DatabaseFailure(error.toString()));
-    } on StateError catch (error) {
-      _loggerService.e(error.toString());
-      return Left(CurrencyFailure(error.toString()));
-    }
-  }
-
   /// Renames an existing product and returns its persisted representation.
   Future<Either<Failure, ProductModel>> renameProduct(
     String productId,
@@ -590,19 +557,4 @@ class ProductsLocalDatasource {
     return models;
   }
 
-  Future<ProductModel?> _touchProduct(String productId) async {
-    return _db.transaction(() async {
-      final ProductRow? row = await (_db.select(
-        _db.productTable,
-      )..where((table) => table.id.equals(productId))).getSingleOrNull();
-      if (row == null) {
-        return null;
-      }
-      await (_db.update(_db.productTable)
-            ..where((table) => table.id.equals(productId)))
-          .write(ProductTableCompanion(lastUpdatedAt: Value(DateTime.now())));
-      final List<ProductModel> products = await _readProducts();
-      return products.firstWhere((ProductModel item) => item.id == productId);
-    });
-  }
 }
