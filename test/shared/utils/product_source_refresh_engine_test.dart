@@ -45,6 +45,7 @@ void main() {
         direction: PriceChangeDirection.none,
       ),
     );
+    registerFallbackValue(buildProductSource());
   });
 
   setUp(() {
@@ -877,6 +878,185 @@ void main() {
         await Future<void>.delayed(Duration.zero);
 
         verifyZeroInteractions(mockPriceAlertCoordinator);
+      },
+    );
+
+    test(
+      'calls onProgress with the initial count when sources are newly queued',
+      () async {
+        final ProductSourceModel sourceA = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final ProductSourceModel sourceB = buildProductSourceModel(
+          id: 'source-2',
+          url: 'https://example.com/2',
+        );
+        final List<(int, int)> progressCalls = [];
+        engine.onProgress = (int completed, int total) =>
+            progressCalls.add((completed, total));
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([sourceA, sourceB]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(
+          () => mockRemoteDatasource.fetchPrices(any()),
+        ).thenAnswer((_) => Completer<Either<Failure, ProductSourceModel>>().future);
+
+        await engine.enqueueSourceRefresh(['source-1', 'source-2']);
+
+        expect(progressCalls, [(0, 2)]);
+      },
+    );
+
+    test('does not call onProgress when no source is newly queued', () async {
+      final List<(int, int)> progressCalls = [];
+      engine.onProgress = (int completed, int total) =>
+          progressCalls.add((completed, total));
+      when(
+        () => mockDatasource.loadProductSources(),
+      ).thenAnswer((_) async => const Right([]));
+
+      await engine.enqueueSourceRefresh(['missing-source']);
+
+      expect(progressCalls, isEmpty);
+    });
+
+    test(
+      'accumulates the total across a second enqueueSourceRefresh() call issued before the first batch drains',
+      () async {
+        final ProductSourceModel sourceA = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final ProductSourceModel sourceB = buildProductSourceModel(
+          id: 'source-2',
+          url: 'https://example.com/2',
+        );
+        final List<(int, int)> progressCalls = [];
+        engine.onProgress = (int completed, int total) =>
+            progressCalls.add((completed, total));
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([sourceA, sourceB]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(
+          () => mockRemoteDatasource.fetchPrices(any()),
+        ).thenAnswer((_) => Completer<Either<Failure, ProductSourceModel>>().future);
+
+        await engine.enqueueSourceRefresh(['source-1']);
+        await engine.enqueueSourceRefresh(['source-2']);
+
+        expect(progressCalls, [(0, 1), (0, 2)]);
+      },
+    );
+
+    test(
+      'calls onProgress with an incrementing completed count as each source finishes',
+      () async {
+        final ProductSourceModel source = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final List<(int, int)> progressCalls = [];
+        engine.onProgress = (int completed, int total) =>
+            progressCalls.add((completed, total));
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([source]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(
+          () => mockRemoteDatasource.fetchPrices(source),
+        ).thenAnswer((_) async => Right(source));
+        when(
+          () => mockDatasource.updateSourcePrices(source.productId, any()),
+        ).thenAnswer((_) async => Right(buildProductModel()));
+
+        await engine.enqueueSourceRefresh(['source-1']);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(progressCalls, [(0, 1), (1, 1)]);
+      },
+    );
+
+    test(
+      'resets progress once the queue fully drains, so a later enqueue starts a fresh count',
+      () async {
+        final ProductSourceModel sourceA = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final ProductSourceModel sourceB = buildProductSourceModel(
+          id: 'source-2',
+          url: 'https://example.com/2',
+        );
+        final List<(int, int)> progressCalls = [];
+        engine.onProgress = (int completed, int total) =>
+            progressCalls.add((completed, total));
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([sourceA, sourceB]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(
+          () => mockRemoteDatasource.fetchPrices(any()),
+        ).thenAnswer((_) async => Right(sourceA));
+        when(
+          () => mockDatasource.updateSourcePrices(any(), any()),
+        ).thenAnswer((_) async => Right(buildProductModel()));
+
+        await engine.enqueueSourceRefresh(['source-1']);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        progressCalls.clear();
+
+        await engine.enqueueSourceRefresh(['source-2']);
+
+        expect(progressCalls, [(0, 1)]);
+      },
+    );
+
+    test(
+      'does not reset progress while another merchant is still in flight',
+      () async {
+        final ProductSourceModel sourceA = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final ProductSourceModel sourceB = buildProductSourceModel(
+          id: 'source-2',
+          url: 'https://merchant-2.example.com/1',
+          merchantDomain: 'merchant-2.example.com',
+        );
+        final List<(int, int)> progressCalls = [];
+        engine.onProgress = (int completed, int total) =>
+            progressCalls.add((completed, total));
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([sourceA, sourceB]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(
+          () => mockRemoteDatasource.fetchPrices(sourceA),
+        ).thenAnswer((_) async => Right(sourceA));
+        when(
+          () => mockRemoteDatasource.fetchPrices(sourceB),
+        ).thenAnswer((_) => Completer<Either<Failure, ProductSourceModel>>().future);
+        when(
+          () => mockDatasource.updateSourcePrices(any(), any()),
+        ).thenAnswer((_) async => Right(buildProductModel()));
+
+        await engine.enqueueSourceRefresh(['source-1', 'source-2']);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(progressCalls.last, (1, 2));
       },
     );
   });

@@ -130,22 +130,32 @@ class BackgroundRefreshService : Service() {
             .build()
     }
 
-    private fun updateForegroundNotification(message: String) {
+    private fun updateForegroundNotification(
+        message: String,
+        progress: Pair<Int, Int>? = null,
+    ) {
         NotificationManagerCompat.from(this).notify(
             NOTIFICATION_ID,
-            createNotification(message),
+            createNotification(message, progress),
         )
     }
 
-    private fun createNotification(message: String): Notification {
-        return NotificationCompat.Builder(this, CHANNEL_ID)
+    private fun createNotification(
+        message: String,
+        progress: Pair<Int, Int>? = null,
+    ): Notification {
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle("WorthLoop")
             .setContentText(message)
             .setOngoing(true)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setPriority(NotificationCompat.PRIORITY_LOW)
-            .build()
+        if (progress != null) {
+            val (completed, total) = progress
+            builder.setProgress(total, completed, false)
+        }
+        return builder.build()
     }
 
     private fun showRefreshResult(title: String, message: String) {
@@ -191,12 +201,29 @@ class BackgroundRefreshService : Service() {
                 }
                 "refreshCompleted" -> {
                     updateForegroundNotification("Last refresh completed")
-                    showRefreshResult("Refresh complete", "Product prices were updated")
+                    if ((call.arguments as? Map<*, *>)?.get("showResult") == true) {
+                        showRefreshResult("Refresh complete", "Product prices were updated")
+                    }
                     result.success(true)
                 }
                 "refreshFailed" -> {
                     updateForegroundNotification("Last refresh failed")
-                    showRefreshResult("Refresh failed", "Some product prices could not be updated")
+                    if ((call.arguments as? Map<*, *>)?.get("showResult") == true) {
+                        showRefreshResult(
+                            "Refresh failed",
+                            "Some product prices could not be updated",
+                        )
+                    }
+                    result.success(true)
+                }
+                "updateProgress" -> {
+                    val arguments = call.arguments as? Map<*, *>
+                    val completed = (arguments?.get("completed") as? Int) ?: 0
+                    val total = (arguments?.get("total") as? Int) ?: 0
+                    updateForegroundNotification(
+                        "Refreshing prices… ($completed/$total)",
+                        completed to total,
+                    )
                     result.success(true)
                 }
                 else -> result.notImplemented()

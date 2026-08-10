@@ -42,6 +42,14 @@ class ProductSourceRefreshEngine {
   final Set<String> _sourceIdsQueuedOrInFlight = {};
   Completer<void>? _wakeSignal;
   bool _workersStarted = false;
+  int _totalInCurrentRun = 0;
+  int _completedInCurrentRun = 0;
+
+  /// Called with (completed, total) counts for the sources currently active
+  /// or queued, whenever those counts change. Unset by default — assigned by
+  /// whichever isolate wants to surface live progress (the background
+  /// entrypoint, for its notification's progress bar).
+  void Function(int completed, int total)? onProgress;
 
   /// Queues [sourceIds] onto their merchant-specific fetch queues, starting
   /// worker processing if it isn't already running. [bypassCooldown] applies
@@ -61,6 +69,7 @@ class ProductSourceRefreshEngine {
       return sourcesResult.map((_) => unit);
     }
     final Set<String> requestedIds = sourceIds.toSet();
+    int newlyQueuedCount = 0;
     for (final ProductSourceModel source
         in sourcesResult.getRight().toNullable() ?? const []) {
       if (!requestedIds.contains(source.id) ||
@@ -78,6 +87,11 @@ class ProductSourceRefreshEngine {
         source.id,
         SourceRefreshStatus.queued,
       );
+      newlyQueuedCount++;
+    }
+    if (newlyQueuedCount > 0) {
+      _totalInCurrentRun += newlyQueuedCount;
+      onProgress?.call(_completedInCurrentRun, _totalInCurrentRun);
     }
     _ensureWorkersRunning();
     _wakeWorkers();
@@ -98,6 +112,7 @@ class ProductSourceRefreshEngine {
     while (true) {
       final String? merchant = _claimPendingMerchant();
       if (merchant == null) {
+        _resetProgressIfDrained();
         await _waitForQueuedWork();
         continue;
       }
@@ -108,9 +123,18 @@ class ProductSourceRefreshEngine {
             .removeFirst();
         await _fetchAndPersistSource(source, bypassCooldown: bypassCooldown);
         _sourceIdsQueuedOrInFlight.remove(source.id);
+        _completedInCurrentRun++;
+        onProgress?.call(_completedInCurrentRun, _totalInCurrentRun);
       }
       _pendingByMerchant.remove(merchant);
       _merchantsInFlight.remove(merchant);
+    }
+  }
+
+  void _resetProgressIfDrained() {
+    if (_pendingByMerchant.isEmpty && _merchantsInFlight.isEmpty) {
+      _totalInCurrentRun = 0;
+      _completedInCurrentRun = 0;
     }
   }
 
