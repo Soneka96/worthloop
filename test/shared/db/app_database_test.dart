@@ -2,7 +2,7 @@
 import 'dart:io';
 
 // Package imports:
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -35,9 +35,9 @@ void main() {
       await db.close();
     });
 
-    test('AppDatabase.forTesting opens with schema version 8', () {
+    test('AppDatabase.forTesting opens with schema version 9', () {
       expect(db.schemaVersion, isA<int>());
-      expect(db.schemaVersion, 8);
+      expect(db.schemaVersion, 9);
     });
 
     test('AppDatabase.forTesting exposes the WorthLoop tables', () async {
@@ -75,6 +75,7 @@ void main() {
           'price_changed_at',
           'last_refresh_status',
           'last_refresh_at',
+          'live_status',
         ]),
       );
       final List<QueryRow> refreshSettingsColumns = await db
@@ -212,7 +213,7 @@ void main() {
         )
       ''');
       legacy.execute('PRAGMA user_version = 2');
-      legacy.dispose();
+      legacy.close();
       db = AppDatabase.forTesting(NativeDatabase(file));
     });
 
@@ -274,7 +275,7 @@ void main() {
         )
       ''');
       legacy.execute('PRAGMA user_version = 5');
-      legacy.dispose();
+      legacy.close();
 
       final AppDatabase migrated = AppDatabase.forTesting(NativeDatabase(file));
       final List<QueryRow> columns = await migrated
@@ -294,5 +295,82 @@ void main() {
       );
       await migrated.close();
     });
+
+    test(
+      'migrates schema version 8 with a live-status column',
+      () async {
+        final File file = File(p.join(tempDirectory.path, 'version8.sqlite'));
+        final sqlite.Database legacy = sqlite.sqlite3.open(file.path);
+        legacy.execute('''
+        CREATE TABLE product_table (
+          id TEXT NOT NULL PRIMARY KEY,
+          name TEXT NOT NULL,
+          image_url TEXT,
+          last_updated_at INTEGER NOT NULL,
+          previous_best_price_minor_units INTEGER,
+          previous_best_price_currency_code TEXT,
+          best_price_changed_at INTEGER
+        )
+      ''');
+        legacy.execute('''
+        CREATE TABLE product_source_table (
+          id TEXT NOT NULL PRIMARY KEY,
+          product_id TEXT NOT NULL REFERENCES product_table (id) ON DELETE CASCADE,
+          url TEXT NOT NULL,
+          merchant_domain TEXT NOT NULL,
+          minor_units INTEGER,
+          currency_code TEXT,
+          previous_price_minor_units INTEGER,
+          previous_price_currency_code TEXT,
+          is_available INTEGER,
+          last_checked_at INTEGER,
+          price_changed_at INTEGER,
+          last_refresh_status TEXT,
+          last_refresh_at INTEGER,
+          created_at INTEGER NOT NULL,
+          UNIQUE (product_id, url)
+        )
+      ''');
+        legacy.execute('''
+        CREATE TABLE refresh_settings_table (
+          id INTEGER NOT NULL DEFAULT 1 PRIMARY KEY,
+          interval_minutes INTEGER NOT NULL DEFAULT 60,
+          browser_refresh_enabled INTEGER NOT NULL DEFAULT 0,
+          price_alerts_enabled INTEGER NOT NULL DEFAULT 0,
+          CHECK (id = 1)
+        )
+      ''');
+        legacy.execute('''
+        INSERT INTO product_table (id, name, last_updated_at)
+        VALUES ('legacy-product', 'Legacy Product', 1767268800000)
+      ''');
+        legacy.execute('''
+        INSERT INTO product_source_table
+          (id, product_id, url, merchant_domain, created_at)
+        VALUES (
+          'legacy-source', 'legacy-product', 'https://example.com/1',
+          'example.com', 1767268800000
+        )
+      ''');
+        legacy.execute('PRAGMA user_version = 8');
+        legacy.close();
+
+        final AppDatabase migrated = AppDatabase.forTesting(
+          NativeDatabase(file),
+        );
+        final List<QueryRow> columns = await migrated
+            .customSelect('PRAGMA table_info(product_source_table)')
+            .get();
+
+        expect(
+          columns.map((QueryRow row) => row.data['name']),
+          contains('live_status'),
+        );
+        final ProductSourceRow source =
+            (await migrated.select(migrated.productSourceTable).get()).single;
+        expect(source.liveStatus, isNull);
+        await migrated.close();
+      },
+    );
   });
 }

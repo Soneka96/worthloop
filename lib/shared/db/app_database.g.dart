@@ -697,6 +697,17 @@ class $ProductSourceTableTable extends ProductSourceTable
         type: DriftSqlType.dateTime,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _liveStatusMeta = const VerificationMeta(
+    'liveStatus',
+  );
+  @override
+  late final GeneratedColumn<String> liveStatus = GeneratedColumn<String>(
+    'live_status',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -723,6 +734,7 @@ class $ProductSourceTableTable extends ProductSourceTable
     priceChangedAt,
     lastRefreshStatus,
     lastRefreshAt,
+    liveStatus,
     createdAt,
   ];
   @override
@@ -847,6 +859,12 @@ class $ProductSourceTableTable extends ProductSourceTable
         ),
       );
     }
+    if (data.containsKey('live_status')) {
+      context.handle(
+        _liveStatusMeta,
+        liveStatus.isAcceptableOrUnknown(data['live_status']!, _liveStatusMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -920,6 +938,10 @@ class $ProductSourceTableTable extends ProductSourceTable
         DriftSqlType.dateTime,
         data['${effectivePrefix}last_refresh_at'],
       ),
+      liveStatus: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}live_status'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -975,6 +997,9 @@ class ProductSourceRow extends DataClass
   /// When the most recently completed refresh attempt finished.
   final DateTime? lastRefreshAt;
 
+  /// Live progress of a refresh currently in flight; null when none is.
+  final String? liveStatus;
+
   /// When the source was added.
   final DateTime createdAt;
   const ProductSourceRow({
@@ -991,6 +1016,7 @@ class ProductSourceRow extends DataClass
     this.priceChangedAt,
     this.lastRefreshStatus,
     this.lastRefreshAt,
+    this.liveStatus,
     required this.createdAt,
   });
   @override
@@ -1031,6 +1057,9 @@ class ProductSourceRow extends DataClass
     if (!nullToAbsent || lastRefreshAt != null) {
       map['last_refresh_at'] = Variable<DateTime>(lastRefreshAt);
     }
+    if (!nullToAbsent || liveStatus != null) {
+      map['live_status'] = Variable<String>(liveStatus);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -1069,6 +1098,9 @@ class ProductSourceRow extends DataClass
       lastRefreshAt: lastRefreshAt == null && nullToAbsent
           ? const Value.absent()
           : Value(lastRefreshAt),
+      liveStatus: liveStatus == null && nullToAbsent
+          ? const Value.absent()
+          : Value(liveStatus),
       createdAt: Value(createdAt),
     );
   }
@@ -1098,6 +1130,7 @@ class ProductSourceRow extends DataClass
         json['lastRefreshStatus'],
       ),
       lastRefreshAt: serializer.fromJson<DateTime?>(json['lastRefreshAt']),
+      liveStatus: serializer.fromJson<String?>(json['liveStatus']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -1122,6 +1155,7 @@ class ProductSourceRow extends DataClass
       'priceChangedAt': serializer.toJson<DateTime?>(priceChangedAt),
       'lastRefreshStatus': serializer.toJson<String?>(lastRefreshStatus),
       'lastRefreshAt': serializer.toJson<DateTime?>(lastRefreshAt),
+      'liveStatus': serializer.toJson<String?>(liveStatus),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -1140,6 +1174,7 @@ class ProductSourceRow extends DataClass
     Value<DateTime?> priceChangedAt = const Value.absent(),
     Value<String?> lastRefreshStatus = const Value.absent(),
     Value<DateTime?> lastRefreshAt = const Value.absent(),
+    Value<String?> liveStatus = const Value.absent(),
     DateTime? createdAt,
   }) => ProductSourceRow(
     id: id ?? this.id,
@@ -1167,6 +1202,7 @@ class ProductSourceRow extends DataClass
     lastRefreshAt: lastRefreshAt.present
         ? lastRefreshAt.value
         : this.lastRefreshAt,
+    liveStatus: liveStatus.present ? liveStatus.value : this.liveStatus,
     createdAt: createdAt ?? this.createdAt,
   );
   ProductSourceRow copyWithCompanion(ProductSourceTableCompanion data) {
@@ -1204,6 +1240,9 @@ class ProductSourceRow extends DataClass
       lastRefreshAt: data.lastRefreshAt.present
           ? data.lastRefreshAt.value
           : this.lastRefreshAt,
+      liveStatus: data.liveStatus.present
+          ? data.liveStatus.value
+          : this.liveStatus,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -1224,6 +1263,7 @@ class ProductSourceRow extends DataClass
           ..write('priceChangedAt: $priceChangedAt, ')
           ..write('lastRefreshStatus: $lastRefreshStatus, ')
           ..write('lastRefreshAt: $lastRefreshAt, ')
+          ..write('liveStatus: $liveStatus, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -1244,6 +1284,7 @@ class ProductSourceRow extends DataClass
     priceChangedAt,
     lastRefreshStatus,
     lastRefreshAt,
+    liveStatus,
     createdAt,
   );
   @override
@@ -1263,6 +1304,7 @@ class ProductSourceRow extends DataClass
           other.priceChangedAt == this.priceChangedAt &&
           other.lastRefreshStatus == this.lastRefreshStatus &&
           other.lastRefreshAt == this.lastRefreshAt &&
+          other.liveStatus == this.liveStatus &&
           other.createdAt == this.createdAt);
 }
 
@@ -1280,6 +1322,7 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
   final Value<DateTime?> priceChangedAt;
   final Value<String?> lastRefreshStatus;
   final Value<DateTime?> lastRefreshAt;
+  final Value<String?> liveStatus;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
   const ProductSourceTableCompanion({
@@ -1296,6 +1339,7 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
     this.priceChangedAt = const Value.absent(),
     this.lastRefreshStatus = const Value.absent(),
     this.lastRefreshAt = const Value.absent(),
+    this.liveStatus = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -1313,6 +1357,7 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
     this.priceChangedAt = const Value.absent(),
     this.lastRefreshStatus = const Value.absent(),
     this.lastRefreshAt = const Value.absent(),
+    this.liveStatus = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -1334,6 +1379,7 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
     Expression<DateTime>? priceChangedAt,
     Expression<String>? lastRefreshStatus,
     Expression<DateTime>? lastRefreshAt,
+    Expression<String>? liveStatus,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -1353,6 +1399,7 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
       if (priceChangedAt != null) 'price_changed_at': priceChangedAt,
       if (lastRefreshStatus != null) 'last_refresh_status': lastRefreshStatus,
       if (lastRefreshAt != null) 'last_refresh_at': lastRefreshAt,
+      if (liveStatus != null) 'live_status': liveStatus,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -1372,6 +1419,7 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
     Value<DateTime?>? priceChangedAt,
     Value<String?>? lastRefreshStatus,
     Value<DateTime?>? lastRefreshAt,
+    Value<String?>? liveStatus,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
   }) {
@@ -1391,6 +1439,7 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
       priceChangedAt: priceChangedAt ?? this.priceChangedAt,
       lastRefreshStatus: lastRefreshStatus ?? this.lastRefreshStatus,
       lastRefreshAt: lastRefreshAt ?? this.lastRefreshAt,
+      liveStatus: liveStatus ?? this.liveStatus,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -1442,6 +1491,9 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
     if (lastRefreshAt.present) {
       map['last_refresh_at'] = Variable<DateTime>(lastRefreshAt.value);
     }
+    if (liveStatus.present) {
+      map['live_status'] = Variable<String>(liveStatus.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -1467,6 +1519,7 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
           ..write('priceChangedAt: $priceChangedAt, ')
           ..write('lastRefreshStatus: $lastRefreshStatus, ')
           ..write('lastRefreshAt: $lastRefreshAt, ')
+          ..write('liveStatus: $liveStatus, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -1872,10 +1925,7 @@ final class $$ProductTableTableReferences
   _productSourceTableRefsTable(_$AppDatabase db) =>
       MultiTypedResultKey.fromTable(
         db.productSourceTable,
-        aliasName: $_aliasNameGenerator(
-          db.productTable.id,
-          db.productSourceTable.productId,
-        ),
+        aliasName: 'product_table__id__product_source_table__product_id',
       );
 
   $$ProductSourceTableTableProcessedTableManager get productSourceTableRefs {
@@ -2216,6 +2266,7 @@ typedef $$ProductSourceTableTableCreateCompanionBuilder =
       Value<DateTime?> priceChangedAt,
       Value<String?> lastRefreshStatus,
       Value<DateTime?> lastRefreshAt,
+      Value<String?> liveStatus,
       required DateTime createdAt,
       Value<int> rowid,
     });
@@ -2234,6 +2285,7 @@ typedef $$ProductSourceTableTableUpdateCompanionBuilder =
       Value<DateTime?> priceChangedAt,
       Value<String?> lastRefreshStatus,
       Value<DateTime?> lastRefreshAt,
+      Value<String?> liveStatus,
       Value<DateTime> createdAt,
       Value<int> rowid,
     });
@@ -2251,13 +2303,8 @@ final class $$ProductSourceTableTableReferences
     super.$_typedResult,
   );
 
-  static $ProductTableTable _productIdTable(_$AppDatabase db) =>
-      db.productTable.createAlias(
-        $_aliasNameGenerator(
-          db.productSourceTable.productId,
-          db.productTable.id,
-        ),
-      );
+  static $ProductTableTable _productIdTable(_$AppDatabase db) => db.productTable
+      .createAlias('product_source_table__product_id__product_table__id');
 
   $$ProductTableTableProcessedTableManager get productId {
     final $_column = $_itemColumn<String>('product_id')!;
@@ -2340,6 +2387,11 @@ class $$ProductSourceTableTableFilterComposer
 
   ColumnFilters<DateTime> get lastRefreshAt => $composableBuilder(
     column: $table.lastRefreshAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get liveStatus => $composableBuilder(
+    column: $table.liveStatus,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2441,6 +2493,11 @@ class $$ProductSourceTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get liveStatus => $composableBuilder(
+    column: $table.liveStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -2535,6 +2592,11 @@ class $$ProductSourceTableTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get liveStatus => $composableBuilder(
+    column: $table.liveStatus,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -2608,6 +2670,7 @@ class $$ProductSourceTableTableTableManager
                 Value<DateTime?> priceChangedAt = const Value.absent(),
                 Value<String?> lastRefreshStatus = const Value.absent(),
                 Value<DateTime?> lastRefreshAt = const Value.absent(),
+                Value<String?> liveStatus = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProductSourceTableCompanion(
@@ -2624,6 +2687,7 @@ class $$ProductSourceTableTableTableManager
                 priceChangedAt: priceChangedAt,
                 lastRefreshStatus: lastRefreshStatus,
                 lastRefreshAt: lastRefreshAt,
+                liveStatus: liveStatus,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -2642,6 +2706,7 @@ class $$ProductSourceTableTableTableManager
                 Value<DateTime?> priceChangedAt = const Value.absent(),
                 Value<String?> lastRefreshStatus = const Value.absent(),
                 Value<DateTime?> lastRefreshAt = const Value.absent(),
+                Value<String?> liveStatus = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
               }) => ProductSourceTableCompanion.insert(
@@ -2658,6 +2723,7 @@ class $$ProductSourceTableTableTableManager
                 priceChangedAt: priceChangedAt,
                 lastRefreshStatus: lastRefreshStatus,
                 lastRefreshAt: lastRefreshAt,
+                liveStatus: liveStatus,
                 createdAt: createdAt,
                 rowid: rowid,
               ),

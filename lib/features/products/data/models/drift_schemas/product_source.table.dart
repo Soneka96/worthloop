@@ -49,6 +49,9 @@ class ProductSourceTable extends Table {
   /// When the most recently completed refresh attempt finished.
   DateTimeColumn get lastRefreshAt => dateTime().nullable()();
 
+  /// Live progress of a refresh currently in flight; null when none is.
+  TextColumn get liveStatus => text().nullable()();
+
   /// When the source was added.
   DateTimeColumn get createdAt => dateTime()();
 

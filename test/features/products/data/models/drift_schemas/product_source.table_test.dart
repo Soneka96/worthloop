@@ -56,6 +56,7 @@ void main() {
       expect(row.lastCheckedAt, isNull);
       expect(row.lastRefreshStatus, isNull);
       expect(row.lastRefreshAt, isNull);
+      expect(row.liveStatus, isNull);
     });
 
     test(
@@ -75,6 +76,7 @@ void main() {
                 lastCheckedAt: Value(DateTime(2026, 1, 1, 12)),
                 lastRefreshStatus: const Value('blocked'),
                 lastRefreshAt: Value(DateTime(2026, 1, 3, 12)),
+                liveStatus: const Value('fetching'),
                 createdAt: DateTime(2026, 1, 1),
               ),
             );
@@ -92,6 +94,8 @@ void main() {
         expect(row.lastCheckedAt, DateTime(2026, 1, 1, 12));
         expect(row.lastRefreshStatus, PriceFetchStatus.blocked.name);
         expect(row.lastRefreshAt, DateTime(2026, 1, 3, 12));
+        expect(row.liveStatus, isA<String>());
+        expect(row.liveStatus, SourceRefreshStatus.fetching.name);
       },
     );
 
@@ -143,6 +147,92 @@ void main() {
       expect(row.minorUnits, 49999);
       expect(row.isAvailable, isNull);
       expect(row.lastCheckedAt, isNull);
+    });
+
+    test('updates liveStatus independently of other columns', () async {
+      await db
+          .into(db.productSourceTable)
+          .insert(
+            ProductSourceTableCompanion.insert(
+              id: 'source-1',
+              productId: 'product-1',
+              url: 'https://example.com/products/1',
+              merchantDomain: 'example.com',
+              minorUnits: const Value(49999),
+              currencyCode: const Value('EUR'),
+              createdAt: DateTime(2026, 1, 1),
+            ),
+          );
+
+      await (db.update(
+        db.productSourceTable,
+      )..where((table) => table.id.equals('source-1'))).write(
+        const ProductSourceTableCompanion(liveStatus: Value('queued')),
+      );
+
+      final ProductSourceRow row = await db
+          .select(db.productSourceTable)
+          .getSingle();
+
+      expect(row.liveStatus, isA<String>());
+      expect(row.liveStatus, SourceRefreshStatus.queued.name);
+      expect(row.minorUnits, isA<int>());
+      expect(row.minorUnits, 49999);
+    });
+
+    test('clears liveStatus back to null', () async {
+      await db
+          .into(db.productSourceTable)
+          .insert(
+            ProductSourceTableCompanion.insert(
+              id: 'source-1',
+              productId: 'product-1',
+              url: 'https://example.com/products/1',
+              merchantDomain: 'example.com',
+              liveStatus: const Value('fetching'),
+              createdAt: DateTime(2026, 1, 1),
+            ),
+          );
+
+      await (db.update(
+        db.productSourceTable,
+      )..where((table) => table.id.equals('source-1'))).write(
+        const ProductSourceTableCompanion(liveStatus: Value(null)),
+      );
+
+      final ProductSourceRow row = await db
+          .select(db.productSourceTable)
+          .getSingle();
+
+      expect(row.liveStatus, isNull);
+    });
+
+    test('updating another column leaves liveStatus untouched', () async {
+      await db
+          .into(db.productSourceTable)
+          .insert(
+            ProductSourceTableCompanion.insert(
+              id: 'source-1',
+              productId: 'product-1',
+              url: 'https://example.com/products/1',
+              merchantDomain: 'example.com',
+              liveStatus: const Value('queued'),
+              createdAt: DateTime(2026, 1, 1),
+            ),
+          );
+
+      await (db.update(
+        db.productSourceTable,
+      )..where((table) => table.id.equals('source-1'))).write(
+        const ProductSourceTableCompanion(minorUnits: Value(49999)),
+      );
+
+      final ProductSourceRow row = await db
+          .select(db.productSourceTable)
+          .getSingle();
+
+      expect(row.liveStatus, isA<String>());
+      expect(row.liveStatus, SourceRefreshStatus.queued.name);
     });
 
     test('rejects a duplicate id', () async {
