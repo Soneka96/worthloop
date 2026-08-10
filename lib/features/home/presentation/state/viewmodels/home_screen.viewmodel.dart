@@ -41,6 +41,11 @@ class HomeScreenViewModel extends Equatable {
   /// Preferred foreground refresh interval in minutes.
   final int refreshIntervalMinutes;
 
+  /// Whether the background refresh's own notification already shows a
+  /// progress bar — when true, the in-app "X of Y" text stays hidden so the
+  /// user isn't shown the same progress twice.
+  final bool showRefreshProgress;
+
   /// Whether a product is being created.
   final bool isCreatingProduct;
 
@@ -78,6 +83,7 @@ class HomeScreenViewModel extends Equatable {
     required this.refreshCompletedCount,
     required this.refreshTotalCount,
     required this.refreshIntervalMinutes,
+    required this.showRefreshProgress,
     required this.isCreatingProduct,
     required this.productCreationError,
     this.refreshStatus,
@@ -104,6 +110,9 @@ class HomeScreenViewModel extends Equatable {
         store.state,
       ),
       refreshIntervalMinutes: RefreshSettingsSelectors.intervalMinutesSelector(
+        store.state,
+      ),
+      showRefreshProgress: RefreshSettingsSelectors.showRefreshProgressSelector(
         store.state,
       ),
       isCreatingProduct: ProductsSelectors.isCreatingProductSelector(
@@ -137,6 +146,7 @@ class HomeScreenViewModel extends Equatable {
     refreshCompletedCount,
     refreshTotalCount,
     refreshIntervalMinutes,
+    showRefreshProgress,
     isCreatingProduct,
     productCreationError,
     refreshStatus,

@@ -1059,5 +1059,127 @@ void main() {
         expect(progressCalls.last, (1, 2));
       },
     );
+
+    test(
+      'does not clear a finished source\'s live status while another merchant is still in flight',
+      () async {
+        final ProductSourceModel sourceA = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final ProductSourceModel sourceB = buildProductSourceModel(
+          id: 'source-2',
+          url: 'https://merchant-2.example.com/1',
+          merchantDomain: 'merchant-2.example.com',
+        );
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([sourceA, sourceB]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(
+          () => mockRemoteDatasource.fetchPrices(sourceA),
+        ).thenAnswer((_) async => Right(sourceA));
+        when(
+          () => mockRemoteDatasource.fetchPrices(sourceB),
+        ).thenAnswer((_) => Completer<Either<Failure, ProductSourceModel>>().future);
+        when(
+          () => mockDatasource.updateSourcePrices(any(), any()),
+        ).thenAnswer((_) async => Right(buildProductModel()));
+
+        await engine.enqueueSourceRefresh(['source-1', 'source-2']);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        verifyNever(() => mockDatasource.writeSourceLiveStatus('source-1', null));
+      },
+    );
+
+    test(
+      'sweep-clears every source\'s live status once the whole run drains',
+      () async {
+        final ProductSourceModel sourceA = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final ProductSourceModel sourceB = buildProductSourceModel(
+          id: 'source-2',
+          url: 'https://merchant-2.example.com/1',
+          merchantDomain: 'merchant-2.example.com',
+        );
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([sourceA, sourceB]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(
+          () => mockRemoteDatasource.fetchPrices(any()),
+        ).thenAnswer((invocation) async {
+          final ProductSourceModel source =
+              invocation.positionalArguments.first as ProductSourceModel;
+          return Right(source);
+        });
+        when(
+          () => mockDatasource.updateSourcePrices(any(), any()),
+        ).thenAnswer((_) async => Right(buildProductModel()));
+
+        await engine.enqueueSourceRefresh(['source-1', 'source-2']);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        verify(
+          () => mockDatasource.writeSourceLiveStatus('source-1', null),
+        ).called(1);
+        verify(
+          () => mockDatasource.writeSourceLiveStatus('source-2', null),
+        ).called(1);
+      },
+    );
+
+    test(
+      'sweeps every remaining source even when clearing one fails',
+      () async {
+        final ProductSourceModel sourceA = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final ProductSourceModel sourceB = buildProductSourceModel(
+          id: 'source-2',
+          url: 'https://merchant-2.example.com/1',
+          merchantDomain: 'merchant-2.example.com',
+        );
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([sourceA, sourceB]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(
+          () => mockDatasource.writeSourceLiveStatus('source-1', null),
+        ).thenAnswer(
+          (_) async => const Left(DatabaseFailure('database failed')),
+        );
+        when(
+          () => mockRemoteDatasource.fetchPrices(any()),
+        ).thenAnswer((invocation) async {
+          final ProductSourceModel source =
+              invocation.positionalArguments.first as ProductSourceModel;
+          return Right(source);
+        });
+        when(
+          () => mockDatasource.updateSourcePrices(any(), any()),
+        ).thenAnswer((_) async => Right(buildProductModel()));
+
+        await engine.enqueueSourceRefresh(['source-1', 'source-2']);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        verify(
+          () => mockDatasource.writeSourceLiveStatus('source-2', null),
+        ).called(1);
+      },
+    );
   });
 }

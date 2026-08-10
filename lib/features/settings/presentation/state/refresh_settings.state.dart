@@ -18,6 +18,16 @@ class RefreshSettingsState extends Equatable {
   /// Whether product price-drop notifications are enabled.
   final bool priceAlertsEnabled;
 
+  /// Whether product price-increase notifications are enabled.
+  final bool priceIncreaseAlertsEnabled;
+
+  /// Whether a notification is shown for every completed background refresh.
+  final bool refreshCompletedAlertsEnabled;
+
+  /// Whether the background refresh shows a progress bar on its
+  /// notification while sources are being fetched.
+  final bool showRefreshProgress;
+
   /// Whether persisted settings are loading.
   final bool isLoading;
 
@@ -31,6 +41,9 @@ class RefreshSettingsState extends Equatable {
     required this.intervalMinutes,
     required this.browserRefreshEnabled,
     required this.priceAlertsEnabled,
+    required this.priceIncreaseAlertsEnabled,
+    required this.refreshCompletedAlertsEnabled,
+    required this.showRefreshProgress,
     required this.isLoading,
     required this.isSaving,
     required this.error,
@@ -41,6 +54,9 @@ class RefreshSettingsState extends Equatable {
     intervalMinutes: RefreshIntervalConstants.hourly,
     browserRefreshEnabled: false,
     priceAlertsEnabled: false,
+    priceIncreaseAlertsEnabled: false,
+    refreshCompletedAlertsEnabled: false,
+    showRefreshProgress: false,
     isLoading: false,
     isSaving: false,
     error: null,
@@ -51,6 +67,9 @@ class RefreshSettingsState extends Equatable {
     int? intervalMinutes,
     bool? browserRefreshEnabled,
     bool? priceAlertsEnabled,
+    bool? priceIncreaseAlertsEnabled,
+    bool? refreshCompletedAlertsEnabled,
+    bool? showRefreshProgress,
     bool? isLoading,
     bool? isSaving,
     Option<String>? error,
@@ -58,6 +77,11 @@ class RefreshSettingsState extends Equatable {
     intervalMinutes: intervalMinutes ?? this.intervalMinutes,
     browserRefreshEnabled: browserRefreshEnabled ?? this.browserRefreshEnabled,
     priceAlertsEnabled: priceAlertsEnabled ?? this.priceAlertsEnabled,
+    priceIncreaseAlertsEnabled:
+        priceIncreaseAlertsEnabled ?? this.priceIncreaseAlertsEnabled,
+    refreshCompletedAlertsEnabled:
+        refreshCompletedAlertsEnabled ?? this.refreshCompletedAlertsEnabled,
+    showRefreshProgress: showRefreshProgress ?? this.showRefreshProgress,
     isLoading: isLoading ?? this.isLoading,
     isSaving: isSaving ?? this.isSaving,
     error: error == null ? this.error : error.toNullable(),
@@ -68,6 +92,9 @@ class RefreshSettingsState extends Equatable {
     intervalMinutes,
     browserRefreshEnabled,
     priceAlertsEnabled,
+    priceIncreaseAlertsEnabled,
+    refreshCompletedAlertsEnabled,
+    showRefreshProgress,
     isLoading,
     isSaving,
     error,

@@ -19,6 +19,11 @@ class HomeProductsHeader extends StatelessWidget {
   /// Number of sources included in the active refresh.
   final int refreshTotalCount;
 
+  /// Whether the background refresh's own notification already shows a
+  /// progress bar — when true, this widget's "X of Y" text stays hidden so
+  /// the user isn't shown the same progress twice.
+  final bool showRefreshProgress;
+
   /// Most recent update time across tracked products.
   final DateTime? latestUpdatedAt;
 
@@ -27,6 +32,7 @@ class HomeProductsHeader extends StatelessWidget {
     required this.isRefreshing,
     required this.refreshCompletedCount,
     required this.refreshTotalCount,
+    required this.showRefreshProgress,
     required this.latestUpdatedAt,
     super.key,
   });
@@ -41,7 +47,7 @@ class HomeProductsHeader extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: context.spacing.xs),
       child: Text(
-        isRefreshing
+        isRefreshing && !showRefreshProgress
             ? t.home.refreshProgress(
                 completed: refreshCompletedCount,
                 total: refreshTotalCount,

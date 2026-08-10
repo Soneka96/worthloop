@@ -236,14 +236,19 @@ void main() {
             reason: 'the DB row is authoritative, stale Redux state is dropped',
           );
           expect(
-            reducedState.refreshCompletedCount,
-            state.refreshCompletedCount,
-            reason: 'this reducer does not own the legacy progress counters',
+            state.refreshTotalCount,
+            0,
+            reason: 'no progress counted before this update',
           );
           expect(
             reducedState.refreshTotalCount,
-            state.refreshTotalCount,
-            reason: 'this reducer does not own the legacy progress counters',
+            2,
+            reason: 'sources 1 and 2 carry a non-null liveStatus',
+          );
+          expect(
+            reducedState.refreshCompletedCount,
+            0,
+            reason: 'queued and fetching are not terminal',
           );
         },
       );
@@ -363,6 +368,179 @@ void main() {
           reason: 'no source is active anymore',
         );
       });
+
+      test(
+        'ProductsUpdatedFromDatabaseAction counts a terminal liveStatus as '
+        'completed and an active one as not, across products',
+        () {
+          final Product first = buildProduct(
+            id: 'product-1',
+            sources: [
+              buildProductSource(
+                id: 'source-1',
+                liveStatus: SourceRefreshStatus.fetching,
+              ),
+              buildProductSource(
+                id: 'source-2',
+                productId: 'product-1',
+                url: 'https://example.com/2',
+                liveStatus: SourceRefreshStatus.success,
+              ),
+            ],
+          );
+          final Product second = buildProduct(
+            id: 'product-2',
+            sources: [
+              buildProductSource(
+                id: 'source-3',
+                productId: 'product-2',
+                url: 'https://example.com/3',
+                liveStatus: SourceRefreshStatus.error,
+              ),
+            ],
+          );
+          final ProductsState state = ProductsState.initial();
+
+          final ProductsState reducedState = productsReducer(
+            state,
+            ProductsUpdatedFromDatabaseAction([first, second]),
+          );
+
+          expect(
+            state.refreshCompletedCount,
+            0,
+            reason: 'no progress counted before this update',
+          );
+          expect(
+            state.refreshTotalCount,
+            0,
+            reason: 'no progress counted before this update',
+          );
+          expect(
+            reducedState.refreshTotalCount,
+            3,
+            reason: 'every source has a non-null liveStatus',
+          );
+          expect(
+            reducedState.refreshCompletedCount,
+            2,
+            reason: 'success and error are terminal, fetching is not',
+          );
+        },
+      );
+
+      test(
+        'ProductsUpdatedFromDatabaseAction excludes a source with only a '
+        'persisted lastRefreshStatus from the progress count',
+        () {
+          final Product product = buildProduct(
+            sources: [
+              buildProductSource(
+                id: 'source-1',
+                isAvailable: true,
+                lastRefreshStatus: PriceFetchStatus.success,
+              ),
+            ],
+          );
+          final ProductsState state = ProductsState.initial();
+
+          final ProductsState reducedState = productsReducer(
+            state,
+            ProductsUpdatedFromDatabaseAction([product]),
+          );
+
+          expect(
+            state.refreshTotalCount,
+            0,
+            reason: 'no progress counted before this update',
+          );
+          expect(
+            reducedState.refreshTotalCount,
+            0,
+            reason:
+                'a source with no liveStatus is not part of an active run, '
+                'even once it has a persisted refresh result',
+          );
+          expect(
+            reducedState.refreshCompletedCount,
+            0,
+            reason: 'nothing was counted as part of a run',
+          );
+        },
+      );
+
+      test(
+        'ProductsUpdatedFromDatabaseAction counts an unavailable liveStatus '
+        'as completed',
+        () {
+          final Product product = buildProduct(
+            sources: [
+              buildProductSource(
+                id: 'source-1',
+                liveStatus: SourceRefreshStatus.unavailable,
+              ),
+            ],
+          );
+          final ProductsState state = ProductsState.initial();
+
+          final ProductsState reducedState = productsReducer(
+            state,
+            ProductsUpdatedFromDatabaseAction([product]),
+          );
+
+          expect(
+            reducedState.refreshTotalCount,
+            1,
+            reason: 'the source carries a non-null liveStatus',
+          );
+          expect(
+            reducedState.refreshCompletedCount,
+            1,
+            reason: 'unavailable is a terminal status, not an active one',
+          );
+        },
+      );
+
+      test(
+        'ProductsUpdatedFromDatabaseAction does not let a lastRefreshStatus-only '
+        'source inflate the total alongside an active one',
+        () {
+          final Product product = buildProduct(
+            sources: [
+              buildProductSource(
+                id: 'source-1',
+                liveStatus: SourceRefreshStatus.fetching,
+              ),
+              buildProductSource(
+                id: 'source-2',
+                productId: 'product-1',
+                url: 'https://example.com/2',
+                isAvailable: true,
+                lastRefreshStatus: PriceFetchStatus.success,
+              ),
+            ],
+          );
+          final ProductsState state = ProductsState.initial();
+
+          final ProductsState reducedState = productsReducer(
+            state,
+            ProductsUpdatedFromDatabaseAction([product]),
+          );
+
+          expect(
+            reducedState.refreshTotalCount,
+            1,
+            reason:
+                'only source-1 carries a non-null liveStatus; source-2\'s '
+                'persisted-only result does not count',
+          );
+          expect(
+            reducedState.refreshCompletedCount,
+            0,
+            reason: 'source-1 is still fetching',
+          );
+        },
+      );
     },
   );
 

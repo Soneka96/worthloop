@@ -43,6 +43,7 @@ void main() {
         ),
         refreshSettings: RefreshSettingsState.initial().copyWith(
           intervalMinutes: 180,
+          showRefreshProgress: true,
         ),
       );
 
@@ -65,6 +66,8 @@ void main() {
       expect(viewmodel.refreshTotalCount, 42);
       expect(viewmodel.refreshIntervalMinutes, isA<int>());
       expect(viewmodel.refreshIntervalMinutes, 180);
+      expect(viewmodel.showRefreshProgress, isA<bool>());
+      expect(viewmodel.showRefreshProgress, isTrue);
       expect(viewmodel.isCreatingProduct, isTrue);
       expect(viewmodel.productCreationError, 'creation failed');
       expect(viewmodel.createdProductId, 'product-1');

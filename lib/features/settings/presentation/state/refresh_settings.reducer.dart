@@ -16,7 +16,7 @@ refreshSettingsReducer = combineReducers<RefreshSettingsState>([
   ).call,
 
   /// Handles [RefreshSettingsLoadedAction].
-  /// Updates [RefreshSettingsState.intervalMinutes], [RefreshSettingsState.isLoading], [RefreshSettingsState.error].
+  /// Updates [RefreshSettingsState.intervalMinutes], [RefreshSettingsState.browserRefreshEnabled], [RefreshSettingsState.priceAlertsEnabled], [RefreshSettingsState.priceIncreaseAlertsEnabled], [RefreshSettingsState.refreshCompletedAlertsEnabled], [RefreshSettingsState.showRefreshProgress], [RefreshSettingsState.isLoading], [RefreshSettingsState.error].
   TypedReducer<RefreshSettingsState, RefreshSettingsLoadedAction>(
     refreshSettingsLoadedReducer,
   ).call,
@@ -90,7 +90,7 @@ RefreshSettingsState loadRefreshSettingsReducer(
 ) => state.copyWith(isLoading: true, error: const None());
 
 /// Handles [RefreshSettingsLoadedAction].
-/// Updates [RefreshSettingsState.intervalMinutes], [RefreshSettingsState.isLoading], [RefreshSettingsState.error].
+/// Updates [RefreshSettingsState.intervalMinutes], [RefreshSettingsState.browserRefreshEnabled], [RefreshSettingsState.priceAlertsEnabled], [RefreshSettingsState.priceIncreaseAlertsEnabled], [RefreshSettingsState.refreshCompletedAlertsEnabled], [RefreshSettingsState.showRefreshProgress], [RefreshSettingsState.isLoading], [RefreshSettingsState.error].
 RefreshSettingsState refreshSettingsLoadedReducer(
   RefreshSettingsState state,
   RefreshSettingsLoadedAction action,
@@ -98,6 +98,10 @@ RefreshSettingsState refreshSettingsLoadedReducer(
   intervalMinutes: action.settings.intervalMinutes,
   browserRefreshEnabled: action.settings.browserRefreshEnabled,
   priceAlertsEnabled: action.settings.priceDropAlertsEnabled,
+  priceIncreaseAlertsEnabled: action.settings.priceIncreaseAlertsEnabled,
+  refreshCompletedAlertsEnabled:
+      action.settings.refreshCompletedAlertsEnabled,
+  showRefreshProgress: action.settings.showRefreshProgress,
   isLoading: false,
   error: const None(),
 );

@@ -12,6 +12,7 @@ import 'package:worth_loop/features/products/data/models/product.model.dart';
 import 'package:worth_loop/features/products/data/models/product_source.model.dart';
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
 import 'package:worth_loop/features/products/domain/entities/product_price_change.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
 import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
@@ -40,6 +41,7 @@ class ProductSourceRefreshEngine {
   final Map<String, Queue<(ProductSourceModel, bool)>> _pendingByMerchant = {};
   final Set<String> _merchantsInFlight = {};
   final Set<String> _sourceIdsQueuedOrInFlight = {};
+  final Set<String> _sourceIdsAwaitingSweep = {};
   Completer<void>? _wakeSignal;
   bool _workersStarted = false;
   int _totalInCurrentRun = 0;
@@ -77,6 +79,7 @@ class ProductSourceRefreshEngine {
         continue;
       }
       _sourceIdsQueuedOrInFlight.add(source.id);
+      _sourceIdsAwaitingSweep.add(source.id);
       _pendingByMerchant
           .putIfAbsent(
             source.merchantDomain.toLowerCase(),
@@ -112,7 +115,7 @@ class ProductSourceRefreshEngine {
     while (true) {
       final String? merchant = _claimPendingMerchant();
       if (merchant == null) {
-        _resetProgressIfDrained();
+        await _finishRunIfDrained();
         await _waitForQueuedWork();
         continue;
       }
@@ -131,10 +134,26 @@ class ProductSourceRefreshEngine {
     }
   }
 
-  void _resetProgressIfDrained() {
-    if (_pendingByMerchant.isEmpty && _merchantsInFlight.isEmpty) {
-      _totalInCurrentRun = 0;
-      _completedInCurrentRun = 0;
+  /// Once nothing is pending or in flight, sweep-clears
+  /// [ProductSource.liveStatus] for every source that was part of the run —
+  /// each source stays tagged with its terminal status for the life of the
+  /// whole run, not just its own individual fetch, so presentation state can
+  /// derive an "X of Y done" count straight from the DB — then resets the
+  /// progress counters for the next run.
+  Future<void> _finishRunIfDrained() async {
+    if (_pendingByMerchant.isNotEmpty || _merchantsInFlight.isNotEmpty) {
+      return;
+    }
+    // Snapshot and clear before the first await — a source enqueued mid-sweep
+    // (which starts a new run) must never be iterated here, both to keep it
+    // from being incorrectly cleared and to avoid mutating this Set while
+    // iterating it.
+    final List<String> sourceIdsToSweep = _sourceIdsAwaitingSweep.toList();
+    _sourceIdsAwaitingSweep.clear();
+    _totalInCurrentRun = 0;
+    _completedInCurrentRun = 0;
+    for (final String sourceId in sourceIdsToSweep) {
+      await _localDatasource.writeSourceLiveStatus(sourceId, null);
     }
   }
 
@@ -185,7 +204,6 @@ class ProductSourceRefreshEngine {
     );
     final Either<Failure, ProductModel> persistResult = await _localDatasource
         .updateSourcePrices(source.productId, [updatedSource]);
-    await _localDatasource.writeSourceLiveStatus(source.id, null);
 
     final ProductModel? refreshedProduct = persistResult.getRight().toNullable();
     if (previousProduct != null && refreshedProduct != null) {

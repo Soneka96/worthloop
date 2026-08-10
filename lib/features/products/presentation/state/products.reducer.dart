@@ -181,7 +181,8 @@ ProductsState productsLoadedReducer(
 
 /// Handles [ProductsUpdatedFromDatabaseAction].
 /// Updates [ProductsState.products], [ProductsState.sourceRefreshStatuses],
-/// [ProductsState.isRefreshingAll], [ProductsState.refreshingProductIds].
+/// [ProductsState.isRefreshingAll], [ProductsState.refreshingProductIds],
+/// [ProductsState.refreshCompletedCount], [ProductsState.refreshTotalCount].
 ProductsState productsUpdatedFromDatabaseReducer(
   ProductsState state,
   ProductsUpdatedFromDatabaseAction action,
@@ -191,6 +192,8 @@ ProductsState productsUpdatedFromDatabaseReducer(
   final bool anySourceActive = sourceRefreshStatuses.values.any(
     _isActiveSourceRefreshStatus,
   );
+  final (int refreshCompletedCount, int refreshTotalCount) =
+      _refreshProgressForProducts(action.products);
   return state.copyWith(
     products: action.products,
     sourceRefreshStatuses: sourceRefreshStatuses,
@@ -198,7 +201,33 @@ ProductsState productsUpdatedFromDatabaseReducer(
     refreshingProductIds: anySourceActive
         ? state.refreshingProductIds
         : const {},
+    refreshCompletedCount: refreshCompletedCount,
+    refreshTotalCount: refreshTotalCount,
   );
+}
+
+/// Counts sources still tagged with a live refresh status (queued, fetching,
+/// or a terminal result not yet swept back to null) across every product.
+/// There is no batch-id concept — this counts everything currently active or
+/// not-yet-swept, which also covers a source enqueued mid-run.
+(int completed, int total) _refreshProgressForProducts(
+  List<Product> products,
+) {
+  int total = 0;
+  int completed = 0;
+  for (final Product product in products) {
+    for (final ProductSource source in product.sources) {
+      final SourceRefreshStatus? liveStatus = source.liveStatus;
+      if (liveStatus == null) {
+        continue;
+      }
+      total++;
+      if (!_isActiveSourceRefreshStatus(liveStatus)) {
+        completed++;
+      }
+    }
+  }
+  return (completed, total);
 }
 
 /// Derives each source's [SourceRefreshStatus] from its persisted DB state:

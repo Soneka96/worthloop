@@ -12,6 +12,7 @@ void main() {
     bool isRefreshing = false,
     int refreshCompletedCount = 0,
     int refreshTotalCount = 0,
+    bool showRefreshProgress = false,
     DateTime? latestUpdatedAt,
     bool omitUpdatedAt = false,
   }) => TranslationProvider(
@@ -22,6 +23,7 @@ void main() {
           isRefreshing: isRefreshing,
           refreshCompletedCount: refreshCompletedCount,
           refreshTotalCount: refreshTotalCount,
+          showRefreshProgress: showRefreshProgress,
           latestUpdatedAt: omitUpdatedAt
               ? null
               : latestUpdatedAt ?? DateTime(2026, 8, 7, 21, 51),
@@ -60,6 +62,29 @@ void main() {
     );
     expect(find.byType(FilledButton), findsNothing);
   });
+
+  testWidgets(
+    'HomeProductsHeader hides compact refresh progress when showRefreshProgress = true',
+    (tester) async {
+      await tester.pumpWidget(
+        buildWidget(
+          isRefreshing: true,
+          refreshCompletedCount: 18,
+          refreshTotalCount: 42,
+          showRefreshProgress: true,
+        ),
+      );
+
+      expect(
+        find.text(t.home.refreshProgress(completed: 18, total: 42)),
+        findsNothing,
+      );
+      expect(
+        find.textContaining(t.home.trackedProducts(count: 2)),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets(
     'HomeProductsHeader omits update time when there are no products',

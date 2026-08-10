@@ -72,6 +72,7 @@ class HomeScreen extends StatelessWidget {
                             refreshCompletedCount:
                                 viewmodel.refreshCompletedCount,
                             refreshTotalCount: viewmodel.refreshTotalCount,
+                            showRefreshProgress: viewmodel.showRefreshProgress,
                             latestUpdatedAt: viewmodel.latestUpdatedAt,
                           ),
                         ]),

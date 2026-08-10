@@ -51,6 +51,7 @@ void main() {
     when(() => mockViewModel.refreshCompletedCount).thenReturn(0);
     when(() => mockViewModel.refreshTotalCount).thenReturn(0);
     when(() => mockViewModel.refreshIntervalMinutes).thenReturn(60);
+    when(() => mockViewModel.showRefreshProgress).thenReturn(false);
     when(
       () => mockViewModel.latestUpdatedAt,
     ).thenReturn(DateTime(2026, 8, 7, 21, 51));
