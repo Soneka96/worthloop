@@ -19,6 +19,7 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
   static const List<SettingsCategory> _categories = [
     SettingsCategory.general,
     SettingsCategory.appearance,
+    SettingsCategory.notifications,
   ];
 
   SettingsCategory _selectedCategory = SettingsCategory.general;

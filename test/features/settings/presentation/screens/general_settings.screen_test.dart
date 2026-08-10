@@ -15,7 +15,6 @@ import 'package:worth_loop/features/settings/presentation/state/general_settings
 import 'package:worth_loop/features/settings/presentation/state/viewmodels/general_settings_screen.viewmodel.dart';
 import 'package:worth_loop/features/settings/presentation/widgets/general/about.section.dart';
 import 'package:worth_loop/features/settings/presentation/widgets/general/language.section.dart';
-import 'package:worth_loop/features/settings/presentation/widgets/general/price_alerts.section.dart';
 import 'package:worth_loop/features/settings/presentation/widgets/general/refresh_interval.section.dart';
 import 'package:worth_loop/features/settings/presentation/widgets/general/updates.section.dart';
 import 'package:worth_loop/injection_container.dart';
@@ -36,13 +35,11 @@ void main() {
 
     when(() => mockViewModel.refreshIntervalMinutes).thenReturn(60);
     when(() => mockViewModel.browserRefreshEnabled).thenReturn(false);
-    when(() => mockViewModel.priceAlertsEnabled).thenReturn(false);
     when(() => mockViewModel.isRefreshIntervalBusy).thenReturn(false);
     when(() => mockViewModel.onCheckForUpdates).thenReturn(() {});
     when(() => mockViewModel.onOpenPrivacyPolicy).thenReturn(() {});
     when(() => mockViewModel.onRefreshIntervalSelected).thenReturn((_) {});
     when(() => mockViewModel.onBrowserRefreshEnabledChanged).thenReturn((_) {});
-    when(() => mockViewModel.onPriceAlertsEnabledChanged).thenReturn((_) {});
     when(() => mockViewModel.onOpenBackgroundRestrictions).thenReturn(() {});
 
     sl.registerFactoryParam<
@@ -152,16 +149,6 @@ void main() {
         await tester.pumpWidget(buildWidget());
 
         expect(find.byType(AboutSection), findsOneWidget);
-      },
-    );
-
-    testWidgets(
-      'GeneralSettingsScreen contains PriceAlertsSection with the correct parameters',
-      (tester) async {
-        await tester.pumpWidget(buildWidget());
-
-        expect(find.byType(PriceAlertsSection), findsOneWidget);
-        expect(find.byKey(const Key('price-alerts-switch')), findsOneWidget);
       },
     );
   });
@@ -304,7 +291,6 @@ void main() {
             Key('language-picker-dropdown'),
             Key('refresh-interval-dropdown'),
             Key('browser-refresh-switch'),
-            Key('price-alerts-switch'),
             Key('general-settings-check-for-updates-button'),
             Key('general-settings-privacy-policy-button'),
           ];

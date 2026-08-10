@@ -73,20 +73,19 @@ class ProductPriceAlertNotificationCoordinator {
     }
   }
 
-  String _title(ProductPriceChange change) =>
-      switch (change.direction) {
-        PriceChangeDirection.increase =>
-          t.settings.general.priceIncreaseAlerts.notificationTitle,
-        PriceChangeDirection.drop || PriceChangeDirection.none =>
-          t.settings.general.priceAlerts.notificationTitle,
-      }(name: change.product.name);
+  String _title(ProductPriceChange change) => switch (change.direction) {
+    PriceChangeDirection.increase =>
+      t.settings.notifications.priceIncreaseAlerts.notificationTitle,
+    PriceChangeDirection.drop || PriceChangeDirection.none =>
+      t.settings.notifications.priceAlerts.notificationTitle,
+  }(name: change.product.name);
 
   String _body(ProductPriceChange change) =>
       switch (change.direction) {
         PriceChangeDirection.increase =>
-          t.settings.general.priceIncreaseAlerts.notificationBody,
+          t.settings.notifications.priceIncreaseAlerts.notificationBody,
         PriceChangeDirection.drop || PriceChangeDirection.none =>
-          t.settings.general.priceAlerts.notificationBody,
+          t.settings.notifications.priceAlerts.notificationBody,
       }(
         current: _format(change.currentBestPrice),
         previous: _format(change.previousBestPrice),

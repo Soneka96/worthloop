@@ -164,6 +164,117 @@ class PriceAlertsSaveFailedAction extends Equatable {
   List<Object?> get props => [message];
 }
 
+/// Requests persisting the price-increase-alert preference.
+@immutable
+class SavePriceIncreaseAlertsEnabledAction extends Equatable {
+  /// Whether product price-increase notifications should be enabled.
+  final bool enabled;
+
+  const SavePriceIncreaseAlertsEnabledAction(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+/// Carries a persisted price-increase-alert preference.
+@immutable
+class PriceIncreaseAlertsEnabledSavedAction extends Equatable {
+  /// Whether product price-increase notifications are enabled.
+  final bool enabled;
+
+  const PriceIncreaseAlertsEnabledSavedAction(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+/// Carries a price-increase-alert preference persistence failure.
+@immutable
+class PriceIncreaseAlertsSaveFailedAction extends Equatable {
+  /// Failure message.
+  final String message;
+
+  const PriceIncreaseAlertsSaveFailedAction(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+/// Requests persisting the refresh-completed-alert preference.
+@immutable
+class SaveRefreshCompletedAlertsEnabledAction extends Equatable {
+  /// Whether a notification should be shown for every completed
+  /// background refresh.
+  final bool enabled;
+
+  const SaveRefreshCompletedAlertsEnabledAction(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+/// Carries a persisted refresh-completed-alert preference.
+@immutable
+class RefreshCompletedAlertsEnabledSavedAction extends Equatable {
+  /// Whether a notification is shown for every completed background refresh.
+  final bool enabled;
+
+  const RefreshCompletedAlertsEnabledSavedAction(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+/// Carries a refresh-completed-alert preference persistence failure.
+@immutable
+class RefreshCompletedAlertsSaveFailedAction extends Equatable {
+  /// Failure message.
+  final String message;
+
+  const RefreshCompletedAlertsSaveFailedAction(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+/// Requests persisting the show-refresh-progress preference.
+@immutable
+class SaveShowRefreshProgressAction extends Equatable {
+  /// Whether the background refresh should show a progress bar on its
+  /// notification while sources are being fetched.
+  final bool enabled;
+
+  const SaveShowRefreshProgressAction(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+/// Carries a persisted show-refresh-progress preference.
+@immutable
+class ShowRefreshProgressSavedAction extends Equatable {
+  /// Whether the background refresh shows a progress bar on its
+  /// notification while sources are being fetched.
+  final bool enabled;
+
+  const ShowRefreshProgressSavedAction(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+/// Carries a show-refresh-progress preference persistence failure.
+@immutable
+class ShowRefreshProgressSaveFailedAction extends Equatable {
+  /// Failure message.
+  final String message;
+
+  const ShowRefreshProgressSaveFailedAction(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
 /// Requests opening Android's background-restriction settings.
 @immutable
 class OpenBackgroundRestrictionsAction extends Equatable {

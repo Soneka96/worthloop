@@ -13,6 +13,7 @@ import 'package:worth_loop/features/settings/domain/usecases/save_refresh_comple
 import 'package:worth_loop/features/settings/domain/usecases/save_refresh_interval.usecase.dart';
 import 'package:worth_loop/features/settings/domain/usecases/save_show_refresh_progress.usecase.dart';
 import 'package:worth_loop/features/settings/presentation/state/viewmodels/general_settings_screen.viewmodel.dart';
+import 'package:worth_loop/features/settings/presentation/state/viewmodels/notifications_settings_screen.viewmodel.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
@@ -55,4 +56,9 @@ void initSettingsDependencies() {
     Store<AppState>,
     void
   >((store, _) => GeneralSettingsScreenViewModel.fromStore(store));
+  sl.registerFactoryParam<
+    NotificationsSettingsScreenViewModel,
+    Store<AppState>,
+    void
+  >((store, _) => NotificationsSettingsScreenViewModel.fromStore(store));
 }

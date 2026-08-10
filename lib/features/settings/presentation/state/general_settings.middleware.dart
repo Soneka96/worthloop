@@ -5,11 +5,17 @@ import 'package:redux/redux.dart';
 import 'package:worth_loop/features/settings/domain/entities/refresh_settings.entity.dart';
 import 'package:worth_loop/features/settings/domain/usecases/load_refresh_settings.usecase.dart';
 import 'package:worth_loop/features/settings/domain/usecases/params/save_browser_refresh_enabled.params.dart';
-import 'package:worth_loop/features/settings/domain/usecases/params/save_refresh_interval.params.dart';
-import 'package:worth_loop/features/settings/domain/usecases/save_browser_refresh_enabled.usecase.dart';
 import 'package:worth_loop/features/settings/domain/usecases/params/save_price_drop_alerts_enabled.params.dart';
+import 'package:worth_loop/features/settings/domain/usecases/params/save_price_increase_alerts_enabled.params.dart';
+import 'package:worth_loop/features/settings/domain/usecases/params/save_refresh_completed_alerts_enabled.params.dart';
+import 'package:worth_loop/features/settings/domain/usecases/params/save_refresh_interval.params.dart';
+import 'package:worth_loop/features/settings/domain/usecases/params/save_show_refresh_progress.params.dart';
+import 'package:worth_loop/features/settings/domain/usecases/save_browser_refresh_enabled.usecase.dart';
 import 'package:worth_loop/features/settings/domain/usecases/save_price_drop_alerts_enabled.usecase.dart';
+import 'package:worth_loop/features/settings/domain/usecases/save_price_increase_alerts_enabled.usecase.dart';
+import 'package:worth_loop/features/settings/domain/usecases/save_refresh_completed_alerts_enabled.usecase.dart';
 import 'package:worth_loop/features/settings/domain/usecases/save_refresh_interval.usecase.dart';
+import 'package:worth_loop/features/settings/domain/usecases/save_show_refresh_progress.usecase.dart';
 import 'package:worth_loop/features/settings/presentation/state/general_settings.actions.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
@@ -17,8 +23,8 @@ import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/usecase/no_params.dart';
 import 'package:worth_loop/shared/utils/android_background_capabilities_service.dart';
 import 'package:worth_loop/shared/utils/android_background_refresh_service.dart';
-import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/android_price_alert_notification_service.dart';
+import 'package:worth_loop/shared/utils/logger_service.dart';
 
 /// Handles General settings actions.
 class GeneralSettingsMiddleware extends MiddlewareClass<AppState> {
@@ -39,6 +45,12 @@ class GeneralSettingsMiddleware extends MiddlewareClass<AppState> {
         _saveBrowserRefreshEnabled(store, action);
       case SavePriceAlertsEnabledAction _:
         _savePriceAlertsEnabled(store, action);
+      case SavePriceIncreaseAlertsEnabledAction _:
+        _savePriceIncreaseAlertsEnabled(store, action);
+      case SaveRefreshCompletedAlertsEnabledAction _:
+        _saveRefreshCompletedAlertsEnabled(store, action);
+      case SaveShowRefreshProgressAction _:
+        _saveShowRefreshProgress(store, action);
       case OpenBackgroundRestrictionsAction _:
         _openBackgroundRestrictions();
     }
@@ -125,7 +137,7 @@ class GeneralSettingsMiddleware extends MiddlewareClass<AppState> {
           .requestPermission();
       if (!granted) {
         sl<LoggerService>().w(
-          t.settings.general.priceAlerts.permissionDenied,
+          t.settings.notifications.priceAlerts.permissionDenied,
           showPopup: true,
         );
         return;
@@ -141,6 +153,92 @@ class GeneralSettingsMiddleware extends MiddlewareClass<AppState> {
       (RefreshSettings settings) {
         store.dispatch(
           PriceAlertsEnabledSavedAction(settings.priceDropAlertsEnabled),
+        );
+      },
+    );
+  }
+
+  /// Handles [SavePriceIncreaseAlertsEnabledAction].
+  Future<void> _savePriceIncreaseAlertsEnabled(
+    Store<AppState> store,
+    SavePriceIncreaseAlertsEnabledAction action,
+  ) async {
+    if (action.enabled) {
+      final bool granted = await sl<AndroidPriceAlertNotificationService>()
+          .requestPermission();
+      if (!granted) {
+        sl<LoggerService>().w(
+          t.settings.notifications.priceIncreaseAlerts.permissionDenied,
+          showPopup: true,
+        );
+        return;
+      }
+    }
+    (await sl<SavePriceIncreaseAlertsEnabledUseCase>()(
+      SavePriceIncreaseAlertsEnabledParams(enabled: action.enabled),
+    )).fold(
+      (failure) {
+        sl<LoggerService>().e(failure.message, showPopup: true);
+        store.dispatch(PriceIncreaseAlertsSaveFailedAction(failure.message));
+      },
+      (RefreshSettings settings) {
+        store.dispatch(
+          PriceIncreaseAlertsEnabledSavedAction(
+            settings.priceIncreaseAlertsEnabled,
+          ),
+        );
+      },
+    );
+  }
+
+  /// Handles [SaveRefreshCompletedAlertsEnabledAction].
+  Future<void> _saveRefreshCompletedAlertsEnabled(
+    Store<AppState> store,
+    SaveRefreshCompletedAlertsEnabledAction action,
+  ) async {
+    if (action.enabled) {
+      final bool granted = await sl<AndroidPriceAlertNotificationService>()
+          .requestPermission();
+      if (!granted) {
+        sl<LoggerService>().w(
+          t.settings.notifications.refreshCompletedAlerts.permissionDenied,
+          showPopup: true,
+        );
+        return;
+      }
+    }
+    (await sl<SaveRefreshCompletedAlertsEnabledUseCase>()(
+      SaveRefreshCompletedAlertsEnabledParams(enabled: action.enabled),
+    )).fold(
+      (failure) {
+        sl<LoggerService>().e(failure.message, showPopup: true);
+        store.dispatch(RefreshCompletedAlertsSaveFailedAction(failure.message));
+      },
+      (RefreshSettings settings) {
+        store.dispatch(
+          RefreshCompletedAlertsEnabledSavedAction(
+            settings.refreshCompletedAlertsEnabled,
+          ),
+        );
+      },
+    );
+  }
+
+  /// Handles [SaveShowRefreshProgressAction].
+  Future<void> _saveShowRefreshProgress(
+    Store<AppState> store,
+    SaveShowRefreshProgressAction action,
+  ) async {
+    (await sl<SaveShowRefreshProgressUseCase>()(
+      SaveShowRefreshProgressParams(enabled: action.enabled),
+    )).fold(
+      (failure) {
+        sl<LoggerService>().e(failure.message, showPopup: true);
+        store.dispatch(ShowRefreshProgressSaveFailedAction(failure.message));
+      },
+      (RefreshSettings settings) {
+        store.dispatch(
+          ShowRefreshProgressSavedAction(settings.showRefreshProgress),
         );
       },
     );

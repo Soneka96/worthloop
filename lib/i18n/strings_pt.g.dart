@@ -181,6 +181,7 @@ class _Translations$settings$pt implements Translations$settings$en {
 	@override String get title => 'Definições';
 	@override late final _Translations$settings$appearance$pt appearance = _Translations$settings$appearance$pt._(_root);
 	@override late final _Translations$settings$general$pt general = _Translations$settings$general$pt._(_root);
+	@override late final _Translations$settings$notifications$pt notifications = _Translations$settings$notifications$pt._(_root);
 }
 
 // Path: enums
@@ -226,10 +227,24 @@ class _Translations$settings$general$pt implements Translations$settings$general
 	@override late final _Translations$settings$general$language$pt language = _Translations$settings$general$language$pt._(_root);
 	@override late final _Translations$settings$general$refreshInterval$pt refreshInterval = _Translations$settings$general$refreshInterval$pt._(_root);
 	@override late final _Translations$settings$general$browserRefresh$pt browserRefresh = _Translations$settings$general$browserRefresh$pt._(_root);
-	@override late final _Translations$settings$general$priceAlerts$pt priceAlerts = _Translations$settings$general$priceAlerts$pt._(_root);
-	@override late final _Translations$settings$general$priceIncreaseAlerts$pt priceIncreaseAlerts = _Translations$settings$general$priceIncreaseAlerts$pt._(_root);
 	@override late final _Translations$settings$general$updates$pt updates = _Translations$settings$general$updates$pt._(_root);
 	@override late final _Translations$settings$general$about$pt about = _Translations$settings$general$about$pt._(_root);
+}
+
+// Path: settings.notifications
+class _Translations$settings$notifications$pt implements Translations$settings$notifications$en {
+	_Translations$settings$notifications$pt._(this._root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Notificações';
+	@override String get priceAlertsSectionLabel => 'Alertas de preço';
+	@override String get refreshActivitySectionLabel => 'Atividade de atualização';
+	@override late final _Translations$settings$notifications$priceAlerts$pt priceAlerts = _Translations$settings$notifications$priceAlerts$pt._(_root);
+	@override late final _Translations$settings$notifications$priceIncreaseAlerts$pt priceIncreaseAlerts = _Translations$settings$notifications$priceIncreaseAlerts$pt._(_root);
+	@override late final _Translations$settings$notifications$refreshCompletedAlerts$pt refreshCompletedAlerts = _Translations$settings$notifications$refreshCompletedAlerts$pt._(_root);
+	@override late final _Translations$settings$notifications$showRefreshProgress$pt showRefreshProgress = _Translations$settings$notifications$showRefreshProgress$pt._(_root);
 }
 
 // Path: enums.cornerStyle
@@ -263,6 +278,7 @@ class _Translations$enums$settingsCategory$pt implements Translations$enums$sett
 	// Translations
 	@override String get general => 'Geral';
 	@override String get appearance => 'Aparência';
+	@override String get notifications => 'Notificações';
 }
 
 // Path: settings.general.language
@@ -304,36 +320,6 @@ class _Translations$settings$general$browserRefresh$pt implements Translations$s
 	@override String get fixRestrictions => 'Corrigir restrições de segundo plano';
 }
 
-// Path: settings.general.priceAlerts
-class _Translations$settings$general$priceAlerts$pt implements Translations$settings$general$priceAlerts$en {
-	_Translations$settings$general$priceAlerts$pt._(this._root);
-
-	final TranslationsPt _root; // ignore: unused_field
-
-	// Translations
-	@override String get title => 'Notificações de descida de preço';
-	@override String get description => 'Receba uma notificação quando um produto atingir um novo melhor preço.';
-	@override String get enabledDescription => 'As notificações estão ativas para novos melhores preços. É necessária permissão do Android.';
-	@override String notificationTitle({required Object name}) => '${name} está mais barato';
-	@override String notificationBody({required Object current, required Object previous}) => 'Agora ${current}, antes ${previous}.';
-	@override String get permissionDenied => 'A permissão de notificações do Android não foi concedida, por isso os alertas permanecem desligados.';
-}
-
-// Path: settings.general.priceIncreaseAlerts
-class _Translations$settings$general$priceIncreaseAlerts$pt implements Translations$settings$general$priceIncreaseAlerts$en {
-	_Translations$settings$general$priceIncreaseAlerts$pt._(this._root);
-
-	final TranslationsPt _root; // ignore: unused_field
-
-	// Translations
-	@override String get title => 'Notificações de subida de preço';
-	@override String get description => 'Receba uma notificação quando o melhor preço de um produto seguido subir.';
-	@override String get enabledDescription => 'As notificações estão ativas para subidas de preço. É necessária permissão do Android.';
-	@override String notificationTitle({required Object name}) => '${name} ficou mais caro';
-	@override String notificationBody({required Object current, required Object previous}) => 'Agora ${current}, antes ${previous}.';
-	@override String get permissionDenied => 'A permissão de notificações do Android não foi concedida, por isso os alertas permanecem desligados.';
-}
-
 // Path: settings.general.updates
 class _Translations$settings$general$updates$pt implements Translations$settings$general$updates$en {
 	_Translations$settings$general$updates$pt._(this._root);
@@ -359,6 +345,60 @@ class _Translations$settings$general$about$pt implements Translations$settings$g
 	@override String get copyright => '© 2026 Soneka96';
 	@override String get privacyPolicy => 'Privacidade e utilização de dados';
 	@override String get notImplemented => 'Privacidade e utilização de dados ainda não está implementado.';
+}
+
+// Path: settings.notifications.priceAlerts
+class _Translations$settings$notifications$priceAlerts$pt implements Translations$settings$notifications$priceAlerts$en {
+	_Translations$settings$notifications$priceAlerts$pt._(this._root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Notificações de descida de preço';
+	@override String get description => 'Receba uma notificação quando um produto atingir um novo melhor preço.';
+	@override String get enabledDescription => 'As notificações estão ativas para novos melhores preços. É necessária permissão do Android.';
+	@override String notificationTitle({required Object name}) => '${name} está mais barato';
+	@override String notificationBody({required Object current, required Object previous}) => 'Agora ${current}, antes ${previous}.';
+	@override String get permissionDenied => 'A permissão de notificações do Android não foi concedida, por isso os alertas permanecem desligados.';
+}
+
+// Path: settings.notifications.priceIncreaseAlerts
+class _Translations$settings$notifications$priceIncreaseAlerts$pt implements Translations$settings$notifications$priceIncreaseAlerts$en {
+	_Translations$settings$notifications$priceIncreaseAlerts$pt._(this._root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Notificações de subida de preço';
+	@override String get description => 'Receba uma notificação quando o melhor preço de um produto seguido subir.';
+	@override String get enabledDescription => 'As notificações estão ativas para subidas de preço. É necessária permissão do Android.';
+	@override String notificationTitle({required Object name}) => '${name} ficou mais caro';
+	@override String notificationBody({required Object current, required Object previous}) => 'Agora ${current}, antes ${previous}.';
+	@override String get permissionDenied => 'A permissão de notificações do Android não foi concedida, por isso os alertas permanecem desligados.';
+}
+
+// Path: settings.notifications.refreshCompletedAlerts
+class _Translations$settings$notifications$refreshCompletedAlerts$pt implements Translations$settings$notifications$refreshCompletedAlerts$en {
+	_Translations$settings$notifications$refreshCompletedAlerts$pt._(this._root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Notificações de atualização concluída';
+	@override String get description => 'Receba uma notificação sempre que uma atualização em segundo plano terminar, mesmo sem alterações.';
+	@override String get enabledDescription => 'As notificações estão ativas para todas as atualizações em segundo plano concluídas. É necessária permissão do Android.';
+	@override String get permissionDenied => 'A permissão de notificações do Android não foi concedida, por isso as notificações de atualização permanecem desligadas.';
+}
+
+// Path: settings.notifications.showRefreshProgress
+class _Translations$settings$notifications$showRefreshProgress$pt implements Translations$settings$notifications$showRefreshProgress$en {
+	_Translations$settings$notifications$showRefreshProgress$pt._(this._root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Mostrar progresso da atualização';
+	@override String get description => 'Mostra uma barra de progresso na notificação de atualização em segundo plano enquanto os preços são verificados.';
 }
 
 /// The flat map containing all translations for locale <pt>.
@@ -494,18 +534,6 @@ extension on TranslationsPt {
 			'settings.general.browserRefresh.enabledDescription' => 'A atualização pelo navegador pode usar mais bateria e dados ao verificar lojas em segundo plano.',
 			'settings.general.browserRefresh.status' => 'A atualização pelo navegador está ativa. O Android pode atrasar o trabalho em segundo plano.',
 			'settings.general.browserRefresh.fixRestrictions' => 'Corrigir restrições de segundo plano',
-			'settings.general.priceAlerts.title' => 'Notificações de descida de preço',
-			'settings.general.priceAlerts.description' => 'Receba uma notificação quando um produto atingir um novo melhor preço.',
-			'settings.general.priceAlerts.enabledDescription' => 'As notificações estão ativas para novos melhores preços. É necessária permissão do Android.',
-			'settings.general.priceAlerts.notificationTitle' => ({required Object name}) => '${name} está mais barato',
-			'settings.general.priceAlerts.notificationBody' => ({required Object current, required Object previous}) => 'Agora ${current}, antes ${previous}.',
-			'settings.general.priceAlerts.permissionDenied' => 'A permissão de notificações do Android não foi concedida, por isso os alertas permanecem desligados.',
-			'settings.general.priceIncreaseAlerts.title' => 'Notificações de subida de preço',
-			'settings.general.priceIncreaseAlerts.description' => 'Receba uma notificação quando o melhor preço de um produto seguido subir.',
-			'settings.general.priceIncreaseAlerts.enabledDescription' => 'As notificações estão ativas para subidas de preço. É necessária permissão do Android.',
-			'settings.general.priceIncreaseAlerts.notificationTitle' => ({required Object name}) => '${name} ficou mais caro',
-			'settings.general.priceIncreaseAlerts.notificationBody' => ({required Object current, required Object previous}) => 'Agora ${current}, antes ${previous}.',
-			'settings.general.priceIncreaseAlerts.permissionDenied' => 'A permissão de notificações do Android não foi concedida, por isso os alertas permanecem desligados.',
 			'settings.general.updates.title' => 'Atualizações',
 			'settings.general.updates.version' => ({required Object version}) => 'Versão ${version}',
 			'settings.general.updates.checkForUpdates' => 'Verificar atualizações',
@@ -515,12 +543,34 @@ extension on TranslationsPt {
 			'settings.general.about.copyright' => '© 2026 Soneka96',
 			'settings.general.about.privacyPolicy' => 'Privacidade e utilização de dados',
 			'settings.general.about.notImplemented' => 'Privacidade e utilização de dados ainda não está implementado.',
+			'settings.notifications.title' => 'Notificações',
+			'settings.notifications.priceAlertsSectionLabel' => 'Alertas de preço',
+			'settings.notifications.refreshActivitySectionLabel' => 'Atividade de atualização',
+			'settings.notifications.priceAlerts.title' => 'Notificações de descida de preço',
+			'settings.notifications.priceAlerts.description' => 'Receba uma notificação quando um produto atingir um novo melhor preço.',
+			'settings.notifications.priceAlerts.enabledDescription' => 'As notificações estão ativas para novos melhores preços. É necessária permissão do Android.',
+			'settings.notifications.priceAlerts.notificationTitle' => ({required Object name}) => '${name} está mais barato',
+			'settings.notifications.priceAlerts.notificationBody' => ({required Object current, required Object previous}) => 'Agora ${current}, antes ${previous}.',
+			'settings.notifications.priceAlerts.permissionDenied' => 'A permissão de notificações do Android não foi concedida, por isso os alertas permanecem desligados.',
+			'settings.notifications.priceIncreaseAlerts.title' => 'Notificações de subida de preço',
+			'settings.notifications.priceIncreaseAlerts.description' => 'Receba uma notificação quando o melhor preço de um produto seguido subir.',
+			'settings.notifications.priceIncreaseAlerts.enabledDescription' => 'As notificações estão ativas para subidas de preço. É necessária permissão do Android.',
+			'settings.notifications.priceIncreaseAlerts.notificationTitle' => ({required Object name}) => '${name} ficou mais caro',
+			'settings.notifications.priceIncreaseAlerts.notificationBody' => ({required Object current, required Object previous}) => 'Agora ${current}, antes ${previous}.',
+			'settings.notifications.priceIncreaseAlerts.permissionDenied' => 'A permissão de notificações do Android não foi concedida, por isso os alertas permanecem desligados.',
+			'settings.notifications.refreshCompletedAlerts.title' => 'Notificações de atualização concluída',
+			'settings.notifications.refreshCompletedAlerts.description' => 'Receba uma notificação sempre que uma atualização em segundo plano terminar, mesmo sem alterações.',
+			'settings.notifications.refreshCompletedAlerts.enabledDescription' => 'As notificações estão ativas para todas as atualizações em segundo plano concluídas. É necessária permissão do Android.',
+			'settings.notifications.refreshCompletedAlerts.permissionDenied' => 'A permissão de notificações do Android não foi concedida, por isso as notificações de atualização permanecem desligadas.',
+			'settings.notifications.showRefreshProgress.title' => 'Mostrar progresso da atualização',
+			'settings.notifications.showRefreshProgress.description' => 'Mostra uma barra de progresso na notificação de atualização em segundo plano enquanto os preços são verificados.',
 			'enums.cornerStyle.rounded' => 'Arredondado',
 			'enums.cornerStyle.square' => 'Quadrado',
 			'enums.spacingDensity.comfortable' => 'Confortável',
 			'enums.spacingDensity.compact' => 'Compacto',
 			'enums.settingsCategory.general' => 'Geral',
 			'enums.settingsCategory.appearance' => 'Aparência',
+			'enums.settingsCategory.notifications' => 'Notificações',
 			_ => null,
 		};
 	}

@@ -137,6 +137,21 @@ settings:
       enabledDescription: A atualização pelo navegador pode usar mais bateria e dados ao verificar lojas em segundo plano.
       status: A atualização pelo navegador está ativa. O Android pode atrasar o trabalho em segundo plano.
       fixRestrictions: Corrigir restrições de segundo plano
+    updates:
+      title: Atualizações
+      version: Versão $version
+      checkForUpdates: Verificar atualizações
+      description: A verificação de atualizações será adicionada mais tarde.
+      notImplemented: Verificar atualizações ainda não está implementado.
+    about:
+      title: Acerca
+      copyright: © 2026 Soneka96
+      privacyPolicy: Privacidade e utilização de dados
+      notImplemented: Privacidade e utilização de dados ainda não está implementado.
+  notifications:
+    title: Notificações
+    priceAlertsSectionLabel: Alertas de preço
+    refreshActivitySectionLabel: Atividade de atualização
     priceAlerts:
       title: Notificações de descida de preço
       description: Receba uma notificação quando um produto atingir um novo melhor preço.
@@ -151,17 +166,14 @@ settings:
       notificationTitle: "$name ficou mais caro"
       notificationBody: "Agora $current, antes $previous."
       permissionDenied: A permissão de notificações do Android não foi concedida, por isso os alertas permanecem desligados.
-    updates:
-      title: Atualizações
-      version: Versão $version
-      checkForUpdates: Verificar atualizações
-      description: A verificação de atualizações será adicionada mais tarde.
-      notImplemented: Verificar atualizações ainda não está implementado.
-    about:
-      title: Acerca
-      copyright: © 2026 Soneka96
-      privacyPolicy: Privacidade e utilização de dados
-      notImplemented: Privacidade e utilização de dados ainda não está implementado.
+    refreshCompletedAlerts:
+      title: Notificações de atualização concluída
+      description: Receba uma notificação sempre que uma atualização em segundo plano terminar, mesmo sem alterações.
+      enabledDescription: As notificações estão ativas para todas as atualizações em segundo plano concluídas. É necessária permissão do Android.
+      permissionDenied: A permissão de notificações do Android não foi concedida, por isso as notificações de atualização permanecem desligadas.
+    showRefreshProgress:
+      title: Mostrar progresso da atualização
+      description: Mostra uma barra de progresso na notificação de atualização em segundo plano enquanto os preços são verificados.
 
 enums:
   cornerStyle:
@@ -173,3 +185,4 @@ enums:
   settingsCategory:
     general: Geral
     appearance: Aparência
+    notifications: Notificações

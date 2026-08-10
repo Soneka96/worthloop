@@ -264,6 +264,9 @@ enum SettingsCategory {
 
   /// Theme and zoom controls.
   appearance,
+
+  /// Price-alert and background-refresh notification controls.
+  notifications,
 }
 
 /// Display/behaviour helpers for [SettingsCategory] — kept off the enum
@@ -274,6 +277,7 @@ extension SettingsCategoryX on SettingsCategory {
     SettingsCategory.none => '',
     SettingsCategory.general => t.enums.settingsCategory.general,
     SettingsCategory.appearance => t.enums.settingsCategory.appearance,
+    SettingsCategory.notifications => t.enums.settingsCategory.notifications,
   };
 
   /// The category's icon in the settings category list.
@@ -281,6 +285,7 @@ extension SettingsCategoryX on SettingsCategory {
     SettingsCategory.none => Icons.circle_outlined,
     SettingsCategory.general => Icons.settings_outlined,
     SettingsCategory.appearance => Icons.palette_outlined,
+    SettingsCategory.notifications => Icons.notifications_outlined,
   };
 
   /// Whether this category currently has content built for it.
@@ -291,6 +296,7 @@ extension SettingsCategoryX on SettingsCategory {
   static const Set<SettingsCategory> _enabledCategories = {
     SettingsCategory.general,
     SettingsCategory.appearance,
+    SettingsCategory.notifications,
   };
 }
 

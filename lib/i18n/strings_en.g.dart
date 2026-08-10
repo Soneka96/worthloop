@@ -388,6 +388,7 @@ class Translations$settings$en {
 
 	late final Translations$settings$appearance$en appearance = Translations$settings$appearance$en._(_root);
 	late final Translations$settings$general$en general = Translations$settings$general$en._(_root);
+	late final Translations$settings$notifications$en notifications = Translations$settings$notifications$en._(_root);
 }
 
 // Path: enums
@@ -458,10 +459,31 @@ class Translations$settings$general$en {
 	late final Translations$settings$general$language$en language = Translations$settings$general$language$en._(_root);
 	late final Translations$settings$general$refreshInterval$en refreshInterval = Translations$settings$general$refreshInterval$en._(_root);
 	late final Translations$settings$general$browserRefresh$en browserRefresh = Translations$settings$general$browserRefresh$en._(_root);
-	late final Translations$settings$general$priceAlerts$en priceAlerts = Translations$settings$general$priceAlerts$en._(_root);
-	late final Translations$settings$general$priceIncreaseAlerts$en priceIncreaseAlerts = Translations$settings$general$priceIncreaseAlerts$en._(_root);
 	late final Translations$settings$general$updates$en updates = Translations$settings$general$updates$en._(_root);
 	late final Translations$settings$general$about$en about = Translations$settings$general$about$en._(_root);
+}
+
+// Path: settings.notifications
+class Translations$settings$notifications$en {
+	Translations$settings$notifications$en._(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Notifications'
+	String get title => 'Notifications';
+
+	/// en: 'Price alerts'
+	String get priceAlertsSectionLabel => 'Price alerts';
+
+	/// en: 'Refresh activity'
+	String get refreshActivitySectionLabel => 'Refresh activity';
+
+	late final Translations$settings$notifications$priceAlerts$en priceAlerts = Translations$settings$notifications$priceAlerts$en._(_root);
+	late final Translations$settings$notifications$priceIncreaseAlerts$en priceIncreaseAlerts = Translations$settings$notifications$priceIncreaseAlerts$en._(_root);
+	late final Translations$settings$notifications$refreshCompletedAlerts$en refreshCompletedAlerts = Translations$settings$notifications$refreshCompletedAlerts$en._(_root);
+	late final Translations$settings$notifications$showRefreshProgress$en showRefreshProgress = Translations$settings$notifications$showRefreshProgress$en._(_root);
 }
 
 // Path: enums.cornerStyle
@@ -507,6 +529,9 @@ class Translations$enums$settingsCategory$en {
 
 	/// en: 'Appearance'
 	String get appearance => 'Appearance';
+
+	/// en: 'Notifications'
+	String get notifications => 'Notifications';
 }
 
 // Path: settings.general.language
@@ -572,60 +597,6 @@ class Translations$settings$general$browserRefresh$en {
 	String get fixRestrictions => 'Fix background restrictions';
 }
 
-// Path: settings.general.priceAlerts
-class Translations$settings$general$priceAlerts$en {
-	Translations$settings$general$priceAlerts$en._(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-
-	/// en: 'Price drop notifications'
-	String get title => 'Price drop notifications';
-
-	/// en: 'Get a phone notification when a tracked product reaches a new best price.'
-	String get description => 'Get a phone notification when a tracked product reaches a new best price.';
-
-	/// en: 'Notifications are enabled for new best prices. Android permission is required.'
-	String get enabledDescription => 'Notifications are enabled for new best prices. Android permission is required.';
-
-	/// en: '$name is cheaper'
-	String notificationTitle({required Object name}) => '${name} is cheaper';
-
-	/// en: 'Now $current, down from $previous.'
-	String notificationBody({required Object current, required Object previous}) => 'Now ${current}, down from ${previous}.';
-
-	/// en: 'Android notification permission was not granted, so price alerts remain off.'
-	String get permissionDenied => 'Android notification permission was not granted, so price alerts remain off.';
-}
-
-// Path: settings.general.priceIncreaseAlerts
-class Translations$settings$general$priceIncreaseAlerts$en {
-	Translations$settings$general$priceIncreaseAlerts$en._(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-
-	/// en: 'Price increase notifications'
-	String get title => 'Price increase notifications';
-
-	/// en: 'Get a phone notification when a tracked product's best price goes up.'
-	String get description => 'Get a phone notification when a tracked product\'s best price goes up.';
-
-	/// en: 'Notifications are enabled for price increases. Android permission is required.'
-	String get enabledDescription => 'Notifications are enabled for price increases. Android permission is required.';
-
-	/// en: '$name got more expensive'
-	String notificationTitle({required Object name}) => '${name} got more expensive';
-
-	/// en: 'Now $current, up from $previous.'
-	String notificationBody({required Object current, required Object previous}) => 'Now ${current}, up from ${previous}.';
-
-	/// en: 'Android notification permission was not granted, so price alerts remain off.'
-	String get permissionDenied => 'Android notification permission was not granted, so price alerts remain off.';
-}
-
 // Path: settings.general.updates
 class Translations$settings$general$updates$en {
 	Translations$settings$general$updates$en._(this._root);
@@ -669,6 +640,96 @@ class Translations$settings$general$about$en {
 
 	/// en: 'Privacy & data use is not implemented yet.'
 	String get notImplemented => 'Privacy & data use is not implemented yet.';
+}
+
+// Path: settings.notifications.priceAlerts
+class Translations$settings$notifications$priceAlerts$en {
+	Translations$settings$notifications$priceAlerts$en._(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Price drop notifications'
+	String get title => 'Price drop notifications';
+
+	/// en: 'Get a phone notification when a tracked product reaches a new best price.'
+	String get description => 'Get a phone notification when a tracked product reaches a new best price.';
+
+	/// en: 'Notifications are enabled for new best prices. Android permission is required.'
+	String get enabledDescription => 'Notifications are enabled for new best prices. Android permission is required.';
+
+	/// en: '$name is cheaper'
+	String notificationTitle({required Object name}) => '${name} is cheaper';
+
+	/// en: 'Now $current, down from $previous.'
+	String notificationBody({required Object current, required Object previous}) => 'Now ${current}, down from ${previous}.';
+
+	/// en: 'Android notification permission was not granted, so price alerts remain off.'
+	String get permissionDenied => 'Android notification permission was not granted, so price alerts remain off.';
+}
+
+// Path: settings.notifications.priceIncreaseAlerts
+class Translations$settings$notifications$priceIncreaseAlerts$en {
+	Translations$settings$notifications$priceIncreaseAlerts$en._(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Price increase notifications'
+	String get title => 'Price increase notifications';
+
+	/// en: 'Get a phone notification when a tracked product's best price goes up.'
+	String get description => 'Get a phone notification when a tracked product\'s best price goes up.';
+
+	/// en: 'Notifications are enabled for price increases. Android permission is required.'
+	String get enabledDescription => 'Notifications are enabled for price increases. Android permission is required.';
+
+	/// en: '$name got more expensive'
+	String notificationTitle({required Object name}) => '${name} got more expensive';
+
+	/// en: 'Now $current, up from $previous.'
+	String notificationBody({required Object current, required Object previous}) => 'Now ${current}, up from ${previous}.';
+
+	/// en: 'Android notification permission was not granted, so price alerts remain off.'
+	String get permissionDenied => 'Android notification permission was not granted, so price alerts remain off.';
+}
+
+// Path: settings.notifications.refreshCompletedAlerts
+class Translations$settings$notifications$refreshCompletedAlerts$en {
+	Translations$settings$notifications$refreshCompletedAlerts$en._(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Refresh completed notifications'
+	String get title => 'Refresh completed notifications';
+
+	/// en: 'Get a phone notification every time a background refresh finishes, even when nothing changed.'
+	String get description => 'Get a phone notification every time a background refresh finishes, even when nothing changed.';
+
+	/// en: 'Notifications are enabled for every completed background refresh. Android permission is required.'
+	String get enabledDescription => 'Notifications are enabled for every completed background refresh. Android permission is required.';
+
+	/// en: 'Android notification permission was not granted, so refresh notifications remain off.'
+	String get permissionDenied => 'Android notification permission was not granted, so refresh notifications remain off.';
+}
+
+// Path: settings.notifications.showRefreshProgress
+class Translations$settings$notifications$showRefreshProgress$en {
+	Translations$settings$notifications$showRefreshProgress$en._(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Show refresh progress'
+	String get title => 'Show refresh progress';
+
+	/// en: 'Show a progress bar in the background refresh notification while prices are being checked.'
+	String get description => 'Show a progress bar in the background refresh notification while prices are being checked.';
 }
 
 /// The flat map containing all translations for locale <en>.
@@ -804,18 +865,6 @@ extension on Translations {
 			'settings.general.browserRefresh.enabledDescription' => 'Browser refresh may use additional battery and data while checking stores in the background.',
 			'settings.general.browserRefresh.status' => 'Browser refresh is enabled. Android may still delay background work.',
 			'settings.general.browserRefresh.fixRestrictions' => 'Fix background restrictions',
-			'settings.general.priceAlerts.title' => 'Price drop notifications',
-			'settings.general.priceAlerts.description' => 'Get a phone notification when a tracked product reaches a new best price.',
-			'settings.general.priceAlerts.enabledDescription' => 'Notifications are enabled for new best prices. Android permission is required.',
-			'settings.general.priceAlerts.notificationTitle' => ({required Object name}) => '${name} is cheaper',
-			'settings.general.priceAlerts.notificationBody' => ({required Object current, required Object previous}) => 'Now ${current}, down from ${previous}.',
-			'settings.general.priceAlerts.permissionDenied' => 'Android notification permission was not granted, so price alerts remain off.',
-			'settings.general.priceIncreaseAlerts.title' => 'Price increase notifications',
-			'settings.general.priceIncreaseAlerts.description' => 'Get a phone notification when a tracked product\'s best price goes up.',
-			'settings.general.priceIncreaseAlerts.enabledDescription' => 'Notifications are enabled for price increases. Android permission is required.',
-			'settings.general.priceIncreaseAlerts.notificationTitle' => ({required Object name}) => '${name} got more expensive',
-			'settings.general.priceIncreaseAlerts.notificationBody' => ({required Object current, required Object previous}) => 'Now ${current}, up from ${previous}.',
-			'settings.general.priceIncreaseAlerts.permissionDenied' => 'Android notification permission was not granted, so price alerts remain off.',
 			'settings.general.updates.title' => 'Updates',
 			'settings.general.updates.version' => ({required Object version}) => 'Version ${version}',
 			'settings.general.updates.checkForUpdates' => 'Check for updates',
@@ -825,12 +874,34 @@ extension on Translations {
 			'settings.general.about.copyright' => '© 2026 Soneka96',
 			'settings.general.about.privacyPolicy' => 'Privacy & data use',
 			'settings.general.about.notImplemented' => 'Privacy & data use is not implemented yet.',
+			'settings.notifications.title' => 'Notifications',
+			'settings.notifications.priceAlertsSectionLabel' => 'Price alerts',
+			'settings.notifications.refreshActivitySectionLabel' => 'Refresh activity',
+			'settings.notifications.priceAlerts.title' => 'Price drop notifications',
+			'settings.notifications.priceAlerts.description' => 'Get a phone notification when a tracked product reaches a new best price.',
+			'settings.notifications.priceAlerts.enabledDescription' => 'Notifications are enabled for new best prices. Android permission is required.',
+			'settings.notifications.priceAlerts.notificationTitle' => ({required Object name}) => '${name} is cheaper',
+			'settings.notifications.priceAlerts.notificationBody' => ({required Object current, required Object previous}) => 'Now ${current}, down from ${previous}.',
+			'settings.notifications.priceAlerts.permissionDenied' => 'Android notification permission was not granted, so price alerts remain off.',
+			'settings.notifications.priceIncreaseAlerts.title' => 'Price increase notifications',
+			'settings.notifications.priceIncreaseAlerts.description' => 'Get a phone notification when a tracked product\'s best price goes up.',
+			'settings.notifications.priceIncreaseAlerts.enabledDescription' => 'Notifications are enabled for price increases. Android permission is required.',
+			'settings.notifications.priceIncreaseAlerts.notificationTitle' => ({required Object name}) => '${name} got more expensive',
+			'settings.notifications.priceIncreaseAlerts.notificationBody' => ({required Object current, required Object previous}) => 'Now ${current}, up from ${previous}.',
+			'settings.notifications.priceIncreaseAlerts.permissionDenied' => 'Android notification permission was not granted, so price alerts remain off.',
+			'settings.notifications.refreshCompletedAlerts.title' => 'Refresh completed notifications',
+			'settings.notifications.refreshCompletedAlerts.description' => 'Get a phone notification every time a background refresh finishes, even when nothing changed.',
+			'settings.notifications.refreshCompletedAlerts.enabledDescription' => 'Notifications are enabled for every completed background refresh. Android permission is required.',
+			'settings.notifications.refreshCompletedAlerts.permissionDenied' => 'Android notification permission was not granted, so refresh notifications remain off.',
+			'settings.notifications.showRefreshProgress.title' => 'Show refresh progress',
+			'settings.notifications.showRefreshProgress.description' => 'Show a progress bar in the background refresh notification while prices are being checked.',
 			'enums.cornerStyle.rounded' => 'Rounded',
 			'enums.cornerStyle.square' => 'Square',
 			'enums.spacingDensity.comfortable' => 'Comfortable',
 			'enums.spacingDensity.compact' => 'Compact',
 			'enums.settingsCategory.general' => 'General',
 			'enums.settingsCategory.appearance' => 'Appearance',
+			'enums.settingsCategory.notifications' => 'Notifications',
 			_ => null,
 		};
 	}

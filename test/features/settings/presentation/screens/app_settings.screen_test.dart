@@ -13,7 +13,9 @@ import 'package:redux/redux.dart';
 import 'package:worth_loop/features/settings/presentation/screens/app_settings.screen.dart';
 import 'package:worth_loop/features/settings/presentation/screens/appearance_settings.screen.dart';
 import 'package:worth_loop/features/settings/presentation/screens/general_settings.screen.dart';
+import 'package:worth_loop/features/settings/presentation/screens/notifications_settings.screen.dart';
 import 'package:worth_loop/features/settings/presentation/state/viewmodels/general_settings_screen.viewmodel.dart';
+import 'package:worth_loop/features/settings/presentation/state/viewmodels/notifications_settings_screen.viewmodel.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/state/app.reducer.dart';
@@ -28,21 +30,49 @@ import 'package:worth_loop/shared/theme/app_zoom.dart';
 class MockGeneralSettingsScreenViewModel extends Mock
     implements GeneralSettingsScreenViewModel {}
 
+class MockNotificationsSettingsScreenViewModel extends Mock
+    implements NotificationsSettingsScreenViewModel {}
+
 void main() {
   late MockGeneralSettingsScreenViewModel mockViewModel;
+  late MockNotificationsSettingsScreenViewModel mockNotificationsViewModel;
   late Store<AppState> store;
 
   setUp(() {
     mockViewModel = MockGeneralSettingsScreenViewModel();
+    mockNotificationsViewModel = MockNotificationsSettingsScreenViewModel();
+    when(
+      () => mockNotificationsViewModel.priceDropAlertsEnabled,
+    ).thenReturn(false);
+    when(
+      () => mockNotificationsViewModel.priceIncreaseAlertsEnabled,
+    ).thenReturn(false);
+    when(
+      () => mockNotificationsViewModel.refreshCompletedAlertsEnabled,
+    ).thenReturn(false);
+    when(
+      () => mockNotificationsViewModel.showRefreshProgress,
+    ).thenReturn(false);
+    when(() => mockNotificationsViewModel.isBusy).thenReturn(false);
+    when(
+      () => mockNotificationsViewModel.onPriceDropAlertsEnabledChanged,
+    ).thenReturn((_) {});
+    when(
+      () => mockNotificationsViewModel.onPriceIncreaseAlertsEnabledChanged,
+    ).thenReturn((_) {});
+    when(
+      () => mockNotificationsViewModel.onRefreshCompletedAlertsEnabledChanged,
+    ).thenReturn((_) {});
+    when(
+      () => mockNotificationsViewModel.onShowRefreshProgressChanged,
+    ).thenReturn((_) {});
     when(() => mockViewModel.refreshIntervalMinutes).thenReturn(60);
     when(() => mockViewModel.browserRefreshEnabled).thenReturn(false);
-    when(() => mockViewModel.priceAlertsEnabled).thenReturn(false);
     when(() => mockViewModel.isRefreshIntervalBusy).thenReturn(false);
     when(() => mockViewModel.onCheckForUpdates).thenReturn(() {});
     when(() => mockViewModel.onOpenPrivacyPolicy).thenReturn(() {});
     when(() => mockViewModel.onRefreshIntervalSelected).thenReturn((_) {});
     when(() => mockViewModel.onBrowserRefreshEnabledChanged).thenReturn((_) {});
-    when(() => mockViewModel.onPriceAlertsEnabledChanged).thenReturn((_) {});
     when(() => mockViewModel.onOpenBackgroundRestrictions).thenReturn(() {});
 
     sl.registerLazySingleton<AppTheme>(AppTheme.new);
@@ -64,12 +94,18 @@ void main() {
       Store<AppState>,
       void
     >((store, _) => mockViewModel);
+    sl.registerFactoryParam<
+      NotificationsSettingsScreenViewModel,
+      Store<AppState>,
+      void
+    >((store, _) => mockNotificationsViewModel);
 
     store = Store<AppState>(appReducer, initialState: AppState.initial());
   });
   tearDown(() async {
     await sl.reset();
     reset(mockViewModel);
+    reset(mockNotificationsViewModel);
   });
 
   Widget buildWidget({
@@ -131,7 +167,7 @@ void main() {
         );
 
         expect(selector.segments.length, isA<int>());
-        expect(selector.segments.length, 2);
+        expect(selector.segments.length, 3);
       },
     );
 
@@ -165,6 +201,18 @@ void main() {
         await tester.pump();
 
         expect(find.byType(AppearanceSettingsScreen), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'AppSettingsScreen shows NotificationsSettingsScreen when the Notifications category is tapped',
+      (tester) async {
+        await tester.pumpWidget(buildWidget());
+
+        await tester.tap(find.text('Notifications'));
+        await tester.pump();
+
+        expect(find.byType(NotificationsSettingsScreen), findsOneWidget);
       },
     );
   });
@@ -247,10 +295,10 @@ void main() {
       const List<Key> focusOrder = [
         Key('settings-category-selector'),
         Key('settings-category-selector'),
+        Key('settings-category-selector'),
         Key('language-picker-dropdown'),
         Key('refresh-interval-dropdown'),
         Key('browser-refresh-switch'),
-        Key('price-alerts-switch'),
         Key('general-settings-check-for-updates-button'),
         Key('general-settings-privacy-policy-button'),
       ];

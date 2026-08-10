@@ -8,10 +8,16 @@ import 'package:redux/redux.dart';
 import 'package:worth_loop/features/settings/domain/usecases/load_refresh_settings.usecase.dart';
 import 'package:worth_loop/features/settings/domain/usecases/params/save_browser_refresh_enabled.params.dart';
 import 'package:worth_loop/features/settings/domain/usecases/params/save_price_drop_alerts_enabled.params.dart';
+import 'package:worth_loop/features/settings/domain/usecases/params/save_price_increase_alerts_enabled.params.dart';
+import 'package:worth_loop/features/settings/domain/usecases/params/save_refresh_completed_alerts_enabled.params.dart';
 import 'package:worth_loop/features/settings/domain/usecases/params/save_refresh_interval.params.dart';
+import 'package:worth_loop/features/settings/domain/usecases/params/save_show_refresh_progress.params.dart';
 import 'package:worth_loop/features/settings/domain/usecases/save_browser_refresh_enabled.usecase.dart';
 import 'package:worth_loop/features/settings/domain/usecases/save_price_drop_alerts_enabled.usecase.dart';
+import 'package:worth_loop/features/settings/domain/usecases/save_price_increase_alerts_enabled.usecase.dart';
+import 'package:worth_loop/features/settings/domain/usecases/save_refresh_completed_alerts_enabled.usecase.dart';
 import 'package:worth_loop/features/settings/domain/usecases/save_refresh_interval.usecase.dart';
+import 'package:worth_loop/features/settings/domain/usecases/save_show_refresh_progress.usecase.dart';
 import 'package:worth_loop/features/settings/presentation/state/general_settings.actions.dart';
 import 'package:worth_loop/features/settings/presentation/state/general_settings.middleware.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
@@ -21,8 +27,8 @@ import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/usecase/no_params.dart';
 import 'package:worth_loop/shared/utils/android_background_capabilities_service.dart';
 import 'package:worth_loop/shared/utils/android_background_refresh_service.dart';
-import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/android_price_alert_notification_service.dart';
+import 'package:worth_loop/shared/utils/logger_service.dart';
 import '../../fixtures/refresh_settings.fixture.dart';
 
 class MockStore extends Mock implements Store<AppState> {}
@@ -40,6 +46,15 @@ class MockSaveBrowserRefreshEnabledUseCase extends Mock
 
 class MockSavePriceDropAlertsEnabledUseCase extends Mock
     implements SavePriceDropAlertsEnabledUseCase {}
+
+class MockSavePriceIncreaseAlertsEnabledUseCase extends Mock
+    implements SavePriceIncreaseAlertsEnabledUseCase {}
+
+class MockSaveRefreshCompletedAlertsEnabledUseCase extends Mock
+    implements SaveRefreshCompletedAlertsEnabledUseCase {}
+
+class MockSaveShowRefreshProgressUseCase extends Mock
+    implements SaveShowRefreshProgressUseCase {}
 
 class MockAndroidBackgroundCapabilitiesService extends Mock
     implements AndroidBackgroundCapabilitiesService {}
@@ -59,6 +74,15 @@ class FakeSaveBrowserRefreshEnabledParams extends Fake
 class FakeSavePriceDropAlertsEnabledParams extends Fake
     implements SavePriceDropAlertsEnabledParams {}
 
+class FakeSavePriceIncreaseAlertsEnabledParams extends Fake
+    implements SavePriceIncreaseAlertsEnabledParams {}
+
+class FakeSaveRefreshCompletedAlertsEnabledParams extends Fake
+    implements SaveRefreshCompletedAlertsEnabledParams {}
+
+class FakeSaveShowRefreshProgressParams extends Fake
+    implements SaveShowRefreshProgressParams {}
+
 void main() {
   late List<dynamic> actionLog;
   late GeneralSettingsMiddleware middleware;
@@ -68,6 +92,11 @@ void main() {
   late MockSaveRefreshIntervalUseCase mockSaveUseCase;
   late MockSaveBrowserRefreshEnabledUseCase mockSaveBrowserRefreshUseCase;
   late MockSavePriceDropAlertsEnabledUseCase mockSavePriceDropAlertsUseCase;
+  late MockSavePriceIncreaseAlertsEnabledUseCase
+  mockSavePriceIncreaseAlertsUseCase;
+  late MockSaveRefreshCompletedAlertsEnabledUseCase
+  mockSaveRefreshCompletedAlertsUseCase;
+  late MockSaveShowRefreshProgressUseCase mockSaveShowRefreshProgressUseCase;
   late MockAndroidBackgroundCapabilitiesService mockCapabilitiesService;
   late MockAndroidBackgroundRefreshService mockBackgroundRefreshService;
   late MockAndroidPriceAlertNotificationService mockNotificationService;
@@ -79,6 +108,9 @@ void main() {
     registerFallbackValue(FakeSaveRefreshIntervalParams());
     registerFallbackValue(FakeSaveBrowserRefreshEnabledParams());
     registerFallbackValue(FakeSavePriceDropAlertsEnabledParams());
+    registerFallbackValue(FakeSavePriceIncreaseAlertsEnabledParams());
+    registerFallbackValue(FakeSaveRefreshCompletedAlertsEnabledParams());
+    registerFallbackValue(FakeSaveShowRefreshProgressParams());
   });
 
   setUp(() {
@@ -90,6 +122,11 @@ void main() {
     mockSaveUseCase = MockSaveRefreshIntervalUseCase();
     mockSaveBrowserRefreshUseCase = MockSaveBrowserRefreshEnabledUseCase();
     mockSavePriceDropAlertsUseCase = MockSavePriceDropAlertsEnabledUseCase();
+    mockSavePriceIncreaseAlertsUseCase =
+        MockSavePriceIncreaseAlertsEnabledUseCase();
+    mockSaveRefreshCompletedAlertsUseCase =
+        MockSaveRefreshCompletedAlertsEnabledUseCase();
+    mockSaveShowRefreshProgressUseCase = MockSaveShowRefreshProgressUseCase();
     mockCapabilitiesService = MockAndroidBackgroundCapabilitiesService();
     mockBackgroundRefreshService = MockAndroidBackgroundRefreshService();
     mockNotificationService = MockAndroidPriceAlertNotificationService();
@@ -108,6 +145,15 @@ void main() {
     );
     sl.registerSingleton<SavePriceDropAlertsEnabledUseCase>(
       mockSavePriceDropAlertsUseCase,
+    );
+    sl.registerSingleton<SavePriceIncreaseAlertsEnabledUseCase>(
+      mockSavePriceIncreaseAlertsUseCase,
+    );
+    sl.registerSingleton<SaveRefreshCompletedAlertsEnabledUseCase>(
+      mockSaveRefreshCompletedAlertsUseCase,
+    );
+    sl.registerSingleton<SaveShowRefreshProgressUseCase>(
+      mockSaveShowRefreshProgressUseCase,
     );
     sl.registerSingleton<AndroidBackgroundCapabilitiesService>(
       mockCapabilitiesService,
@@ -307,7 +353,7 @@ void main() {
       verifyNever(() => mockSavePriceDropAlertsUseCase(any()));
       verify(
         () => mockLoggerService.w(
-          t.settings.general.priceAlerts.permissionDenied,
+          t.settings.notifications.priceAlerts.permissionDenied,
           showPopup: true,
         ),
       ).called(1);
@@ -338,6 +384,321 @@ void main() {
       verifyNoMoreInteractions(mockLoggerService);
     });
   });
+
+  group(
+    'GeneralSettingsMiddleware processes SavePriceIncreaseAlertsEnabledAction',
+    () {
+      test(
+        'dispatches PriceIncreaseAlertsEnabledSavedAction when successful',
+        () async {
+          when(() => mockSavePriceIncreaseAlertsUseCase(any())).thenAnswer(
+            (_) async =>
+                Right(buildRefreshSettings(priceIncreaseAlertsEnabled: true)),
+          );
+
+          middleware.call(
+            mockStore,
+            const SavePriceIncreaseAlertsEnabledAction(true),
+            next,
+          );
+          await Future<void>.delayed(Duration.zero);
+
+          expect(actionLog[0], isA<SavePriceIncreaseAlertsEnabledAction>());
+          expect(
+            actionLog[1],
+            const PriceIncreaseAlertsEnabledSavedAction(true),
+          );
+          verify(() => mockNotificationService.requestPermission()).called(1);
+          verify(
+            () => mockSavePriceIncreaseAlertsUseCase(
+              const SavePriceIncreaseAlertsEnabledParams(enabled: true),
+            ),
+          ).called(1);
+          verifyNoMoreInteractions(mockSavePriceIncreaseAlertsUseCase);
+          verifyZeroInteractions(mockLoggerService);
+        },
+      );
+
+      test('does not save when notification permission is denied', () async {
+        when(
+          () => mockNotificationService.requestPermission(),
+        ).thenAnswer((_) async => false);
+
+        middleware.call(
+          mockStore,
+          const SavePriceIncreaseAlertsEnabledAction(true),
+          next,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(actionLog, [const SavePriceIncreaseAlertsEnabledAction(true)]);
+        verifyNever(() => mockSavePriceIncreaseAlertsUseCase(any()));
+        verify(
+          () => mockLoggerService.w(
+            t.settings.notifications.priceIncreaseAlerts.permissionDenied,
+            showPopup: true,
+          ),
+        ).called(1);
+      });
+
+      test(
+        'dispatches PriceIncreaseAlertsSaveFailedAction when failed',
+        () async {
+          const DatabaseFailure failure = DatabaseFailure('failed');
+          when(
+            () => mockSavePriceIncreaseAlertsUseCase(any()),
+          ).thenAnswer((_) async => const Left(failure));
+
+          middleware.call(
+            mockStore,
+            const SavePriceIncreaseAlertsEnabledAction(false),
+            next,
+          );
+          await Future<void>.delayed(Duration.zero);
+
+          expect(
+            actionLog[1],
+            const PriceIncreaseAlertsSaveFailedAction('failed'),
+          );
+          verifyNever(() => mockNotificationService.requestPermission());
+          verify(
+            () => mockSavePriceIncreaseAlertsUseCase(
+              const SavePriceIncreaseAlertsEnabledParams(enabled: false),
+            ),
+          ).called(1);
+          verifyNoMoreInteractions(mockSavePriceIncreaseAlertsUseCase);
+          verify(
+            () => mockLoggerService.e('failed', showPopup: true),
+          ).called(1);
+          verifyNoMoreInteractions(mockLoggerService);
+        },
+      );
+
+      test(
+        'dispatches PriceIncreaseAlertsSaveFailedAction when permission is granted but saving fails',
+        () async {
+          const DatabaseFailure failure = DatabaseFailure('failed');
+          when(
+            () => mockSavePriceIncreaseAlertsUseCase(any()),
+          ).thenAnswer((_) async => const Left(failure));
+
+          middleware.call(
+            mockStore,
+            const SavePriceIncreaseAlertsEnabledAction(true),
+            next,
+          );
+          await Future<void>.delayed(Duration.zero);
+
+          expect(
+            actionLog[1],
+            const PriceIncreaseAlertsSaveFailedAction('failed'),
+          );
+          verify(() => mockNotificationService.requestPermission()).called(1);
+          verify(
+            () => mockSavePriceIncreaseAlertsUseCase(
+              const SavePriceIncreaseAlertsEnabledParams(enabled: true),
+            ),
+          ).called(1);
+          verifyNoMoreInteractions(mockSavePriceIncreaseAlertsUseCase);
+          verify(
+            () => mockLoggerService.e('failed', showPopup: true),
+          ).called(1);
+          verifyNoMoreInteractions(mockLoggerService);
+        },
+      );
+    },
+  );
+
+  group(
+    'GeneralSettingsMiddleware processes SaveRefreshCompletedAlertsEnabledAction',
+    () {
+      test(
+        'dispatches RefreshCompletedAlertsEnabledSavedAction when successful',
+        () async {
+          when(() => mockSaveRefreshCompletedAlertsUseCase(any())).thenAnswer(
+            (_) async => Right(
+              buildRefreshSettings(refreshCompletedAlertsEnabled: true),
+            ),
+          );
+
+          middleware.call(
+            mockStore,
+            const SaveRefreshCompletedAlertsEnabledAction(true),
+            next,
+          );
+          await Future<void>.delayed(Duration.zero);
+
+          expect(actionLog[0], isA<SaveRefreshCompletedAlertsEnabledAction>());
+          expect(
+            actionLog[1],
+            const RefreshCompletedAlertsEnabledSavedAction(true),
+          );
+          verify(() => mockNotificationService.requestPermission()).called(1);
+          verify(
+            () => mockSaveRefreshCompletedAlertsUseCase(
+              const SaveRefreshCompletedAlertsEnabledParams(enabled: true),
+            ),
+          ).called(1);
+          verifyNoMoreInteractions(mockSaveRefreshCompletedAlertsUseCase);
+          verifyZeroInteractions(mockLoggerService);
+        },
+      );
+
+      test('does not save when notification permission is denied', () async {
+        when(
+          () => mockNotificationService.requestPermission(),
+        ).thenAnswer((_) async => false);
+
+        middleware.call(
+          mockStore,
+          const SaveRefreshCompletedAlertsEnabledAction(true),
+          next,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(actionLog, [
+          const SaveRefreshCompletedAlertsEnabledAction(true),
+        ]);
+        verifyNever(() => mockSaveRefreshCompletedAlertsUseCase(any()));
+        verify(
+          () => mockLoggerService.w(
+            t.settings.notifications.refreshCompletedAlerts.permissionDenied,
+            showPopup: true,
+          ),
+        ).called(1);
+      });
+
+      test(
+        'dispatches RefreshCompletedAlertsSaveFailedAction when failed',
+        () async {
+          const DatabaseFailure failure = DatabaseFailure('failed');
+          when(
+            () => mockSaveRefreshCompletedAlertsUseCase(any()),
+          ).thenAnswer((_) async => const Left(failure));
+
+          middleware.call(
+            mockStore,
+            const SaveRefreshCompletedAlertsEnabledAction(false),
+            next,
+          );
+          await Future<void>.delayed(Duration.zero);
+
+          expect(
+            actionLog[1],
+            const RefreshCompletedAlertsSaveFailedAction('failed'),
+          );
+          verifyNever(() => mockNotificationService.requestPermission());
+          verify(
+            () => mockSaveRefreshCompletedAlertsUseCase(
+              const SaveRefreshCompletedAlertsEnabledParams(enabled: false),
+            ),
+          ).called(1);
+          verifyNoMoreInteractions(mockSaveRefreshCompletedAlertsUseCase);
+          verify(
+            () => mockLoggerService.e('failed', showPopup: true),
+          ).called(1);
+          verifyNoMoreInteractions(mockLoggerService);
+        },
+      );
+
+      test(
+        'dispatches RefreshCompletedAlertsSaveFailedAction when permission is granted but saving fails',
+        () async {
+          const DatabaseFailure failure = DatabaseFailure('failed');
+          when(
+            () => mockSaveRefreshCompletedAlertsUseCase(any()),
+          ).thenAnswer((_) async => const Left(failure));
+
+          middleware.call(
+            mockStore,
+            const SaveRefreshCompletedAlertsEnabledAction(true),
+            next,
+          );
+          await Future<void>.delayed(Duration.zero);
+
+          expect(
+            actionLog[1],
+            const RefreshCompletedAlertsSaveFailedAction('failed'),
+          );
+          verify(() => mockNotificationService.requestPermission()).called(1);
+          verify(
+            () => mockSaveRefreshCompletedAlertsUseCase(
+              const SaveRefreshCompletedAlertsEnabledParams(enabled: true),
+            ),
+          ).called(1);
+          verifyNoMoreInteractions(mockSaveRefreshCompletedAlertsUseCase);
+          verify(
+            () => mockLoggerService.e('failed', showPopup: true),
+          ).called(1);
+          verifyNoMoreInteractions(mockLoggerService);
+        },
+      );
+    },
+  );
+
+  group(
+    'GeneralSettingsMiddleware processes SaveShowRefreshProgressAction',
+    () {
+      test(
+        'dispatches ShowRefreshProgressSavedAction when successful',
+        () async {
+          when(() => mockSaveShowRefreshProgressUseCase(any())).thenAnswer(
+            (_) async => Right(buildRefreshSettings(showRefreshProgress: true)),
+          );
+
+          middleware.call(
+            mockStore,
+            const SaveShowRefreshProgressAction(true),
+            next,
+          );
+          await Future<void>.delayed(Duration.zero);
+
+          expect(actionLog[0], isA<SaveShowRefreshProgressAction>());
+          expect(actionLog[1], const ShowRefreshProgressSavedAction(true));
+          verifyNever(() => mockNotificationService.requestPermission());
+          verify(
+            () => mockSaveShowRefreshProgressUseCase(
+              const SaveShowRefreshProgressParams(enabled: true),
+            ),
+          ).called(1);
+          verifyNoMoreInteractions(mockSaveShowRefreshProgressUseCase);
+          verifyZeroInteractions(mockLoggerService);
+        },
+      );
+
+      test(
+        'dispatches ShowRefreshProgressSaveFailedAction when failed',
+        () async {
+          const DatabaseFailure failure = DatabaseFailure('failed');
+          when(
+            () => mockSaveShowRefreshProgressUseCase(any()),
+          ).thenAnswer((_) async => const Left(failure));
+
+          middleware.call(
+            mockStore,
+            const SaveShowRefreshProgressAction(false),
+            next,
+          );
+          await Future<void>.delayed(Duration.zero);
+
+          expect(
+            actionLog[1],
+            const ShowRefreshProgressSaveFailedAction('failed'),
+          );
+          verify(
+            () => mockSaveShowRefreshProgressUseCase(
+              const SaveShowRefreshProgressParams(enabled: false),
+            ),
+          ).called(1);
+          verifyNoMoreInteractions(mockSaveShowRefreshProgressUseCase);
+          verify(
+            () => mockLoggerService.e('failed', showPopup: true),
+          ).called(1);
+          verifyNoMoreInteractions(mockLoggerService);
+        },
+      );
+    },
+  );
 
   group(
     'GeneralSettingsMiddleware processes SaveBrowserRefreshEnabledAction',

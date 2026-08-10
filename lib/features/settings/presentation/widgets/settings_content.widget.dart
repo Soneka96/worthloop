@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 // Project imports:
 import 'package:worth_loop/features/settings/presentation/screens/appearance_settings.screen.dart';
 import 'package:worth_loop/features/settings/presentation/screens/general_settings.screen.dart';
+import 'package:worth_loop/features/settings/presentation/screens/notifications_settings.screen.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
 
 /// The content pane for whichever [SettingsCategory] is selected. Categories
@@ -19,6 +20,7 @@ class SettingsContent extends StatelessWidget {
     return switch (category) {
       SettingsCategory.general => const GeneralSettingsScreen(),
       SettingsCategory.appearance => const AppearanceSettingsScreen(),
+      SettingsCategory.notifications => const NotificationsSettingsScreen(),
       _ => const SizedBox.shrink(),
     };
   }
