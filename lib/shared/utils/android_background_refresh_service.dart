@@ -73,13 +73,17 @@ class AndroidBackgroundRefreshService {
   }
 
   /// Queues [sourceIds] onto the background service, starting it if it
-  /// isn't already running.
-  Future<bool> enqueueSources(List<String> sourceIds) async {
+  /// isn't already running. [bypassCooldown] is only honored when the
+  /// service is already running — see the matching native-side note.
+  Future<bool> enqueueSources(
+    List<String> sourceIds, {
+    bool bypassCooldown = false,
+  }) async {
     try {
-      return await _methodChannel.invokeMethod<bool>(
-            'enqueueSources',
-            sourceIds,
-          ) ??
+      return await _methodChannel.invokeMethod<bool>('enqueueSources', {
+            'sourceIds': sourceIds,
+            'bypassCooldown': bypassCooldown,
+          }) ??
           false;
     } on MissingPluginException {
       return false;

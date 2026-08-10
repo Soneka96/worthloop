@@ -28,6 +28,7 @@ class BackgroundRefreshService : Service() {
         const val ACTION_REQUEST_REFRESH =
             "io.github.soneka96.worthloop.action.REQUEST_REFRESH"
         const val EXTRA_SOURCE_IDS = "source_ids"
+        const val EXTRA_BYPASS_COOLDOWN = "bypass_cooldown"
         const val ENGINE_CHANNEL =
             "io.github.soneka96.worthloop/background_refresh_engine"
         const val PREFS_NAME = "worth_loop_background_refresh"
@@ -72,7 +73,13 @@ class BackgroundRefreshService : Service() {
         if (!engineStarted) {
             engineStarted = startFlutterEngine()
         } else if (sourceIds != null) {
-            notifyFlutterEngine(sourceIds)
+            // ponytail: a bypass-cooldown request made while the engine is
+            // cold-starting (the branch above) loses that hint and queues
+            // normally instead — rare enough that thread-through isn't worth
+            // the extra native plumbing. Only the already-running path here
+            // honors it.
+            val bypassCooldown = intent?.getBooleanExtra(EXTRA_BYPASS_COOLDOWN, false) ?: false
+            notifyFlutterEngine(sourceIds, bypassCooldown)
         }
         return START_NOT_STICKY
     }
@@ -202,7 +209,10 @@ class BackgroundRefreshService : Service() {
         return true
     }
 
-    private fun notifyFlutterEngine(sourceIds: List<String>) {
-        engineChannel?.invokeMethod("enqueueSources", sourceIds)
+    private fun notifyFlutterEngine(sourceIds: List<String>, bypassCooldown: Boolean) {
+        engineChannel?.invokeMethod(
+            "enqueueSources",
+            mapOf("sourceIds" to sourceIds, "bypassCooldown" to bypassCooldown),
+        )
     }
 }

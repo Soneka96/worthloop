@@ -67,10 +67,16 @@ class MainActivity : FlutterActivity() {
                 "requestRefresh" -> result.success(requestBackgroundRefresh())
                 "isRunning" -> result.success(BackgroundRefreshService.isRunning)
                 "enqueueSources" -> {
-                    val sourceIds = (call.arguments as? List<*>)
+                    val arguments = call.arguments as? Map<*, *>
+                    val sourceIds = (arguments?.get("sourceIds") as? List<*>)
                         ?.filterIsInstance<String>()
+                    val bypassCooldown = arguments?.get("bypassCooldown") as? Boolean ?: false
                     result.success(
-                        if (sourceIds != null) enqueueSources(sourceIds) else false,
+                        if (sourceIds != null) {
+                            enqueueSources(sourceIds, bypassCooldown)
+                        } else {
+                            false
+                        },
                     )
                 }
                 "registerCallbackHandle" -> {
@@ -176,7 +182,7 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun enqueueSources(sourceIds: List<String>): Boolean {
+    private fun enqueueSources(sourceIds: List<String>, bypassCooldown: Boolean): Boolean {
         return try {
             val intent = Intent(this, BackgroundRefreshService::class.java).apply {
                 action = BackgroundRefreshService.ACTION_REQUEST_REFRESH
@@ -184,6 +190,7 @@ class MainActivity : FlutterActivity() {
                     BackgroundRefreshService.EXTRA_SOURCE_IDS,
                     ArrayList(sourceIds),
                 )
+                putExtra(BackgroundRefreshService.EXTRA_BYPASS_COOLDOWN, bypassCooldown)
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 startForegroundService(intent)

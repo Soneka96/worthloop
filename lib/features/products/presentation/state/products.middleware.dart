@@ -2,7 +2,6 @@
 import 'dart:async';
 
 // Package imports:
-import 'package:fpdart/fpdart.dart';
 import 'package:redux/redux.dart';
 
 // Project imports:
@@ -20,45 +19,27 @@ import 'package:worth_loop/features/products/domain/usecases/params/create_produ
 import 'package:worth_loop/features/products/domain/usecases/params/delete_product.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/delete_source.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/edit_source.params.dart';
-import 'package:worth_loop/features/products/domain/usecases/params/refresh_product.params.dart';
-import 'package:worth_loop/features/products/domain/usecases/params/refresh_source.params.dart';
 import 'package:worth_loop/features/products/domain/usecases/params/rename_product.params.dart';
-import 'package:worth_loop/features/products/domain/usecases/refresh_product.usecase.dart';
-import 'package:worth_loop/features/products/domain/usecases/refresh_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/rename_product.usecase.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
-import 'package:worth_loop/shared/constants/enums.dart';
-import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/navigation/app_routes.dart';
 import 'package:worth_loop/shared/navigation/navigator_service.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import 'package:worth_loop/shared/usecase/no_params.dart';
 import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
-import 'package:worth_loop/shared/preferences/background_refresh_progress.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
 import 'package:worth_loop/shared/utils/url_launcher_service.dart';
-import 'package:worth_loop/shared/utils/product_price_alert_notification_coordinator.dart';
 import 'package:worth_loop/shared/utils/android_background_refresh_service.dart';
 
 /// Handles tracked-product actions.
 class ProductsMiddleware extends MiddlewareClass<AppState> {
-  static const Duration _progressPollInterval = Duration(seconds: 1);
-  static const Duration _progressStaleAfter = Duration(seconds: 45);
-
-  bool _refreshInProgress = false;
   StreamSubscription<List<Product>>? _productsSubscription;
-  Timer? _backgroundProgressTimer;
 
   @override
   void call(Store<AppState> store, dynamic action, NextDispatcher next) {
     next(action);
-
-    if (action is SourceRefreshFinishedAction) {
-      _refreshInProgress = false;
-      _stopBackgroundProgressPolling();
-    }
 
     switch (action) {
       case LoadProductsAction _:
@@ -105,72 +86,6 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
         sl<LoggerService>().e(error.toString());
       },
     );
-  }
-
-  void _startBackgroundProgressPolling(Store<AppState> store) {
-    _stopBackgroundProgressPolling();
-    unawaited(_pollBackgroundRefreshProgress(store));
-    _backgroundProgressTimer = Timer.periodic(
-      _progressPollInterval,
-      (_) => unawaited(_pollBackgroundRefreshProgress(store)),
-    );
-  }
-
-  void _stopBackgroundProgressPolling() {
-    _backgroundProgressTimer?.cancel();
-    _backgroundProgressTimer = null;
-  }
-
-  Future<void> _pollBackgroundRefreshProgress(Store<AppState> store) async {
-    final BackgroundRefreshProgress? progress;
-    try {
-      progress = await sl<AppPreferencesStore>()
-          .readBackgroundRefreshProgress();
-    } catch (error) {
-      sl<LoggerService>().e(error.toString());
-      return;
-    }
-    if (progress == null || !_refreshInProgress) {
-      return;
-    }
-    store.dispatch(BackgroundRefreshProgressUpdatedAction(progress));
-    final bool isTerminal =
-        progress.status == BackgroundRefreshStatus.completed ||
-        progress.status == BackgroundRefreshStatus.failed;
-    if (isTerminal) {
-      _stopBackgroundProgressPolling();
-      await _finishBackgroundRefresh(
-        store,
-        progress.status == BackgroundRefreshStatus.completed,
-      );
-      return;
-    }
-    if (DateTime.now().difference(progress.lastProgressAt) >
-        _progressStaleAfter) {
-      _stopBackgroundProgressPolling();
-      sl<LoggerService>().e(t.common.refreshFailed);
-      store.dispatch(RefreshAllProductsFailedAction(t.common.refreshFailed));
-      store.dispatch(const SourceRefreshFinishedAction());
-    }
-  }
-
-  Future<void> _finishBackgroundRefresh(
-    Store<AppState> store,
-    bool succeeded,
-  ) async {
-    await (await sl<LoadProductsUseCase>()(NoParams())).fold(
-      (failure) {
-        sl<LoggerService>().e(failure.message, showPopup: true);
-        store.dispatch(ProductsLoadFailedAction(failure.message));
-      },
-      (List<Product> products) {
-        store.dispatch(ProductsLoadedAction(products));
-      },
-    );
-    if (!succeeded) {
-      store.dispatch(RefreshAllProductsFailedAction(t.common.refreshFailed));
-    }
-    store.dispatch(const SourceRefreshFinishedAction());
   }
 
   /// Handles [CreateProductAction].
@@ -230,168 +145,59 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
   }
 
   /// Handles [RefreshProductAction].
+  ///
+  /// Enqueues the product's sources on the background service and returns —
+  /// fetch results are not awaited here, they land in the database as each
+  /// source completes.
   Future<void> _refreshProduct(
     Store<AppState> store,
     RefreshProductAction action,
   ) async {
-    if (_refreshInProgress) {
-      return;
-    }
-    _refreshInProgress = true;
     final List<String> sourceIds = _sourceIdsForProduct(
       store,
       action.productId,
     );
-    int completedCount = 0;
-    int failedCount = 0;
-    store.dispatch(SourceRefreshStartedAction(sourceIds));
-    try {
-      await (await sl<RefreshProductUseCase>()(
-        RefreshProductParams(
-          productId: action.productId,
-          onPriceDrop: sl<ProductPriceAlertNotificationCoordinator>().notify,
-          onSourceStatusChanged: (String sourceId, SourceRefreshStatus status) {
-            if (_isTerminalSourceRefreshStatus(status)) {
-              completedCount++;
-            }
-            if (status == SourceRefreshStatus.error) {
-              failedCount++;
-            }
-            store.dispatch(
-              SourceRefreshStatusChangedAction(
-                sourceId: sourceId,
-                status: status,
-              ),
-            );
-          },
-        ),
-      )).fold(
-        (failure) async {
-          sl<LoggerService>().e(failure.message);
-          if (sourceIds.isNotEmpty) {
-            final Either<Failure, List<Product>> productsResult =
-                await sl<LoadProductsUseCase>()(NoParams());
-            productsResult.fold((_) {}, (List<Product> products) {
-              store.dispatch(ProductsLoadedAction(products));
-            });
-          }
-          store.dispatch(
-            ProductRefreshFailedAction(
-              productId: action.productId,
-              message: failure.message,
-              status: failure is PriceFetchFailure ? failure.status : null,
-            ),
-          );
-        },
-        (Product product) {
-          store.dispatch(ProductRefreshedAction(product));
-        },
-      );
-      _showRefreshCompletion(
-        sourceCount: sourceIds.length,
-        completedCount: completedCount,
-        failedCount: failedCount,
-      );
-    } finally {
-      store.dispatch(const SourceRefreshFinishedAction());
-      _refreshInProgress = false;
+    if (sourceIds.isEmpty) {
+      return;
     }
+    await _enqueueOrShowFailure(sourceIds);
   }
 
   /// Handles [RefreshSourceAction].
+  ///
+  /// Enqueues the single source, bypassing its cooldown since this is a
+  /// deliberate, user-initiated retry.
   Future<void> _refreshSource(
     Store<AppState> store,
     RefreshSourceAction action,
   ) async {
-    if (_refreshInProgress) {
-      return;
-    }
-    _refreshInProgress = true;
-    int completedCount = 0;
-    int failedCount = 0;
-    store.dispatch(SourceRefreshStartedAction([action.sourceId]));
-    try {
-      await (await sl<RefreshSourceUseCase>()(
-        RefreshSourceParams(
-          sourceId: action.sourceId,
-          bypassCooldown: true,
-          onSourceStatusChanged: (String sourceId, SourceRefreshStatus status) {
-            if (_isTerminalSourceRefreshStatus(status)) {
-              completedCount++;
-            }
-            if (status == SourceRefreshStatus.error) {
-              failedCount++;
-            }
-            store.dispatch(
-              SourceRefreshStatusChangedAction(
-                sourceId: sourceId,
-                status: status,
-              ),
-            );
-          },
-          onPriceDrop: sl<ProductPriceAlertNotificationCoordinator>().notify,
-        ),
-      )).fold(
-        (failure) {
-          sl<LoggerService>().e(failure.message);
-          if (completedCount == 0) {
-            completedCount++;
-            failedCount++;
-            store.dispatch(
-              SourceRefreshStatusChangedAction(
-                sourceId: action.sourceId,
-                status: SourceRefreshStatus.error,
-              ),
-            );
-          }
-        },
-        (Product product) {
-          store.dispatch(ProductRefreshedAction(product));
-        },
-      );
-      _showRefreshCompletion(
-        sourceCount: 1,
-        completedCount: completedCount,
-        failedCount: failedCount,
-      );
-    } finally {
-      store.dispatch(const SourceRefreshFinishedAction());
-      _refreshInProgress = false;
-    }
+    await _enqueueOrShowFailure([action.sourceId], bypassCooldown: true);
   }
 
   /// Handles [RefreshAllProductsAction].
+  ///
+  /// Enqueues every tracked source on the background service and returns —
+  /// fetch results are not awaited here, they land in the database as each
+  /// source completes.
   Future<void> _refreshAllProducts(
     Store<AppState> store,
     RefreshAllProductsAction action,
   ) async {
-    if (_refreshInProgress) {
+    final List<String> sourceIds = _sourceIdsForAllProducts(store);
+    if (sourceIds.isEmpty) {
       return;
     }
-    _refreshInProgress = true;
-    final List<String> sourceIds = _sourceIdsForAllProducts(store);
-    store.dispatch(SourceRefreshStartedAction(sourceIds, isGlobal: true));
-    bool backgroundRefreshPending = false;
-    try {
-      if (sourceIds.isEmpty) {
-        store.dispatch(const SourceRefreshFinishedAction());
-        return;
-      }
-      final bool requested = await sl<AndroidBackgroundRefreshService>()
-          .requestRefresh();
-      if (!requested) {
-        final String message = t.common.refreshFailed;
-        sl<LoggerService>().e(message, showPopup: true);
-        store.dispatch(RefreshAllProductsFailedAction(message));
-        store.dispatch(const SourceRefreshFinishedAction());
-      } else {
-        backgroundRefreshPending = true;
-        _startBackgroundProgressPolling(store);
-      }
-    } finally {
-      if (!backgroundRefreshPending) {
-        _refreshInProgress = false;
-      }
+    await _enqueueOrShowFailure(sourceIds);
+  }
+
+  Future<void> _enqueueOrShowFailure(
+    List<String> sourceIds, {
+    bool bypassCooldown = false,
+  }) async {
+    final bool requested = await sl<AndroidBackgroundRefreshService>()
+        .enqueueSources(sourceIds, bypassCooldown: bypassCooldown);
+    if (!requested) {
+      sl<LoggerService>().e(t.common.refreshFailed, showPopup: true);
     }
   }
 
@@ -413,30 +219,6 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
       .expand((Product product) => product.sources)
       .map((ProductSource source) => source.id)
       .toList();
-
-  void _showRefreshCompletion({
-    required int sourceCount,
-    required int completedCount,
-    required int failedCount,
-  }) {
-    if (sourceCount == 0) {
-      return;
-    }
-    final String message;
-    if (completedCount == 0 || failedCount == sourceCount) {
-      message = t.common.refreshFailed;
-    } else if (completedCount != sourceCount || failedCount > 0) {
-      message = t.common.refreshCompletedWithErrors;
-    } else {
-      message = t.common.refreshSuccessful;
-    }
-    sl<LoggerService>().i(message, showPopup: true);
-  }
-
-  bool _isTerminalSourceRefreshStatus(SourceRefreshStatus status) =>
-      status == SourceRefreshStatus.success ||
-      status == SourceRefreshStatus.error ||
-      status == SourceRefreshStatus.unavailable;
 
   /// Handles [GoToProductDetailsAction].
   Future<void> _goToProductDetails(

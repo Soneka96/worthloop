@@ -76,15 +76,38 @@ void main() {
       expect(await service.registerCallbackHandle(123456789), isTrue);
     });
 
-    test('enqueueSources returns the native result', () async {
+    test(
+      'enqueueSources returns the native result with bypassCooldown = false by default',
+      () async {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(channel, (MethodCall call) async {
+              expect(call.method, 'enqueueSources');
+              expect(call.arguments, {
+                'sourceIds': ['source-1', 'source-2'],
+                'bypassCooldown': false,
+              });
+              return true;
+            });
+
+        expect(await service.enqueueSources(['source-1', 'source-2']), isTrue);
+      },
+    );
+
+    test('enqueueSources forwards an overridden bypassCooldown', () async {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(channel, (MethodCall call) async {
             expect(call.method, 'enqueueSources');
-            expect(call.arguments, ['source-1', 'source-2']);
+            expect(call.arguments, {
+              'sourceIds': ['source-1'],
+              'bypassCooldown': true,
+            });
             return true;
           });
 
-      expect(await service.enqueueSources(['source-1', 'source-2']), isTrue);
+      expect(
+        await service.enqueueSources(['source-1'], bypassCooldown: true),
+        isTrue,
+      );
     });
 
     test('returns false when the native bridge is unavailable', () async {

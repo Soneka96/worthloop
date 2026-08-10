@@ -43,8 +43,13 @@ Future<void> backgroundRefreshEntrypoint() async {
 
   _engineChannel.setMethodCallHandler((MethodCall call) async {
     if (call.method == 'enqueueSources') {
+      final Object? arguments = call.arguments;
+      final Map<Object?, Object?> payload = arguments is Map
+          ? arguments
+          : const {};
       await sl<IProductsRepository>().enqueueSourceRefresh(
-        _sourceIdsFrom(call.arguments),
+        _sourceIdsFrom(payload['sourceIds']),
+        bypassCooldown: payload['bypassCooldown'] == true,
       );
     }
   });
