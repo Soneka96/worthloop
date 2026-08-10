@@ -425,3 +425,15 @@ extension WidgetLocationX on WidgetLocation {
     WidgetLocation.bottomRight => Alignment.bottomRight,
   };
 }
+
+/// Describes which way a product's best available price moved after refresh.
+enum PriceChangeDirection {
+  /// No price change occurred.
+  none,
+
+  /// The best available price became lower.
+  drop,
+
+  /// The best available price became higher.
+  increase,
+}

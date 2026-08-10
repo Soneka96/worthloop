@@ -52,6 +52,7 @@ void initProductsDependencies() {
     () => ProductSourceRefreshEngine(
       sl<ProductsLocalDatasource>(),
       sl<IProductsRemoteDatasource>(),
+      sl<ProductPriceAlertNotificationCoordinator>(),
     ),
   );
   sl.registerLazySingleton<IProductsRepository>(

@@ -459,6 +459,7 @@ class Translations$settings$general$en {
 	late final Translations$settings$general$refreshInterval$en refreshInterval = Translations$settings$general$refreshInterval$en._(_root);
 	late final Translations$settings$general$browserRefresh$en browserRefresh = Translations$settings$general$browserRefresh$en._(_root);
 	late final Translations$settings$general$priceAlerts$en priceAlerts = Translations$settings$general$priceAlerts$en._(_root);
+	late final Translations$settings$general$priceIncreaseAlerts$en priceIncreaseAlerts = Translations$settings$general$priceIncreaseAlerts$en._(_root);
 	late final Translations$settings$general$updates$en updates = Translations$settings$general$updates$en._(_root);
 	late final Translations$settings$general$about$en about = Translations$settings$general$about$en._(_root);
 }
@@ -593,6 +594,33 @@ class Translations$settings$general$priceAlerts$en {
 
 	/// en: 'Now $current, down from $previous.'
 	String notificationBody({required Object current, required Object previous}) => 'Now ${current}, down from ${previous}.';
+
+	/// en: 'Android notification permission was not granted, so price alerts remain off.'
+	String get permissionDenied => 'Android notification permission was not granted, so price alerts remain off.';
+}
+
+// Path: settings.general.priceIncreaseAlerts
+class Translations$settings$general$priceIncreaseAlerts$en {
+	Translations$settings$general$priceIncreaseAlerts$en._(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Price increase notifications'
+	String get title => 'Price increase notifications';
+
+	/// en: 'Get a phone notification when a tracked product's best price goes up.'
+	String get description => 'Get a phone notification when a tracked product\'s best price goes up.';
+
+	/// en: 'Notifications are enabled for price increases. Android permission is required.'
+	String get enabledDescription => 'Notifications are enabled for price increases. Android permission is required.';
+
+	/// en: '$name got more expensive'
+	String notificationTitle({required Object name}) => '${name} got more expensive';
+
+	/// en: 'Now $current, up from $previous.'
+	String notificationBody({required Object current, required Object previous}) => 'Now ${current}, up from ${previous}.';
 
 	/// en: 'Android notification permission was not granted, so price alerts remain off.'
 	String get permissionDenied => 'Android notification permission was not granted, so price alerts remain off.';
@@ -782,6 +810,12 @@ extension on Translations {
 			'settings.general.priceAlerts.notificationTitle' => ({required Object name}) => '${name} is cheaper',
 			'settings.general.priceAlerts.notificationBody' => ({required Object current, required Object previous}) => 'Now ${current}, down from ${previous}.',
 			'settings.general.priceAlerts.permissionDenied' => 'Android notification permission was not granted, so price alerts remain off.',
+			'settings.general.priceIncreaseAlerts.title' => 'Price increase notifications',
+			'settings.general.priceIncreaseAlerts.description' => 'Get a phone notification when a tracked product\'s best price goes up.',
+			'settings.general.priceIncreaseAlerts.enabledDescription' => 'Notifications are enabled for price increases. Android permission is required.',
+			'settings.general.priceIncreaseAlerts.notificationTitle' => ({required Object name}) => '${name} got more expensive',
+			'settings.general.priceIncreaseAlerts.notificationBody' => ({required Object current, required Object previous}) => 'Now ${current}, up from ${previous}.',
+			'settings.general.priceIncreaseAlerts.permissionDenied' => 'Android notification permission was not granted, so price alerts remain off.',
 			'settings.general.updates.title' => 'Updates',
 			'settings.general.updates.version' => ({required Object version}) => 'Version ${version}',
 			'settings.general.updates.checkForUpdates' => 'Check for updates',

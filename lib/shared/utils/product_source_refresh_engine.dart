@@ -8,10 +8,15 @@ import 'package:fpdart/fpdart.dart';
 // Project imports:
 import 'package:worth_loop/features/products/data/datasources/products_local.datasource.dart';
 import 'package:worth_loop/features/products/data/datasources/products_remote.datasource.dart';
+import 'package:worth_loop/features/products/data/models/product.model.dart';
 import 'package:worth_loop/features/products/data/models/product_source.model.dart';
+import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_price_change.entity.dart';
 import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
+import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
+import 'package:worth_loop/shared/utils/product_price_alert_notification_coordinator.dart';
 
 /// Fetches and persists product sources through bounded, per-merchant-domain
 /// queues — never two concurrent fetches to the same merchant, several
@@ -20,9 +25,15 @@ import 'package:worth_loop/shared/failures/failures.dart';
 class ProductSourceRefreshEngine {
   final ProductsLocalDatasource _localDatasource;
   final IProductsRemoteDatasource _remoteDatasource;
+  final ProductPriceAlertNotificationCoordinator _priceAlertCoordinator;
 
-  /// Creates an engine backed by local and remote product datasources.
-  ProductSourceRefreshEngine(this._localDatasource, this._remoteDatasource);
+  /// Creates an engine backed by local and remote product datasources, and a
+  /// [ProductPriceAlertNotificationCoordinator] for best-price-change alerts.
+  ProductSourceRefreshEngine(
+    this._localDatasource,
+    this._remoteDatasource,
+    this._priceAlertCoordinator,
+  );
 
   static const int _maxConcurrentMerchantQueues = 4;
 
@@ -130,6 +141,12 @@ class ProductSourceRefreshEngine {
     ProductSourceModel source, {
     required bool bypassCooldown,
   }) async {
+    final Either<Failure, ProductModel> previousResult = await _localDatasource
+        .loadProduct(source.productId);
+    final ProductModel? previousProduct = previousResult
+        .getRight()
+        .toNullable();
+
     final Either<Failure, ProductSourceModel> result = await _fetchSource(
       source,
       onSourceStatusChanged:
@@ -142,10 +159,49 @@ class ProductSourceRefreshEngine {
       (Failure failure) => _sourceAfterFailure(source, failure),
       (ProductSourceModel updated) => updated,
     );
-    await _localDatasource.updateSourcePrices(source.productId, [
-      updatedSource,
-    ]);
+    final Either<Failure, ProductModel> persistResult = await _localDatasource
+        .updateSourcePrices(source.productId, [updatedSource]);
     await _localDatasource.writeSourceLiveStatus(source.id, null);
+
+    final ProductModel? refreshedProduct = persistResult.getRight().toNullable();
+    if (previousProduct != null && refreshedProduct != null) {
+      await _notifyPriceChange(previousProduct, refreshedProduct);
+    }
+  }
+
+  Future<void> _notifyPriceChange(
+    Product previousProduct,
+    Product refreshedProduct,
+  ) async {
+    final Money? previousBestPrice =
+        previousProduct.bestAvailablePrice?.currentPrice;
+    final Money? currentBestPrice =
+        refreshedProduct.bestAvailablePrice?.currentPrice;
+    if (previousBestPrice == null || currentBestPrice == null) {
+      return;
+    }
+    if (previousBestPrice.currencyCode != currentBestPrice.currencyCode) {
+      return;
+    }
+    final PriceChangeDirection direction = switch (currentBestPrice
+        .minorUnits) {
+      final int minorUnits when minorUnits < previousBestPrice.minorUnits =>
+        PriceChangeDirection.drop,
+      final int minorUnits when minorUnits > previousBestPrice.minorUnits =>
+        PriceChangeDirection.increase,
+      _ => PriceChangeDirection.none,
+    };
+    if (direction == PriceChangeDirection.none) {
+      return;
+    }
+    await _priceAlertCoordinator.notify(
+      ProductPriceChange(
+        product: refreshedProduct,
+        previousBestPrice: previousBestPrice,
+        currentBestPrice: currentBestPrice,
+        direction: direction,
+      ),
+    );
   }
 
   Future<Either<Failure, ProductSourceModel>> _fetchSource(

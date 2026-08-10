@@ -21,12 +21,16 @@ import 'package:worth_loop/features/products/domain/usecases/refresh_product.use
 import 'package:worth_loop/features/products/domain/usecases/rename_product.usecase.dart';
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
 import 'package:worth_loop/features/products/products.injection_container.dart';
+import 'package:worth_loop/features/settings/domain/usecases/load_refresh_settings.usecase.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
+import 'package:worth_loop/shared/utils/android_price_alert_notification_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
+import 'package:worth_loop/shared/utils/product_price_alert_notification_coordinator.dart';
 import 'package:worth_loop/shared/utils/product_price_fetch_orchestrator_service.dart';
+import 'package:worth_loop/shared/utils/product_source_refresh_engine.dart';
 import 'package:worth_loop/shared/utils/product_url_cleaner_service.dart';
 
 class MockAppDatabase extends Mock implements AppDatabase {}
@@ -40,6 +44,12 @@ class MockAppPreferencesStore extends Mock implements AppPreferencesStore {}
 class MockProductPriceFetchOrchestratorService extends Mock
     implements ProductPriceFetchOrchestratorService {}
 
+class MockLoadRefreshSettingsUseCase extends Mock
+    implements LoadRefreshSettingsUseCase {}
+
+class MockAndroidPriceAlertNotificationService extends Mock
+    implements AndroidPriceAlertNotificationService {}
+
 void main() {
   setUp(() {
     sl.registerSingleton<AppDatabase>(MockAppDatabase());
@@ -50,6 +60,12 @@ void main() {
       MockProductPriceFetchOrchestratorService(),
     );
     sl.registerSingleton<ProductUrlCleanerService>(ProductUrlCleanerService());
+    sl.registerSingleton<LoadRefreshSettingsUseCase>(
+      MockLoadRefreshSettingsUseCase(),
+    );
+    sl.registerSingleton<AndroidPriceAlertNotificationService>(
+      MockAndroidPriceAlertNotificationService(),
+    );
     initProductsDependencies();
   });
 
@@ -72,6 +88,27 @@ void main() {
       expect(sl.isRegistered<IProductsRepository>(), isA<bool>());
       expect(sl.isRegistered<IProductsRepository>(), isTrue);
       expect(sl<IProductsRepository>(), isA<IProductsRepository>());
+    });
+
+    test('refresh engine and price-alert coordinator are registered', () {
+      expect(sl.isRegistered<ProductSourceRefreshEngine>(), isA<bool>());
+      expect(sl.isRegistered<ProductSourceRefreshEngine>(), isTrue);
+      expect(
+        sl<ProductSourceRefreshEngine>(),
+        isA<ProductSourceRefreshEngine>(),
+      );
+      expect(
+        sl.isRegistered<ProductPriceAlertNotificationCoordinator>(),
+        isA<bool>(),
+      );
+      expect(
+        sl.isRegistered<ProductPriceAlertNotificationCoordinator>(),
+        isTrue,
+      );
+      expect(
+        sl<ProductPriceAlertNotificationCoordinator>(),
+        isA<ProductPriceAlertNotificationCoordinator>(),
+      );
     });
 
     test('usecases are registered', () {

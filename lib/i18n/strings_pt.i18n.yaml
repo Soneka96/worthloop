@@ -144,6 +144,13 @@ settings:
       notificationTitle: "$name está mais barato"
       notificationBody: "Agora $current, antes $previous."
       permissionDenied: A permissão de notificações do Android não foi concedida, por isso os alertas permanecem desligados.
+    priceIncreaseAlerts:
+      title: Notificações de subida de preço
+      description: Receba uma notificação quando o melhor preço de um produto seguido subir.
+      enabledDescription: As notificações estão ativas para subidas de preço. É necessária permissão do Android.
+      notificationTitle: "$name ficou mais caro"
+      notificationBody: "Agora $current, antes $previous."
+      permissionDenied: A permissão de notificações do Android não foi concedida, por isso os alertas permanecem desligados.
     updates:
       title: Atualizações
       version: Versão $version

@@ -1,13 +1,15 @@
 // Project imports:
-import 'package:worth_loop/features/products/domain/entities/product_price_drop.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_price_change.entity.dart';
 import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
+import 'package:worth_loop/features/settings/domain/entities/refresh_settings.entity.dart';
 import 'package:worth_loop/features/settings/domain/usecases/load_refresh_settings.usecase.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
 import 'package:worth_loop/shared/usecase/no_params.dart';
 import 'package:worth_loop/shared/utils/android_price_alert_notification_service.dart';
 
-/// Turns persisted price-drop events into user notifications.
+/// Turns persisted price-change events into user notifications.
 class ProductPriceAlertNotificationCoordinator {
   final LoadRefreshSettingsUseCase _loadSettings;
   final AppPreferencesStore _preferences;
@@ -20,15 +22,20 @@ class ProductPriceAlertNotificationCoordinator {
     this._notifications,
   );
 
-  /// Notifies once for each distinct best-price change, when enabled.
-  Future<void> notify(ProductPriceDrop drop) async {
+  /// Notifies once for each distinct best-price change, when enabled for
+  /// that change's direction.
+  Future<void> notify(ProductPriceChange change) async {
     final settingsResult = await _loadSettings(NoParams());
     final bool enabled = settingsResult.fold(
       (_) => false,
-      (settings) => settings.priceDropAlertsEnabled,
+      (RefreshSettings settings) => switch (change.direction) {
+        PriceChangeDirection.drop => settings.priceDropAlertsEnabled,
+        PriceChangeDirection.increase => settings.priceIncreaseAlertsEnabled,
+        PriceChangeDirection.none => false,
+      },
     );
     if (!enabled) return;
-    final String eventKey = _eventKey(drop);
+    final String eventKey = _eventKey(change);
     if (_inFlight.contains(eventKey)) {
       return;
     }
@@ -37,7 +44,7 @@ class ProductPriceAlertNotificationCoordinator {
       final bool claimed;
       try {
         claimed = await _preferences.claimPriceAlertEvent(
-          drop.product.id,
+          change.product.id,
           eventKey,
         );
       } catch (_) {
@@ -45,18 +52,16 @@ class ProductPriceAlertNotificationCoordinator {
       }
       if (!claimed) return;
       final bool shown = await _notifications.showPriceDrop(
-        productId: drop.product.id,
-        title: t.settings.general.priceAlerts.notificationTitle(
-          name: drop.product.name,
-        ),
-        body: t.settings.general.priceAlerts.notificationBody(
-          current: _format(drop.currentBestPrice),
-          previous: _format(drop.previousBestPrice),
-        ),
+        productId: change.product.id,
+        title: _title(change),
+        body: _body(change),
       );
       if (!shown) {
         try {
-          await _preferences.releasePriceAlertEvent(drop.product.id, eventKey);
+          await _preferences.releasePriceAlertEvent(
+            change.product.id,
+            eventKey,
+          );
         } catch (_) {
           // A failed notification must never fail the refresh.
         }
@@ -68,11 +73,31 @@ class ProductPriceAlertNotificationCoordinator {
     }
   }
 
-  String _eventKey(ProductPriceDrop drop) => [
-    drop.product.id,
-    drop.product.bestPriceChangedAt?.toIso8601String() ?? '',
-    drop.currentBestPrice.currencyCode,
-    drop.currentBestPrice.minorUnits,
+  String _title(ProductPriceChange change) =>
+      switch (change.direction) {
+        PriceChangeDirection.increase =>
+          t.settings.general.priceIncreaseAlerts.notificationTitle,
+        PriceChangeDirection.drop || PriceChangeDirection.none =>
+          t.settings.general.priceAlerts.notificationTitle,
+      }(name: change.product.name);
+
+  String _body(ProductPriceChange change) =>
+      switch (change.direction) {
+        PriceChangeDirection.increase =>
+          t.settings.general.priceIncreaseAlerts.notificationBody,
+        PriceChangeDirection.drop || PriceChangeDirection.none =>
+          t.settings.general.priceAlerts.notificationBody,
+      }(
+        current: _format(change.currentBestPrice),
+        previous: _format(change.previousBestPrice),
+      );
+
+  String _eventKey(ProductPriceChange change) => [
+    change.product.id,
+    change.direction.name,
+    change.product.bestPriceChangedAt?.toIso8601String() ?? '',
+    change.currentBestPrice.currencyCode,
+    change.currentBestPrice.minorUnits,
   ].join('|');
 
   String _format(Money price) {

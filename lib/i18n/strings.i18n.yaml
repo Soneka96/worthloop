@@ -143,6 +143,13 @@ settings:
       notificationTitle: "$name is cheaper"
       notificationBody: "Now $current, down from $previous."
       permissionDenied: Android notification permission was not granted, so price alerts remain off.
+    priceIncreaseAlerts:
+      title: Price increase notifications
+      description: Get a phone notification when a tracked product's best price goes up.
+      enabledDescription: Notifications are enabled for price increases. Android permission is required.
+      notificationTitle: "$name got more expensive"
+      notificationBody: "Now $current, up from $previous."
+      permissionDenied: Android notification permission was not granted, so price alerts remain off.
     updates:
       title: Updates
       version: Version $version

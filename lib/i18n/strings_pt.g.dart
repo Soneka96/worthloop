@@ -227,6 +227,7 @@ class _Translations$settings$general$pt implements Translations$settings$general
 	@override late final _Translations$settings$general$refreshInterval$pt refreshInterval = _Translations$settings$general$refreshInterval$pt._(_root);
 	@override late final _Translations$settings$general$browserRefresh$pt browserRefresh = _Translations$settings$general$browserRefresh$pt._(_root);
 	@override late final _Translations$settings$general$priceAlerts$pt priceAlerts = _Translations$settings$general$priceAlerts$pt._(_root);
+	@override late final _Translations$settings$general$priceIncreaseAlerts$pt priceIncreaseAlerts = _Translations$settings$general$priceIncreaseAlerts$pt._(_root);
 	@override late final _Translations$settings$general$updates$pt updates = _Translations$settings$general$updates$pt._(_root);
 	@override late final _Translations$settings$general$about$pt about = _Translations$settings$general$about$pt._(_root);
 }
@@ -314,6 +315,21 @@ class _Translations$settings$general$priceAlerts$pt implements Translations$sett
 	@override String get description => 'Receba uma notificação quando um produto atingir um novo melhor preço.';
 	@override String get enabledDescription => 'As notificações estão ativas para novos melhores preços. É necessária permissão do Android.';
 	@override String notificationTitle({required Object name}) => '${name} está mais barato';
+	@override String notificationBody({required Object current, required Object previous}) => 'Agora ${current}, antes ${previous}.';
+	@override String get permissionDenied => 'A permissão de notificações do Android não foi concedida, por isso os alertas permanecem desligados.';
+}
+
+// Path: settings.general.priceIncreaseAlerts
+class _Translations$settings$general$priceIncreaseAlerts$pt implements Translations$settings$general$priceIncreaseAlerts$en {
+	_Translations$settings$general$priceIncreaseAlerts$pt._(this._root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Notificações de subida de preço';
+	@override String get description => 'Receba uma notificação quando o melhor preço de um produto seguido subir.';
+	@override String get enabledDescription => 'As notificações estão ativas para subidas de preço. É necessária permissão do Android.';
+	@override String notificationTitle({required Object name}) => '${name} ficou mais caro';
 	@override String notificationBody({required Object current, required Object previous}) => 'Agora ${current}, antes ${previous}.';
 	@override String get permissionDenied => 'A permissão de notificações do Android não foi concedida, por isso os alertas permanecem desligados.';
 }
@@ -484,6 +500,12 @@ extension on TranslationsPt {
 			'settings.general.priceAlerts.notificationTitle' => ({required Object name}) => '${name} está mais barato',
 			'settings.general.priceAlerts.notificationBody' => ({required Object current, required Object previous}) => 'Agora ${current}, antes ${previous}.',
 			'settings.general.priceAlerts.permissionDenied' => 'A permissão de notificações do Android não foi concedida, por isso os alertas permanecem desligados.',
+			'settings.general.priceIncreaseAlerts.title' => 'Notificações de subida de preço',
+			'settings.general.priceIncreaseAlerts.description' => 'Receba uma notificação quando o melhor preço de um produto seguido subir.',
+			'settings.general.priceIncreaseAlerts.enabledDescription' => 'As notificações estão ativas para subidas de preço. É necessária permissão do Android.',
+			'settings.general.priceIncreaseAlerts.notificationTitle' => ({required Object name}) => '${name} ficou mais caro',
+			'settings.general.priceIncreaseAlerts.notificationBody' => ({required Object current, required Object previous}) => 'Agora ${current}, antes ${previous}.',
+			'settings.general.priceIncreaseAlerts.permissionDenied' => 'A permissão de notificações do Android não foi concedida, por isso os alertas permanecem desligados.',
 			'settings.general.updates.title' => 'Atualizações',
 			'settings.general.updates.version' => ({required Object version}) => 'Versão ${version}',
 			'settings.general.updates.checkForUpdates' => 'Verificar atualizações',
