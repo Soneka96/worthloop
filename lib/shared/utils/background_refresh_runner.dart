@@ -2,8 +2,6 @@
 import 'package:fpdart/fpdart.dart';
 
 // Project imports:
-import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
-import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
 import 'package:worth_loop/features/settings/domain/entities/refresh_settings.entity.dart';
 import 'package:worth_loop/shared/constants/refresh_interval_constants.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
@@ -11,27 +9,14 @@ import 'package:worth_loop/shared/failures/failures.dart';
 /// Executes one local background-refresh cycle and chooses the next delay.
 class BackgroundRefreshRunner {
   final Future<Either<Failure, RefreshSettings>> Function() _loadSettings;
-  final Future<Either<Failure, List<Product>>> Function({
-    ProductPriceDropListener? onPriceDrop,
-    SourceRefreshListener? onSourceStatusChanged,
-    RefreshSourcesLoadedListener? onSourcesLoaded,
-  })
-  _refreshAllProducts;
-  final ProductPriceDropListener? _onPriceDrop;
+  final Future<Either<Failure, Unit>> Function() _refreshAllProducts;
 
-  /// Creates a runner backed by settings and product-refresh callbacks.
+  /// Creates a runner backed by settings and an all-products enqueue call.
   BackgroundRefreshRunner({
     required Future<Either<Failure, RefreshSettings>> Function() loadSettings,
-    required Future<Either<Failure, List<Product>>> Function({
-      ProductPriceDropListener? onPriceDrop,
-      SourceRefreshListener? onSourceStatusChanged,
-      RefreshSourcesLoadedListener? onSourcesLoaded,
-    })
-    refreshAllProducts,
-    ProductPriceDropListener? onPriceDrop,
+    required Future<Either<Failure, Unit>> Function() refreshAllProducts,
   }) : _loadSettings = loadSettings,
-       _refreshAllProducts = refreshAllProducts,
-       _onPriceDrop = onPriceDrop;
+       _refreshAllProducts = refreshAllProducts;
 
   /// Runs one cycle, returning `null` when the service should stop.
   ///
@@ -39,8 +24,6 @@ class BackgroundRefreshRunner {
   Future<Duration?> runOnce({
     bool force = false,
     Future<void> Function()? onRefreshStarted,
-    RefreshSourcesLoadedListener? onSourcesLoaded,
-    SourceRefreshListener? onSourceStatusChanged,
     Future<void> Function(bool succeeded)? onRefreshOutcome,
   }) async {
     final Either<Failure, RefreshSettings> settingsResult =
@@ -48,12 +31,7 @@ class BackgroundRefreshRunner {
     return settingsResult.fold(
       (_) async {
         await onRefreshStarted?.call();
-        final Either<Failure, List<Product>> refreshResult =
-            await _refreshAllProducts(
-              onPriceDrop: _onPriceDrop,
-              onSourceStatusChanged: onSourceStatusChanged,
-              onSourcesLoaded: onSourcesLoaded,
-            );
+        final Either<Failure, Unit> refreshResult = await _refreshAllProducts();
         await onRefreshOutcome?.call(
           refreshResult.fold((_) => false, (_) => true),
         );
@@ -64,12 +42,7 @@ class BackgroundRefreshRunner {
           return null;
         }
         await onRefreshStarted?.call();
-        final Either<Failure, List<Product>> refreshResult =
-            await _refreshAllProducts(
-              onPriceDrop: _onPriceDrop,
-              onSourceStatusChanged: onSourceStatusChanged,
-              onSourcesLoaded: onSourcesLoaded,
-            );
+        final Either<Failure, Unit> refreshResult = await _refreshAllProducts();
         await onRefreshOutcome?.call(
           refreshResult.fold((_) => false, (_) => true),
         );

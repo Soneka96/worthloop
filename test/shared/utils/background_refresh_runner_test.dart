@@ -3,23 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 
 // Project imports:
-import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
-import 'package:worth_loop/features/products/domain/entities/product_price_drop.entity.dart';
-import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 import 'package:worth_loop/features/settings/domain/entities/refresh_settings.entity.dart';
 import 'package:worth_loop/shared/constants/refresh_interval_constants.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
-import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/utils/background_refresh_runner.dart';
 
 void main() {
-  final Product product = Product(
-    id: 'product-1',
-    name: 'Product',
-    sources: [],
-    lastUpdatedAt: DateTime(2026, 1, 1),
-  );
-
   group('BackgroundRefreshRunner behaves correctly', () {
     test('refreshes enabled settings and returns their interval', () async {
       int refreshCalls = 0;
@@ -27,11 +16,10 @@ void main() {
         loadSettings: () async => const Right(
           RefreshSettings(intervalMinutes: 180, browserRefreshEnabled: true),
         ),
-        refreshAllProducts:
-            ({onPriceDrop, onSourceStatusChanged, onSourcesLoaded}) async {
-              refreshCalls++;
-              return Right(<Product>[product]);
-            },
+        refreshAllProducts: () async {
+          refreshCalls++;
+          return const Right(unit);
+        },
       );
 
       final Duration? nextDelay = await runner.runOnce();
@@ -46,9 +34,8 @@ void main() {
         loadSettings: () async => const Right(
           RefreshSettings(intervalMinutes: 60, browserRefreshEnabled: true),
         ),
-        refreshAllProducts:
-            ({onPriceDrop, onSourceStatusChanged, onSourcesLoaded}) async =>
-                const Left(DatabaseFailure('fetch failed')),
+        refreshAllProducts: () async =>
+            const Left(DatabaseFailure('fetch failed')),
       );
 
       await runner.runOnce(
@@ -65,9 +52,7 @@ void main() {
         loadSettings: () async => const Right(
           RefreshSettings(intervalMinutes: 60, browserRefreshEnabled: true),
         ),
-        refreshAllProducts:
-            ({onPriceDrop, onSourceStatusChanged, onSourcesLoaded}) async =>
-                Right(<Product>[product]),
+        refreshAllProducts: () async => const Right(unit),
       );
 
       await runner.runOnce(
@@ -79,22 +64,45 @@ void main() {
       expect(succeeded, isTrue);
     });
 
+    test(
+      'reports start and successful outcome when settings fail to load',
+      () async {
+        bool started = false;
+        bool? succeeded;
+        final BackgroundRefreshRunner runner = BackgroundRefreshRunner(
+          loadSettings: () async => const Left(DatabaseFailure('failed')),
+          refreshAllProducts: () async => const Right(unit),
+        );
+
+        await runner.runOnce(
+          onRefreshStarted: () async => started = true,
+          onRefreshOutcome: (bool value) async => succeeded = value,
+        );
+
+        expect(started, isTrue);
+        expect(succeeded, isTrue);
+      },
+    );
+
     test('stops without refreshing when browser refresh is disabled', () async {
       int refreshCalls = 0;
+      bool started = false;
       final BackgroundRefreshRunner runner = BackgroundRefreshRunner(
         loadSettings: () async =>
             const Right(RefreshSettings(intervalMinutes: 60)),
-        refreshAllProducts:
-            ({onPriceDrop, onSourceStatusChanged, onSourcesLoaded}) async {
-              refreshCalls++;
-              return Right(<Product>[product]);
-            },
+        refreshAllProducts: () async {
+          refreshCalls++;
+          return const Right(unit);
+        },
       );
 
-      final Duration? nextDelay = await runner.runOnce();
+      final Duration? nextDelay = await runner.runOnce(
+        onRefreshStarted: () async => started = true,
+      );
 
       expect(nextDelay, isNull);
       expect(refreshCalls, 0);
+      expect(started, isFalse);
     });
 
     test('forced refresh ignores the automatic refresh setting once', () async {
@@ -102,11 +110,10 @@ void main() {
       final BackgroundRefreshRunner runner = BackgroundRefreshRunner(
         loadSettings: () async =>
             const Right(RefreshSettings(intervalMinutes: 60)),
-        refreshAllProducts:
-            ({onPriceDrop, onSourceStatusChanged, onSourcesLoaded}) async {
-              refreshCalls++;
-              return Right(<Product>[product]);
-            },
+        refreshAllProducts: () async {
+          refreshCalls++;
+          return const Right(unit);
+        },
       );
 
       final Duration? nextDelay = await runner.runOnce(force: true);
@@ -119,11 +126,10 @@ void main() {
       int refreshCalls = 0;
       final BackgroundRefreshRunner runner = BackgroundRefreshRunner(
         loadSettings: () async => const Left(DatabaseFailure('failed')),
-        refreshAllProducts:
-            ({onPriceDrop, onSourceStatusChanged, onSourcesLoaded}) async {
-              refreshCalls++;
-              return Right(<Product>[product]);
-            },
+        refreshAllProducts: () async {
+          refreshCalls++;
+          return const Right(unit);
+        },
       );
 
       final Duration? nextDelay = await runner.runOnce();
@@ -142,9 +148,7 @@ void main() {
           loadSettings: () async => const Right(
             RefreshSettings(intervalMinutes: 0, browserRefreshEnabled: true),
           ),
-          refreshAllProducts:
-              ({onPriceDrop, onSourceStatusChanged, onSourcesLoaded}) async =>
-                  Right(<Product>[product]),
+          refreshAllProducts: () async => const Right(unit),
         );
 
         expect(
@@ -153,62 +157,5 @@ void main() {
         );
       },
     );
-
-    test('forwards the price-drop listener to refreshes', () async {
-      ProductPriceDrop? receivedDrop;
-      final ProductPriceDrop drop = ProductPriceDrop(
-        product: product,
-        previousBestPrice: const Money(minorUnits: 200, currencyCode: 'EUR'),
-        currentBestPrice: const Money(minorUnits: 100, currencyCode: 'EUR'),
-      );
-      final BackgroundRefreshRunner runner = BackgroundRefreshRunner(
-        loadSettings: () async => const Right(
-          RefreshSettings(intervalMinutes: 60, browserRefreshEnabled: true),
-        ),
-        refreshAllProducts:
-            ({onPriceDrop, onSourceStatusChanged, onSourcesLoaded}) async {
-              await onPriceDrop?.call(drop);
-              return Right(<Product>[product]);
-            },
-        onPriceDrop: (ProductPriceDrop value) async => receivedDrop = value,
-      );
-
-      await runner.runOnce();
-
-      expect(receivedDrop, drop);
-    });
-
-    test('forwards source progress listeners to refreshes', () async {
-      int? totalSources;
-      final List<String> statuses = <String>[];
-      final BackgroundRefreshRunner runner = BackgroundRefreshRunner(
-        loadSettings: () async => const Right(
-          RefreshSettings(intervalMinutes: 60, browserRefreshEnabled: true),
-        ),
-        refreshAllProducts:
-            ({onPriceDrop, onSourceStatusChanged, onSourcesLoaded}) async {
-              await onSourcesLoaded?.call(2);
-              await onSourceStatusChanged?.call(
-                'source-1',
-                SourceRefreshStatus.fetching,
-              );
-              await onSourceStatusChanged?.call(
-                'source-1',
-                SourceRefreshStatus.success,
-              );
-              return Right(<Product>[product]);
-            },
-      );
-
-      await runner.runOnce(
-        onSourcesLoaded: (int value) async => totalSources = value,
-        onSourceStatusChanged: (String sourceId, SourceRefreshStatus status) {
-          statuses.add('$sourceId:${status.name}');
-        },
-      );
-
-      expect(totalSources, 2);
-      expect(statuses, ['source-1:fetching', 'source-1:success']);
-    });
   });
 }
