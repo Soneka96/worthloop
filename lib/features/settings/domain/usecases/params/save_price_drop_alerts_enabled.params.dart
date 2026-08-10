@@ -2,13 +2,13 @@
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 
-/// Parameters for saving the price-alert preference.
+/// Parameters for saving the price-drop-alert preference.
 @immutable
-class SavePriceAlertsEnabledParams extends Equatable {
+class SavePriceDropAlertsEnabledParams extends Equatable {
   /// Whether product price-drop notifications should be enabled.
   final bool enabled;
 
-  const SavePriceAlertsEnabledParams({required this.enabled});
+  const SavePriceDropAlertsEnabledParams({required this.enabled});
 
   @override
   List<Object?> get props => [enabled];

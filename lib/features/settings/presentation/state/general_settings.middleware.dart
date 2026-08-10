@@ -7,8 +7,8 @@ import 'package:worth_loop/features/settings/domain/usecases/load_refresh_settin
 import 'package:worth_loop/features/settings/domain/usecases/params/save_browser_refresh_enabled.params.dart';
 import 'package:worth_loop/features/settings/domain/usecases/params/save_refresh_interval.params.dart';
 import 'package:worth_loop/features/settings/domain/usecases/save_browser_refresh_enabled.usecase.dart';
-import 'package:worth_loop/features/settings/domain/usecases/params/save_price_alerts_enabled.params.dart';
-import 'package:worth_loop/features/settings/domain/usecases/save_price_alerts_enabled.usecase.dart';
+import 'package:worth_loop/features/settings/domain/usecases/params/save_price_drop_alerts_enabled.params.dart';
+import 'package:worth_loop/features/settings/domain/usecases/save_price_drop_alerts_enabled.usecase.dart';
 import 'package:worth_loop/features/settings/domain/usecases/save_refresh_interval.usecase.dart';
 import 'package:worth_loop/features/settings/presentation/state/general_settings.actions.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
@@ -131,8 +131,8 @@ class GeneralSettingsMiddleware extends MiddlewareClass<AppState> {
         return;
       }
     }
-    (await sl<SavePriceAlertsEnabledUseCase>()(
-      SavePriceAlertsEnabledParams(enabled: action.enabled),
+    (await sl<SavePriceDropAlertsEnabledUseCase>()(
+      SavePriceDropAlertsEnabledParams(enabled: action.enabled),
     )).fold(
       (failure) {
         sl<LoggerService>().e(failure.message, showPopup: true);

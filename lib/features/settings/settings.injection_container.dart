@@ -7,8 +7,11 @@ import 'package:worth_loop/features/settings/data/repositories/refresh_settings.
 import 'package:worth_loop/features/settings/domain/repositories/Irefresh_settings.repository.dart';
 import 'package:worth_loop/features/settings/domain/usecases/load_refresh_settings.usecase.dart';
 import 'package:worth_loop/features/settings/domain/usecases/save_browser_refresh_enabled.usecase.dart';
-import 'package:worth_loop/features/settings/domain/usecases/save_price_alerts_enabled.usecase.dart';
+import 'package:worth_loop/features/settings/domain/usecases/save_price_drop_alerts_enabled.usecase.dart';
+import 'package:worth_loop/features/settings/domain/usecases/save_price_increase_alerts_enabled.usecase.dart';
+import 'package:worth_loop/features/settings/domain/usecases/save_refresh_completed_alerts_enabled.usecase.dart';
 import 'package:worth_loop/features/settings/domain/usecases/save_refresh_interval.usecase.dart';
+import 'package:worth_loop/features/settings/domain/usecases/save_show_refresh_progress.usecase.dart';
 import 'package:worth_loop/features/settings/presentation/state/viewmodels/general_settings_screen.viewmodel.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
@@ -32,8 +35,20 @@ void initSettingsDependencies() {
   sl.registerLazySingleton<SaveBrowserRefreshEnabledUseCase>(
     () => SaveBrowserRefreshEnabledUseCase(sl<IRefreshSettingsRepository>()),
   );
-  sl.registerLazySingleton<SavePriceAlertsEnabledUseCase>(
-    () => SavePriceAlertsEnabledUseCase(sl<IRefreshSettingsRepository>()),
+  sl.registerLazySingleton<SavePriceDropAlertsEnabledUseCase>(
+    () => SavePriceDropAlertsEnabledUseCase(sl<IRefreshSettingsRepository>()),
+  );
+  sl.registerLazySingleton<SavePriceIncreaseAlertsEnabledUseCase>(
+    () =>
+        SavePriceIncreaseAlertsEnabledUseCase(sl<IRefreshSettingsRepository>()),
+  );
+  sl.registerLazySingleton<SaveRefreshCompletedAlertsEnabledUseCase>(
+    () => SaveRefreshCompletedAlertsEnabledUseCase(
+      sl<IRefreshSettingsRepository>(),
+    ),
+  );
+  sl.registerLazySingleton<SaveShowRefreshProgressUseCase>(
+    () => SaveShowRefreshProgressUseCase(sl<IRefreshSettingsRepository>()),
   );
   sl.registerFactoryParam<
     GeneralSettingsScreenViewModel,

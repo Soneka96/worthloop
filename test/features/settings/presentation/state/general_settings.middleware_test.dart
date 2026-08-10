@@ -7,10 +7,10 @@ import 'package:redux/redux.dart';
 // Project imports:
 import 'package:worth_loop/features/settings/domain/usecases/load_refresh_settings.usecase.dart';
 import 'package:worth_loop/features/settings/domain/usecases/params/save_browser_refresh_enabled.params.dart';
-import 'package:worth_loop/features/settings/domain/usecases/params/save_price_alerts_enabled.params.dart';
+import 'package:worth_loop/features/settings/domain/usecases/params/save_price_drop_alerts_enabled.params.dart';
 import 'package:worth_loop/features/settings/domain/usecases/params/save_refresh_interval.params.dart';
 import 'package:worth_loop/features/settings/domain/usecases/save_browser_refresh_enabled.usecase.dart';
-import 'package:worth_loop/features/settings/domain/usecases/save_price_alerts_enabled.usecase.dart';
+import 'package:worth_loop/features/settings/domain/usecases/save_price_drop_alerts_enabled.usecase.dart';
 import 'package:worth_loop/features/settings/domain/usecases/save_refresh_interval.usecase.dart';
 import 'package:worth_loop/features/settings/presentation/state/general_settings.actions.dart';
 import 'package:worth_loop/features/settings/presentation/state/general_settings.middleware.dart';
@@ -38,8 +38,8 @@ class MockSaveRefreshIntervalUseCase extends Mock
 class MockSaveBrowserRefreshEnabledUseCase extends Mock
     implements SaveBrowserRefreshEnabledUseCase {}
 
-class MockSavePriceAlertsEnabledUseCase extends Mock
-    implements SavePriceAlertsEnabledUseCase {}
+class MockSavePriceDropAlertsEnabledUseCase extends Mock
+    implements SavePriceDropAlertsEnabledUseCase {}
 
 class MockAndroidBackgroundCapabilitiesService extends Mock
     implements AndroidBackgroundCapabilitiesService {}
@@ -56,8 +56,8 @@ class FakeSaveRefreshIntervalParams extends Fake
 class FakeSaveBrowserRefreshEnabledParams extends Fake
     implements SaveBrowserRefreshEnabledParams {}
 
-class FakeSavePriceAlertsEnabledParams extends Fake
-    implements SavePriceAlertsEnabledParams {}
+class FakeSavePriceDropAlertsEnabledParams extends Fake
+    implements SavePriceDropAlertsEnabledParams {}
 
 void main() {
   late List<dynamic> actionLog;
@@ -67,7 +67,7 @@ void main() {
   late MockLoadRefreshSettingsUseCase mockLoadUseCase;
   late MockSaveRefreshIntervalUseCase mockSaveUseCase;
   late MockSaveBrowserRefreshEnabledUseCase mockSaveBrowserRefreshUseCase;
-  late MockSavePriceAlertsEnabledUseCase mockSavePriceAlertsUseCase;
+  late MockSavePriceDropAlertsEnabledUseCase mockSavePriceDropAlertsUseCase;
   late MockAndroidBackgroundCapabilitiesService mockCapabilitiesService;
   late MockAndroidBackgroundRefreshService mockBackgroundRefreshService;
   late MockAndroidPriceAlertNotificationService mockNotificationService;
@@ -78,7 +78,7 @@ void main() {
     registerFallbackValue(NoParams());
     registerFallbackValue(FakeSaveRefreshIntervalParams());
     registerFallbackValue(FakeSaveBrowserRefreshEnabledParams());
-    registerFallbackValue(FakeSavePriceAlertsEnabledParams());
+    registerFallbackValue(FakeSavePriceDropAlertsEnabledParams());
   });
 
   setUp(() {
@@ -89,7 +89,7 @@ void main() {
     mockLoadUseCase = MockLoadRefreshSettingsUseCase();
     mockSaveUseCase = MockSaveRefreshIntervalUseCase();
     mockSaveBrowserRefreshUseCase = MockSaveBrowserRefreshEnabledUseCase();
-    mockSavePriceAlertsUseCase = MockSavePriceAlertsEnabledUseCase();
+    mockSavePriceDropAlertsUseCase = MockSavePriceDropAlertsEnabledUseCase();
     mockCapabilitiesService = MockAndroidBackgroundCapabilitiesService();
     mockBackgroundRefreshService = MockAndroidBackgroundRefreshService();
     mockNotificationService = MockAndroidPriceAlertNotificationService();
@@ -106,8 +106,8 @@ void main() {
     sl.registerSingleton<SaveBrowserRefreshEnabledUseCase>(
       mockSaveBrowserRefreshUseCase,
     );
-    sl.registerSingleton<SavePriceAlertsEnabledUseCase>(
-      mockSavePriceAlertsUseCase,
+    sl.registerSingleton<SavePriceDropAlertsEnabledUseCase>(
+      mockSavePriceDropAlertsUseCase,
     );
     sl.registerSingleton<AndroidBackgroundCapabilitiesService>(
       mockCapabilitiesService,
@@ -268,7 +268,7 @@ void main() {
 
   group('GeneralSettingsMiddleware processes SavePriceAlertsEnabledAction', () {
     test('dispatches PriceAlertsEnabledSavedAction when successful', () async {
-      when(() => mockSavePriceAlertsUseCase(any())).thenAnswer(
+      when(() => mockSavePriceDropAlertsUseCase(any())).thenAnswer(
         (_) async => Right(buildRefreshSettings(priceDropAlertsEnabled: true)),
       );
 
@@ -283,11 +283,11 @@ void main() {
       expect(actionLog[1], const PriceAlertsEnabledSavedAction(true));
       verify(() => mockNotificationService.requestPermission()).called(1);
       verify(
-        () => mockSavePriceAlertsUseCase(
-          const SavePriceAlertsEnabledParams(enabled: true),
+        () => mockSavePriceDropAlertsUseCase(
+          const SavePriceDropAlertsEnabledParams(enabled: true),
         ),
       ).called(1);
-      verifyNoMoreInteractions(mockSavePriceAlertsUseCase);
+      verifyNoMoreInteractions(mockSavePriceDropAlertsUseCase);
       verifyZeroInteractions(mockLoggerService);
     });
 
@@ -304,7 +304,7 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       expect(actionLog, [const SavePriceAlertsEnabledAction(true)]);
-      verifyNever(() => mockSavePriceAlertsUseCase(any()));
+      verifyNever(() => mockSavePriceDropAlertsUseCase(any()));
       verify(
         () => mockLoggerService.w(
           t.settings.general.priceAlerts.permissionDenied,
@@ -316,7 +316,7 @@ void main() {
     test('dispatches PriceAlertsSaveFailedAction when failed', () async {
       const DatabaseFailure failure = DatabaseFailure('failed');
       when(
-        () => mockSavePriceAlertsUseCase(any()),
+        () => mockSavePriceDropAlertsUseCase(any()),
       ).thenAnswer((_) async => const Left(failure));
 
       middleware.call(
@@ -329,11 +329,11 @@ void main() {
       expect(actionLog[1], const PriceAlertsSaveFailedAction('failed'));
       verifyNever(() => mockNotificationService.requestPermission());
       verify(
-        () => mockSavePriceAlertsUseCase(
-          const SavePriceAlertsEnabledParams(enabled: false),
+        () => mockSavePriceDropAlertsUseCase(
+          const SavePriceDropAlertsEnabledParams(enabled: false),
         ),
       ).called(1);
-      verifyNoMoreInteractions(mockSavePriceAlertsUseCase);
+      verifyNoMoreInteractions(mockSavePriceDropAlertsUseCase);
       verify(() => mockLoggerService.e('failed', showPopup: true)).called(1);
       verifyNoMoreInteractions(mockLoggerService);
     });
