@@ -79,4 +79,11 @@ abstract class IProductsRepository {
   /// Clears any source left showing a live in-progress refresh status from
   /// a previous run that was killed mid-refresh.
   Future<Either<Failure, Unit>> resetStaleSourceStatuses();
+
+  /// Queues [sourceIds] onto their merchant-specific fetch queues, starting
+  /// worker processing if it isn't already running. Returns once every
+  /// source is queued and its live status is persisted — the actual fetch
+  /// results are not awaited here, they flow through the database as each
+  /// source completes.
+  Future<Either<Failure, Unit>> enqueueSourceRefresh(List<String> sourceIds);
 }

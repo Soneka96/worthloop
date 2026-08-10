@@ -1,3 +1,7 @@
+// Dart imports:
+import 'dart:async';
+import 'dart:collection';
+
 // Package imports:
 import 'package:fpdart/fpdart.dart';
 
@@ -23,6 +27,12 @@ class ProductsRepository implements IProductsRepository {
 
   /// Creates a repository backed by local and remote datasources.
   ProductsRepository(this._localDatasource, this._remoteDatasource);
+
+  final Map<String, Queue<ProductSourceModel>> _pendingByMerchant = {};
+  final Set<String> _merchantsInFlight = {};
+  final Set<String> _sourceIdsQueuedOrInFlight = {};
+  Completer<void>? _wakeSignal;
+  bool _workersStarted = false;
 
   @override
   Future<Either<Failure, Product>> createProduct(
@@ -398,5 +408,110 @@ class ProductsRepository implements IProductsRepository {
   @override
   Future<Either<Failure, Unit>> resetStaleSourceStatuses() {
     return _localDatasource.resetStaleLiveStatuses();
+  }
+
+  @override
+  Future<Either<Failure, Unit>> enqueueSourceRefresh(
+    List<String> sourceIds,
+  ) async {
+    if (sourceIds.isEmpty) {
+      return const Right(unit);
+    }
+    final Either<Failure, List<ProductSourceModel>> sourcesResult =
+        await _localDatasource.loadProductSources();
+    if (sourcesResult.isLeft()) {
+      return sourcesResult.map((_) => unit);
+    }
+    final Set<String> requestedIds = sourceIds.toSet();
+    for (final ProductSourceModel source
+        in sourcesResult.getRight().toNullable() ?? const []) {
+      if (!requestedIds.contains(source.id) ||
+          _sourceIdsQueuedOrInFlight.contains(source.id)) {
+        continue;
+      }
+      _sourceIdsQueuedOrInFlight.add(source.id);
+      _pendingByMerchant
+          .putIfAbsent(
+            source.merchantDomain.toLowerCase(),
+            () => Queue<ProductSourceModel>(),
+          )
+          .add(source);
+      await _localDatasource.writeSourceLiveStatus(
+        source.id,
+        SourceRefreshStatus.queued,
+      );
+    }
+    _ensureWorkersRunning();
+    _wakeWorkers();
+    return const Right(unit);
+  }
+
+  void _ensureWorkersRunning() {
+    if (_workersStarted) {
+      return;
+    }
+    _workersStarted = true;
+    for (int i = 0; i < _maxConcurrentMerchantQueues; i++) {
+      unawaited(_runMerchantQueueWorker());
+    }
+  }
+
+  Future<void> _runMerchantQueueWorker() async {
+    while (true) {
+      final String? merchant = _claimPendingMerchant();
+      if (merchant == null) {
+        await _waitForQueuedWork();
+        continue;
+      }
+      final Queue<ProductSourceModel> queue = _pendingByMerchant[merchant]!;
+      while (queue.isNotEmpty) {
+        final ProductSourceModel source = queue.removeFirst();
+        await _fetchAndPersistSource(source);
+        _sourceIdsQueuedOrInFlight.remove(source.id);
+      }
+      _pendingByMerchant.remove(merchant);
+      _merchantsInFlight.remove(merchant);
+    }
+  }
+
+  String? _claimPendingMerchant() {
+    for (final String merchant in _pendingByMerchant.keys) {
+      if (!_merchantsInFlight.contains(merchant)) {
+        _merchantsInFlight.add(merchant);
+        return merchant;
+      }
+    }
+    return null;
+  }
+
+  Future<void> _waitForQueuedWork() async {
+    final Completer<void> signal = _wakeSignal ??= Completer<void>();
+    await signal.future;
+  }
+
+  void _wakeWorkers() {
+    final Completer<void>? signal = _wakeSignal;
+    _wakeSignal = null;
+    if (signal != null && !signal.isCompleted) {
+      signal.complete();
+    }
+  }
+
+  Future<void> _fetchAndPersistSource(ProductSourceModel source) async {
+    final Either<Failure, ProductSourceModel> result = await _fetchSource(
+      source,
+      onSourceStatusChanged:
+          (String sourceId, SourceRefreshStatus status) async {
+            await _localDatasource.writeSourceLiveStatus(sourceId, status);
+          },
+    );
+    final ProductSourceModel updatedSource = result.match(
+      (Failure failure) => _sourceAfterFailure(source, failure),
+      (ProductSourceModel updated) => updated,
+    );
+    await _localDatasource.updateSourcePrices(source.productId, [
+      updatedSource,
+    ]);
+    await _localDatasource.writeSourceLiveStatus(source.id, null);
   }
 }

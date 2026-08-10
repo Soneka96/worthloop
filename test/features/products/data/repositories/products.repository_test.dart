@@ -501,6 +501,289 @@ void main() {
     );
   });
 
+  group('ProductsRepository implements enqueueSourceRefresh() correctly', () {
+    test('returns Right(unit) immediately when sourceIds is empty', () async {
+      final Either<Failure, Unit> result = await repository
+          .enqueueSourceRefresh([]);
+
+      expect(result, const Right(unit));
+      verifyZeroInteractions(mockDatasource);
+      verifyZeroInteractions(mockRemoteDatasource);
+    });
+
+    test(
+      'returns the datasource failure unchanged when loadProductSources() fails',
+      () async {
+        const DatabaseFailure failure = DatabaseFailure('database failed');
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => const Left(failure));
+
+        final Either<Failure, Unit> result = await repository
+            .enqueueSourceRefresh(['source-1']);
+
+        expect(result, const Left(failure));
+        verify(() => mockDatasource.loadProductSources()).called(1);
+        verifyNoMoreInteractions(mockDatasource);
+      },
+    );
+
+    test('skips a requested id that has no matching source', () async {
+      when(
+        () => mockDatasource.loadProductSources(),
+      ).thenAnswer((_) async => const Right([]));
+
+      final Either<Failure, Unit> result = await repository
+          .enqueueSourceRefresh(['missing-source']);
+
+      expect(result, const Right(unit));
+      verify(() => mockDatasource.loadProductSources()).called(1);
+      verifyNoMoreInteractions(mockDatasource);
+    });
+
+    test(
+      'queues a matching source, fetches it, and clears its live status',
+      () async {
+        final ProductSourceModel source = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final ProductSourceModel updatedSource = buildProductSourceModel(
+          id: 'source-1',
+          currentPrice: const Money(minorUnits: 1999, currencyCode: 'EUR'),
+          isAvailable: true,
+        );
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([source]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(
+          () => mockRemoteDatasource.fetchPrices(source),
+        ).thenAnswer((_) async => Right(updatedSource));
+        when(
+          () => mockDatasource.updateSourcePrices(source.productId, [
+            updatedSource,
+          ]),
+        ).thenAnswer((_) async => Right(buildProductModel()));
+
+        final Either<Failure, Unit> result = await repository
+            .enqueueSourceRefresh(['source-1']);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(result, const Right(unit));
+        verifyInOrder([
+          () => mockDatasource.writeSourceLiveStatus(
+            'source-1',
+            SourceRefreshStatus.queued,
+          ),
+          () => mockDatasource.writeSourceLiveStatus(
+            'source-1',
+            SourceRefreshStatus.fetching,
+          ),
+          () => mockRemoteDatasource.fetchPrices(source),
+          () => mockDatasource.writeSourceLiveStatus(
+            'source-1',
+            SourceRefreshStatus.success,
+          ),
+          () => mockDatasource.updateSourcePrices(source.productId, [
+            updatedSource,
+          ]),
+          () => mockDatasource.writeSourceLiveStatus('source-1', null),
+        ]);
+      },
+    );
+
+    test('persists a failed fetch and still clears the live status', () async {
+      final ProductSourceModel source = buildProductSourceModel(id: 'source-1');
+      const NetworkFailure failure = NetworkFailure('unreachable');
+      when(
+        () => mockDatasource.loadProductSources(),
+      ).thenAnswer((_) async => Right([source]));
+      when(
+        () => mockDatasource.writeSourceLiveStatus(any(), any()),
+      ).thenAnswer((_) async => const Right(unit));
+      when(
+        () => mockRemoteDatasource.fetchPrices(source),
+      ).thenAnswer((_) async => const Left(failure));
+      when(
+        () => mockDatasource.updateSourcePrices(source.productId, any()),
+      ).thenAnswer((_) async => Right(buildProductModel()));
+
+      await repository.enqueueSourceRefresh(['source-1']);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+
+      final List<ProductSourceModel> persisted =
+          verify(
+                () => mockDatasource.updateSourcePrices(
+                  source.productId,
+                  captureAny(),
+                ),
+              ).captured.single
+              as List<ProductSourceModel>;
+      expect(persisted.single.lastRefreshStatus, isA<PriceFetchStatus>());
+      expect(persisted.single.lastRefreshStatus, PriceFetchStatus.networkError);
+      verify(
+        () => mockDatasource.writeSourceLiveStatus('source-1', null),
+      ).called(1);
+    });
+
+    test(
+      'does not re-queue a source that is already queued or in flight',
+      () async {
+        final ProductSourceModel source = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final Completer<Either<Failure, ProductSourceModel>> fetchCompleter =
+            Completer();
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([source]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(
+          () => mockRemoteDatasource.fetchPrices(source),
+        ).thenAnswer((_) => fetchCompleter.future);
+        when(
+          () => mockDatasource.updateSourcePrices(source.productId, any()),
+        ).thenAnswer((_) async => Right(buildProductModel()));
+
+        await repository.enqueueSourceRefresh(['source-1']);
+        await Future<void>.delayed(Duration.zero);
+        await repository.enqueueSourceRefresh(['source-1']);
+        await Future<void>.delayed(Duration.zero);
+        fetchCompleter.complete(Right(source));
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        verify(() => mockDatasource.loadProductSources()).called(2);
+        verify(
+          () => mockDatasource.writeSourceLiveStatus(
+            'source-1',
+            SourceRefreshStatus.queued,
+          ),
+        ).called(1);
+      },
+    );
+
+    test('serializes two sources from the same merchant', () async {
+      final ProductSourceModel sourceA = buildProductSourceModel(
+        id: 'source-1',
+      );
+      final ProductSourceModel sourceB = buildProductSourceModel(
+        id: 'source-2',
+        url: 'https://example.com/2',
+      );
+      final Completer<Either<Failure, ProductSourceModel>> completerA =
+          Completer();
+      final Completer<Either<Failure, ProductSourceModel>> completerB =
+          Completer();
+      when(
+        () => mockDatasource.loadProductSources(),
+      ).thenAnswer((_) async => Right([sourceA, sourceB]));
+      when(
+        () => mockDatasource.writeSourceLiveStatus(any(), any()),
+      ).thenAnswer((_) async => const Right(unit));
+      when(
+        () => mockRemoteDatasource.fetchPrices(sourceA),
+      ).thenAnswer((_) => completerA.future);
+      when(
+        () => mockRemoteDatasource.fetchPrices(sourceB),
+      ).thenAnswer((_) => completerB.future);
+      when(
+        () => mockDatasource.updateSourcePrices(sourceA.productId, any()),
+      ).thenAnswer((_) async => Right(buildProductModel()));
+
+      await repository.enqueueSourceRefresh(['source-1', 'source-2']);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+
+      verify(() => mockRemoteDatasource.fetchPrices(sourceA)).called(1);
+      verifyNever(() => mockRemoteDatasource.fetchPrices(sourceB));
+
+      completerA.complete(Right(sourceA));
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+
+      verify(() => mockRemoteDatasource.fetchPrices(sourceB)).called(1);
+    });
+
+    test(
+      'processes at most 4 merchants concurrently, queuing the rest',
+      () async {
+        final List<ProductSourceModel> sources = List.generate(
+          5,
+          (int index) => buildProductSourceModel(
+            id: 'source-$index',
+            url: 'https://merchant-$index.example.com/1',
+            merchantDomain: 'merchant-$index.example.com',
+          ),
+        );
+        final List<Completer<Either<Failure, ProductSourceModel>>>
+        fetchCompleters = List.generate(5, (_) => Completer());
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right(sources));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        for (final (int index, ProductSourceModel source) in sources.indexed) {
+          when(
+            () => mockRemoteDatasource.fetchPrices(source),
+          ).thenAnswer((_) => fetchCompleters[index].future);
+        }
+
+        await repository.enqueueSourceRefresh(
+          sources.map((ProductSourceModel source) => source.id).toList(),
+        );
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        verify(() => mockRemoteDatasource.fetchPrices(sources[0])).called(1);
+        verify(() => mockRemoteDatasource.fetchPrices(sources[1])).called(1);
+        verify(() => mockRemoteDatasource.fetchPrices(sources[2])).called(1);
+        verify(() => mockRemoteDatasource.fetchPrices(sources[3])).called(1);
+        verifyNever(() => mockRemoteDatasource.fetchPrices(sources[4]));
+      },
+    );
+
+    test(
+      "can re-claim a merchant's queue after it previously drained",
+      () async {
+        final ProductSourceModel source = buildProductSourceModel(
+          id: 'source-1',
+        );
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([source]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(
+          () => mockRemoteDatasource.fetchPrices(source),
+        ).thenAnswer((_) async => Right(source));
+        when(
+          () => mockDatasource.updateSourcePrices(source.productId, any()),
+        ).thenAnswer((_) async => Right(buildProductModel()));
+
+        await repository.enqueueSourceRefresh(['source-1']);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        await repository.enqueueSourceRefresh(['source-1']);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        verify(() => mockRemoteDatasource.fetchPrices(source)).called(2);
+      },
+    );
+  });
+
   group('ProductsRepository implements refreshProduct() correctly', () {
     test(
       'emits one ProductPriceDrop when the best price becomes lower',
