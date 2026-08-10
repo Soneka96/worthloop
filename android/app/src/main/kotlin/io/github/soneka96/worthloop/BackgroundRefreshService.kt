@@ -31,6 +31,8 @@ class BackgroundRefreshService : Service() {
         const val EXTRA_BYPASS_COOLDOWN = "bypass_cooldown"
         const val ENGINE_CHANNEL =
             "io.github.soneka96.worthloop/background_refresh_engine"
+        const val PRICE_ALERT_CHANNEL_NAME =
+            "io.github.soneka96.worthloop/price_alert_notifications"
         const val PREFS_NAME = "worth_loop_background_refresh"
         const val CALLBACK_HANDLE_KEY = "callback_handle"
 
@@ -201,6 +203,28 @@ class BackgroundRefreshService : Service() {
             }
         }
         engineChannel = channel
+
+        MethodChannel(engine.dartExecutor.binaryMessenger, PRICE_ALERT_CHANNEL_NAME)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "areNotificationsEnabled" ->
+                        result.success(PriceAlertNotifier.areNotificationsEnabled(this))
+                    "showPriceDrop" -> {
+                        val productId = call.argument<String>("productId")
+                        val title = call.argument<String>("title")
+                        val body = call.argument<String>("body")
+                        if (productId == null || title == null || body == null) {
+                            result.success(false)
+                        } else {
+                            result.success(
+                                PriceAlertNotifier.showPriceDrop(this, productId, title, body),
+                            )
+                        }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+
         flutterEngine = engine
         val loader: FlutterLoader = FlutterInjector.instance().flutterLoader()
         engine.dartExecutor.executeDartCallback(

@@ -1,8 +1,6 @@
 package io.github.soneka96.worthloop
 
 import android.Manifest
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
@@ -11,8 +9,6 @@ import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.android.FlutterActivity
@@ -26,7 +22,6 @@ class MainActivity : FlutterActivity() {
     companion object {
         private const val CHANNEL =
             "io.github.soneka96.worthloop/background_capabilities"
-        private const val PRICE_ALERT_CHANNEL = "price_alerts"
         private const val PRICE_ALERT_PERMISSION_REQUEST = 4001
     }
 
@@ -101,7 +96,7 @@ class MainActivity : FlutterActivity() {
                     pendingPriceAlertProductId = null
                 }
                 "areNotificationsEnabled" ->
-                    result.success(areNotificationsEnabled())
+                    result.success(PriceAlertNotifier.areNotificationsEnabled(this))
                 "requestPermission" -> requestNotificationPermission(result)
                 "showPriceDrop" -> {
                     val productId = call.argument<String>("productId")
@@ -110,7 +105,9 @@ class MainActivity : FlutterActivity() {
                     if (productId == null || title == null || body == null) {
                         result.success(false)
                     } else {
-                        result.success(showPriceDrop(productId, title, body))
+                        result.success(
+                            PriceAlertNotifier.showPriceDrop(this, productId, title, body),
+                        )
                     }
                 }
                 else -> result.notImplemented()
@@ -215,11 +212,8 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun areNotificationsEnabled(): Boolean =
-        NotificationManagerCompat.from(this).areNotificationsEnabled()
-
     private fun requestNotificationPermission(result: MethodChannel.Result) {
-        if (areNotificationsEnabled()) {
+        if (PriceAlertNotifier.areNotificationsEnabled(this)) {
             result.success(true)
             return
         }
@@ -250,47 +244,5 @@ class MainActivity : FlutterActivity() {
         val granted = grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED
         pendingNotificationPermissionResult?.success(granted)
         pendingNotificationPermissionResult = null
-    }
-
-    private fun showPriceDrop(productId: String, title: String, body: String): Boolean {
-        if (!areNotificationsEnabled()) {
-            return false
-        }
-        createPriceAlertChannel()
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra("price_alert_product_id", productId)
-        }
-        val pendingIntent = android.app.PendingIntent.getActivity(
-            this,
-            productId.hashCode(),
-            intent,
-            android.app.PendingIntent.FLAG_UPDATE_CURRENT or
-                android.app.PendingIntent.FLAG_IMMUTABLE,
-        )
-        val notification = NotificationCompat.Builder(this, PRICE_ALERT_CHANNEL)
-            .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle(title)
-            .setContentText(body)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
-            .setCategory(NotificationCompat.CATEGORY_EVENT)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .build()
-        NotificationManagerCompat.from(this).notify(productId.hashCode(), notification)
-        return true
-    }
-
-    private fun createPriceAlertChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                PRICE_ALERT_CHANNEL,
-                "Price alerts",
-                NotificationManager.IMPORTANCE_DEFAULT,
-            )
-            getSystemService(NotificationManager::class.java)
-                .createNotificationChannel(channel)
-        }
     }
 }
