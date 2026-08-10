@@ -501,6 +501,46 @@ class ProductsLocalDatasource {
     }
   }
 
+  /// Updates [sourceId]'s live refresh status only, leaving every other
+  /// column untouched. Pass `null` to clear it back to idle.
+  Future<Either<Failure, Unit>> writeSourceLiveStatus(
+    String sourceId,
+    SourceRefreshStatus? status,
+  ) async {
+    try {
+      final int rowsUpdated =
+          await (_db.update(
+            _db.productSourceTable,
+          )..where((table) => table.id.equals(sourceId))).write(
+            ProductSourceTableCompanion(liveStatus: Value(status?.name)),
+          );
+      return rowsUpdated == 0
+          ? const Left(NotFoundFailure('Source not found'))
+          : const Right(unit);
+    } on SqliteException catch (error) {
+      _loggerService.e(error.toString());
+      return Left(DatabaseFailure(error.toString()));
+    }
+  }
+
+  /// Clears any [SourceRefreshStatus.queued]/[SourceRefreshStatus.fetching]
+  /// leftovers from a previous run that was killed mid-refresh.
+  Future<Either<Failure, Unit>> resetStaleLiveStatuses() async {
+    try {
+      await (_db.update(_db.productSourceTable)..where(
+            (table) => table.liveStatus.isIn([
+              SourceRefreshStatus.queued.name,
+              SourceRefreshStatus.fetching.name,
+            ]),
+          ))
+          .write(const ProductSourceTableCompanion(liveStatus: Value(null)));
+      return const Right(unit);
+    } on SqliteException catch (error) {
+      _loggerService.e(error.toString());
+      return Left(DatabaseFailure(error.toString()));
+    }
+  }
+
   Money? _moneyFromRow(ProductSourceRow row) {
     final int? minorUnits = row.minorUnits;
     final String? currencyCode = row.currencyCode;

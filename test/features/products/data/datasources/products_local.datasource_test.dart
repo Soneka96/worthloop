@@ -1775,4 +1775,163 @@ void main() {
       },
     );
   });
+
+  group('Method writeSourceLiveStatus() returns the correct value', () {
+    Future<void> insertSource() async {
+      await db.into(db.productTable).insert(buildProductTableCompanion());
+      await db
+          .into(db.productSourceTable)
+          .insert(buildProductSourceModel().toCompanion());
+    }
+
+    test("updates the source's liveStatus and returns Right(unit)", () async {
+      await insertSource();
+
+      final Either<Failure, Unit> result = await datasource
+          .writeSourceLiveStatus('source-1', SourceRefreshStatus.fetching);
+      final ProductSourceRow row = await (db.select(
+        db.productSourceTable,
+      )..where((table) => table.id.equals('source-1'))).getSingle();
+
+      expect(result, const Right(unit));
+      expect(row.liveStatus, SourceRefreshStatus.fetching.name);
+      verifyZeroInteractions(mockLoggerService);
+    });
+
+    test('clears liveStatus back to null when status = null', () async {
+      await db.into(db.productTable).insert(buildProductTableCompanion());
+      await db
+          .into(db.productSourceTable)
+          .insert(
+            buildProductSourceModel(
+              liveStatus: SourceRefreshStatus.queued,
+            ).toCompanion(),
+          );
+
+      final Either<Failure, Unit> result = await datasource
+          .writeSourceLiveStatus('source-1', null);
+      final ProductSourceRow row = await (db.select(
+        db.productSourceTable,
+      )..where((table) => table.id.equals('source-1'))).getSingle();
+
+      expect(result, const Right(unit));
+      expect(row.liveStatus, isNull);
+      verifyZeroInteractions(mockLoggerService);
+    });
+
+    test(
+      'returns Left(NotFoundFailure) when the source does not exist',
+      () async {
+        final Either<Failure, Unit> result = await datasource
+            .writeSourceLiveStatus(
+              'missing-source',
+              SourceRefreshStatus.fetching,
+            );
+
+        expect(result, const Left(NotFoundFailure('Source not found')));
+        verifyZeroInteractions(mockLoggerService);
+      },
+    );
+
+    test(
+      'returns Left(DatabaseFailure) when the source table is missing',
+      () async {
+        await db.customStatement('DROP TABLE product_source_table');
+
+        final Either<Failure, Unit> result = await datasource
+            .writeSourceLiveStatus('source-1', SourceRefreshStatus.fetching);
+        final Failure failure =
+            result.getLeft().toNullable() ??
+            const DatabaseFailure('Expected a failure');
+
+        expect(failure, isA<DatabaseFailure>());
+        verify(() => mockLoggerService.e(failure.message)).called(1);
+      },
+    );
+  });
+
+  group('Method resetStaleLiveStatuses() returns the correct value', () {
+    test(
+      'clears every queued and fetching source, leaving others untouched',
+      () async {
+        await db.into(db.productTable).insert(buildProductTableCompanion());
+        await db
+            .into(db.productSourceTable)
+            .insert(
+              buildProductSourceModel(
+                liveStatus: SourceRefreshStatus.queued,
+              ).toCompanion(),
+            );
+        await db
+            .into(db.productSourceTable)
+            .insert(
+              buildProductSourceModel(
+                id: 'source-2',
+                url: 'https://other.example.com/1',
+                liveStatus: SourceRefreshStatus.fetching,
+              ).toCompanion(),
+            );
+        await db
+            .into(db.productSourceTable)
+            .insert(
+              buildProductSourceModel(
+                id: 'source-3',
+                url: 'https://third.example.com/1',
+                currentPrice: const Money(
+                  minorUnits: 1999,
+                  currencyCode: 'USD',
+                ),
+                lastRefreshStatus: PriceFetchStatus.success,
+              ).toCompanion(),
+            );
+
+        final Either<Failure, Unit> result = await datasource
+            .resetStaleLiveStatuses();
+        final List<ProductSourceRow> rows = await db
+            .select(db.productSourceTable)
+            .get();
+
+        expect(result, const Right(unit));
+        expect(
+          rows.firstWhere((row) => row.id == 'source-1').liveStatus,
+          isNull,
+        );
+        expect(
+          rows.firstWhere((row) => row.id == 'source-2').liveStatus,
+          isNull,
+        );
+        final ProductSourceRow untouchedRow = rows.firstWhere(
+          (row) => row.id == 'source-3',
+        );
+        expect(untouchedRow.liveStatus, isNull);
+        expect(untouchedRow.minorUnits, 1999);
+        expect(untouchedRow.lastRefreshStatus, PriceFetchStatus.success.name);
+        verifyZeroInteractions(mockLoggerService);
+      },
+    );
+
+    test('returns Right(unit) when there is nothing stale to clear', () async {
+      final Either<Failure, Unit> result = await datasource
+          .resetStaleLiveStatuses();
+
+      expect(result, const Right(unit));
+      verifyZeroInteractions(mockLoggerService);
+    });
+
+    test(
+      'returns Left(DatabaseFailure) when the source table is missing',
+      () async {
+        await db.customStatement('DROP TABLE product_source_table');
+
+        final Either<Failure, Unit> result = await datasource
+            .resetStaleLiveStatuses();
+        final Failure failure =
+            result.getLeft().toNullable() ??
+            const DatabaseFailure('Expected a failure');
+
+        expect(failure, isA<DatabaseFailure>());
+        verify(() => mockLoggerService.e(failure.message)).called(1);
+      },
+    );
+  });
 }
