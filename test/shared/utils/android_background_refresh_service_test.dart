@@ -76,12 +76,24 @@ void main() {
       expect(await service.registerCallbackHandle(123456789), isTrue);
     });
 
+    test('enqueueSources returns the native result', () async {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (MethodCall call) async {
+            expect(call.method, 'enqueueSources');
+            expect(call.arguments, ['source-1', 'source-2']);
+            return true;
+          });
+
+      expect(await service.enqueueSources(['source-1', 'source-2']), isTrue);
+    });
+
     test('returns false when the native bridge is unavailable', () async {
       expect(await service.start(), isFalse);
       expect(await service.stop(), isFalse);
       expect(await service.requestRefresh(), isFalse);
       expect(await service.isRunning(), isFalse);
       expect(await service.registerCallbackHandle(123456789), isFalse);
+      expect(await service.enqueueSources(['source-1']), isFalse);
     });
   });
 }

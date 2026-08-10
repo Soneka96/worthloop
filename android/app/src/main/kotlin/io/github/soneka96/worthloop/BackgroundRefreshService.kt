@@ -17,7 +17,7 @@ import io.flutter.FlutterInjector
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugins.GeneratedPluginRegistrant
 import io.flutter.view.FlutterCallbackInformation
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.Collections
 
 class BackgroundRefreshService : Service() {
     companion object {
@@ -27,17 +27,22 @@ class BackgroundRefreshService : Service() {
         const val RESULT_CHANNEL_ID = "background_refresh_results"
         const val ACTION_REQUEST_REFRESH =
             "io.github.soneka96.worthloop.action.REQUEST_REFRESH"
+        const val EXTRA_SOURCE_IDS = "source_ids"
         const val ENGINE_CHANNEL =
             "io.github.soneka96.worthloop/background_refresh_engine"
         const val PREFS_NAME = "worth_loop_background_refresh"
         const val CALLBACK_HANDLE_KEY = "callback_handle"
 
-        private val pendingRefreshRequest = AtomicBoolean(false)
+        private val pendingSourceIds = Collections.synchronizedList(mutableListOf<String>())
 
         var isRunning: Boolean = false
 
-        fun consumePendingRefreshRequest(): Boolean {
-            return pendingRefreshRequest.getAndSet(false)
+        fun consumePendingSourceIds(): List<String> {
+            synchronized(pendingSourceIds) {
+                val drained = pendingSourceIds.toList()
+                pendingSourceIds.clear()
+                return drained
+            }
         }
     }
 
@@ -54,20 +59,29 @@ class BackgroundRefreshService : Service() {
     private var engineStarted = false
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_REQUEST_REFRESH) {
-            pendingRefreshRequest.set(true)
+        val sourceIds = if (intent?.action == ACTION_REQUEST_REFRESH) {
+            intent.getStringArrayListExtra(EXTRA_SOURCE_IDS) ?: arrayListOf()
+        } else {
+            null
+        }
+        if (sourceIds != null) {
+            synchronized(pendingSourceIds) {
+                pendingSourceIds.addAll(sourceIds)
+            }
         }
         if (!engineStarted) {
             engineStarted = startFlutterEngine()
-        } else if (intent?.action == ACTION_REQUEST_REFRESH) {
-            notifyFlutterEngine()
+        } else if (sourceIds != null) {
+            notifyFlutterEngine(sourceIds)
         }
         return START_NOT_STICKY
     }
 
     override fun onDestroy() {
         isRunning = false
-        pendingRefreshRequest.set(false)
+        synchronized(pendingSourceIds) {
+            pendingSourceIds.clear()
+        }
         engineChannel = null
         engineStarted = false
         flutterEngine?.destroy()
@@ -156,8 +170,8 @@ class BackgroundRefreshService : Service() {
         val channel = MethodChannel(engine.dartExecutor.binaryMessenger, ENGINE_CHANNEL)
         channel.setMethodCallHandler { call, result ->
             when (call.method) {
-                "consumePendingRefreshRequest" ->
-                    result.success(consumePendingRefreshRequest())
+                "consumePendingSourceIds" ->
+                    result.success(consumePendingSourceIds())
                 "stopService" -> {
                     stopSelf()
                     result.success(true)
@@ -188,7 +202,7 @@ class BackgroundRefreshService : Service() {
         return true
     }
 
-    private fun notifyFlutterEngine() {
-        engineChannel?.invokeMethod("refreshNow", null)
+    private fun notifyFlutterEngine(sourceIds: List<String>) {
+        engineChannel?.invokeMethod("enqueueSources", sourceIds)
     }
 }

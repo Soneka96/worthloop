@@ -71,4 +71,20 @@ class AndroidBackgroundRefreshService {
       return false;
     }
   }
+
+  /// Queues [sourceIds] onto the background service, starting it if it
+  /// isn't already running.
+  Future<bool> enqueueSources(List<String> sourceIds) async {
+    try {
+      return await _methodChannel.invokeMethod<bool>(
+            'enqueueSources',
+            sourceIds,
+          ) ??
+          false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException {
+      return false;
+    }
+  }
 }

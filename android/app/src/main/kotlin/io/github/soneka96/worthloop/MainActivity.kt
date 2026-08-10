@@ -66,6 +66,13 @@ class MainActivity : FlutterActivity() {
                 "stop" -> result.success(stopBackgroundRefresh())
                 "requestRefresh" -> result.success(requestBackgroundRefresh())
                 "isRunning" -> result.success(BackgroundRefreshService.isRunning)
+                "enqueueSources" -> {
+                    val sourceIds = (call.arguments as? List<*>)
+                        ?.filterIsInstance<String>()
+                    result.success(
+                        if (sourceIds != null) enqueueSources(sourceIds) else false,
+                    )
+                }
                 "registerCallbackHandle" -> {
                     val handle = (call.arguments as? Number)?.toLong()
                     result.success(
@@ -157,6 +164,26 @@ class MainActivity : FlutterActivity() {
         return try {
             val intent = Intent(this, BackgroundRefreshService::class.java).apply {
                 action = BackgroundRefreshService.ACTION_REQUEST_REFRESH
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent)
+            } else {
+                startService(intent)
+            }
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun enqueueSources(sourceIds: List<String>): Boolean {
+        return try {
+            val intent = Intent(this, BackgroundRefreshService::class.java).apply {
+                action = BackgroundRefreshService.ACTION_REQUEST_REFRESH
+                putStringArrayListExtra(
+                    BackgroundRefreshService.EXTRA_SOURCE_IDS,
+                    ArrayList(sourceIds),
+                )
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 startForegroundService(intent)
