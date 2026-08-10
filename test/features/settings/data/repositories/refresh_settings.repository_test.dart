@@ -183,4 +183,150 @@ void main() {
       );
     },
   );
+
+  group(
+    'RefreshSettingsRepository implements savePriceIncreaseAlertsEnabled() correctly',
+    () {
+      test(
+        'Method savePriceIncreaseAlertsEnabled() calls datasource savePriceIncreaseAlertsEnabled()',
+        () async {
+          when(
+            () => mockDatasource.savePriceIncreaseAlertsEnabled(true),
+          ).thenAnswer(
+            (_) async => Right(
+              buildRefreshSettingsModel(priceIncreaseAlertsEnabled: true),
+            ),
+          );
+
+          final Either<Failure, RefreshSettings> result = await repository
+              .savePriceIncreaseAlertsEnabled(true);
+
+          expect(
+            result,
+            Right(buildRefreshSettingsModel(priceIncreaseAlertsEnabled: true)),
+          );
+          verify(
+            () => mockDatasource.savePriceIncreaseAlertsEnabled(true),
+          ).called(1);
+          verifyNoMoreInteractions(mockDatasource);
+        },
+      );
+
+      test(
+        'Method savePriceIncreaseAlertsEnabled() returns datasource failures',
+        () async {
+          const DatabaseFailure failure = DatabaseFailure('failed');
+          when(
+            () => mockDatasource.savePriceIncreaseAlertsEnabled(false),
+          ).thenAnswer((_) async => const Left(failure));
+
+          final Either<Failure, RefreshSettings> result = await repository
+              .savePriceIncreaseAlertsEnabled(false);
+
+          expect(result, const Left(failure));
+          verify(
+            () => mockDatasource.savePriceIncreaseAlertsEnabled(false),
+          ).called(1);
+          verifyNoMoreInteractions(mockDatasource);
+        },
+      );
+    },
+  );
+
+  group(
+    'RefreshSettingsRepository implements saveRefreshCompletedAlertsEnabled() correctly',
+    () {
+      test(
+        'Method saveRefreshCompletedAlertsEnabled() calls datasource saveRefreshCompletedAlertsEnabled()',
+        () async {
+          when(
+            () => mockDatasource.saveRefreshCompletedAlertsEnabled(true),
+          ).thenAnswer(
+            (_) async => Right(
+              buildRefreshSettingsModel(refreshCompletedAlertsEnabled: true),
+            ),
+          );
+
+          final Either<Failure, RefreshSettings> result = await repository
+              .saveRefreshCompletedAlertsEnabled(true);
+
+          expect(
+            result,
+            Right(
+              buildRefreshSettingsModel(refreshCompletedAlertsEnabled: true),
+            ),
+          );
+          verify(
+            () => mockDatasource.saveRefreshCompletedAlertsEnabled(true),
+          ).called(1);
+          verifyNoMoreInteractions(mockDatasource);
+        },
+      );
+
+      test(
+        'Method saveRefreshCompletedAlertsEnabled() returns datasource failures',
+        () async {
+          const DatabaseFailure failure = DatabaseFailure('failed');
+          when(
+            () => mockDatasource.saveRefreshCompletedAlertsEnabled(false),
+          ).thenAnswer((_) async => const Left(failure));
+
+          final Either<Failure, RefreshSettings> result = await repository
+              .saveRefreshCompletedAlertsEnabled(false);
+
+          expect(result, const Left(failure));
+          verify(
+            () => mockDatasource.saveRefreshCompletedAlertsEnabled(false),
+          ).called(1);
+          verifyNoMoreInteractions(mockDatasource);
+        },
+      );
+    },
+  );
+
+  group(
+    'RefreshSettingsRepository implements saveShowRefreshProgress() correctly',
+    () {
+      test(
+        'Method saveShowRefreshProgress() calls datasource saveShowRefreshProgress()',
+        () async {
+          when(() => mockDatasource.saveShowRefreshProgress(true)).thenAnswer(
+            (_) async =>
+                Right(buildRefreshSettingsModel(showRefreshProgress: true)),
+          );
+
+          final Either<Failure, RefreshSettings> result = await repository
+              .saveShowRefreshProgress(true);
+
+          expect(
+            result,
+            Right(buildRefreshSettingsModel(showRefreshProgress: true)),
+          );
+          verify(
+            () => mockDatasource.saveShowRefreshProgress(true),
+          ).called(1);
+          verifyNoMoreInteractions(mockDatasource);
+        },
+      );
+
+      test(
+        'Method saveShowRefreshProgress() returns datasource failures',
+        () async {
+          const DatabaseFailure failure = DatabaseFailure('failed');
+          when(
+            () => mockDatasource.saveShowRefreshProgress(false),
+          ).thenAnswer((_) async => const Left(failure));
+
+          final Either<Failure, RefreshSettings> result = await repository
+              .saveShowRefreshProgress(false);
+
+          expect(result, const Left(failure));
+          verify(
+            () => mockDatasource.saveShowRefreshProgress(false),
+          ).called(1);
+          verifyNoMoreInteractions(mockDatasource);
+        },
+      );
+    },
+  );
 }

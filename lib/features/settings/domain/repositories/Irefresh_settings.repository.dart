@@ -22,4 +22,21 @@ abstract class IRefreshSettingsRepository {
   Future<Either<Failure, RefreshSettings>> savePriceDropAlertsEnabled(
     bool enabled,
   );
+
+  /// Persists whether product price-increase notifications are enabled.
+  Future<Either<Failure, RefreshSettings>> savePriceIncreaseAlertsEnabled(
+    bool enabled,
+  );
+
+  /// Persists whether a notification is shown for every completed
+  /// background refresh.
+  Future<Either<Failure, RefreshSettings>> saveRefreshCompletedAlertsEnabled(
+    bool enabled,
+  );
+
+  /// Persists whether the background refresh shows a progress bar on its
+  /// notification while sources are being fetched.
+  Future<Either<Failure, RefreshSettings>> saveShowRefreshProgress(
+    bool enabled,
+  );
 }

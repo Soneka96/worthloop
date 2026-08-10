@@ -124,4 +124,90 @@ class RefreshSettingsLocalDatasource {
       return Left(DatabaseFailure(error.toString()));
     }
   }
+
+  /// Persists whether product price-increase notifications are enabled.
+  Future<Either<Failure, RefreshSettingsModel>> savePriceIncreaseAlertsEnabled(
+    bool enabled,
+  ) async {
+    try {
+      final RefreshSettingsRow? existing = await (_db.select(
+        _db.refreshSettingsTable,
+      )..where((table) => table.id.equals(1))).getSingleOrNull();
+      final RefreshSettingsModel model = RefreshSettingsModel(
+        intervalMinutes:
+            existing?.intervalMinutes ?? RefreshIntervalConstants.hourly,
+        browserRefreshEnabled: existing?.browserRefreshEnabled ?? false,
+        priceDropAlertsEnabled: existing?.priceDropAlertsEnabled ?? false,
+        priceIncreaseAlertsEnabled: enabled,
+        refreshCompletedAlertsEnabled:
+            existing?.refreshCompletedAlertsEnabled ?? false,
+        showRefreshProgress: existing?.showRefreshProgress ?? false,
+      );
+      await _db
+          .into(_db.refreshSettingsTable)
+          .insertOnConflictUpdate(model.toCompanion());
+      return Right(model);
+    } on SqliteException catch (error) {
+      sl<LoggerService>().e(error.toString());
+      return Left(DatabaseFailure(error.toString()));
+    }
+  }
+
+  /// Persists whether a notification is shown for every completed
+  /// background refresh.
+  Future<Either<Failure, RefreshSettingsModel>>
+  saveRefreshCompletedAlertsEnabled(bool enabled) async {
+    try {
+      final RefreshSettingsRow? existing = await (_db.select(
+        _db.refreshSettingsTable,
+      )..where((table) => table.id.equals(1))).getSingleOrNull();
+      final RefreshSettingsModel model = RefreshSettingsModel(
+        intervalMinutes:
+            existing?.intervalMinutes ?? RefreshIntervalConstants.hourly,
+        browserRefreshEnabled: existing?.browserRefreshEnabled ?? false,
+        priceDropAlertsEnabled: existing?.priceDropAlertsEnabled ?? false,
+        priceIncreaseAlertsEnabled:
+            existing?.priceIncreaseAlertsEnabled ?? false,
+        refreshCompletedAlertsEnabled: enabled,
+        showRefreshProgress: existing?.showRefreshProgress ?? false,
+      );
+      await _db
+          .into(_db.refreshSettingsTable)
+          .insertOnConflictUpdate(model.toCompanion());
+      return Right(model);
+    } on SqliteException catch (error) {
+      sl<LoggerService>().e(error.toString());
+      return Left(DatabaseFailure(error.toString()));
+    }
+  }
+
+  /// Persists whether the background refresh shows a progress bar on its
+  /// notification while sources are being fetched.
+  Future<Either<Failure, RefreshSettingsModel>> saveShowRefreshProgress(
+    bool enabled,
+  ) async {
+    try {
+      final RefreshSettingsRow? existing = await (_db.select(
+        _db.refreshSettingsTable,
+      )..where((table) => table.id.equals(1))).getSingleOrNull();
+      final RefreshSettingsModel model = RefreshSettingsModel(
+        intervalMinutes:
+            existing?.intervalMinutes ?? RefreshIntervalConstants.hourly,
+        browserRefreshEnabled: existing?.browserRefreshEnabled ?? false,
+        priceDropAlertsEnabled: existing?.priceDropAlertsEnabled ?? false,
+        priceIncreaseAlertsEnabled:
+            existing?.priceIncreaseAlertsEnabled ?? false,
+        refreshCompletedAlertsEnabled:
+            existing?.refreshCompletedAlertsEnabled ?? false,
+        showRefreshProgress: enabled,
+      );
+      await _db
+          .into(_db.refreshSettingsTable)
+          .insertOnConflictUpdate(model.toCompanion());
+      return Right(model);
+    } on SqliteException catch (error) {
+      sl<LoggerService>().e(error.toString());
+      return Left(DatabaseFailure(error.toString()));
+    }
+  }
 }

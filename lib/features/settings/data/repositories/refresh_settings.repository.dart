@@ -31,4 +31,19 @@ class RefreshSettingsRepository implements IRefreshSettingsRepository {
   Future<Either<Failure, RefreshSettings>> savePriceDropAlertsEnabled(
     bool enabled,
   ) => _localDatasource.savePriceDropAlertsEnabled(enabled);
+
+  @override
+  Future<Either<Failure, RefreshSettings>> savePriceIncreaseAlertsEnabled(
+    bool enabled,
+  ) => _localDatasource.savePriceIncreaseAlertsEnabled(enabled);
+
+  @override
+  Future<Either<Failure, RefreshSettings>> saveRefreshCompletedAlertsEnabled(
+    bool enabled,
+  ) => _localDatasource.saveRefreshCompletedAlertsEnabled(enabled);
+
+  @override
+  Future<Either<Failure, RefreshSettings>> saveShowRefreshProgress(
+    bool enabled,
+  ) => _localDatasource.saveShowRefreshProgress(enabled);
 }

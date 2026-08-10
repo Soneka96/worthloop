@@ -8,6 +8,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:worth_loop/features/settings/data/datasources/refresh_settings_local.datasource.dart';
 import 'package:worth_loop/features/settings/data/models/refresh_settings.model.dart';
 import 'package:worth_loop/injection_container.dart';
+import 'package:worth_loop/shared/constants/refresh_interval_constants.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
@@ -214,6 +215,248 @@ void main() {
         final Failure failure = result.fold(
           (Failure failure) => failure,
           (_) => throw StateError('Expected savePriceDropAlertsEnabled() to fail'),
+        );
+
+        expect(result.isLeft(), isA<bool>());
+        expect(result.isLeft(), isTrue);
+        verify(() => mockLoggerService.e(failure.message)).called(1);
+        verifyNoMoreInteractions(mockLoggerService);
+      },
+    );
+  });
+
+  group(
+    'Method savePriceIncreaseAlertsEnabled() returns the correct value',
+    () {
+      test(
+        'savePriceIncreaseAlertsEnabled() preserves the other preferences',
+        () async {
+          await datasource.saveInterval(180);
+          await datasource.saveBrowserRefreshEnabled(true);
+          await datasource.savePriceDropAlertsEnabled(true);
+          await datasource.saveRefreshCompletedAlertsEnabled(true);
+          await datasource.saveShowRefreshProgress(true);
+
+          final Either<Failure, RefreshSettingsModel> result = await datasource
+              .savePriceIncreaseAlertsEnabled(true);
+          final RefreshSettingsRow row = await db
+              .select(db.refreshSettingsTable)
+              .getSingle();
+
+          expect(
+            result,
+            const Right(
+              RefreshSettingsModel(
+                intervalMinutes: 180,
+                browserRefreshEnabled: true,
+                priceDropAlertsEnabled: true,
+                priceIncreaseAlertsEnabled: true,
+                refreshCompletedAlertsEnabled: true,
+                showRefreshProgress: true,
+              ),
+            ),
+          );
+          expect(row.intervalMinutes, 180);
+          expect(row.browserRefreshEnabled, isTrue);
+          expect(row.priceDropAlertsEnabled, isTrue);
+          expect(row.priceIncreaseAlertsEnabled, isTrue);
+          expect(row.refreshCompletedAlertsEnabled, isTrue);
+          expect(row.showRefreshProgress, isTrue);
+          verifyZeroInteractions(mockLoggerService);
+        },
+      );
+
+      test(
+        'savePriceIncreaseAlertsEnabled() defaults other preferences when no row exists yet',
+        () async {
+          final Either<Failure, RefreshSettingsModel> result = await datasource
+              .savePriceIncreaseAlertsEnabled(true);
+
+          expect(
+            result,
+            const Right(
+              RefreshSettingsModel(
+                intervalMinutes: RefreshIntervalConstants.hourly,
+                priceIncreaseAlertsEnabled: true,
+              ),
+            ),
+          );
+        },
+      );
+
+      test(
+        'savePriceIncreaseAlertsEnabled() returns Left(DatabaseFailure) when table is missing',
+        () async {
+          await db.customStatement('DROP TABLE refresh_settings_table');
+
+          final Either<Failure, RefreshSettingsModel> result = await datasource
+              .savePriceIncreaseAlertsEnabled(true);
+          final Failure failure = result.fold(
+            (Failure failure) => failure,
+            (_) => throw StateError(
+              'Expected savePriceIncreaseAlertsEnabled() to fail',
+            ),
+          );
+
+          expect(result.isLeft(), isA<bool>());
+          expect(result.isLeft(), isTrue);
+          verify(() => mockLoggerService.e(failure.message)).called(1);
+          verifyNoMoreInteractions(mockLoggerService);
+        },
+      );
+    },
+  );
+
+  group(
+    'Method saveRefreshCompletedAlertsEnabled() returns the correct value',
+    () {
+      test(
+        'saveRefreshCompletedAlertsEnabled() preserves the other preferences',
+        () async {
+          await datasource.saveInterval(180);
+          await datasource.saveBrowserRefreshEnabled(true);
+          await datasource.savePriceDropAlertsEnabled(true);
+          await datasource.savePriceIncreaseAlertsEnabled(true);
+          await datasource.saveShowRefreshProgress(true);
+
+          final Either<Failure, RefreshSettingsModel> result = await datasource
+              .saveRefreshCompletedAlertsEnabled(true);
+          final RefreshSettingsRow row = await db
+              .select(db.refreshSettingsTable)
+              .getSingle();
+
+          expect(
+            result,
+            const Right(
+              RefreshSettingsModel(
+                intervalMinutes: 180,
+                browserRefreshEnabled: true,
+                priceDropAlertsEnabled: true,
+                priceIncreaseAlertsEnabled: true,
+                refreshCompletedAlertsEnabled: true,
+                showRefreshProgress: true,
+              ),
+            ),
+          );
+          expect(row.intervalMinutes, 180);
+          expect(row.browserRefreshEnabled, isTrue);
+          expect(row.priceDropAlertsEnabled, isTrue);
+          expect(row.priceIncreaseAlertsEnabled, isTrue);
+          expect(row.refreshCompletedAlertsEnabled, isTrue);
+          expect(row.showRefreshProgress, isTrue);
+          verifyZeroInteractions(mockLoggerService);
+        },
+      );
+
+      test(
+        'saveRefreshCompletedAlertsEnabled() defaults other preferences when no row exists yet',
+        () async {
+          final Either<Failure, RefreshSettingsModel> result = await datasource
+              .saveRefreshCompletedAlertsEnabled(true);
+
+          expect(
+            result,
+            const Right(
+              RefreshSettingsModel(
+                intervalMinutes: RefreshIntervalConstants.hourly,
+                refreshCompletedAlertsEnabled: true,
+              ),
+            ),
+          );
+        },
+      );
+
+      test(
+        'saveRefreshCompletedAlertsEnabled() returns Left(DatabaseFailure) when table is missing',
+        () async {
+          await db.customStatement('DROP TABLE refresh_settings_table');
+
+          final Either<Failure, RefreshSettingsModel> result = await datasource
+              .saveRefreshCompletedAlertsEnabled(true);
+          final Failure failure = result.fold(
+            (Failure failure) => failure,
+            (_) => throw StateError(
+              'Expected saveRefreshCompletedAlertsEnabled() to fail',
+            ),
+          );
+
+          expect(result.isLeft(), isA<bool>());
+          expect(result.isLeft(), isTrue);
+          verify(() => mockLoggerService.e(failure.message)).called(1);
+          verifyNoMoreInteractions(mockLoggerService);
+        },
+      );
+    },
+  );
+
+  group('Method saveShowRefreshProgress() returns the correct value', () {
+    test(
+      'saveShowRefreshProgress() preserves the other preferences',
+      () async {
+        await datasource.saveInterval(180);
+        await datasource.saveBrowserRefreshEnabled(true);
+        await datasource.savePriceDropAlertsEnabled(true);
+        await datasource.savePriceIncreaseAlertsEnabled(true);
+        await datasource.saveRefreshCompletedAlertsEnabled(true);
+
+        final Either<Failure, RefreshSettingsModel> result = await datasource
+            .saveShowRefreshProgress(true);
+        final RefreshSettingsRow row = await db
+            .select(db.refreshSettingsTable)
+            .getSingle();
+
+        expect(
+          result,
+          const Right(
+            RefreshSettingsModel(
+              intervalMinutes: 180,
+              browserRefreshEnabled: true,
+              priceDropAlertsEnabled: true,
+              priceIncreaseAlertsEnabled: true,
+              refreshCompletedAlertsEnabled: true,
+              showRefreshProgress: true,
+            ),
+          ),
+        );
+        expect(row.intervalMinutes, 180);
+        expect(row.browserRefreshEnabled, isTrue);
+        expect(row.priceDropAlertsEnabled, isTrue);
+        expect(row.priceIncreaseAlertsEnabled, isTrue);
+        expect(row.refreshCompletedAlertsEnabled, isTrue);
+        expect(row.showRefreshProgress, isTrue);
+        verifyZeroInteractions(mockLoggerService);
+      },
+    );
+
+    test(
+      'saveShowRefreshProgress() defaults other preferences when no row exists yet',
+      () async {
+        final Either<Failure, RefreshSettingsModel> result = await datasource
+            .saveShowRefreshProgress(true);
+
+        expect(
+          result,
+          const Right(
+            RefreshSettingsModel(
+              intervalMinutes: RefreshIntervalConstants.hourly,
+              showRefreshProgress: true,
+            ),
+          ),
+        );
+      },
+    );
+
+    test(
+      'saveShowRefreshProgress() returns Left(DatabaseFailure) when table is missing',
+      () async {
+        await db.customStatement('DROP TABLE refresh_settings_table');
+
+        final Either<Failure, RefreshSettingsModel> result = await datasource
+            .saveShowRefreshProgress(true);
+        final Failure failure = result.fold(
+          (Failure failure) => failure,
+          (_) =>
+              throw StateError('Expected saveShowRefreshProgress() to fail'),
         );
 
         expect(result.isLeft(), isA<bool>());
