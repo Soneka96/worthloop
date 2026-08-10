@@ -27,6 +27,8 @@ class BackgroundRefreshService : Service() {
             "io.github.soneka96.worthloop.action.REQUEST_REFRESH"
         const val ENGINE_CHANNEL =
             "io.github.soneka96.worthloop/background_refresh_engine"
+        const val PREFS_NAME = "worth_loop_background_refresh"
+        const val CALLBACK_HANDLE_KEY = "callback_handle"
 
         private val pendingRefreshRequest = AtomicBoolean(false)
 

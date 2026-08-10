@@ -1,3 +1,6 @@
+// Dart imports:
+import 'dart:ui' show CallbackHandle, PluginUtilities;
+
 // Flutter imports:
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +15,7 @@ import 'package:redux/redux.dart';
 // Project imports:
 import 'i18n/strings.g.dart';
 import 'injection_container.dart';
+import 'shared/background_refresh_entrypoint.dart';
 import 'shared/snugtoast/snugtoast_manager.dart';
 import 'shared/snugtoast/snugtoast_wrapper.widget.dart';
 import 'shared/state/app.state.dart';
@@ -26,6 +30,7 @@ import 'shared/theme/app_theme.dart';
 import 'shared/theme/app_theme_data.dart';
 import 'shared/theme/app_zoom.dart';
 import 'shared/widgets/app_launch_splash.widget.dart';
+import 'shared/utils/android_background_refresh_service.dart';
 import 'shared/utils/android_price_alert_notification_service.dart';
 import 'shared/navigation/app_routes.dart';
 import 'shared/navigation/navigator_service.dart';
@@ -39,7 +44,23 @@ Future<void> main() async {
     WidgetsFlutterBinding.ensureInitialized();
   }
   await initDependencies();
+  await _registerBackgroundCallbackHandle();
   runApp(TranslationProvider(child: const App()));
+}
+
+// The handle can change between builds, so it's re-registered on every
+// launch rather than once — a stale handle from a previous install would
+// otherwise point native code at a callback table that no longer matches.
+Future<void> _registerBackgroundCallbackHandle() async {
+  final CallbackHandle? handle = PluginUtilities.getCallbackHandle(
+    backgroundRefreshEntrypoint,
+  );
+  if (handle == null) {
+    return;
+  }
+  await sl<AndroidBackgroundRefreshService>().registerCallbackHandle(
+    handle.toRawHandle(),
+  );
 }
 
 /// Root application widget. Owns the Redux store and router instances.

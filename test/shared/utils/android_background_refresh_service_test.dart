@@ -65,11 +65,23 @@ void main() {
       expect(await service.isRunning(), isTrue);
     });
 
+    test('registerCallbackHandle returns the native result', () async {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (MethodCall call) async {
+            expect(call.method, 'registerCallbackHandle');
+            expect(call.arguments, 123456789);
+            return true;
+          });
+
+      expect(await service.registerCallbackHandle(123456789), isTrue);
+    });
+
     test('returns false when the native bridge is unavailable', () async {
       expect(await service.start(), isFalse);
       expect(await service.stop(), isFalse);
       expect(await service.requestRefresh(), isFalse);
       expect(await service.isRunning(), isFalse);
+      expect(await service.registerCallbackHandle(123456789), isFalse);
     });
   });
 }

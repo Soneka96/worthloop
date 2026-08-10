@@ -56,4 +56,19 @@ class AndroidBackgroundRefreshService {
       return false;
     }
   }
+
+  /// Registers the background entrypoint's callback handle with native code.
+  Future<bool> registerCallbackHandle(int handle) async {
+    try {
+      return await _methodChannel.invokeMethod<bool>(
+            'registerCallbackHandle',
+            handle,
+          ) ??
+          false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException {
+      return false;
+    }
+  }
 }

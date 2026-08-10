@@ -66,6 +66,12 @@ class MainActivity : FlutterActivity() {
                 "stop" -> result.success(stopBackgroundRefresh())
                 "requestRefresh" -> result.success(requestBackgroundRefresh())
                 "isRunning" -> result.success(BackgroundRefreshService.isRunning)
+                "registerCallbackHandle" -> {
+                    val handle = (call.arguments as? Number)?.toLong()
+                    result.success(
+                        if (handle != null) registerBackgroundCallbackHandle(handle) else false,
+                    )
+                }
                 else -> result.notImplemented()
                 }
             }
@@ -157,6 +163,18 @@ class MainActivity : FlutterActivity() {
             } else {
                 startService(intent)
             }
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun registerBackgroundCallbackHandle(handle: Long): Boolean {
+        return try {
+            getSharedPreferences(BackgroundRefreshService.PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putLong(BackgroundRefreshService.CALLBACK_HANDLE_KEY, handle)
+                .apply()
             true
         } catch (_: Exception) {
             false
