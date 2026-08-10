@@ -394,4 +394,9 @@ class ProductsRepository implements IProductsRepository {
   Future<Either<Failure, Unit>> deleteProduct(String productId) {
     return _localDatasource.deleteProduct(productId);
   }
+
+  @override
+  Future<Either<Failure, Unit>> resetStaleSourceStatuses() {
+    return _localDatasource.resetStaleLiveStatuses();
+  }
 }

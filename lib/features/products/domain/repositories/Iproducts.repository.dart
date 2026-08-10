@@ -75,4 +75,8 @@ abstract class IProductsRepository {
 
   /// Deletes a product and its sources and offers.
   Future<Either<Failure, Unit>> deleteProduct(String productId);
+
+  /// Clears any source left showing a live in-progress refresh status from
+  /// a previous run that was killed mid-refresh.
+  Future<Either<Failure, Unit>> resetStaleSourceStatuses();
 }

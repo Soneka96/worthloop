@@ -466,6 +466,41 @@ void main() {
     );
   });
 
+  group('ProductsRepository implements resetStaleSourceStatuses() correctly', () {
+    test(
+      'Method resetStaleSourceStatuses() returns the datasource result',
+      () async {
+        when(
+          () => mockDatasource.resetStaleLiveStatuses(),
+        ).thenAnswer((_) async => const Right(unit));
+
+        final Either<Failure, Unit> result = await repository
+            .resetStaleSourceStatuses();
+
+        expect(result, const Right(unit));
+        verify(() => mockDatasource.resetStaleLiveStatuses()).called(1);
+        verifyNoMoreInteractions(mockDatasource);
+      },
+    );
+
+    test(
+      'Method resetStaleSourceStatuses() forwards datasource failures unchanged',
+      () async {
+        const DatabaseFailure failure = DatabaseFailure('database failed');
+        when(
+          () => mockDatasource.resetStaleLiveStatuses(),
+        ).thenAnswer((_) async => const Left(failure));
+
+        final Either<Failure, Unit> result = await repository
+            .resetStaleSourceStatuses();
+
+        expect(result, const Left(failure));
+        verify(() => mockDatasource.resetStaleLiveStatuses()).called(1);
+        verifyNoMoreInteractions(mockDatasource);
+      },
+    );
+  });
+
   group('ProductsRepository implements refreshProduct() correctly', () {
     test(
       'emits one ProductPriceDrop when the best price becomes lower',
