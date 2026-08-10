@@ -4,6 +4,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
@@ -15,6 +16,7 @@ import io.flutter.embedding.engine.loader.FlutterLoader
 import io.flutter.FlutterInjector
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugins.GeneratedPluginRegistrant
+import io.flutter.view.FlutterCallbackInformation
 import java.util.concurrent.atomic.AtomicBoolean
 
 class BackgroundRefreshService : Service() {
@@ -56,8 +58,7 @@ class BackgroundRefreshService : Service() {
             pendingRefreshRequest.set(true)
         }
         if (!engineStarted) {
-            startFlutterEngine()
-            engineStarted = true
+            engineStarted = startFlutterEngine()
         } else if (intent?.action == ACTION_REQUEST_REFRESH) {
             notifyFlutterEngine()
         }
@@ -138,7 +139,18 @@ class BackgroundRefreshService : Service() {
         )
     }
 
-    private fun startFlutterEngine() {
+    private fun startFlutterEngine(): Boolean {
+        val handle = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getLong(CALLBACK_HANDLE_KEY, 0L)
+        val callbackInfo = if (handle != 0L) {
+            FlutterCallbackInformation.lookupCallbackInformation(handle)
+        } else {
+            null
+        }
+        if (callbackInfo == null) {
+            stopSelf()
+            return false
+        }
         val engine = FlutterEngine(this)
         GeneratedPluginRegistrant.registerWith(engine)
         val channel = MethodChannel(engine.dartExecutor.binaryMessenger, ENGINE_CHANNEL)
@@ -170,11 +182,10 @@ class BackgroundRefreshService : Service() {
         engineChannel = channel
         flutterEngine = engine
         val loader: FlutterLoader = FlutterInjector.instance().flutterLoader()
-        val entrypoint = DartExecutor.DartEntrypoint(
-            loader.findAppBundlePath(),
-            "backgroundRefreshEntrypoint",
+        engine.dartExecutor.executeDartCallback(
+            DartExecutor.DartCallback(assets, loader.findAppBundlePath(), callbackInfo),
         )
-        engine.dartExecutor.executeDartEntrypoint(entrypoint)
+        return true
     }
 
     private fun notifyFlutterEngine() {
