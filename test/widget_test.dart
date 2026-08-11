@@ -54,7 +54,12 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(const App());
-      await tester.pump(const Duration(milliseconds: 1200));
+      // Wait for splash to finish and app to initialize. In test mode, animations are instant,
+      // but post-frame callbacks and database initialization need time.
+      // Pump multiple times to ensure all deferred work (post-frame callbacks) processes.
+      for (int i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
 
       final SafeArea safeArea = tester.widget(
         find.byKey(const Key('app-bottom-safe-area')),
