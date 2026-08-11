@@ -28,28 +28,31 @@ Future<void> backgroundRefreshEntrypoint() async {
   await initDependencies();
   await sl<IProductsRepository>().resetStaleSourceStatuses();
 
-  sl<ProductSourceRefreshEngine>().onProgress = (
-    int completed,
-    int total,
-  ) async {
-    final Either<Failure, RefreshSettings> settingsResult =
-        await sl<LoadRefreshSettingsUseCase>()(NoParams());
-    final bool showProgress = settingsResult.fold(
-      (_) => false,
-      (RefreshSettings settings) => settings.showRefreshProgress,
-    );
-    if (!showProgress) {
-      return;
-    }
-    await _notifyEngine(
-      'updateProgress',
-      arguments: {'completed': completed, 'total': total},
-    );
-  };
+  sl<ProductSourceRefreshEngine>().onProgress =
+      (int completed, int total) async {
+        final Either<Failure, RefreshSettings> settingsResult =
+            await sl<LoadRefreshSettingsUseCase>()(NoParams());
+        final bool showProgress = settingsResult.fold(
+          (_) => false,
+          (RefreshSettings settings) => settings.showRefreshProgress,
+        );
+        if (!showProgress) {
+          return;
+        }
+        await _notifyEngine(
+          'updateProgress',
+          arguments: {'completed': completed, 'total': total},
+        );
+      };
 
   final BackgroundRefreshRunner runner = BackgroundRefreshRunner(
     loadSettings: () => sl<LoadRefreshSettingsUseCase>()(NoParams()),
-    refreshAllProducts: () => sl<RefreshAllProductsUseCase>()(NoParams()),
+    refreshAllProducts: () async {
+      final Either<Failure, Unit> result =
+          await sl<RefreshAllProductsUseCase>()(NoParams());
+      await sl<ProductSourceRefreshEngine>().waitUntilIdle();
+      return result;
+    },
   );
 
   Future<Duration?> runRefresh({required bool force}) {

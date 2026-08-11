@@ -43,6 +43,7 @@ class ProductSourceRefreshEngine {
   final Set<String> _sourceIdsQueuedOrInFlight = {};
   final Set<String> _sourceIdsAwaitingSweep = {};
   Completer<void>? _wakeSignal;
+  Completer<void>? _idleSignal;
   bool _workersStarted = false;
   int _totalInCurrentRun = 0;
   int _completedInCurrentRun = 0;
@@ -115,6 +116,21 @@ class ProductSourceRefreshEngine {
     return const Right(unit);
   }
 
+  /// Completes once no source is queued or in flight — resolves immediately
+  /// if the engine is already idle. Lets a caller (the background
+  /// entrypoint) know when a refresh cycle has actually finished, rather
+  /// than just been enqueued, so it can wait for real completion before
+  /// notifying the user.
+  Future<void> waitUntilIdle() async {
+    if (_pendingByMerchant.isEmpty &&
+        _merchantsInFlight.isEmpty &&
+        _sourceIdsQueuedOrInFlight.isEmpty) {
+      return;
+    }
+    final Completer<void> signal = _idleSignal ??= Completer<void>();
+    await signal.future;
+  }
+
   void _ensureWorkersRunning() {
     if (_workersStarted) {
       return;
@@ -153,7 +169,8 @@ class ProductSourceRefreshEngine {
   /// each source stays tagged with its terminal status for the life of the
   /// whole run, not just its own individual fetch, so presentation state can
   /// derive an "X of Y done" count straight from the DB — then resets the
-  /// progress counters for the next run.
+  /// progress counters for the next run and completes [waitUntilIdle]'s
+  /// signal, if anything is waiting on it.
   Future<void> _finishRunIfDrained() async {
     if (_pendingByMerchant.isNotEmpty || _merchantsInFlight.isNotEmpty) {
       return;
@@ -168,6 +185,11 @@ class ProductSourceRefreshEngine {
     _completedInCurrentRun = 0;
     for (final String sourceId in sourceIdsToSweep) {
       await _localDatasource.writeSourceLiveStatus(sourceId, null);
+    }
+    final Completer<void>? idleSignal = _idleSignal;
+    _idleSignal = null;
+    if (idleSignal != null && !idleSignal.isCompleted) {
+      idleSignal.complete();
     }
   }
 

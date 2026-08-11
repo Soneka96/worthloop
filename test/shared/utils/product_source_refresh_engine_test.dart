@@ -437,6 +437,46 @@ void main() {
     );
 
     test(
+      'waitUntilIdle() resolves immediately when nothing is queued or in flight',
+      () async {
+        await expectLater(engine.waitUntilIdle(), completes);
+      },
+    );
+
+    test('waitUntilIdle() resolves only after the run drains', () async {
+      final ProductSourceModel source = buildProductSourceModel(id: 'source-1');
+      final Completer<Either<Failure, ProductSourceModel>> fetchCompleter =
+          Completer();
+      when(
+        () => mockDatasource.loadProductSources(),
+      ).thenAnswer((_) async => Right([source]));
+      when(
+        () => mockDatasource.writeSourceLiveStatus(any(), any()),
+      ).thenAnswer((_) async => const Right(unit));
+      when(
+        () => mockRemoteDatasource.fetchPrices(source),
+      ).thenAnswer((_) => fetchCompleter.future);
+      when(
+        () => mockDatasource.updateSourcePrices(source.productId, any()),
+      ).thenAnswer((_) async => Right(buildProductModel()));
+
+      await engine.enqueueSourceRefresh(['source-1']);
+      await Future<void>.delayed(Duration.zero);
+
+      bool idleResolved = false;
+      unawaited(engine.waitUntilIdle().then((_) => idleResolved = true));
+      await Future<void>.delayed(Duration.zero);
+      expect(idleResolved, false);
+
+      fetchCompleter.complete(Right(source));
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(idleResolved, true);
+    });
+
+    test(
       'does not re-queue a source already handled in the current run when bypassCooldown = false',
       () async {
         final ProductSourceModel sourceA = buildProductSourceModel(
