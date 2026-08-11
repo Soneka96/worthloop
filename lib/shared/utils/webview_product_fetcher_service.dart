@@ -32,9 +32,12 @@ class WebViewProductFetcherService {
   }
 
   /// Polls for the HTML captured by the `onLoadStop` callback instead of a
-  /// single fixed delay, so a fast page returns as soon as it's rendered
-  /// and a slow one still gets up to [_totalTimeout] rather than being cut
-  /// off early.
+  /// single fixed delay, so a fast page returns as soon as it's rendered and
+  /// a slow one still gets up to [PriceFetchConstants.webViewTotalTimeout]
+  /// rather than being cut off early. That deadline bounds `run()` itself,
+  /// not just the poll loop — otherwise a hung WebView load blocks this
+  /// fetch, and every other source queued behind it on the same merchant,
+  /// forever.
   static Future<String> _defaultHeadlessFetch(String url) async {
     String? html;
     final HeadlessInAppWebView headless = HeadlessInAppWebView(
@@ -47,14 +50,17 @@ class WebViewProductFetcherService {
         html = outerHtml as String? ?? '';
       },
     );
-    await headless.run();
     final DateTime deadline = DateTime.now().add(
       PriceFetchConstants.webViewTotalTimeout,
     );
-    while (html == null && DateTime.now().isBefore(deadline)) {
-      await Future<void>.delayed(PriceFetchConstants.webViewPollInterval);
+    try {
+      await headless.run().timeout(PriceFetchConstants.webViewTotalTimeout);
+      while (html == null && DateTime.now().isBefore(deadline)) {
+        await Future<void>.delayed(PriceFetchConstants.webViewPollInterval);
+      }
+      return html ?? '';
+    } finally {
+      await headless.dispose();
     }
-    await headless.dispose();
-    return html ?? '';
   }
 }

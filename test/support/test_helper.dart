@@ -4,9 +4,6 @@ import 'package:flutter/widgets.dart';
 // Package imports:
 import 'package:flutter_test/flutter_test.dart';
 
-// Project imports:
-import 'package:worth_loop/i18n/strings.g.dart';
-
 /// General-purpose static helpers shared across widget tests.
 class TestHelper {
   /// Pumps [buildWidget] and calls [verify] once — previously supported
