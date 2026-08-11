@@ -3,6 +3,7 @@ package io.github.soneka96.worthloop
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -127,7 +128,20 @@ class BackgroundRefreshService : Service() {
             .setOngoing(true)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setContentIntent(contentPendingIntent())
             .build()
+    }
+
+    private fun contentPendingIntent(): PendingIntent {
+        val intent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        return PendingIntent.getActivity(
+            this,
+            NOTIFICATION_ID,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
     }
 
     private fun updateForegroundNotification(
@@ -151,6 +165,7 @@ class BackgroundRefreshService : Service() {
             .setOngoing(true)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setContentIntent(contentPendingIntent())
         if (progress != null) {
             val (completed, total) = progress
             builder.setProgress(total, completed, false)
@@ -165,6 +180,7 @@ class BackgroundRefreshService : Service() {
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle(title)
                 .setContentText(message)
+                .setContentIntent(contentPendingIntent())
                 .setAutoCancel(true)
                 .setCategory(NotificationCompat.CATEGORY_EVENT)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)

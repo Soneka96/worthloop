@@ -6,10 +6,10 @@ void main() {
   test('background refresh bridge exposes the request command', () {
     final mainActivity = File(
       'android/app/src/main/kotlin/io/github/soneka96/worthloop/MainActivity.kt',
-    ).readAsStringSync();
+    ).readAsStringSync().replaceAll('\r\n', '\n');
     final backgroundService = File(
       'android/app/src/main/kotlin/io/github/soneka96/worthloop/BackgroundRefreshService.kt',
-    ).readAsStringSync();
+    ).readAsStringSync().replaceAll('\r\n', '\n');
 
     expect(mainActivity, contains('"requestRefresh"'));
     expect(
@@ -34,17 +34,33 @@ void main() {
     expect(backgroundService, contains('addAll'));
     expect(backgroundService, contains('if (!engineStarted)'));
     expect(backgroundService, contains('startFlutterEngine()'));
+    expect(backgroundService, contains('import android.app.PendingIntent'));
+    expect(
+      backgroundService,
+      contains(
+        'PendingIntent.getActivity(\n            this,\n            NOTIFICATION_ID,',
+      ),
+    );
+    expect(
+      'setContentIntent(contentPendingIntent())'
+          .allMatches(backgroundService)
+          .length,
+      3,
+    );
   });
 
   test('background entrypoint reports refresh lifecycle status', () {
     final entrypoint = File(
       'lib/shared/background_refresh_entrypoint.dart',
     ).readAsStringSync();
+    final notifications = File(
+      'lib/shared/utils/background_refresh_notifications.dart',
+    ).readAsStringSync();
 
     expect(entrypoint, contains("'refreshStarted'"));
-    expect(entrypoint, contains("'refreshCompleted'"));
-    expect(entrypoint, contains("'refreshFailed'"));
     expect(entrypoint, contains('runRefresh(force: false)'));
     expect(entrypoint, contains('runRefresh(force: true)'));
+    expect(notifications, contains("'refreshCompleted'"));
+    expect(notifications, contains("'refreshFailed'"));
   });
 }
