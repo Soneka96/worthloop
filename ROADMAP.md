@@ -20,7 +20,7 @@ on an Android device.
 - [x] Reusable presentation widgets and screen composition
 - [x] Automated tests and static analysis
 - [ ] Real Android-device validation
-- [ ] Product creation and management
+- [x] Product creation and management
 - [ ] Real merchant price data
 - [ ] Honest loading, empty, offline, and failure states for real data
 
@@ -48,22 +48,22 @@ on an Android device.
 **Exit condition:** the app has a tested, reusable product-source foundation that can support
 multiple merchant URLs per product.
 
-## Phase 3 — Complete the product and source lifecycle
+## Phase 3 — Complete the product and source lifecycle ✅
 
-- [ ] Decouple product creation from source: `CreateProductParams` takes only a
+- [x] Decouple product creation from source: `CreateProductParams` takes only a
       name; `IProductsRepository.createProduct` accepts an optional source.
-- [ ] Add a product from the UI via a small add button and name-only popup;
+- [x] Add a product from the UI via a small add button and name-only popup;
       add a search bar to filter tracked products on Home.
-- [ ] Add an `AddSourceUseCase` to attach one or more merchant source URLs to
+- [x] Add an `AddSourceUseCase` to attach one or more merchant source URLs to
       an existing product, validating each URL.
-- [ ] Add a source-entry UI on Product Details for a product with zero
+- [x] Add a source-entry UI on Product Details for a product with zero
       sources, showing the detected merchant domain per source.
-- [ ] Edit and delete individual source URLs, behind a shared confirm dialog.
-- [ ] Edit and delete tracked products, reusing the same confirm dialog.
-- [ ] Stop reseeding fake products whenever the product table is empty; seed
+- [x] Edit and delete individual source URLs, behind a shared confirm dialog.
+- [x] Edit and delete tracked products, reusing the same confirm dialog.
+- [x] Stop reseeding fake products whenever the product table is empty; seed
       only on true first launch, so deleting the last product doesn't bring
       the fake ones back.
-- [ ] Verify products and sources persist across app restarts once creation,
+- [x] Verify products and sources persist across app restarts once creation,
       add-source, and delete all exist.
 
 **Exit condition:** a user can create and manage their own watchlist without developer
