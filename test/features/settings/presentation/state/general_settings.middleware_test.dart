@@ -246,7 +246,72 @@ void main() {
       verifyNoMoreInteractions(mockLoadUseCase);
       verify(() => mockLoggerService.e('failed', showPopup: true)).called(1);
       verifyNoMoreInteractions(mockLoggerService);
+      verifyZeroInteractions(mockBackgroundRefreshService);
     });
+
+    test(
+      'restarts the background refresh service when settings load with browserRefreshEnabled = true',
+      () async {
+        when(() => mockLoadUseCase(any())).thenAnswer(
+          (_) async => Right(buildRefreshSettings(browserRefreshEnabled: true)),
+        );
+        when(
+          () => mockBackgroundRefreshService.start(),
+        ).thenAnswer((_) async => true);
+
+        middleware.call(mockStore, const LoadRefreshSettingsAction(), next);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        verify(() => mockBackgroundRefreshService.start()).called(1);
+        verifyNoMoreInteractions(mockBackgroundRefreshService);
+        verifyZeroInteractions(mockLoggerService);
+      },
+    );
+
+    test(
+      'warns when the background refresh service fails to restart on load',
+      () async {
+        when(() => mockLoadUseCase(any())).thenAnswer(
+          (_) async => Right(buildRefreshSettings(browserRefreshEnabled: true)),
+        );
+        when(
+          () => mockBackgroundRefreshService.start(),
+        ).thenAnswer((_) async => false);
+
+        middleware.call(mockStore, const LoadRefreshSettingsAction(), next);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        verify(() => mockBackgroundRefreshService.start()).called(1);
+        verify(
+          () => mockLoggerService.w(
+            'Background browser refresh could not start yet',
+            showPopup: true,
+          ),
+        ).called(1);
+        verifyNoMoreInteractions(mockBackgroundRefreshService);
+        verifyNoMoreInteractions(mockLoggerService);
+      },
+    );
+
+    test(
+      'does not restart the background refresh service when settings load with browserRefreshEnabled = false',
+      () async {
+        when(() => mockLoadUseCase(any())).thenAnswer(
+          (_) async =>
+              Right(buildRefreshSettings(browserRefreshEnabled: false)),
+        );
+
+        middleware.call(mockStore, const LoadRefreshSettingsAction(), next);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        verifyNever(() => mockBackgroundRefreshService.start());
+        verifyZeroInteractions(mockBackgroundRefreshService);
+        verifyZeroInteractions(mockLoggerService);
+      },
+    );
   });
 
   group('GeneralSettingsMiddleware processes SaveRefreshIntervalAction', () {

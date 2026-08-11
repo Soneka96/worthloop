@@ -1,3 +1,6 @@
+// Dart imports:
+import 'dart:async';
+
 // Package imports:
 import 'package:redux/redux.dart';
 
@@ -73,6 +76,11 @@ class GeneralSettingsMiddleware extends MiddlewareClass<AppState> {
   }
 
   /// Handles [LoadRefreshSettingsAction].
+  ///
+  /// Also re-starts the background refresh service when the loaded setting
+  /// says it should be running — the persisted setting and the actual
+  /// service can drift apart (killed by the OS or an OEM battery manager,
+  /// or the device rebooted), and nothing else re-syncs them.
   Future<void> _loadRefreshSettings(
     Store<AppState> store,
     LoadRefreshSettingsAction action,
@@ -84,6 +92,9 @@ class GeneralSettingsMiddleware extends MiddlewareClass<AppState> {
       },
       (RefreshSettings settings) {
         store.dispatch(RefreshSettingsLoadedAction(settings));
+        if (settings.browserRefreshEnabled) {
+          unawaited(_syncBackgroundRefreshService(true));
+        }
       },
     );
   }
