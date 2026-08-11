@@ -12,6 +12,7 @@ import 'package:worth_loop/features/settings/domain/usecases/load_refresh_settin
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/usecase/no_params.dart';
+import 'package:worth_loop/shared/utils/background_refresh_channel_payload.dart';
 import 'package:worth_loop/shared/utils/background_refresh_loop.dart';
 import 'package:worth_loop/shared/utils/background_refresh_notifications.dart';
 import 'package:worth_loop/shared/utils/background_refresh_runner.dart';
@@ -61,13 +62,11 @@ Future<void> backgroundRefreshEntrypoint() async {
 
   _engineChannel.setMethodCallHandler((MethodCall call) async {
     if (call.method == 'enqueueSources') {
-      final Object? arguments = call.arguments;
-      final Map<Object?, Object?> payload = arguments is Map
-          ? arguments
-          : const {};
+      final (List<String> sourceIds, bool bypassCooldown) =
+          parseEnqueueSourcesPayload(call.arguments);
       await sl<IProductsRepository>().enqueueSourceRefresh(
-        _sourceIdsFrom(payload['sourceIds']),
-        bypassCooldown: payload['bypassCooldown'] == true,
+        sourceIds,
+        bypassCooldown: bypassCooldown,
       );
     }
   });
@@ -76,7 +75,7 @@ Future<void> backgroundRefreshEntrypoint() async {
     final Object? pending = await _engineChannel.invokeMethod<Object?>(
       'consumePendingSourceIds',
     );
-    final List<String> sourceIds = _sourceIdsFrom(pending);
+    final List<String> sourceIds = sourceIdsFromChannelPayload(pending);
     if (sourceIds.isNotEmpty) {
       await sl<IProductsRepository>().enqueueSourceRefresh(sourceIds);
     }
@@ -108,6 +107,3 @@ Future<void> _notifyEngine(String method, {Object? arguments}) async {
     // Notification failures must not stop product refreshes.
   }
 }
-
-List<String> _sourceIdsFrom(Object? arguments) =>
-    arguments is List ? arguments.whereType<String>().toList() : const [];
