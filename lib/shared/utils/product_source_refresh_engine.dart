@@ -51,8 +51,14 @@ class ProductSourceRefreshEngine {
   /// Called with (completed, total) counts for the sources currently active
   /// or queued, whenever those counts change. Unset by default — assigned by
   /// whichever isolate wants to surface live progress (the background
-  /// entrypoint, for its notification's progress bar).
-  void Function(int completed, int total)? onProgress;
+  /// entrypoint, for its notification's progress bar). Every call is awaited,
+  /// in order, before the engine does anything else — including starting
+  /// workers after the first call and checking whether the run has drained
+  /// after the last. This guarantees a caller doing real async work here
+  /// (e.g. an actual native notification call) always delivers ticks in
+  /// order and never lets a stale progress notification land after a later
+  /// "run complete" signal and overwrite it.
+  Future<void> Function(int completed, int total)? onProgress;
 
   /// Queues [sourceIds] onto their merchant-specific fetch queues, starting
   /// worker processing if it isn't already running. [bypassCooldown] applies
@@ -109,7 +115,7 @@ class ProductSourceRefreshEngine {
     }
     if (newlyQueuedCount > 0) {
       _totalInCurrentRun += newlyQueuedCount;
-      onProgress?.call(_completedInCurrentRun, _totalInCurrentRun);
+      await onProgress?.call(_completedInCurrentRun, _totalInCurrentRun);
     }
     _ensureWorkersRunning();
     _wakeWorkers();
@@ -157,7 +163,7 @@ class ProductSourceRefreshEngine {
         await _fetchAndPersistSource(source, bypassCooldown: bypassCooldown);
         _sourceIdsQueuedOrInFlight.remove(source.id);
         _completedInCurrentRun++;
-        onProgress?.call(_completedInCurrentRun, _totalInCurrentRun);
+        await onProgress?.call(_completedInCurrentRun, _totalInCurrentRun);
       }
       _pendingByMerchant.remove(merchant);
       _merchantsInFlight.remove(merchant);

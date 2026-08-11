@@ -477,6 +477,48 @@ void main() {
     });
 
     test(
+      'waitUntilIdle() waits for the final onProgress() call to finish before resolving',
+      () async {
+        final ProductSourceModel source = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final Completer<void> progressNotified = Completer();
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([source]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(
+          () => mockRemoteDatasource.fetchPrices(source),
+        ).thenAnswer((_) async => Right(source));
+        when(
+          () => mockDatasource.updateSourcePrices(source.productId, any()),
+        ).thenAnswer((_) async => Right(buildProductModel()));
+        engine.onProgress = (int completed, int total) async {
+          if (completed == total) {
+            await progressNotified.future;
+          }
+        };
+
+        await engine.enqueueSourceRefresh(['source-1']);
+        await Future<void>.delayed(Duration.zero);
+
+        bool idleResolved = false;
+        unawaited(engine.waitUntilIdle().then((_) => idleResolved = true));
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        expect(idleResolved, false);
+
+        progressNotified.complete();
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(idleResolved, true);
+      },
+    );
+
+    test(
       'does not re-queue a source already handled in the current run when bypassCooldown = false',
       () async {
         final ProductSourceModel sourceA = buildProductSourceModel(
@@ -490,7 +532,7 @@ void main() {
         final Completer<Either<Failure, ProductSourceModel>> completerB =
             Completer();
         final List<(int, int)> progressCalls = [];
-        engine.onProgress = (int completed, int total) =>
+        engine.onProgress = (int completed, int total) async =>
             progressCalls.add((completed, total));
         when(
           () => mockDatasource.loadProductSources(),
@@ -544,7 +586,7 @@ void main() {
         final Completer<Either<Failure, ProductSourceModel>> completerB =
             Completer();
         final List<(int, int)> progressCalls = [];
-        engine.onProgress = (int completed, int total) =>
+        engine.onProgress = (int completed, int total) async =>
             progressCalls.add((completed, total));
         when(
           () => mockDatasource.loadProductSources(),
@@ -1031,7 +1073,7 @@ void main() {
           url: 'https://example.com/2',
         );
         final List<(int, int)> progressCalls = [];
-        engine.onProgress = (int completed, int total) =>
+        engine.onProgress = (int completed, int total) async =>
             progressCalls.add((completed, total));
         when(
           () => mockDatasource.loadProductSources(),
@@ -1051,7 +1093,7 @@ void main() {
 
     test('does not call onProgress when no source is newly queued', () async {
       final List<(int, int)> progressCalls = [];
-      engine.onProgress = (int completed, int total) =>
+      engine.onProgress = (int completed, int total) async =>
           progressCalls.add((completed, total));
       when(
         () => mockDatasource.loadProductSources(),
@@ -1073,7 +1115,7 @@ void main() {
           url: 'https://example.com/2',
         );
         final List<(int, int)> progressCalls = [];
-        engine.onProgress = (int completed, int total) =>
+        engine.onProgress = (int completed, int total) async =>
             progressCalls.add((completed, total));
         when(
           () => mockDatasource.loadProductSources(),
@@ -1099,7 +1141,7 @@ void main() {
           id: 'source-1',
         );
         final List<(int, int)> progressCalls = [];
-        engine.onProgress = (int completed, int total) =>
+        engine.onProgress = (int completed, int total) async =>
             progressCalls.add((completed, total));
         when(
           () => mockDatasource.loadProductSources(),
@@ -1133,7 +1175,7 @@ void main() {
           url: 'https://example.com/2',
         );
         final List<(int, int)> progressCalls = [];
-        engine.onProgress = (int completed, int total) =>
+        engine.onProgress = (int completed, int total) async =>
             progressCalls.add((completed, total));
         when(
           () => mockDatasource.loadProductSources(),
@@ -1172,7 +1214,7 @@ void main() {
           merchantDomain: 'merchant-2.example.com',
         );
         final List<(int, int)> progressCalls = [];
-        engine.onProgress = (int completed, int total) =>
+        engine.onProgress = (int completed, int total) async =>
             progressCalls.add((completed, total));
         when(
           () => mockDatasource.loadProductSources(),
