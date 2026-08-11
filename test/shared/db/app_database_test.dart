@@ -2,6 +2,7 @@
 import 'dart:io';
 
 // Package imports:
+import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -34,16 +35,13 @@ void main() {
       await db.close();
     });
 
-    test('AppDatabase.forTesting opens with schema version 3', () {
+    test('AppDatabase.forTesting opens with schema version 10', () {
       expect(db.schemaVersion, isA<int>());
-      expect(db.schemaVersion, 3);
+      expect(db.schemaVersion, 10);
     });
 
     test('AppDatabase.forTesting exposes the WorthLoop tables', () async {
       final List<ProductRow> products = await db.select(db.productTable).get();
-      final List<StorePriceRow> prices = await db
-          .select(db.storePriceTable)
-          .get();
       final List<ProductSourceRow> sources = await db
           .select(db.productSourceTable)
           .get();
@@ -52,9 +50,92 @@ void main() {
           .get();
 
       expect(products, isEmpty);
-      expect(prices, isEmpty);
       expect(sources, isEmpty);
       expect(settings, isEmpty);
+
+      final List<QueryRow> productColumns = await db
+          .customSelect('PRAGMA table_info(product_table)')
+          .get();
+      final List<QueryRow> sourceColumns = await db
+          .customSelect('PRAGMA table_info(product_source_table)')
+          .get();
+      expect(
+        productColumns.map((QueryRow row) => row.data['name']),
+        containsAll([
+          'previous_best_price_minor_units',
+          'previous_best_price_currency_code',
+          'best_price_changed_at',
+        ]),
+      );
+      expect(
+        sourceColumns.map((QueryRow row) => row.data['name']),
+        containsAll([
+          'previous_price_minor_units',
+          'previous_price_currency_code',
+          'price_changed_at',
+          'last_refresh_status',
+          'last_refresh_at',
+          'live_status',
+        ]),
+      );
+      final List<QueryRow> refreshSettingsColumns = await db
+          .customSelect('PRAGMA table_info(refresh_settings_table)')
+          .get();
+      expect(
+        refreshSettingsColumns.map((QueryRow row) => row.data['name']),
+        containsAll([
+          'browser_refresh_enabled',
+          'price_drop_alerts_enabled',
+          'price_increase_alerts_enabled',
+          'refresh_completed_alerts_enabled',
+          'show_refresh_progress',
+        ]),
+      );
+    });
+
+    test('AppDatabase persists price-history columns', () async {
+      await db
+          .into(db.productTable)
+          .insert(
+            ProductTableCompanion.insert(
+              id: 'product-1',
+              name: 'Example Product',
+              lastUpdatedAt: DateTime(2026, 1, 1, 12),
+              previousBestPriceMinorUnits: const Value(59999),
+              previousBestPriceCurrencyCode: const Value('EUR'),
+              bestPriceChangedAt: Value(DateTime(2026, 1, 2, 12)),
+            ),
+          );
+      await db
+          .into(db.productSourceTable)
+          .insert(
+            ProductSourceTableCompanion.insert(
+              id: 'source-1',
+              productId: 'product-1',
+              url: 'https://example.com/products/1',
+              merchantDomain: 'example.com',
+              createdAt: DateTime(2026, 1, 1, 12),
+              previousPriceMinorUnits: const Value(59999),
+              previousPriceCurrencyCode: const Value('EUR'),
+              priceChangedAt: Value(DateTime(2026, 1, 2, 12)),
+              lastRefreshStatus: const Value('networkError'),
+              lastRefreshAt: Value(DateTime(2026, 1, 3, 12)),
+            ),
+          );
+
+      final ProductRow product =
+          (await db.select(db.productTable).get()).single;
+      final ProductSourceRow source =
+          (await db.select(db.productSourceTable).get()).single;
+
+      expect(product.previousBestPriceMinorUnits, 59999);
+      expect(product.previousBestPriceCurrencyCode, 'EUR');
+      expect(product.bestPriceChangedAt, DateTime(2026, 1, 2, 12));
+      expect(source.previousPriceMinorUnits, 59999);
+      expect(source.previousPriceCurrencyCode, 'EUR');
+      expect(source.priceChangedAt, DateTime(2026, 1, 2, 12));
+      expect(source.lastRefreshStatus, 'networkError');
+      expect(source.lastRefreshAt, DateTime(2026, 1, 3, 12));
     });
   });
 
@@ -138,7 +219,7 @@ void main() {
         )
       ''');
       legacy.execute('PRAGMA user_version = 2');
-      legacy.dispose();
+      legacy.close();
       db = AppDatabase.forTesting(NativeDatabase(file));
     });
 
@@ -149,9 +230,6 @@ void main() {
 
     test('migrates schema version 2 and preserves existing rows', () async {
       final List<ProductRow> products = await db.select(db.productTable).get();
-      final List<StorePriceRow> prices = await db
-          .select(db.storePriceTable)
-          .get();
       final List<ProductSourceRow> sources = await db
           .select(db.productSourceTable)
           .get();
@@ -160,9 +238,322 @@ void main() {
           .get();
       expect(products.length, 1);
       expect(products.single.id, 'legacy-product');
-      expect(prices, isEmpty);
       expect(sources, isEmpty);
       expect(settings, isEmpty);
     });
+
+    test('migrates schema version 5 with refresh metadata columns', () async {
+      final File file = File(p.join(tempDirectory.path, 'version5.sqlite'));
+      final sqlite.Database legacy = sqlite.sqlite3.open(file.path);
+      legacy.execute('''
+        CREATE TABLE product_table (
+          id TEXT NOT NULL PRIMARY KEY,
+          name TEXT NOT NULL,
+          image_url TEXT,
+          last_updated_at INTEGER NOT NULL,
+          previous_best_price_minor_units INTEGER,
+          previous_best_price_currency_code TEXT,
+          best_price_changed_at INTEGER
+        )
+      ''');
+      legacy.execute('''
+        CREATE TABLE product_source_table (
+          id TEXT NOT NULL PRIMARY KEY,
+          product_id TEXT NOT NULL REFERENCES product_table (id) ON DELETE CASCADE,
+          url TEXT NOT NULL,
+          merchant_domain TEXT NOT NULL,
+          minor_units INTEGER,
+          currency_code TEXT,
+          previous_price_minor_units INTEGER,
+          previous_price_currency_code TEXT,
+          is_available INTEGER,
+          last_checked_at INTEGER,
+          price_changed_at INTEGER,
+          created_at INTEGER NOT NULL,
+          UNIQUE (product_id, url)
+        )
+      ''');
+      legacy.execute('''
+        CREATE TABLE refresh_settings_table (
+          id INTEGER NOT NULL DEFAULT 1 PRIMARY KEY,
+          interval_minutes INTEGER NOT NULL DEFAULT 60,
+          CHECK (id = 1)
+        )
+      ''');
+      legacy.execute('PRAGMA user_version = 5');
+      legacy.close();
+
+      final AppDatabase migrated = AppDatabase.forTesting(NativeDatabase(file));
+      final List<QueryRow> columns = await migrated
+          .customSelect('PRAGMA table_info(product_source_table)')
+          .get();
+
+      expect(
+        columns.map((QueryRow row) => row.data['name']),
+        containsAll(['last_refresh_status', 'last_refresh_at']),
+      );
+      final List<QueryRow> refreshSettingsColumns = await migrated
+          .customSelect('PRAGMA table_info(refresh_settings_table)')
+          .get();
+      expect(
+        refreshSettingsColumns.map((QueryRow row) => row.data['name']),
+        containsAll([
+          'price_drop_alerts_enabled',
+          'price_increase_alerts_enabled',
+          'refresh_completed_alerts_enabled',
+          'show_refresh_progress',
+        ]),
+      );
+      await migrated.close();
+    });
+
+    test(
+      'migrates schema version 7, adding priceDropAlertsEnabled under its current name',
+      () async {
+        final File file = File(p.join(tempDirectory.path, 'version7.sqlite'));
+        final sqlite.Database legacy = sqlite.sqlite3.open(file.path);
+        legacy.execute('''
+        CREATE TABLE product_table (
+          id TEXT NOT NULL PRIMARY KEY,
+          name TEXT NOT NULL,
+          image_url TEXT,
+          last_updated_at INTEGER NOT NULL,
+          previous_best_price_minor_units INTEGER,
+          previous_best_price_currency_code TEXT,
+          best_price_changed_at INTEGER
+        )
+      ''');
+        legacy.execute('''
+        CREATE TABLE product_source_table (
+          id TEXT NOT NULL PRIMARY KEY,
+          product_id TEXT NOT NULL REFERENCES product_table (id) ON DELETE CASCADE,
+          url TEXT NOT NULL,
+          merchant_domain TEXT NOT NULL,
+          minor_units INTEGER,
+          currency_code TEXT,
+          previous_price_minor_units INTEGER,
+          previous_price_currency_code TEXT,
+          is_available INTEGER,
+          last_checked_at INTEGER,
+          price_changed_at INTEGER,
+          last_refresh_status TEXT,
+          last_refresh_at INTEGER,
+          created_at INTEGER NOT NULL,
+          UNIQUE (product_id, url)
+        )
+      ''');
+        legacy.execute('''
+        CREATE TABLE refresh_settings_table (
+          id INTEGER NOT NULL DEFAULT 1 PRIMARY KEY,
+          interval_minutes INTEGER NOT NULL DEFAULT 60,
+          browser_refresh_enabled INTEGER NOT NULL DEFAULT 0,
+          CHECK (id = 1)
+        )
+      ''');
+        legacy.execute('PRAGMA user_version = 7');
+        legacy.close();
+
+        final AppDatabase migrated = AppDatabase.forTesting(
+          NativeDatabase(file),
+        );
+        final List<QueryRow> refreshSettingsColumns = await migrated
+            .customSelect('PRAGMA table_info(refresh_settings_table)')
+            .get();
+
+        expect(
+          refreshSettingsColumns.map((QueryRow row) => row.data['name']),
+          containsAll([
+            'price_drop_alerts_enabled',
+            'price_increase_alerts_enabled',
+            'refresh_completed_alerts_enabled',
+            'show_refresh_progress',
+          ]),
+        );
+        expect(
+          refreshSettingsColumns.map((QueryRow row) => row.data['name']),
+          isNot(contains('price_alerts_enabled')),
+        );
+        await migrated.close();
+      },
+    );
+
+    test(
+      'migrates schema version 8 with a live-status column',
+      () async {
+        final File file = File(p.join(tempDirectory.path, 'version8.sqlite'));
+        final sqlite.Database legacy = sqlite.sqlite3.open(file.path);
+        legacy.execute('''
+        CREATE TABLE product_table (
+          id TEXT NOT NULL PRIMARY KEY,
+          name TEXT NOT NULL,
+          image_url TEXT,
+          last_updated_at INTEGER NOT NULL,
+          previous_best_price_minor_units INTEGER,
+          previous_best_price_currency_code TEXT,
+          best_price_changed_at INTEGER
+        )
+      ''');
+        legacy.execute('''
+        CREATE TABLE product_source_table (
+          id TEXT NOT NULL PRIMARY KEY,
+          product_id TEXT NOT NULL REFERENCES product_table (id) ON DELETE CASCADE,
+          url TEXT NOT NULL,
+          merchant_domain TEXT NOT NULL,
+          minor_units INTEGER,
+          currency_code TEXT,
+          previous_price_minor_units INTEGER,
+          previous_price_currency_code TEXT,
+          is_available INTEGER,
+          last_checked_at INTEGER,
+          price_changed_at INTEGER,
+          last_refresh_status TEXT,
+          last_refresh_at INTEGER,
+          created_at INTEGER NOT NULL,
+          UNIQUE (product_id, url)
+        )
+      ''');
+        legacy.execute('''
+        CREATE TABLE refresh_settings_table (
+          id INTEGER NOT NULL DEFAULT 1 PRIMARY KEY,
+          interval_minutes INTEGER NOT NULL DEFAULT 60,
+          browser_refresh_enabled INTEGER NOT NULL DEFAULT 0,
+          price_alerts_enabled INTEGER NOT NULL DEFAULT 0,
+          CHECK (id = 1)
+        )
+      ''');
+        legacy.execute('''
+        INSERT INTO product_table (id, name, last_updated_at)
+        VALUES ('legacy-product', 'Legacy Product', 1767268800000)
+      ''');
+        legacy.execute('''
+        INSERT INTO product_source_table
+          (id, product_id, url, merchant_domain, created_at)
+        VALUES (
+          'legacy-source', 'legacy-product', 'https://example.com/1',
+          'example.com', 1767268800000
+        )
+      ''');
+        legacy.execute('PRAGMA user_version = 8');
+        legacy.close();
+
+        final AppDatabase migrated = AppDatabase.forTesting(
+          NativeDatabase(file),
+        );
+        final List<QueryRow> columns = await migrated
+            .customSelect('PRAGMA table_info(product_source_table)')
+            .get();
+
+        expect(
+          columns.map((QueryRow row) => row.data['name']),
+          contains('live_status'),
+        );
+        final ProductSourceRow source =
+            (await migrated.select(migrated.productSourceTable).get()).single;
+        expect(source.liveStatus, isNull);
+        final List<QueryRow> refreshSettingsColumns = await migrated
+            .customSelect('PRAGMA table_info(refresh_settings_table)')
+            .get();
+        expect(
+          refreshSettingsColumns.map((QueryRow row) => row.data['name']),
+          containsAll([
+            'price_drop_alerts_enabled',
+            'price_increase_alerts_enabled',
+            'refresh_completed_alerts_enabled',
+            'show_refresh_progress',
+          ]),
+        );
+        expect(
+          refreshSettingsColumns.map((QueryRow row) => row.data['name']),
+          isNot(contains('price_alerts_enabled')),
+        );
+        await migrated.close();
+      },
+    );
+
+    test(
+      'migrates schema version 9, renaming price_alerts_enabled and preserving its value',
+      () async {
+        final File file = File(p.join(tempDirectory.path, 'version9.sqlite'));
+        final sqlite.Database legacy = sqlite.sqlite3.open(file.path);
+        legacy.execute('''
+        CREATE TABLE product_table (
+          id TEXT NOT NULL PRIMARY KEY,
+          name TEXT NOT NULL,
+          image_url TEXT,
+          last_updated_at INTEGER NOT NULL,
+          previous_best_price_minor_units INTEGER,
+          previous_best_price_currency_code TEXT,
+          best_price_changed_at INTEGER
+        )
+      ''');
+        legacy.execute('''
+        CREATE TABLE product_source_table (
+          id TEXT NOT NULL PRIMARY KEY,
+          product_id TEXT NOT NULL REFERENCES product_table (id) ON DELETE CASCADE,
+          url TEXT NOT NULL,
+          merchant_domain TEXT NOT NULL,
+          minor_units INTEGER,
+          currency_code TEXT,
+          previous_price_minor_units INTEGER,
+          previous_price_currency_code TEXT,
+          is_available INTEGER,
+          last_checked_at INTEGER,
+          price_changed_at INTEGER,
+          last_refresh_status TEXT,
+          last_refresh_at INTEGER,
+          live_status TEXT,
+          created_at INTEGER NOT NULL,
+          UNIQUE (product_id, url)
+        )
+      ''');
+        legacy.execute('''
+        CREATE TABLE refresh_settings_table (
+          id INTEGER NOT NULL DEFAULT 1 PRIMARY KEY,
+          interval_minutes INTEGER NOT NULL DEFAULT 60,
+          browser_refresh_enabled INTEGER NOT NULL DEFAULT 0,
+          price_alerts_enabled INTEGER NOT NULL DEFAULT 0,
+          CHECK (id = 1)
+        )
+      ''');
+        legacy.execute('''
+        INSERT INTO refresh_settings_table
+          (id, interval_minutes, browser_refresh_enabled, price_alerts_enabled)
+        VALUES (1, 180, 1, 1)
+      ''');
+        legacy.execute('PRAGMA user_version = 9');
+        legacy.close();
+
+        final AppDatabase migrated = AppDatabase.forTesting(
+          NativeDatabase(file),
+        );
+        final List<QueryRow> columns = await migrated
+            .customSelect('PRAGMA table_info(refresh_settings_table)')
+            .get();
+
+        expect(
+          columns.map((QueryRow row) => row.data['name']),
+          containsAll([
+            'price_drop_alerts_enabled',
+            'price_increase_alerts_enabled',
+            'refresh_completed_alerts_enabled',
+            'show_refresh_progress',
+          ]),
+        );
+        expect(
+          columns.map((QueryRow row) => row.data['name']),
+          isNot(contains('price_alerts_enabled')),
+        );
+        final RefreshSettingsRow settings =
+            (await migrated.select(migrated.refreshSettingsTable).get())
+                .single;
+        expect(settings.intervalMinutes, 180);
+        expect(settings.browserRefreshEnabled, isTrue);
+        expect(settings.priceDropAlertsEnabled, isTrue);
+        expect(settings.priceIncreaseAlertsEnabled, isFalse);
+        expect(settings.refreshCompletedAlertsEnabled, isFalse);
+        expect(settings.showRefreshProgress, isFalse);
+        await migrated.close();
+      },
+    );
   });
 }

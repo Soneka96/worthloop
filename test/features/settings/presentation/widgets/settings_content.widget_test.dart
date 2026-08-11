@@ -10,7 +10,9 @@ import 'package:redux/redux.dart';
 // Project imports:
 import 'package:worth_loop/features/settings/presentation/screens/appearance_settings.screen.dart';
 import 'package:worth_loop/features/settings/presentation/screens/general_settings.screen.dart';
+import 'package:worth_loop/features/settings/presentation/screens/notifications_settings.screen.dart';
 import 'package:worth_loop/features/settings/presentation/state/viewmodels/general_settings_screen.viewmodel.dart';
+import 'package:worth_loop/features/settings/presentation/state/viewmodels/notifications_settings_screen.viewmodel.dart';
 import 'package:worth_loop/features/settings/presentation/widgets/settings_content.widget.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
@@ -46,6 +48,11 @@ void main() {
       Store<AppState>,
       void
     >((store, _) => GeneralSettingsScreenViewModel.fromStore(store));
+    sl.registerFactoryParam<
+      NotificationsSettingsScreenViewModel,
+      Store<AppState>,
+      void
+    >((store, _) => NotificationsSettingsScreenViewModel.fromStore(store));
     store = Store<AppState>(appReducer, initialState: AppState.initial());
   });
   tearDown(() => sl.reset());
@@ -80,11 +87,21 @@ void main() {
       expect(find.byType(AppearanceSettingsScreen), findsOneWidget);
     });
 
+    testWidgets(
+      'shows NotificationsSettingsScreen for the Notifications category',
+      (tester) async {
+        await tester.pumpWidget(buildWidget(SettingsCategory.notifications));
+
+        expect(find.byType(NotificationsSettingsScreen), findsOneWidget);
+      },
+    );
+
     testWidgets('shows nothing when no category is selected', (tester) async {
       await tester.pumpWidget(buildWidget(SettingsCategory.none));
 
       expect(find.byType(GeneralSettingsScreen), findsNothing);
       expect(find.byType(AppearanceSettingsScreen), findsNothing);
+      expect(find.byType(NotificationsSettingsScreen), findsNothing);
     });
   });
 }

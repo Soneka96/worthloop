@@ -9,6 +9,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:worth_loop/features/settings/presentation/state/general_settings.actions.dart';
 import 'package:worth_loop/features/settings/presentation/state/viewmodels/general_settings_screen.viewmodel.dart';
 import 'package:worth_loop/features/settings/presentation/widgets/general/about.section.dart';
+import 'package:worth_loop/features/settings/presentation/widgets/general/browser_refresh.section.dart';
 import 'package:worth_loop/features/settings/presentation/widgets/general/language.section.dart';
 import 'package:worth_loop/features/settings/presentation/widgets/general/refresh_interval.section.dart';
 import 'package:worth_loop/features/settings/presentation/widgets/general/updates.section.dart';
@@ -42,6 +43,14 @@ class GeneralSettingsScreen extends StatelessWidget {
               intervalMinutes: viewmodel.refreshIntervalMinutes,
               isBusy: viewmodel.isRefreshIntervalBusy,
               onSelected: viewmodel.onRefreshIntervalSelected,
+            ),
+            Divider(height: context.spacing.xl),
+            BrowserRefreshSection(
+              enabled: viewmodel.browserRefreshEnabled,
+              isBusy: viewmodel.isRefreshIntervalBusy,
+              onChanged: viewmodel.onBrowserRefreshEnabledChanged,
+              onOpenBackgroundRestrictions:
+                  viewmodel.onOpenBackgroundRestrictions,
             ),
             Divider(height: context.spacing.xl),
             UpdatesSection(

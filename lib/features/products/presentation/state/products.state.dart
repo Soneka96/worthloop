@@ -32,6 +32,15 @@ class ProductsState extends Equatable {
   /// product identifier.
   final Map<String, PriceFetchStatus> productRefreshStatuses;
 
+  /// Current refresh state for each source, keyed by source identifier.
+  final Map<String, SourceRefreshStatus> sourceRefreshStatuses;
+
+  /// Number of sources that have reached a terminal refresh state.
+  final int refreshCompletedCount;
+
+  /// Number of sources included in the active refresh.
+  final int refreshTotalCount;
+
   /// Whether a product is being created.
   final bool isCreatingProduct;
 
@@ -41,6 +50,36 @@ class ProductsState extends Equatable {
   /// Identifier of the most recently created product, or `null`.
   final String? createdProductId;
 
+  /// Whether a source is being added.
+  final bool isAddingSource;
+
+  /// The most recent source-add failure, or `null`.
+  final String? addSourceError;
+
+  /// Identifier of the source currently being edited, or `null`.
+  final String? editingSourceId;
+
+  /// The most recent source-edit failure, or `null`.
+  final String? editSourceError;
+
+  /// Source identifiers currently being deleted.
+  final Set<String> deletingSourceIds;
+
+  /// The most recent source-delete failure, or `null`.
+  final String? deleteSourceError;
+
+  /// Whether a product is being renamed.
+  final bool isRenamingProduct;
+
+  /// The most recent product-rename failure, or `null`.
+  final String? renameProductError;
+
+  /// Product identifiers currently being deleted.
+  final Set<String> deletingProductIds;
+
+  /// The most recent product-delete failure, or `null`.
+  final String? deleteProductError;
+
   const ProductsState({
     required this.products,
     required this.isLoading,
@@ -49,9 +88,22 @@ class ProductsState extends Equatable {
     required this.error,
     this.refreshStatus,
     required this.productRefreshStatuses,
+    required this.sourceRefreshStatuses,
+    required this.refreshCompletedCount,
+    required this.refreshTotalCount,
     required this.isCreatingProduct,
     required this.creationError,
     required this.createdProductId,
+    required this.isAddingSource,
+    required this.addSourceError,
+    required this.editingSourceId,
+    required this.editSourceError,
+    required this.deletingSourceIds,
+    required this.deleteSourceError,
+    required this.isRenamingProduct,
+    required this.renameProductError,
+    required this.deletingProductIds,
+    required this.deleteProductError,
   });
 
   /// Returns the state used before products are loaded.
@@ -62,9 +114,22 @@ class ProductsState extends Equatable {
     refreshingProductIds: {},
     error: null,
     productRefreshStatuses: {},
+    sourceRefreshStatuses: {},
+    refreshCompletedCount: 0,
+    refreshTotalCount: 0,
     isCreatingProduct: false,
     creationError: null,
     createdProductId: null,
+    isAddingSource: false,
+    addSourceError: null,
+    editingSourceId: null,
+    editSourceError: null,
+    deletingSourceIds: {},
+    deleteSourceError: null,
+    isRenamingProduct: false,
+    renameProductError: null,
+    deletingProductIds: {},
+    deleteProductError: null,
   );
 
   /// Returns a copy with the supplied fields replaced.
@@ -76,9 +141,22 @@ class ProductsState extends Equatable {
     Option<String>? error,
     Option<PriceFetchStatus>? refreshStatus,
     Map<String, PriceFetchStatus>? productRefreshStatuses,
+    Map<String, SourceRefreshStatus>? sourceRefreshStatuses,
+    int? refreshCompletedCount,
+    int? refreshTotalCount,
     bool? isCreatingProduct,
     Option<String>? creationError,
     Option<String>? createdProductId,
+    bool? isAddingSource,
+    Option<String>? addSourceError,
+    Option<String>? editingSourceId,
+    Option<String>? editSourceError,
+    Set<String>? deletingSourceIds,
+    Option<String>? deleteSourceError,
+    bool? isRenamingProduct,
+    Option<String>? renameProductError,
+    Set<String>? deletingProductIds,
+    Option<String>? deleteProductError,
   }) => ProductsState(
     products: products ?? this.products,
     isLoading: isLoading ?? this.isLoading,
@@ -90,6 +168,9 @@ class ProductsState extends Equatable {
         : refreshStatus.toNullable(),
     productRefreshStatuses:
         productRefreshStatuses ?? this.productRefreshStatuses,
+    sourceRefreshStatuses: sourceRefreshStatuses ?? this.sourceRefreshStatuses,
+    refreshCompletedCount: refreshCompletedCount ?? this.refreshCompletedCount,
+    refreshTotalCount: refreshTotalCount ?? this.refreshTotalCount,
     isCreatingProduct: isCreatingProduct ?? this.isCreatingProduct,
     creationError: creationError == null
         ? this.creationError
@@ -97,6 +178,28 @@ class ProductsState extends Equatable {
     createdProductId: createdProductId == null
         ? this.createdProductId
         : createdProductId.toNullable(),
+    isAddingSource: isAddingSource ?? this.isAddingSource,
+    addSourceError: addSourceError == null
+        ? this.addSourceError
+        : addSourceError.toNullable(),
+    editingSourceId: editingSourceId == null
+        ? this.editingSourceId
+        : editingSourceId.toNullable(),
+    editSourceError: editSourceError == null
+        ? this.editSourceError
+        : editSourceError.toNullable(),
+    deletingSourceIds: deletingSourceIds ?? this.deletingSourceIds,
+    deleteSourceError: deleteSourceError == null
+        ? this.deleteSourceError
+        : deleteSourceError.toNullable(),
+    isRenamingProduct: isRenamingProduct ?? this.isRenamingProduct,
+    renameProductError: renameProductError == null
+        ? this.renameProductError
+        : renameProductError.toNullable(),
+    deletingProductIds: deletingProductIds ?? this.deletingProductIds,
+    deleteProductError: deleteProductError == null
+        ? this.deleteProductError
+        : deleteProductError.toNullable(),
   );
 
   @override
@@ -108,8 +211,21 @@ class ProductsState extends Equatable {
     error,
     refreshStatus,
     productRefreshStatuses,
+    sourceRefreshStatuses,
+    refreshCompletedCount,
+    refreshTotalCount,
     isCreatingProduct,
     creationError,
     createdProductId,
+    isAddingSource,
+    addSourceError,
+    editingSourceId,
+    editSourceError,
+    deletingSourceIds,
+    deleteSourceError,
+    isRenamingProduct,
+    renameProductError,
+    deletingProductIds,
+    deleteProductError,
   ];
 }

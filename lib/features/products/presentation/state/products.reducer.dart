@@ -4,6 +4,7 @@ import 'package:redux/redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/features/products/presentation/state/products.state.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
@@ -17,6 +18,9 @@ Reducer<ProductsState> productsReducer = combineReducers<ProductsState>([
   /// Handles [ProductsLoadedAction].
   /// Updates [ProductsState.products], [ProductsState.isLoading], [ProductsState.error].
   TypedReducer<ProductsState, ProductsLoadedAction>(productsLoadedReducer).call,
+  TypedReducer<ProductsState, ProductsUpdatedFromDatabaseAction>(
+    productsUpdatedFromDatabaseReducer,
+  ).call,
 
   /// Handles [ProductsLoadFailedAction].
   /// Updates [ProductsState.isLoading], [ProductsState.error].
@@ -42,6 +46,12 @@ Reducer<ProductsState> productsReducer = combineReducers<ProductsState>([
   /// Updates [ProductsState.refreshingProductIds], [ProductsState.error].
   TypedReducer<ProductsState, RefreshProductAction>(refreshProductReducer).call,
 
+  /// Handles [SourceRefreshFinishedAction].
+  /// Updates [ProductsState.refreshTotalCount], [ProductsState.refreshCompletedCount].
+  TypedReducer<ProductsState, SourceRefreshFinishedAction>(
+    sourceRefreshFinishedReducer,
+  ).call,
+
   /// Handles [ProductRefreshedAction].
   /// Updates [ProductsState.products], [ProductsState.refreshingProductIds], [ProductsState.error].
   TypedReducer<ProductsState, ProductRefreshedAction>(
@@ -65,6 +75,76 @@ Reducer<ProductsState> productsReducer = combineReducers<ProductsState>([
   TypedReducer<ProductsState, RefreshAllProductsFailedAction>(
     refreshAllProductsFailedReducer,
   ).call,
+
+  /// Handles [AddSourceAction].
+  /// Updates [ProductsState.isAddingSource], [ProductsState.addSourceError].
+  TypedReducer<ProductsState, AddSourceAction>(addSourceReducer).call,
+
+  /// Handles [SourceAddedAction].
+  /// Updates [ProductsState.products], [ProductsState.isAddingSource], [ProductsState.addSourceError].
+  TypedReducer<ProductsState, SourceAddedAction>(sourceAddedReducer).call,
+
+  /// Handles [SourceAddFailedAction].
+  /// Updates [ProductsState.isAddingSource], [ProductsState.addSourceError].
+  TypedReducer<ProductsState, SourceAddFailedAction>(
+    sourceAddFailedReducer,
+  ).call,
+
+  /// Handles [EditSourceAction].
+  /// Updates [ProductsState.editingSourceId], [ProductsState.editSourceError].
+  TypedReducer<ProductsState, EditSourceAction>(editSourceReducer).call,
+
+  /// Handles [SourceEditedAction].
+  /// Updates [ProductsState.products], [ProductsState.editingSourceId], [ProductsState.editSourceError].
+  TypedReducer<ProductsState, SourceEditedAction>(sourceEditedReducer).call,
+
+  /// Handles [SourceEditFailedAction].
+  /// Updates [ProductsState.editingSourceId], [ProductsState.editSourceError].
+  TypedReducer<ProductsState, SourceEditFailedAction>(
+    sourceEditFailedReducer,
+  ).call,
+
+  /// Handles [DeleteSourceAction].
+  /// Updates [ProductsState.deletingSourceIds], [ProductsState.deleteSourceError].
+  TypedReducer<ProductsState, DeleteSourceAction>(deleteSourceReducer).call,
+
+  /// Handles [SourceDeletedAction].
+  /// Updates [ProductsState.products], [ProductsState.deletingSourceIds].
+  TypedReducer<ProductsState, SourceDeletedAction>(sourceDeletedReducer).call,
+
+  /// Handles [SourceDeleteFailedAction].
+  /// Updates [ProductsState.deletingSourceIds], [ProductsState.deleteSourceError].
+  TypedReducer<ProductsState, SourceDeleteFailedAction>(
+    sourceDeleteFailedReducer,
+  ).call,
+
+  /// Handles [RenameProductAction].
+  /// Updates [ProductsState.isRenamingProduct], [ProductsState.renameProductError].
+  TypedReducer<ProductsState, RenameProductAction>(renameProductReducer).call,
+
+  /// Handles [ProductRenamedAction].
+  /// Updates [ProductsState.products], [ProductsState.isRenamingProduct], [ProductsState.renameProductError].
+  TypedReducer<ProductsState, ProductRenamedAction>(productRenamedReducer).call,
+
+  /// Handles [ProductRenameFailedAction].
+  /// Updates [ProductsState.isRenamingProduct], [ProductsState.renameProductError].
+  TypedReducer<ProductsState, ProductRenameFailedAction>(
+    productRenameFailedReducer,
+  ).call,
+
+  /// Handles [DeleteProductAction].
+  /// Updates [ProductsState.deletingProductIds], [ProductsState.deleteProductError].
+  TypedReducer<ProductsState, DeleteProductAction>(deleteProductReducer).call,
+
+  /// Handles [ProductDeletedAction].
+  /// Updates [ProductsState.products], [ProductsState.deletingProductIds].
+  TypedReducer<ProductsState, ProductDeletedAction>(productDeletedReducer).call,
+
+  /// Handles [ProductDeleteFailedAction].
+  /// Updates [ProductsState.deletingProductIds], [ProductsState.deleteProductError].
+  TypedReducer<ProductsState, ProductDeleteFailedAction>(
+    productDeleteFailedReducer,
+  ).call,
 ]);
 
 /// Handles [LoadProductsAction].
@@ -76,6 +156,9 @@ ProductsState loadProductsReducer(
   isLoading: true,
   error: const None(),
   refreshStatus: const None(),
+  sourceRefreshStatuses: {},
+  refreshCompletedCount: 0,
+  refreshTotalCount: 0,
 );
 
 /// Handles [ProductsLoadedAction].
@@ -83,15 +166,109 @@ ProductsState loadProductsReducer(
 ProductsState productsLoadedReducer(
   ProductsState state,
   ProductsLoadedAction action,
-) => state.copyWith(
-  products: action.products,
-  isLoading: false,
-  isRefreshingAll: false,
-  refreshingProductIds: {},
-  error: const None(),
-  refreshStatus: const None(),
-  productRefreshStatuses: {},
-);
+) {
+  return state.copyWith(
+    products: action.products,
+    isLoading: false,
+    isRefreshingAll: false,
+    refreshingProductIds: {},
+    error: const None(),
+    refreshStatus: const None(),
+    sourceRefreshStatuses: _sourceRefreshStatusesForProducts(action.products),
+    productRefreshStatuses: {},
+  );
+}
+
+/// Handles [ProductsUpdatedFromDatabaseAction].
+/// Updates [ProductsState.products], [ProductsState.sourceRefreshStatuses],
+/// [ProductsState.isRefreshingAll], [ProductsState.refreshingProductIds],
+/// [ProductsState.refreshCompletedCount], [ProductsState.refreshTotalCount].
+ProductsState productsUpdatedFromDatabaseReducer(
+  ProductsState state,
+  ProductsUpdatedFromDatabaseAction action,
+) {
+  final Map<String, SourceRefreshStatus> sourceRefreshStatuses =
+      _sourceRefreshStatusesForProducts(action.products);
+  final bool anySourceActive = sourceRefreshStatuses.values.any(
+    _isActiveSourceRefreshStatus,
+  );
+  final (int refreshCompletedCount, int refreshTotalCount) =
+      _refreshProgressForProducts(action.products);
+  return state.copyWith(
+    products: action.products,
+    sourceRefreshStatuses: sourceRefreshStatuses,
+    isRefreshingAll: state.isRefreshingAll && anySourceActive,
+    refreshingProductIds: anySourceActive
+        ? state.refreshingProductIds
+        : const {},
+    refreshCompletedCount: refreshCompletedCount,
+    refreshTotalCount: refreshTotalCount,
+  );
+}
+
+/// Counts sources still tagged with a live refresh status (queued, fetching,
+/// or a terminal result not yet swept back to null) across every product.
+/// There is no batch-id concept — this counts everything currently active or
+/// not-yet-swept, which also covers a source enqueued mid-run.
+(int completed, int total) _refreshProgressForProducts(
+  List<Product> products,
+) {
+  int total = 0;
+  int completed = 0;
+  for (final Product product in products) {
+    for (final ProductSource source in product.sources) {
+      final SourceRefreshStatus? liveStatus = source.liveStatus;
+      if (liveStatus == null) {
+        continue;
+      }
+      total++;
+      if (!_isActiveSourceRefreshStatus(liveStatus)) {
+        completed++;
+      }
+    }
+  }
+  return (completed, total);
+}
+
+/// Derives each source's [SourceRefreshStatus] from its persisted DB state:
+/// [ProductSource.liveStatus] when a refresh is actively in flight, else a
+/// terminal status derived from [ProductSource.lastRefreshStatus]. The DB
+/// row is the sole source of truth — nothing here is carried over from the
+/// previous Redux state.
+Map<String, SourceRefreshStatus> _sourceRefreshStatusesForProducts(
+  List<Product> products,
+) {
+  final Map<String, SourceRefreshStatus> statuses = {};
+  for (final Product product in products) {
+    for (final ProductSource source in product.sources) {
+      final SourceRefreshStatus? status = _sourceRefreshStatusFor(source);
+      if (status != null) {
+        statuses[source.id] = status;
+      }
+    }
+  }
+  return statuses;
+}
+
+SourceRefreshStatus? _sourceRefreshStatusFor(ProductSource source) {
+  final SourceRefreshStatus? liveStatus = source.liveStatus;
+  if (liveStatus != null) {
+    return liveStatus;
+  }
+  final PriceFetchStatus? refreshStatus = source.lastRefreshStatus;
+  if (refreshStatus == null || refreshStatus == PriceFetchStatus.none) {
+    return null;
+  }
+  return refreshStatus == PriceFetchStatus.success
+      ? source.isAvailable == true
+            ? SourceRefreshStatus.success
+            : SourceRefreshStatus.unavailable
+      : SourceRefreshStatus.error;
+}
+
+bool _isActiveSourceRefreshStatus(SourceRefreshStatus status) =>
+    status == SourceRefreshStatus.queued ||
+    status == SourceRefreshStatus.fetching;
 
 /// Handles [ProductsLoadFailedAction].
 /// Updates [ProductsState.isLoading], [ProductsState.error].
@@ -139,6 +316,9 @@ ProductsState refreshProductReducer(
   ProductsState state,
   RefreshProductAction action,
 ) {
+  if (state.isRefreshingAll || state.refreshingProductIds.isNotEmpty) {
+    return state;
+  }
   final Map<String, PriceFetchStatus> productRefreshStatuses = {
     ...state.productRefreshStatuses,
   }..remove(action.productId);
@@ -148,6 +328,16 @@ ProductsState refreshProductReducer(
     productRefreshStatuses: productRefreshStatuses,
   );
 }
+
+/// Handles [SourceRefreshFinishedAction].
+/// Updates [ProductsState.refreshTotalCount], [ProductsState.refreshCompletedCount].
+///
+/// Per-source terminal statuses intentionally remain available after cleanup so
+/// the product details Issues filter can show the latest refresh failures.
+ProductsState sourceRefreshFinishedReducer(
+  ProductsState state,
+  SourceRefreshFinishedAction action,
+) => state.copyWith(refreshCompletedCount: 0, refreshTotalCount: 0);
 
 /// Handles [ProductRefreshedAction].
 /// Updates [ProductsState.products], [ProductsState.refreshingProductIds], [ProductsState.error].
@@ -166,10 +356,13 @@ ProductsState productRefreshedReducer(
   final Map<String, PriceFetchStatus> productRefreshStatuses = {
     ...state.productRefreshStatuses,
   }..remove(action.product.id);
+  final Map<String, SourceRefreshStatus> sourceRefreshStatuses =
+      _sourceRefreshStatusesForProducts(products);
   return state.copyWith(
     products: products,
     refreshingProductIds: refreshingProductIds,
     error: const None(),
+    sourceRefreshStatuses: sourceRefreshStatuses,
     productRefreshStatuses: productRefreshStatuses,
   );
 }
@@ -203,11 +396,16 @@ ProductsState productRefreshFailedReducer(
 ProductsState refreshAllProductsReducer(
   ProductsState state,
   RefreshAllProductsAction action,
-) => state.copyWith(
-  isRefreshingAll: true,
-  error: const None(),
-  refreshStatus: const None(),
-);
+) {
+  if (state.isRefreshingAll || state.refreshingProductIds.isNotEmpty) {
+    return state;
+  }
+  return state.copyWith(
+    isRefreshingAll: true,
+    error: const None(),
+    refreshStatus: const None(),
+  );
+}
 
 /// Handles [RefreshAllProductsFailedAction].
 /// Updates [ProductsState.isRefreshingAll], [ProductsState.error].
@@ -221,3 +419,202 @@ ProductsState refreshAllProductsFailedReducer(
       ? const None()
       : Some(action.status ?? PriceFetchStatus.none),
 );
+
+/// Handles [AddSourceAction].
+/// Updates [ProductsState.isAddingSource], [ProductsState.addSourceError].
+ProductsState addSourceReducer(ProductsState state, AddSourceAction action) =>
+    state.copyWith(isAddingSource: true, addSourceError: const None());
+
+/// Handles [SourceAddedAction].
+/// Updates [ProductsState.products], [ProductsState.isAddingSource], [ProductsState.addSourceError].
+ProductsState sourceAddedReducer(
+  ProductsState state,
+  SourceAddedAction action,
+) {
+  final List<Product> products = state.products
+      .map(
+        (Product product) =>
+            product.id == action.product.id ? action.product : product,
+      )
+      .toList(growable: false);
+  final Map<String, SourceRefreshStatus> sourceRefreshStatuses =
+      _sourceRefreshStatusesForProducts(products);
+  return state.copyWith(
+    products: products,
+    sourceRefreshStatuses: sourceRefreshStatuses,
+    isAddingSource: false,
+    addSourceError: const None(),
+  );
+}
+
+/// Handles [SourceAddFailedAction].
+/// Updates [ProductsState.isAddingSource], [ProductsState.addSourceError].
+ProductsState sourceAddFailedReducer(
+  ProductsState state,
+  SourceAddFailedAction action,
+) =>
+    state.copyWith(isAddingSource: false, addSourceError: Some(action.message));
+
+/// Handles [EditSourceAction].
+/// Updates [ProductsState.editingSourceId], [ProductsState.editSourceError].
+ProductsState editSourceReducer(ProductsState state, EditSourceAction action) =>
+    state.copyWith(
+      editingSourceId: Some(action.sourceId),
+      editSourceError: const None(),
+    );
+
+/// Handles [SourceEditedAction].
+/// Updates [ProductsState.products], [ProductsState.editingSourceId], [ProductsState.editSourceError].
+ProductsState sourceEditedReducer(
+  ProductsState state,
+  SourceEditedAction action,
+) {
+  final List<Product> products = state.products
+      .map(
+        (Product product) =>
+            product.id == action.product.id ? action.product : product,
+      )
+      .toList(growable: false);
+  final Map<String, SourceRefreshStatus> sourceRefreshStatuses =
+      _sourceRefreshStatusesForProducts(products);
+  return state.copyWith(
+    products: products,
+    sourceRefreshStatuses: sourceRefreshStatuses,
+    editingSourceId: const None(),
+    editSourceError: const None(),
+  );
+}
+
+/// Handles [SourceEditFailedAction].
+/// Updates [ProductsState.editingSourceId], [ProductsState.editSourceError].
+ProductsState sourceEditFailedReducer(
+  ProductsState state,
+  SourceEditFailedAction action,
+) => state.copyWith(
+  editingSourceId: const None(),
+  editSourceError: Some(action.message),
+);
+
+/// Handles [DeleteSourceAction].
+/// Updates [ProductsState.deletingSourceIds], [ProductsState.deleteSourceError].
+ProductsState deleteSourceReducer(
+  ProductsState state,
+  DeleteSourceAction action,
+) => state.copyWith(
+  deletingSourceIds: {...state.deletingSourceIds, action.sourceId},
+  deleteSourceError: const None(),
+);
+
+/// Handles [SourceDeletedAction].
+/// Updates [ProductsState.products], [ProductsState.deletingSourceIds].
+ProductsState sourceDeletedReducer(
+  ProductsState state,
+  SourceDeletedAction action,
+) {
+  final List<Product> products = state.products
+      .map(
+        (Product product) =>
+            product.id == action.product.id ? action.product : product,
+      )
+      .toList(growable: false);
+  final Set<String> deletingSourceIds = {...state.deletingSourceIds}
+    ..remove(action.sourceId);
+  final Map<String, SourceRefreshStatus> sourceRefreshStatuses =
+      _sourceRefreshStatusesForProducts(products);
+  return state.copyWith(
+    products: products,
+    deletingSourceIds: deletingSourceIds,
+    sourceRefreshStatuses: sourceRefreshStatuses,
+  );
+}
+
+/// Handles [SourceDeleteFailedAction].
+/// Updates [ProductsState.deletingSourceIds], [ProductsState.deleteSourceError].
+ProductsState sourceDeleteFailedReducer(
+  ProductsState state,
+  SourceDeleteFailedAction action,
+) {
+  final Set<String> deletingSourceIds = {...state.deletingSourceIds}
+    ..remove(action.sourceId);
+  return state.copyWith(
+    deletingSourceIds: deletingSourceIds,
+    deleteSourceError: Some(action.message),
+  );
+}
+
+/// Handles [RenameProductAction].
+/// Updates [ProductsState.isRenamingProduct], [ProductsState.renameProductError].
+ProductsState renameProductReducer(
+  ProductsState state,
+  RenameProductAction action,
+) => state.copyWith(isRenamingProduct: true, renameProductError: const None());
+
+/// Handles [ProductRenamedAction].
+/// Updates [ProductsState.products], [ProductsState.isRenamingProduct], [ProductsState.renameProductError].
+ProductsState productRenamedReducer(
+  ProductsState state,
+  ProductRenamedAction action,
+) {
+  final List<Product> products = state.products
+      .map(
+        (Product product) =>
+            product.id == action.product.id ? action.product : product,
+      )
+      .toList(growable: false);
+  return state.copyWith(
+    products: products,
+    isRenamingProduct: false,
+    renameProductError: const None(),
+  );
+}
+
+/// Handles [ProductRenameFailedAction].
+/// Updates [ProductsState.isRenamingProduct], [ProductsState.renameProductError].
+ProductsState productRenameFailedReducer(
+  ProductsState state,
+  ProductRenameFailedAction action,
+) => state.copyWith(
+  isRenamingProduct: false,
+  renameProductError: Some(action.message),
+);
+
+/// Handles [DeleteProductAction].
+/// Updates [ProductsState.deletingProductIds], [ProductsState.deleteProductError].
+ProductsState deleteProductReducer(
+  ProductsState state,
+  DeleteProductAction action,
+) => state.copyWith(
+  deletingProductIds: {...state.deletingProductIds, action.productId},
+  deleteProductError: const None(),
+);
+
+/// Handles [ProductDeletedAction].
+/// Updates [ProductsState.products], [ProductsState.deletingProductIds].
+ProductsState productDeletedReducer(
+  ProductsState state,
+  ProductDeletedAction action,
+) {
+  final List<Product> products = state.products
+      .where((Product product) => product.id != action.productId)
+      .toList(growable: false);
+  final Set<String> deletingProductIds = {...state.deletingProductIds}
+    ..remove(action.productId);
+  return state.copyWith(
+    products: products,
+    deletingProductIds: deletingProductIds,
+  );
+}
+
+/// Handles [ProductDeleteFailedAction].
+/// Updates [ProductsState.deletingProductIds], [ProductsState.deleteProductError].
+ProductsState productDeleteFailedReducer(
+  ProductsState state,
+  ProductDeleteFailedAction action,
+) {
+  final Set<String> deletingProductIds = {...state.deletingProductIds}
+    ..remove(action.productId);
+  return state.copyWith(
+    deletingProductIds: deletingProductIds,
+    deleteProductError: Some(action.message),
+  );
+}

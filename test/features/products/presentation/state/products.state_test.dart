@@ -21,9 +21,22 @@ void main() {
       expect(state.refreshingProductIds, isEmpty);
       expect(state.error, isNull);
       expect(state.productRefreshStatuses, isEmpty);
+      expect(state.sourceRefreshStatuses, isEmpty);
+      expect(state.refreshCompletedCount, 0);
+      expect(state.refreshTotalCount, 0);
       expect(state.isCreatingProduct, isFalse);
       expect(state.creationError, isNull);
       expect(state.createdProductId, isNull);
+      expect(state.isAddingSource, isFalse);
+      expect(state.addSourceError, isNull);
+      expect(state.editingSourceId, isNull);
+      expect(state.editSourceError, isNull);
+      expect(state.deletingSourceIds, isEmpty);
+      expect(state.deleteSourceError, isNull);
+      expect(state.isRenamingProduct, isFalse);
+      expect(state.renameProductError, isNull);
+      expect(state.deletingProductIds, isEmpty);
+      expect(state.deleteProductError, isNull);
     });
   });
 
@@ -38,9 +51,22 @@ void main() {
         refreshingProductIds: {'product-1'},
         error: const Some('failed'),
         productRefreshStatuses: {'product-1': PriceFetchStatus.networkError},
+        sourceRefreshStatuses: {'source-1': SourceRefreshStatus.fetching},
+        refreshCompletedCount: 2,
+        refreshTotalCount: 6,
         isCreatingProduct: true,
         creationError: const Some('creation failed'),
         createdProductId: const Some('product-1'),
+        isAddingSource: true,
+        addSourceError: const Some('add failed'),
+        editingSourceId: const Some('source-1'),
+        editSourceError: const Some('edit failed'),
+        deletingSourceIds: {'source-1'},
+        deleteSourceError: const Some('delete failed'),
+        isRenamingProduct: true,
+        renameProductError: const Some('rename failed'),
+        deletingProductIds: {'product-1'},
+        deleteProductError: const Some('product delete failed'),
       );
 
       expect(state.products, [product]);
@@ -54,9 +80,24 @@ void main() {
       expect(state.productRefreshStatuses, {
         'product-1': PriceFetchStatus.networkError,
       });
+      expect(state.sourceRefreshStatuses, {
+        'source-1': SourceRefreshStatus.fetching,
+      });
+      expect(state.refreshCompletedCount, 2);
+      expect(state.refreshTotalCount, 6);
       expect(state.isCreatingProduct, isTrue);
       expect(state.creationError, 'creation failed');
       expect(state.createdProductId, 'product-1');
+      expect(state.isAddingSource, isTrue);
+      expect(state.addSourceError, 'add failed');
+      expect(state.editingSourceId, 'source-1');
+      expect(state.editSourceError, 'edit failed');
+      expect(state.deletingSourceIds, {'source-1'});
+      expect(state.deleteSourceError, 'delete failed');
+      expect(state.isRenamingProduct, isTrue);
+      expect(state.renameProductError, 'rename failed');
+      expect(state.deletingProductIds, {'product-1'});
+      expect(state.deleteProductError, 'product delete failed');
     });
 
     test('ProductsState copyWith clears error when passed None', () {
@@ -69,6 +110,24 @@ void main() {
       expect(next.error, isNull);
     });
 
+    test(
+      'ProductsState copyWith clears renameProductError and deleteProductError when passed None',
+      () {
+        final ProductsState state = ProductsState.initial().copyWith(
+          renameProductError: const Some('rename failed'),
+          deleteProductError: const Some('product delete failed'),
+        );
+
+        final ProductsState next = state.copyWith(
+          renameProductError: const None(),
+          deleteProductError: const None(),
+        );
+
+        expect(next.renameProductError, isNull);
+        expect(next.deleteProductError, isNull);
+      },
+    );
+
     test('ProductsState copyWith preserves fields when omitted', () {
       final ProductsState state = ProductsState.initial().copyWith(
         products: [buildProduct()],
@@ -77,6 +136,19 @@ void main() {
         refreshingProductIds: {'product-1'},
         error: const Some('failed'),
         productRefreshStatuses: {'product-1': PriceFetchStatus.networkError},
+        sourceRefreshStatuses: {'source-1': SourceRefreshStatus.success},
+        refreshCompletedCount: 1,
+        refreshTotalCount: 2,
+        isAddingSource: true,
+        addSourceError: const Some('add failed'),
+        editingSourceId: const Some('source-1'),
+        editSourceError: const Some('edit failed'),
+        deletingSourceIds: {'source-1'},
+        deleteSourceError: const Some('delete failed'),
+        isRenamingProduct: true,
+        renameProductError: const Some('rename failed'),
+        deletingProductIds: {'product-1'},
+        deleteProductError: const Some('product delete failed'),
       );
 
       expect(state.copyWith(), state);

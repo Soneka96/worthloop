@@ -4,7 +4,8 @@ import 'package:drift/drift.dart';
 // Project imports:
 import 'package:worth_loop/features/products/data/models/drift_schemas/product.table.dart';
 
-/// Persisted website links used to track products.
+/// Persisted website links tracked for products, together with each one's
+/// latest fetched offer.
 @DataClassName('ProductSourceRow')
 class ProductSourceTable extends Table {
   /// Stable source identifier.
@@ -20,9 +21,45 @@ class ProductSourceTable extends Table {
   /// Lower-case merchant domain extracted from [url].
   TextColumn get merchantDomain => text()();
 
+  /// Exact price in the currency's minor unit, once an offer is fetched.
+  IntColumn get minorUnits => integer().nullable()();
+
+  /// ISO 4217 currency code, once an offer is fetched.
+  TextColumn get currencyCode => text().nullable()();
+
+  /// Previous price in the currency's minor unit, after a price change.
+  IntColumn get previousPriceMinorUnits => integer().nullable()();
+
+  /// ISO 4217 currency code for the previous price.
+  TextColumn get previousPriceCurrencyCode => text().nullable()();
+
+  /// Whether the merchant currently has the product available, once an
+  /// offer is fetched.
+  BoolColumn get isAvailable => boolean().nullable()();
+
+  /// When this source's offer was last checked, once fetched.
+  DateTimeColumn get lastCheckedAt => dateTime().nullable()();
+
+  /// When the source price last changed.
+  DateTimeColumn get priceChangedAt => dateTime().nullable()();
+
+  /// The outcome of the most recently completed refresh attempt.
+  TextColumn get lastRefreshStatus => text().nullable()();
+
+  /// When the most recently completed refresh attempt finished.
+  DateTimeColumn get lastRefreshAt => dateTime().nullable()();
+
+  /// Live progress of a refresh currently in flight; null when none is.
+  TextColumn get liveStatus => text().nullable()();
+
   /// When the source was added.
   DateTimeColumn get createdAt => dateTime()();
 
   @override
   Set<Column> get primaryKey => {id};
+
+  @override
+  List<Set<Column>> get uniqueKeys => [
+    {productId, url},
+  ];
 }

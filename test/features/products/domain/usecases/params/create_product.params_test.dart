@@ -6,28 +6,13 @@ import 'package:worth_loop/features/products/domain/usecases/params/create_produ
 
 void main() {
   group('CreateProductParams equality', () {
-    test('includes the product name and URL', () {
+    test('includes the product name', () {
       const CreateProductParams params = CreateProductParams(
         name: 'Example Product',
-        url: 'https://example.com/products/1',
       );
 
-      expect(
-        params,
-        const CreateProductParams(
-          name: 'Example Product',
-          url: 'https://example.com/products/1',
-        ),
-      );
-      expect(
-        params,
-        isNot(
-          const CreateProductParams(
-            name: 'Other Product',
-            url: 'https://example.com/products/1',
-          ),
-        ),
-      );
+      expect(params, const CreateProductParams(name: 'Example Product'));
+      expect(params, isNot(const CreateProductParams(name: 'Other Product')));
     });
   });
 }

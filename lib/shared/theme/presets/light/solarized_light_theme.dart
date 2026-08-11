@@ -7,32 +7,32 @@ import 'package:flutter/material.dart';
 /// falls back to Flutter's stock Material defaults.
 const ColorScheme solarizedLightColorScheme = ColorScheme(
   brightness: Brightness.light,
-  primary: Color(0xFF268BD2), // Blue
+  primary: Color(0xFF1B6FAE), // Darker blue for controls
   onPrimary: Color(0xFFFDF6E3), // Base3
-  primaryContainer: Color(0xFFEEE8D5), // Base2
-  onPrimaryContainer: Color(0xFF657B83), // Base00
-  secondary: Color(0xFF6C71C4), // Violet
+  primaryContainer: Color(0xFFE1D8BE), // Lifted blue surface
+  onPrimaryContainer: Color(0xFF4A5A60), // Accessible dark text
+  secondary: Color(0xFF5A5FA8), // Darker violet for controls
   onSecondary: Color(0xFFFDF6E3), // Base3
-  secondaryContainer: Color(0xFFEEE8D5), // Base2
-  onSecondaryContainer: Color(0xFF657B83), // Base00
-  tertiary: Color(0xFF2AA198), // Cyan
+  secondaryContainer: Color(0xFFDDDDF0), // Lifted violet surface
+  onSecondaryContainer: Color(0xFF4A5A60), // Accessible dark text
+  tertiary: Color(0xFF1E736D), // Darker cyan for controls
   onTertiary: Color(0xFFFDF6E3), // Base3
-  tertiaryContainer: Color(0xFFEEE8D5), // Base2
-  onTertiaryContainer: Color(0xFF657B83), // Base00
-  error: Color(0xFFDC322F), // Red
+  tertiaryContainer: Color(0xFFD5E8E4), // Lifted cyan surface
+  onTertiaryContainer: Color(0xFF4A5A60), // Accessible dark text
+  error: Color(0xFFA51F1D), // Darker red for controls
   onError: Color(0xFFFDF6E3), // Base3
-  errorContainer: Color(0xFFEEE8D5), // Base2
-  onErrorContainer: Color(0xFF657B83), // Base00
+  errorContainer: Color(0xFFF1D0CD), // Lifted red surface
+  onErrorContainer: Color(0xFF4A5A60), // Accessible dark text
   surface: Color(0xFFFDF6E3), // Base3
-  onSurface: Color(0xFF657B83), // Base00
-  onSurfaceVariant: Color(0xFF93A1A1), // Base1 (comments)
+  onSurface: Color(0xFF526A6F), // Accessible Base01
+  onSurfaceVariant: Color(0xFF465C60), // Accessible muted blue-grey
   surfaceContainerHighest: Color(0xFFEEE8D5), // Base2
-  outline: Color(0xFF93A1A1), // Base1
-  outlineVariant: Color(0xFFEEE8D5), // Base2
+  outline: Color(0xFF465C60), // Accessible muted blue-grey
+  outlineVariant: Color(0xFF8B7F66), // Visible lifted border
   shadow: Color(0xFF000000),
   scrim: Color(0xFF000000),
   inverseSurface: Color(0xFF657B83), // Base00
   onInverseSurface: Color(0xFFFDF6E3), // Base3
-  inversePrimary: Color(0xFFEEE8D5), // Base2
+  inversePrimary: Color(0xFF17618E), // Darker blue for inverse surfaces
   surfaceTint: Color(0xFF268BD2), // Blue
 );

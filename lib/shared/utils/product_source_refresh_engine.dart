@@ -1,0 +1,444 @@
+// Dart imports:
+import 'dart:async';
+import 'dart:collection';
+
+// Package imports:
+import 'package:fpdart/fpdart.dart';
+
+// Project imports:
+import 'package:worth_loop/features/products/data/datasources/products_local.datasource.dart';
+import 'package:worth_loop/features/products/data/datasources/products_remote.datasource.dart';
+import 'package:worth_loop/features/products/data/models/product.model.dart';
+import 'package:worth_loop/features/products/data/models/product_source.model.dart';
+import 'package:worth_loop/features/products/domain/entities/product.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_price_change.entity.dart';
+import 'package:worth_loop/features/products/domain/entities/product_source.entity.dart';
+import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
+import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
+import 'package:worth_loop/shared/constants/price_fetch_constants.dart';
+import 'package:worth_loop/shared/failures/failures.dart';
+import 'package:worth_loop/shared/utils/product_price_alert_notification_coordinator.dart';
+
+/// Fetches and persists product sources through bounded, per-merchant-domain
+/// queues — never two concurrent fetches to the same merchant, several
+/// different merchants at once. A source enqueued mid-run lands in its own
+/// merchant's queue without waiting for anything else in flight.
+class ProductSourceRefreshEngine {
+  final ProductsLocalDatasource _localDatasource;
+  final IProductsRemoteDatasource _remoteDatasource;
+  final ProductPriceAlertNotificationCoordinator _priceAlertCoordinator;
+  final Duration _sourceFetchTimeout;
+  final int _maxTimeoutRetries;
+
+  /// Creates an engine backed by local and remote product datasources, and a
+  /// [ProductPriceAlertNotificationCoordinator] for best-price-change alerts.
+  /// [sourceFetchTimeout] and [maxTimeoutRetries] default to production
+  /// values — overridable in tests so a stuck-fetch retry doesn't need to
+  /// wait out a real 120-second timeout.
+  ProductSourceRefreshEngine(
+    this._localDatasource,
+    this._remoteDatasource,
+    this._priceAlertCoordinator, {
+    Duration sourceFetchTimeout = PriceFetchConstants.sourceFetchTimeout,
+    int maxTimeoutRetries = 3,
+  }) : _sourceFetchTimeout = sourceFetchTimeout,
+       _maxTimeoutRetries = maxTimeoutRetries;
+
+  static const int _maxConcurrentMerchantQueues = 4;
+
+  final Map<String, Queue<(ProductSourceModel, bool)>> _pendingByMerchant = {};
+  final Set<String> _merchantsInFlight = {};
+  final Set<String> _sourceIdsQueuedOrInFlight = {};
+  final Set<String> _sourceIdsAwaitingSweep = {};
+  final Set<String> _failedSourceIdsInCurrentRun = {};
+  final Map<String, int> _timeoutAttemptsBySourceId = {};
+  Completer<void>? _wakeSignal;
+  Completer<void>? _idleSignal;
+  bool _workersStarted = false;
+  int _totalInCurrentRun = 0;
+  int _completedInCurrentRun = 0;
+
+  /// Called with (completed, total) counts for the sources currently active
+  /// or queued, whenever those counts change. Unset by default — assigned by
+  /// whichever isolate wants to surface live progress (the background
+  /// entrypoint, for its notification's progress bar). Every call is awaited,
+  /// in order, before the engine does anything else — including starting
+  /// workers after the first call and checking whether the run has drained
+  /// after the last. This guarantees a caller doing real async work here
+  /// (e.g. an actual native notification call) always delivers ticks in
+  /// order and never lets a stale progress notification land after a later
+  /// "run complete" signal and overwrite it.
+  Future<void> Function(int completed, int total)? onProgress;
+
+  /// Called once a run fully drains, with whether every source in it has a
+  /// successful current state — a source that fails then succeeds on a
+  /// later bypass-cooldown retry within the same still-open run no longer
+  /// counts against it. Unset by default — assigned by
+  /// whichever isolate wants to report a refresh's outcome (the background
+  /// entrypoint, for its "completed"/"failed" notification). Fires for every
+  /// enqueue path that feeds this engine, not just one caller's own trigger
+  /// — this is what a manual refresh needs, since it never goes through the
+  /// scheduled loop that used to be the only thing reporting completion.
+  Future<void> Function(bool succeeded)? onRunComplete;
+
+  /// Queues [sourceIds] onto their merchant-specific fetch queues, starting
+  /// worker processing if it isn't already running. [bypassCooldown] applies
+  /// to every source in this call. A source currently queued or in flight is
+  /// always skipped, to avoid two concurrent fetches of the same source. A
+  /// source already handled within the still-open run (finished, but the run
+  /// hasn't fully drained yet) is skipped too — unless [bypassCooldown] is
+  /// true, which re-queues it as a deliberate, user-initiated retry. This
+  /// keeps an overlapping bulk refresh trigger (e.g. a scheduled run and a
+  /// manual pull-to-refresh) from re-fetching and double-counting sources
+  /// the open run already finished. Returns once every source is queued and
+  /// its live status is persisted — the actual fetch results are not
+  /// awaited here, they flow through the database as each source completes.
+  Future<Either<Failure, Unit>> enqueueSourceRefresh(
+    List<String> sourceIds, {
+    bool bypassCooldown = false,
+  }) async {
+    if (sourceIds.isEmpty) {
+      return const Right(unit);
+    }
+    final Either<Failure, List<ProductSourceModel>> sourcesResult =
+        await _localDatasource.loadProductSources();
+    if (sourcesResult.isLeft()) {
+      return sourcesResult.map((_) => unit);
+    }
+    final Set<String> requestedIds = sourceIds.toSet();
+    int newlyQueuedCount = 0;
+    for (final ProductSourceModel source
+        in sourcesResult.getRight().toNullable() ?? const []) {
+      final bool queuedOrInFlight = _sourceIdsQueuedOrInFlight.contains(
+        source.id,
+      );
+      final bool alreadyHandledThisRun = _sourceIdsAwaitingSweep.contains(
+        source.id,
+      );
+      if (!requestedIds.contains(source.id) ||
+          queuedOrInFlight ||
+          (!bypassCooldown && alreadyHandledThisRun)) {
+        continue;
+      }
+      _sourceIdsQueuedOrInFlight.add(source.id);
+      _sourceIdsAwaitingSweep.add(source.id);
+      _pendingByMerchant
+          .putIfAbsent(
+            source.merchantDomain.toLowerCase(),
+            () => Queue<(ProductSourceModel, bool)>(),
+          )
+          .add((source, bypassCooldown));
+      await _localDatasource.writeSourceLiveStatus(
+        source.id,
+        SourceRefreshStatus.queued,
+      );
+      newlyQueuedCount++;
+    }
+    if (newlyQueuedCount > 0) {
+      _totalInCurrentRun += newlyQueuedCount;
+      await onProgress?.call(_completedInCurrentRun, _totalInCurrentRun);
+    }
+    _ensureWorkersRunning();
+    _wakeWorkers();
+    return const Right(unit);
+  }
+
+  /// Completes once no source is queued or in flight — resolves immediately
+  /// if the engine is already idle. Lets a caller (the background
+  /// entrypoint) know when a refresh cycle has actually finished, rather
+  /// than just been enqueued, so it can wait for real completion before
+  /// notifying the user.
+  Future<void> waitUntilIdle() async {
+    if (_pendingByMerchant.isEmpty &&
+        _merchantsInFlight.isEmpty &&
+        _sourceIdsQueuedOrInFlight.isEmpty) {
+      return;
+    }
+    final Completer<void> signal = _idleSignal ??= Completer<void>();
+    await signal.future;
+  }
+
+  void _ensureWorkersRunning() {
+    if (_workersStarted) {
+      return;
+    }
+    _workersStarted = true;
+    for (int i = 0; i < _maxConcurrentMerchantQueues; i++) {
+      unawaited(_runMerchantQueueWorker());
+    }
+  }
+
+  // A source whose fetch timed out with retries left comes back from
+  // _fetchAndPersistSource() as `false` rather than being persisted —
+  // it's already pushed onto the back of this same merchant's queue, so
+  // the `while` loop below picks up whatever's left in front of it first.
+  Future<void> _runMerchantQueueWorker() async {
+    while (true) {
+      final String? merchant = _claimPendingMerchant();
+      if (merchant == null) {
+        await _finishRunIfDrained();
+        await _waitForQueuedWork();
+        continue;
+      }
+      final Queue<(ProductSourceModel, bool)> queue =
+          _pendingByMerchant[merchant]!;
+      while (queue.isNotEmpty) {
+        final (ProductSourceModel source, bool bypassCooldown) = queue
+            .removeFirst();
+        final bool completed = await _fetchAndPersistSource(
+          source,
+          bypassCooldown: bypassCooldown,
+        );
+        if (!completed) {
+          continue;
+        }
+        _sourceIdsQueuedOrInFlight.remove(source.id);
+        _completedInCurrentRun++;
+        await onProgress?.call(_completedInCurrentRun, _totalInCurrentRun);
+      }
+      _pendingByMerchant.remove(merchant);
+      _merchantsInFlight.remove(merchant);
+    }
+  }
+
+  /// Once nothing is pending or in flight, sweep-clears
+  /// [ProductSource.liveStatus] for every source that was part of the run —
+  /// each source stays tagged with its terminal status for the life of the
+  /// whole run, not just its own individual fetch, so presentation state can
+  /// derive an "X of Y done" count straight from the DB — then resets the
+  /// progress counters for the next run, completes [waitUntilIdle]'s signal
+  /// if anything is waiting on it, and reports [onRunComplete] if a run
+  /// actually just finished (this method also runs as a frequent no-op
+  /// whenever a worker finds nothing to claim, so it only reports when
+  /// [sourceIdsToSweep] is non-empty).
+  Future<void> _finishRunIfDrained() async {
+    if (_pendingByMerchant.isNotEmpty || _merchantsInFlight.isNotEmpty) {
+      return;
+    }
+    // Snapshot and clear before the first await — a source enqueued mid-sweep
+    // (which starts a new run) must never be iterated here, both to keep it
+    // from being incorrectly cleared and to avoid mutating this Set while
+    // iterating it.
+    final List<String> sourceIdsToSweep = _sourceIdsAwaitingSweep.toList();
+    _sourceIdsAwaitingSweep.clear();
+    _totalInCurrentRun = 0;
+    _completedInCurrentRun = 0;
+    final bool hadFailure = _failedSourceIdsInCurrentRun.isNotEmpty;
+    _failedSourceIdsInCurrentRun.clear();
+    for (final String sourceId in sourceIdsToSweep) {
+      await _localDatasource.writeSourceLiveStatus(sourceId, null);
+    }
+    final Completer<void>? idleSignal = _idleSignal;
+    _idleSignal = null;
+    if (idleSignal != null && !idleSignal.isCompleted) {
+      idleSignal.complete();
+    }
+    if (sourceIdsToSweep.isNotEmpty) {
+      await onRunComplete?.call(!hadFailure);
+    }
+  }
+
+  String? _claimPendingMerchant() {
+    for (final String merchant in _pendingByMerchant.keys) {
+      if (!_merchantsInFlight.contains(merchant)) {
+        _merchantsInFlight.add(merchant);
+        return merchant;
+      }
+    }
+    return null;
+  }
+
+  Future<void> _waitForQueuedWork() async {
+    final Completer<void> signal = _wakeSignal ??= Completer<void>();
+    await signal.future;
+  }
+
+  void _wakeWorkers() {
+    final Completer<void>? signal = _wakeSignal;
+    _wakeSignal = null;
+    if (signal != null && !signal.isCompleted) {
+      signal.complete();
+    }
+  }
+
+  /// Fetches and persists [source]. Returns `false` instead of persisting
+  /// anything when the fetch timed out and was re-queued for a later retry
+  /// — the caller must not count that as a completion.
+  Future<bool> _fetchAndPersistSource(
+    ProductSourceModel source, {
+    required bool bypassCooldown,
+  }) async {
+    final Either<Failure, ProductModel> previousResult = await _localDatasource
+        .loadProduct(source.productId);
+    final ProductModel? previousProduct = previousResult
+        .getRight()
+        .toNullable();
+
+    final Either<Failure, ProductSourceModel>? result = await _fetchWithTimeout(
+      source,
+      bypassCooldown: bypassCooldown,
+    );
+    if (result == null) {
+      return false;
+    }
+    final ProductSourceModel updatedSource = result.match(
+      (Failure failure) {
+        _failedSourceIdsInCurrentRun.add(source.id);
+        return _sourceAfterFailure(source, failure);
+      },
+      (ProductSourceModel updated) {
+        _failedSourceIdsInCurrentRun.remove(source.id);
+        return updated;
+      },
+    );
+    final Either<Failure, ProductModel> persistResult = await _localDatasource
+        .updateSourcePrices(source.productId, [updatedSource]);
+
+    final ProductModel? refreshedProduct = persistResult
+        .getRight()
+        .toNullable();
+    if (previousProduct != null && refreshedProduct != null) {
+      await _notifyPriceChange(previousProduct, refreshedProduct);
+    }
+    return true;
+  }
+
+  /// Runs [_fetchSource] under [_sourceFetchTimeout]. Returns `null` when it
+  /// times out and [source] still has retries left — re-queued at the back
+  /// of its own merchant's queue so the rest of that queue gets a turn
+  /// first, rather than one wedged fetch blocking every source behind it
+  /// forever. After [_maxTimeoutRetries] timeouts it gives up and returns a
+  /// terminal networkError failure instead, same as any other failure.
+  ///
+  /// Note: [Future.timeout] stops *waiting* on the original fetch, it
+  /// doesn't cancel it — Dart has no way to cancel an arbitrary in-flight
+  /// Future. If the original eventually finishes on its own, its
+  /// [SourceRefreshListener] call can still land a stale live-status write
+  /// after this source has already moved on to its next attempt. Accepted:
+  /// the next attempt's own status writes overwrite it, so it can't get
+  /// stuck — it can only flicker.
+  Future<Either<Failure, ProductSourceModel>?> _fetchWithTimeout(
+    ProductSourceModel source, {
+    required bool bypassCooldown,
+  }) async {
+    try {
+      final Either<Failure, ProductSourceModel> result = await _fetchSource(
+        source,
+        onSourceStatusChanged:
+            (String sourceId, SourceRefreshStatus status) async {
+              await _localDatasource.writeSourceLiveStatus(sourceId, status);
+            },
+        bypassCooldown: bypassCooldown,
+      ).timeout(_sourceFetchTimeout);
+      _timeoutAttemptsBySourceId.remove(source.id);
+      return result;
+    } on TimeoutException {
+      final int attempts = (_timeoutAttemptsBySourceId[source.id] ?? 0) + 1;
+      if (attempts < _maxTimeoutRetries) {
+        _timeoutAttemptsBySourceId[source.id] = attempts;
+        _pendingByMerchant
+            .putIfAbsent(
+              source.merchantDomain.toLowerCase(),
+              () => Queue<(ProductSourceModel, bool)>(),
+            )
+            .add((source, bypassCooldown));
+        await _localDatasource.writeSourceLiveStatus(
+          source.id,
+          SourceRefreshStatus.queued,
+        );
+        return null;
+      }
+      _timeoutAttemptsBySourceId.remove(source.id);
+      await _localDatasource.writeSourceLiveStatus(
+        source.id,
+        SourceRefreshStatus.error,
+      );
+      return const Left(
+        PriceFetchFailure(
+          status: PriceFetchStatus.networkError,
+          message: 'Price fetch timed out repeatedly',
+        ),
+      );
+    }
+  }
+
+  Future<void> _notifyPriceChange(
+    Product previousProduct,
+    Product refreshedProduct,
+  ) async {
+    final Money? previousBestPrice =
+        previousProduct.bestAvailablePrice?.currentPrice;
+    final Money? currentBestPrice =
+        refreshedProduct.bestAvailablePrice?.currentPrice;
+    if (previousBestPrice == null || currentBestPrice == null) {
+      return;
+    }
+    if (previousBestPrice.currencyCode != currentBestPrice.currencyCode) {
+      return;
+    }
+    final PriceChangeDirection direction =
+        switch (currentBestPrice.minorUnits) {
+          final int minorUnits when minorUnits < previousBestPrice.minorUnits =>
+            PriceChangeDirection.drop,
+          final int minorUnits when minorUnits > previousBestPrice.minorUnits =>
+            PriceChangeDirection.increase,
+          _ => PriceChangeDirection.none,
+        };
+    if (direction == PriceChangeDirection.none) {
+      return;
+    }
+    await _priceAlertCoordinator.notify(
+      ProductPriceChange(
+        product: refreshedProduct,
+        previousBestPrice: previousBestPrice,
+        currentBestPrice: currentBestPrice,
+        direction: direction,
+      ),
+    );
+  }
+
+  Future<Either<Failure, ProductSourceModel>> _fetchSource(
+    ProductSourceModel source, {
+    SourceRefreshListener? onSourceStatusChanged,
+    bool bypassCooldown = false,
+  }) async {
+    await onSourceStatusChanged?.call(source.id, SourceRefreshStatus.fetching);
+    final Either<Failure, ProductSourceModel> result = bypassCooldown
+        ? await _remoteDatasource.fetchPrices(source, bypassCooldown: true)
+        : await _remoteDatasource.fetchPrices(source);
+    await result.match(
+      (Failure failure) async {
+        await onSourceStatusChanged?.call(source.id, SourceRefreshStatus.error);
+      },
+      (ProductSourceModel updated) async {
+        await onSourceStatusChanged?.call(
+          source.id,
+          updated.isAvailable == true
+              ? SourceRefreshStatus.success
+              : SourceRefreshStatus.unavailable,
+        );
+      },
+    );
+    return result;
+  }
+
+  ProductSourceModel _sourceAfterFailure(
+    ProductSourceModel source,
+    Failure failure,
+  ) => ProductSourceModel(
+    id: source.id,
+    productId: source.productId,
+    url: source.url,
+    merchantDomain: source.merchantDomain,
+    createdAt: source.createdAt,
+    currentPrice: source.currentPrice,
+    previousPrice: source.previousPrice,
+    isAvailable: source.isAvailable,
+    lastCheckedAt: source.lastCheckedAt,
+    priceChangedAt: source.priceChangedAt,
+    lastRefreshStatus: failure is PriceFetchFailure
+        ? failure.status
+        : PriceFetchStatus.networkError,
+  );
+}

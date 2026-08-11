@@ -1,35 +1,61 @@
 appTitle: WorthLoop
 
+common:
+  cancel: Cancelar
+  refreshSuccessful: Atualização concluída
+  refreshCompletedWithErrors: Atualização concluída com erros
+  refreshFailed: Falha na atualização
+
 home:
   subtitle: A sua lista, com a melhor oferta atual em primeiro lugar.
-  sampleDataNotice: Preços de demonstração — dados de exemplo locais, não são ofertas em tempo real.
   trackedProducts: $count acompanhados
+  refreshProgress: "A atualizar preços · $completed de $total fontes verificadas"
   refreshAll: Atualizar todos
   refreshing: A atualizar
+  refreshAllComplete: "Todas as fontes foram verificadas."
+  refreshAllPartial: "Atualização concluída; não foi possível verificar $failed fontes."
+  refreshBlockedProduct: Já está a ser verificado um produto
+  refreshBlockedAllProducts: Todos os produtos estão a ser verificados
+  sourceRefreshChecking: "A verificar $count fontes"
+  sourceRefreshFailed: "Não foi possível verificar $merchant"
+  sourceRefreshFailedCount: "Não foi possível verificar $count fontes"
   bestPrice: Melhor preço
   noAvailablePrice: Sem preço disponível
   noStore: Nenhuma loja com stock
   storeOffers: "Ofertas: $count"
   updatedAt: Atualizado às $time
+  priceDrop: "↓ $amount desde $date"
+  priceIncrease: "↑ $amount desde $date"
   emptyTitle: Nenhum produto acompanhado
   emptyDescription: Os produtos acompanhados aparecem aqui com a melhor oferta disponível.
-
   addProductTitle: Adicionar produto
   addProductDescription: Cole um link de produto para começar a acompanhá-lo.
   productNameLabel: Nome do produto
-  productUrlLabel: Link do produto
-  productUrlHint: https://exemplo.com/produto
   productNameRequired: Introduza o nome do produto.
-  productUrlInvalid: Introduza um link HTTPS válido.
   addProductButton: Adicionar produto
   addProductSaving: A guardar
-  productSourceSupportDescription: Os links podem ser guardados agora. A atualização automática só está disponível para sites suportados.
+  searchHint: Pesquisar nos seus produtos acompanhados
+  searchClearTooltip: Limpar pesquisa
+  noSearchResultsTitle: Sem resultados
+  noSearchResultsDescription: Nenhum produto acompanhado corresponde a "$query".
 
 productDetails:
+  priceDrop: "↓ $amount desde $date"
+  priceIncrease: "↑ $amount desde $date"
   title: Detalhes do produto
   backTooltip: Voltar
   refresh: Atualizar
   refreshing: A atualizar
+  refreshProgress: "$completed de $total fontes verificadas"
+  otherProductsRefreshing: "Outros produtos a atualizar"
+  refreshBlockedThisProduct: Este produto já está a ser verificado
+  refreshBlockedOtherProduct: Outro produto está a ser verificado
+  refreshBlockedAllProducts: Todos os produtos estão a ser verificados
+  queued: Em fila
+  checking: A verificar
+  cannotAccessNow: Não é possível aceder agora
+  refreshComplete: "As $total fontes foram verificadas."
+  refreshPartial: "$completed de $total fontes verificadas; não foi possível aceder a $failed."
   bestPrice: Melhor preço
   offers: "Ofertas em lojas: $count"
   availableOffers: Ofertas disponíveis
@@ -38,6 +64,10 @@ productDetails:
   noOffers: Ainda não existem ofertas.
   available: Em stock
   unavailable: Sem stock
+  filterAll: Todas
+  filterAvailable: Disponível
+  filterUnavailable: Indisponível
+  filterIssues: Problemas
   checkedAt: Verificado às $time
   productNotFound: Produto não encontrado
   productNotFoundDescription: Volte aos produtos acompanhados e escolha novamente um artigo.
@@ -45,6 +75,35 @@ productDetails:
   refreshUnsupported: Este site ainda não fornece um preço legível.
   refreshNetworkError: Não foi possível contactar o site. O último preço continua visível.
   refreshInvalidData: O site devolveu um preço ilegível. O último preço continua visível.
+  sourcesTitle: Fontes
+  openOfferFailed: Não foi possível abrir a página da loja.
+  openOfferHint: Abre no seu navegador
+  addSourceTooltip: Adicionar fonte
+  addSourceTitle: Adicionar uma fonte
+  editSourceTitle: Editar fonte
+  sourceUrlLabel: Link do site
+  sourceUrlHint: https://exemplo.com/produto
+  sourceUrlRequired: Introduza um link do site.
+  savingSource: A guardar
+  addSourceButton: Adicionar fonte
+  saveSourceButton: Guardar
+  noSourcesTitle: Ainda sem fontes
+  noSourcesDescription: Adicione o link de uma loja para começar a comparar preços deste produto.
+  editSourceTooltip: Editar fonte
+  deleteSourceTooltip: Eliminar fonte
+  deleteSourceTitle: Eliminar esta fonte?
+  deleteSourceMessage: Isto remove $merchant e a sua oferta deste produto.
+  deleteSourceConfirmLabel: Eliminar
+  renameProductTooltip: Renomear produto
+  renameProductTitle: Renomear produto
+  productNameLabel: Nome do produto
+  renameProductRequired: Introduza o nome do produto.
+  renameProductButton: Guardar
+  renameProductSaving: A guardar
+  deleteProductTooltip: Eliminar produto
+  deleteProductTitle: Eliminar este produto?
+  deleteProductMessage: Isto remove $name e todas as suas fontes e ofertas guardadas.
+  deleteProductConfirmLabel: Eliminar
 
 settings:
   title: Definições
@@ -71,6 +130,12 @@ settings:
       everyThreeHours: A cada 3 horas
       everySixHours: A cada 6 horas
       everyTwelveHours: A cada 12 horas
+    browserRefresh:
+      title: Atualização pelo navegador
+      description: Muitas lojas bloqueiam pedidos simples. Ative um navegador em segundo plano para melhorar a cobertura automática de preços.
+      enabledDescription: A atualização pelo navegador pode usar mais bateria e dados ao verificar lojas em segundo plano.
+      status: A atualização pelo navegador está ativa. O Android pode atrasar o trabalho em segundo plano.
+      fixRestrictions: Corrigir restrições de segundo plano
     updates:
       title: Atualizações
       version: Versão $version
@@ -82,6 +147,32 @@ settings:
       copyright: © 2026 Soneka96
       privacyPolicy: Privacidade e utilização de dados
       notImplemented: Privacidade e utilização de dados ainda não está implementado.
+  notifications:
+    title: Notificações
+    priceAlertsSectionLabel: Alertas de preço
+    refreshActivitySectionLabel: Atividade de atualização
+    priceAlerts:
+      title: Notificações de descida de preço
+      description: Receba uma notificação quando um produto atingir um novo melhor preço.
+      enabledDescription: As notificações estão ativas para novos melhores preços. É necessária permissão do Android.
+      notificationTitle: "$name está mais barato"
+      notificationBody: "Agora $current, antes $previous."
+      permissionDenied: A permissão de notificações do Android não foi concedida, por isso os alertas permanecem desligados.
+    priceIncreaseAlerts:
+      title: Notificações de subida de preço
+      description: Receba uma notificação quando o melhor preço de um produto seguido subir.
+      enabledDescription: As notificações estão ativas para subidas de preço. É necessária permissão do Android.
+      notificationTitle: "$name ficou mais caro"
+      notificationBody: "Agora $current, antes $previous."
+      permissionDenied: A permissão de notificações do Android não foi concedida, por isso os alertas permanecem desligados.
+    refreshCompletedAlerts:
+      title: Notificações de atualização concluída
+      description: Receba uma notificação sempre que uma atualização em segundo plano terminar, mesmo sem alterações.
+      enabledDescription: As notificações estão ativas para todas as atualizações em segundo plano concluídas. É necessária permissão do Android.
+      permissionDenied: A permissão de notificações do Android não foi concedida, por isso as notificações de atualização permanecem desligadas.
+    showRefreshProgress:
+      title: Mostrar progresso da atualização
+      description: Mostra uma barra de progresso na notificação de atualização em segundo plano enquanto os preços são verificados.
 
 enums:
   cornerStyle:
@@ -93,3 +184,4 @@ enums:
   settingsCategory:
     general: Geral
     appearance: Aparência
+    notifications: Notificações

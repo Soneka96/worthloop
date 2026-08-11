@@ -50,8 +50,49 @@ class $ProductTableTable extends ProductTable
         type: DriftSqlType.dateTime,
         requiredDuringInsert: true,
       );
+  static const VerificationMeta _previousBestPriceMinorUnitsMeta =
+      const VerificationMeta('previousBestPriceMinorUnits');
   @override
-  List<GeneratedColumn> get $columns => [id, name, imageUrl, lastUpdatedAt];
+  late final GeneratedColumn<int> previousBestPriceMinorUnits =
+      GeneratedColumn<int>(
+        'previous_best_price_minor_units',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _previousBestPriceCurrencyCodeMeta =
+      const VerificationMeta('previousBestPriceCurrencyCode');
+  @override
+  late final GeneratedColumn<String> previousBestPriceCurrencyCode =
+      GeneratedColumn<String>(
+        'previous_best_price_currency_code',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _bestPriceChangedAtMeta =
+      const VerificationMeta('bestPriceChangedAt');
+  @override
+  late final GeneratedColumn<DateTime> bestPriceChangedAt =
+      GeneratedColumn<DateTime>(
+        'best_price_changed_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    imageUrl,
+    lastUpdatedAt,
+    previousBestPriceMinorUnits,
+    previousBestPriceCurrencyCode,
+    bestPriceChangedAt,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -94,6 +135,33 @@ class $ProductTableTable extends ProductTable
     } else if (isInserting) {
       context.missing(_lastUpdatedAtMeta);
     }
+    if (data.containsKey('previous_best_price_minor_units')) {
+      context.handle(
+        _previousBestPriceMinorUnitsMeta,
+        previousBestPriceMinorUnits.isAcceptableOrUnknown(
+          data['previous_best_price_minor_units']!,
+          _previousBestPriceMinorUnitsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('previous_best_price_currency_code')) {
+      context.handle(
+        _previousBestPriceCurrencyCodeMeta,
+        previousBestPriceCurrencyCode.isAcceptableOrUnknown(
+          data['previous_best_price_currency_code']!,
+          _previousBestPriceCurrencyCodeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('best_price_changed_at')) {
+      context.handle(
+        _bestPriceChangedAtMeta,
+        bestPriceChangedAt.isAcceptableOrUnknown(
+          data['best_price_changed_at']!,
+          _bestPriceChangedAtMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -119,6 +187,18 @@ class $ProductTableTable extends ProductTable
         DriftSqlType.dateTime,
         data['${effectivePrefix}last_updated_at'],
       )!,
+      previousBestPriceMinorUnits: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}previous_best_price_minor_units'],
+      ),
+      previousBestPriceCurrencyCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}previous_best_price_currency_code'],
+      ),
+      bestPriceChangedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}best_price_changed_at'],
+      ),
     );
   }
 
@@ -140,11 +220,23 @@ class ProductRow extends DataClass implements Insertable<ProductRow> {
 
   /// When any offer for the product was last updated.
   final DateTime lastUpdatedAt;
+
+  /// Previous best price in the currency's minor unit.
+  final int? previousBestPriceMinorUnits;
+
+  /// ISO 4217 currency code for the previous best price.
+  final String? previousBestPriceCurrencyCode;
+
+  /// When the product's best price last changed.
+  final DateTime? bestPriceChangedAt;
   const ProductRow({
     required this.id,
     required this.name,
     this.imageUrl,
     required this.lastUpdatedAt,
+    this.previousBestPriceMinorUnits,
+    this.previousBestPriceCurrencyCode,
+    this.bestPriceChangedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -155,6 +247,19 @@ class ProductRow extends DataClass implements Insertable<ProductRow> {
       map['image_url'] = Variable<String>(imageUrl);
     }
     map['last_updated_at'] = Variable<DateTime>(lastUpdatedAt);
+    if (!nullToAbsent || previousBestPriceMinorUnits != null) {
+      map['previous_best_price_minor_units'] = Variable<int>(
+        previousBestPriceMinorUnits,
+      );
+    }
+    if (!nullToAbsent || previousBestPriceCurrencyCode != null) {
+      map['previous_best_price_currency_code'] = Variable<String>(
+        previousBestPriceCurrencyCode,
+      );
+    }
+    if (!nullToAbsent || bestPriceChangedAt != null) {
+      map['best_price_changed_at'] = Variable<DateTime>(bestPriceChangedAt);
+    }
     return map;
   }
 
@@ -166,6 +271,17 @@ class ProductRow extends DataClass implements Insertable<ProductRow> {
           ? const Value.absent()
           : Value(imageUrl),
       lastUpdatedAt: Value(lastUpdatedAt),
+      previousBestPriceMinorUnits:
+          previousBestPriceMinorUnits == null && nullToAbsent
+          ? const Value.absent()
+          : Value(previousBestPriceMinorUnits),
+      previousBestPriceCurrencyCode:
+          previousBestPriceCurrencyCode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(previousBestPriceCurrencyCode),
+      bestPriceChangedAt: bestPriceChangedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bestPriceChangedAt),
     );
   }
 
@@ -179,6 +295,15 @@ class ProductRow extends DataClass implements Insertable<ProductRow> {
       name: serializer.fromJson<String>(json['name']),
       imageUrl: serializer.fromJson<String?>(json['imageUrl']),
       lastUpdatedAt: serializer.fromJson<DateTime>(json['lastUpdatedAt']),
+      previousBestPriceMinorUnits: serializer.fromJson<int?>(
+        json['previousBestPriceMinorUnits'],
+      ),
+      previousBestPriceCurrencyCode: serializer.fromJson<String?>(
+        json['previousBestPriceCurrencyCode'],
+      ),
+      bestPriceChangedAt: serializer.fromJson<DateTime?>(
+        json['bestPriceChangedAt'],
+      ),
     );
   }
   @override
@@ -189,6 +314,13 @@ class ProductRow extends DataClass implements Insertable<ProductRow> {
       'name': serializer.toJson<String>(name),
       'imageUrl': serializer.toJson<String?>(imageUrl),
       'lastUpdatedAt': serializer.toJson<DateTime>(lastUpdatedAt),
+      'previousBestPriceMinorUnits': serializer.toJson<int?>(
+        previousBestPriceMinorUnits,
+      ),
+      'previousBestPriceCurrencyCode': serializer.toJson<String?>(
+        previousBestPriceCurrencyCode,
+      ),
+      'bestPriceChangedAt': serializer.toJson<DateTime?>(bestPriceChangedAt),
     };
   }
 
@@ -197,11 +329,23 @@ class ProductRow extends DataClass implements Insertable<ProductRow> {
     String? name,
     Value<String?> imageUrl = const Value.absent(),
     DateTime? lastUpdatedAt,
+    Value<int?> previousBestPriceMinorUnits = const Value.absent(),
+    Value<String?> previousBestPriceCurrencyCode = const Value.absent(),
+    Value<DateTime?> bestPriceChangedAt = const Value.absent(),
   }) => ProductRow(
     id: id ?? this.id,
     name: name ?? this.name,
     imageUrl: imageUrl.present ? imageUrl.value : this.imageUrl,
     lastUpdatedAt: lastUpdatedAt ?? this.lastUpdatedAt,
+    previousBestPriceMinorUnits: previousBestPriceMinorUnits.present
+        ? previousBestPriceMinorUnits.value
+        : this.previousBestPriceMinorUnits,
+    previousBestPriceCurrencyCode: previousBestPriceCurrencyCode.present
+        ? previousBestPriceCurrencyCode.value
+        : this.previousBestPriceCurrencyCode,
+    bestPriceChangedAt: bestPriceChangedAt.present
+        ? bestPriceChangedAt.value
+        : this.bestPriceChangedAt,
   );
   ProductRow copyWithCompanion(ProductTableCompanion data) {
     return ProductRow(
@@ -211,6 +355,15 @@ class ProductRow extends DataClass implements Insertable<ProductRow> {
       lastUpdatedAt: data.lastUpdatedAt.present
           ? data.lastUpdatedAt.value
           : this.lastUpdatedAt,
+      previousBestPriceMinorUnits: data.previousBestPriceMinorUnits.present
+          ? data.previousBestPriceMinorUnits.value
+          : this.previousBestPriceMinorUnits,
+      previousBestPriceCurrencyCode: data.previousBestPriceCurrencyCode.present
+          ? data.previousBestPriceCurrencyCode.value
+          : this.previousBestPriceCurrencyCode,
+      bestPriceChangedAt: data.bestPriceChangedAt.present
+          ? data.bestPriceChangedAt.value
+          : this.bestPriceChangedAt,
     );
   }
 
@@ -220,13 +373,26 @@ class ProductRow extends DataClass implements Insertable<ProductRow> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('imageUrl: $imageUrl, ')
-          ..write('lastUpdatedAt: $lastUpdatedAt')
+          ..write('lastUpdatedAt: $lastUpdatedAt, ')
+          ..write('previousBestPriceMinorUnits: $previousBestPriceMinorUnits, ')
+          ..write(
+            'previousBestPriceCurrencyCode: $previousBestPriceCurrencyCode, ',
+          )
+          ..write('bestPriceChangedAt: $bestPriceChangedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, imageUrl, lastUpdatedAt);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    imageUrl,
+    lastUpdatedAt,
+    previousBestPriceMinorUnits,
+    previousBestPriceCurrencyCode,
+    bestPriceChangedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -234,7 +400,12 @@ class ProductRow extends DataClass implements Insertable<ProductRow> {
           other.id == this.id &&
           other.name == this.name &&
           other.imageUrl == this.imageUrl &&
-          other.lastUpdatedAt == this.lastUpdatedAt);
+          other.lastUpdatedAt == this.lastUpdatedAt &&
+          other.previousBestPriceMinorUnits ==
+              this.previousBestPriceMinorUnits &&
+          other.previousBestPriceCurrencyCode ==
+              this.previousBestPriceCurrencyCode &&
+          other.bestPriceChangedAt == this.bestPriceChangedAt);
 }
 
 class ProductTableCompanion extends UpdateCompanion<ProductRow> {
@@ -242,12 +413,18 @@ class ProductTableCompanion extends UpdateCompanion<ProductRow> {
   final Value<String> name;
   final Value<String?> imageUrl;
   final Value<DateTime> lastUpdatedAt;
+  final Value<int?> previousBestPriceMinorUnits;
+  final Value<String?> previousBestPriceCurrencyCode;
+  final Value<DateTime?> bestPriceChangedAt;
   final Value<int> rowid;
   const ProductTableCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.imageUrl = const Value.absent(),
     this.lastUpdatedAt = const Value.absent(),
+    this.previousBestPriceMinorUnits = const Value.absent(),
+    this.previousBestPriceCurrencyCode = const Value.absent(),
+    this.bestPriceChangedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ProductTableCompanion.insert({
@@ -255,6 +432,9 @@ class ProductTableCompanion extends UpdateCompanion<ProductRow> {
     required String name,
     this.imageUrl = const Value.absent(),
     required DateTime lastUpdatedAt,
+    this.previousBestPriceMinorUnits = const Value.absent(),
+    this.previousBestPriceCurrencyCode = const Value.absent(),
+    this.bestPriceChangedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        name = Value(name),
@@ -264,6 +444,9 @@ class ProductTableCompanion extends UpdateCompanion<ProductRow> {
     Expression<String>? name,
     Expression<String>? imageUrl,
     Expression<DateTime>? lastUpdatedAt,
+    Expression<int>? previousBestPriceMinorUnits,
+    Expression<String>? previousBestPriceCurrencyCode,
+    Expression<DateTime>? bestPriceChangedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -271,6 +454,12 @@ class ProductTableCompanion extends UpdateCompanion<ProductRow> {
       if (name != null) 'name': name,
       if (imageUrl != null) 'image_url': imageUrl,
       if (lastUpdatedAt != null) 'last_updated_at': lastUpdatedAt,
+      if (previousBestPriceMinorUnits != null)
+        'previous_best_price_minor_units': previousBestPriceMinorUnits,
+      if (previousBestPriceCurrencyCode != null)
+        'previous_best_price_currency_code': previousBestPriceCurrencyCode,
+      if (bestPriceChangedAt != null)
+        'best_price_changed_at': bestPriceChangedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -280,6 +469,9 @@ class ProductTableCompanion extends UpdateCompanion<ProductRow> {
     Value<String>? name,
     Value<String?>? imageUrl,
     Value<DateTime>? lastUpdatedAt,
+    Value<int?>? previousBestPriceMinorUnits,
+    Value<String?>? previousBestPriceCurrencyCode,
+    Value<DateTime?>? bestPriceChangedAt,
     Value<int>? rowid,
   }) {
     return ProductTableCompanion(
@@ -287,6 +479,11 @@ class ProductTableCompanion extends UpdateCompanion<ProductRow> {
       name: name ?? this.name,
       imageUrl: imageUrl ?? this.imageUrl,
       lastUpdatedAt: lastUpdatedAt ?? this.lastUpdatedAt,
+      previousBestPriceMinorUnits:
+          previousBestPriceMinorUnits ?? this.previousBestPriceMinorUnits,
+      previousBestPriceCurrencyCode:
+          previousBestPriceCurrencyCode ?? this.previousBestPriceCurrencyCode,
+      bestPriceChangedAt: bestPriceChangedAt ?? this.bestPriceChangedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -306,6 +503,21 @@ class ProductTableCompanion extends UpdateCompanion<ProductRow> {
     if (lastUpdatedAt.present) {
       map['last_updated_at'] = Variable<DateTime>(lastUpdatedAt.value);
     }
+    if (previousBestPriceMinorUnits.present) {
+      map['previous_best_price_minor_units'] = Variable<int>(
+        previousBestPriceMinorUnits.value,
+      );
+    }
+    if (previousBestPriceCurrencyCode.present) {
+      map['previous_best_price_currency_code'] = Variable<String>(
+        previousBestPriceCurrencyCode.value,
+      );
+    }
+    if (bestPriceChangedAt.present) {
+      map['best_price_changed_at'] = Variable<DateTime>(
+        bestPriceChangedAt.value,
+      );
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -319,6 +531,11 @@ class ProductTableCompanion extends UpdateCompanion<ProductRow> {
           ..write('name: $name, ')
           ..write('imageUrl: $imageUrl, ')
           ..write('lastUpdatedAt: $lastUpdatedAt, ')
+          ..write('previousBestPriceMinorUnits: $previousBestPriceMinorUnits, ')
+          ..write(
+            'previousBestPriceCurrencyCode: $previousBestPriceCurrencyCode, ',
+          )
+          ..write('bestPriceChangedAt: $bestPriceChangedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -374,6 +591,123 @@ class $ProductSourceTableTable extends ProductSourceTable
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _minorUnitsMeta = const VerificationMeta(
+    'minorUnits',
+  );
+  @override
+  late final GeneratedColumn<int> minorUnits = GeneratedColumn<int>(
+    'minor_units',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _currencyCodeMeta = const VerificationMeta(
+    'currencyCode',
+  );
+  @override
+  late final GeneratedColumn<String> currencyCode = GeneratedColumn<String>(
+    'currency_code',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _previousPriceMinorUnitsMeta =
+      const VerificationMeta('previousPriceMinorUnits');
+  @override
+  late final GeneratedColumn<int> previousPriceMinorUnits =
+      GeneratedColumn<int>(
+        'previous_price_minor_units',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _previousPriceCurrencyCodeMeta =
+      const VerificationMeta('previousPriceCurrencyCode');
+  @override
+  late final GeneratedColumn<String> previousPriceCurrencyCode =
+      GeneratedColumn<String>(
+        'previous_price_currency_code',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _isAvailableMeta = const VerificationMeta(
+    'isAvailable',
+  );
+  @override
+  late final GeneratedColumn<bool> isAvailable = GeneratedColumn<bool>(
+    'is_available',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_available" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _lastCheckedAtMeta = const VerificationMeta(
+    'lastCheckedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastCheckedAt =
+      GeneratedColumn<DateTime>(
+        'last_checked_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _priceChangedAtMeta = const VerificationMeta(
+    'priceChangedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> priceChangedAt =
+      GeneratedColumn<DateTime>(
+        'price_changed_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _lastRefreshStatusMeta = const VerificationMeta(
+    'lastRefreshStatus',
+  );
+  @override
+  late final GeneratedColumn<String> lastRefreshStatus =
+      GeneratedColumn<String>(
+        'last_refresh_status',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _lastRefreshAtMeta = const VerificationMeta(
+    'lastRefreshAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastRefreshAt =
+      GeneratedColumn<DateTime>(
+        'last_refresh_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _liveStatusMeta = const VerificationMeta(
+    'liveStatus',
+  );
+  @override
+  late final GeneratedColumn<String> liveStatus = GeneratedColumn<String>(
+    'live_status',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -391,6 +725,16 @@ class $ProductSourceTableTable extends ProductSourceTable
     productId,
     url,
     merchantDomain,
+    minorUnits,
+    currencyCode,
+    previousPriceMinorUnits,
+    previousPriceCurrencyCode,
+    isAvailable,
+    lastCheckedAt,
+    priceChangedAt,
+    lastRefreshStatus,
+    lastRefreshAt,
+    liveStatus,
     createdAt,
   ];
   @override
@@ -437,6 +781,90 @@ class $ProductSourceTableTable extends ProductSourceTable
     } else if (isInserting) {
       context.missing(_merchantDomainMeta);
     }
+    if (data.containsKey('minor_units')) {
+      context.handle(
+        _minorUnitsMeta,
+        minorUnits.isAcceptableOrUnknown(data['minor_units']!, _minorUnitsMeta),
+      );
+    }
+    if (data.containsKey('currency_code')) {
+      context.handle(
+        _currencyCodeMeta,
+        currencyCode.isAcceptableOrUnknown(
+          data['currency_code']!,
+          _currencyCodeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('previous_price_minor_units')) {
+      context.handle(
+        _previousPriceMinorUnitsMeta,
+        previousPriceMinorUnits.isAcceptableOrUnknown(
+          data['previous_price_minor_units']!,
+          _previousPriceMinorUnitsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('previous_price_currency_code')) {
+      context.handle(
+        _previousPriceCurrencyCodeMeta,
+        previousPriceCurrencyCode.isAcceptableOrUnknown(
+          data['previous_price_currency_code']!,
+          _previousPriceCurrencyCodeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_available')) {
+      context.handle(
+        _isAvailableMeta,
+        isAvailable.isAcceptableOrUnknown(
+          data['is_available']!,
+          _isAvailableMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_checked_at')) {
+      context.handle(
+        _lastCheckedAtMeta,
+        lastCheckedAt.isAcceptableOrUnknown(
+          data['last_checked_at']!,
+          _lastCheckedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('price_changed_at')) {
+      context.handle(
+        _priceChangedAtMeta,
+        priceChangedAt.isAcceptableOrUnknown(
+          data['price_changed_at']!,
+          _priceChangedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_refresh_status')) {
+      context.handle(
+        _lastRefreshStatusMeta,
+        lastRefreshStatus.isAcceptableOrUnknown(
+          data['last_refresh_status']!,
+          _lastRefreshStatusMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_refresh_at')) {
+      context.handle(
+        _lastRefreshAtMeta,
+        lastRefreshAt.isAcceptableOrUnknown(
+          data['last_refresh_at']!,
+          _lastRefreshAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('live_status')) {
+      context.handle(
+        _liveStatusMeta,
+        liveStatus.isAcceptableOrUnknown(data['live_status']!, _liveStatusMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -450,6 +878,10 @@ class $ProductSourceTableTable extends ProductSourceTable
 
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {productId, url},
+  ];
   @override
   ProductSourceRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -470,6 +902,46 @@ class $ProductSourceTableTable extends ProductSourceTable
         DriftSqlType.string,
         data['${effectivePrefix}merchant_domain'],
       )!,
+      minorUnits: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}minor_units'],
+      ),
+      currencyCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}currency_code'],
+      ),
+      previousPriceMinorUnits: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}previous_price_minor_units'],
+      ),
+      previousPriceCurrencyCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}previous_price_currency_code'],
+      ),
+      isAvailable: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_available'],
+      ),
+      lastCheckedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_checked_at'],
+      ),
+      priceChangedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}price_changed_at'],
+      ),
+      lastRefreshStatus: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}last_refresh_status'],
+      ),
+      lastRefreshAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_refresh_at'],
+      ),
+      liveStatus: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}live_status'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -497,6 +969,37 @@ class ProductSourceRow extends DataClass
   /// Lower-case merchant domain extracted from [url].
   final String merchantDomain;
 
+  /// Exact price in the currency's minor unit, once an offer is fetched.
+  final int? minorUnits;
+
+  /// ISO 4217 currency code, once an offer is fetched.
+  final String? currencyCode;
+
+  /// Previous price in the currency's minor unit, after a price change.
+  final int? previousPriceMinorUnits;
+
+  /// ISO 4217 currency code for the previous price.
+  final String? previousPriceCurrencyCode;
+
+  /// Whether the merchant currently has the product available, once an
+  /// offer is fetched.
+  final bool? isAvailable;
+
+  /// When this source's offer was last checked, once fetched.
+  final DateTime? lastCheckedAt;
+
+  /// When the source price last changed.
+  final DateTime? priceChangedAt;
+
+  /// The outcome of the most recently completed refresh attempt.
+  final String? lastRefreshStatus;
+
+  /// When the most recently completed refresh attempt finished.
+  final DateTime? lastRefreshAt;
+
+  /// Live progress of a refresh currently in flight; null when none is.
+  final String? liveStatus;
+
   /// When the source was added.
   final DateTime createdAt;
   const ProductSourceRow({
@@ -504,6 +1007,16 @@ class ProductSourceRow extends DataClass
     required this.productId,
     required this.url,
     required this.merchantDomain,
+    this.minorUnits,
+    this.currencyCode,
+    this.previousPriceMinorUnits,
+    this.previousPriceCurrencyCode,
+    this.isAvailable,
+    this.lastCheckedAt,
+    this.priceChangedAt,
+    this.lastRefreshStatus,
+    this.lastRefreshAt,
+    this.liveStatus,
     required this.createdAt,
   });
   @override
@@ -513,6 +1026,40 @@ class ProductSourceRow extends DataClass
     map['product_id'] = Variable<String>(productId);
     map['url'] = Variable<String>(url);
     map['merchant_domain'] = Variable<String>(merchantDomain);
+    if (!nullToAbsent || minorUnits != null) {
+      map['minor_units'] = Variable<int>(minorUnits);
+    }
+    if (!nullToAbsent || currencyCode != null) {
+      map['currency_code'] = Variable<String>(currencyCode);
+    }
+    if (!nullToAbsent || previousPriceMinorUnits != null) {
+      map['previous_price_minor_units'] = Variable<int>(
+        previousPriceMinorUnits,
+      );
+    }
+    if (!nullToAbsent || previousPriceCurrencyCode != null) {
+      map['previous_price_currency_code'] = Variable<String>(
+        previousPriceCurrencyCode,
+      );
+    }
+    if (!nullToAbsent || isAvailable != null) {
+      map['is_available'] = Variable<bool>(isAvailable);
+    }
+    if (!nullToAbsent || lastCheckedAt != null) {
+      map['last_checked_at'] = Variable<DateTime>(lastCheckedAt);
+    }
+    if (!nullToAbsent || priceChangedAt != null) {
+      map['price_changed_at'] = Variable<DateTime>(priceChangedAt);
+    }
+    if (!nullToAbsent || lastRefreshStatus != null) {
+      map['last_refresh_status'] = Variable<String>(lastRefreshStatus);
+    }
+    if (!nullToAbsent || lastRefreshAt != null) {
+      map['last_refresh_at'] = Variable<DateTime>(lastRefreshAt);
+    }
+    if (!nullToAbsent || liveStatus != null) {
+      map['live_status'] = Variable<String>(liveStatus);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -523,6 +1070,37 @@ class ProductSourceRow extends DataClass
       productId: Value(productId),
       url: Value(url),
       merchantDomain: Value(merchantDomain),
+      minorUnits: minorUnits == null && nullToAbsent
+          ? const Value.absent()
+          : Value(minorUnits),
+      currencyCode: currencyCode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(currencyCode),
+      previousPriceMinorUnits: previousPriceMinorUnits == null && nullToAbsent
+          ? const Value.absent()
+          : Value(previousPriceMinorUnits),
+      previousPriceCurrencyCode:
+          previousPriceCurrencyCode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(previousPriceCurrencyCode),
+      isAvailable: isAvailable == null && nullToAbsent
+          ? const Value.absent()
+          : Value(isAvailable),
+      lastCheckedAt: lastCheckedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastCheckedAt),
+      priceChangedAt: priceChangedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(priceChangedAt),
+      lastRefreshStatus: lastRefreshStatus == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastRefreshStatus),
+      lastRefreshAt: lastRefreshAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastRefreshAt),
+      liveStatus: liveStatus == null && nullToAbsent
+          ? const Value.absent()
+          : Value(liveStatus),
       createdAt: Value(createdAt),
     );
   }
@@ -537,6 +1115,22 @@ class ProductSourceRow extends DataClass
       productId: serializer.fromJson<String>(json['productId']),
       url: serializer.fromJson<String>(json['url']),
       merchantDomain: serializer.fromJson<String>(json['merchantDomain']),
+      minorUnits: serializer.fromJson<int?>(json['minorUnits']),
+      currencyCode: serializer.fromJson<String?>(json['currencyCode']),
+      previousPriceMinorUnits: serializer.fromJson<int?>(
+        json['previousPriceMinorUnits'],
+      ),
+      previousPriceCurrencyCode: serializer.fromJson<String?>(
+        json['previousPriceCurrencyCode'],
+      ),
+      isAvailable: serializer.fromJson<bool?>(json['isAvailable']),
+      lastCheckedAt: serializer.fromJson<DateTime?>(json['lastCheckedAt']),
+      priceChangedAt: serializer.fromJson<DateTime?>(json['priceChangedAt']),
+      lastRefreshStatus: serializer.fromJson<String?>(
+        json['lastRefreshStatus'],
+      ),
+      lastRefreshAt: serializer.fromJson<DateTime?>(json['lastRefreshAt']),
+      liveStatus: serializer.fromJson<String?>(json['liveStatus']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -548,6 +1142,20 @@ class ProductSourceRow extends DataClass
       'productId': serializer.toJson<String>(productId),
       'url': serializer.toJson<String>(url),
       'merchantDomain': serializer.toJson<String>(merchantDomain),
+      'minorUnits': serializer.toJson<int?>(minorUnits),
+      'currencyCode': serializer.toJson<String?>(currencyCode),
+      'previousPriceMinorUnits': serializer.toJson<int?>(
+        previousPriceMinorUnits,
+      ),
+      'previousPriceCurrencyCode': serializer.toJson<String?>(
+        previousPriceCurrencyCode,
+      ),
+      'isAvailable': serializer.toJson<bool?>(isAvailable),
+      'lastCheckedAt': serializer.toJson<DateTime?>(lastCheckedAt),
+      'priceChangedAt': serializer.toJson<DateTime?>(priceChangedAt),
+      'lastRefreshStatus': serializer.toJson<String?>(lastRefreshStatus),
+      'lastRefreshAt': serializer.toJson<DateTime?>(lastRefreshAt),
+      'liveStatus': serializer.toJson<String?>(liveStatus),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -557,12 +1165,44 @@ class ProductSourceRow extends DataClass
     String? productId,
     String? url,
     String? merchantDomain,
+    Value<int?> minorUnits = const Value.absent(),
+    Value<String?> currencyCode = const Value.absent(),
+    Value<int?> previousPriceMinorUnits = const Value.absent(),
+    Value<String?> previousPriceCurrencyCode = const Value.absent(),
+    Value<bool?> isAvailable = const Value.absent(),
+    Value<DateTime?> lastCheckedAt = const Value.absent(),
+    Value<DateTime?> priceChangedAt = const Value.absent(),
+    Value<String?> lastRefreshStatus = const Value.absent(),
+    Value<DateTime?> lastRefreshAt = const Value.absent(),
+    Value<String?> liveStatus = const Value.absent(),
     DateTime? createdAt,
   }) => ProductSourceRow(
     id: id ?? this.id,
     productId: productId ?? this.productId,
     url: url ?? this.url,
     merchantDomain: merchantDomain ?? this.merchantDomain,
+    minorUnits: minorUnits.present ? minorUnits.value : this.minorUnits,
+    currencyCode: currencyCode.present ? currencyCode.value : this.currencyCode,
+    previousPriceMinorUnits: previousPriceMinorUnits.present
+        ? previousPriceMinorUnits.value
+        : this.previousPriceMinorUnits,
+    previousPriceCurrencyCode: previousPriceCurrencyCode.present
+        ? previousPriceCurrencyCode.value
+        : this.previousPriceCurrencyCode,
+    isAvailable: isAvailable.present ? isAvailable.value : this.isAvailable,
+    lastCheckedAt: lastCheckedAt.present
+        ? lastCheckedAt.value
+        : this.lastCheckedAt,
+    priceChangedAt: priceChangedAt.present
+        ? priceChangedAt.value
+        : this.priceChangedAt,
+    lastRefreshStatus: lastRefreshStatus.present
+        ? lastRefreshStatus.value
+        : this.lastRefreshStatus,
+    lastRefreshAt: lastRefreshAt.present
+        ? lastRefreshAt.value
+        : this.lastRefreshAt,
+    liveStatus: liveStatus.present ? liveStatus.value : this.liveStatus,
     createdAt: createdAt ?? this.createdAt,
   );
   ProductSourceRow copyWithCompanion(ProductSourceTableCompanion data) {
@@ -573,6 +1213,36 @@ class ProductSourceRow extends DataClass
       merchantDomain: data.merchantDomain.present
           ? data.merchantDomain.value
           : this.merchantDomain,
+      minorUnits: data.minorUnits.present
+          ? data.minorUnits.value
+          : this.minorUnits,
+      currencyCode: data.currencyCode.present
+          ? data.currencyCode.value
+          : this.currencyCode,
+      previousPriceMinorUnits: data.previousPriceMinorUnits.present
+          ? data.previousPriceMinorUnits.value
+          : this.previousPriceMinorUnits,
+      previousPriceCurrencyCode: data.previousPriceCurrencyCode.present
+          ? data.previousPriceCurrencyCode.value
+          : this.previousPriceCurrencyCode,
+      isAvailable: data.isAvailable.present
+          ? data.isAvailable.value
+          : this.isAvailable,
+      lastCheckedAt: data.lastCheckedAt.present
+          ? data.lastCheckedAt.value
+          : this.lastCheckedAt,
+      priceChangedAt: data.priceChangedAt.present
+          ? data.priceChangedAt.value
+          : this.priceChangedAt,
+      lastRefreshStatus: data.lastRefreshStatus.present
+          ? data.lastRefreshStatus.value
+          : this.lastRefreshStatus,
+      lastRefreshAt: data.lastRefreshAt.present
+          ? data.lastRefreshAt.value
+          : this.lastRefreshAt,
+      liveStatus: data.liveStatus.present
+          ? data.liveStatus.value
+          : this.liveStatus,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -584,14 +1254,39 @@ class ProductSourceRow extends DataClass
           ..write('productId: $productId, ')
           ..write('url: $url, ')
           ..write('merchantDomain: $merchantDomain, ')
+          ..write('minorUnits: $minorUnits, ')
+          ..write('currencyCode: $currencyCode, ')
+          ..write('previousPriceMinorUnits: $previousPriceMinorUnits, ')
+          ..write('previousPriceCurrencyCode: $previousPriceCurrencyCode, ')
+          ..write('isAvailable: $isAvailable, ')
+          ..write('lastCheckedAt: $lastCheckedAt, ')
+          ..write('priceChangedAt: $priceChangedAt, ')
+          ..write('lastRefreshStatus: $lastRefreshStatus, ')
+          ..write('lastRefreshAt: $lastRefreshAt, ')
+          ..write('liveStatus: $liveStatus, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, productId, url, merchantDomain, createdAt);
+  int get hashCode => Object.hash(
+    id,
+    productId,
+    url,
+    merchantDomain,
+    minorUnits,
+    currencyCode,
+    previousPriceMinorUnits,
+    previousPriceCurrencyCode,
+    isAvailable,
+    lastCheckedAt,
+    priceChangedAt,
+    lastRefreshStatus,
+    lastRefreshAt,
+    liveStatus,
+    createdAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -600,6 +1295,16 @@ class ProductSourceRow extends DataClass
           other.productId == this.productId &&
           other.url == this.url &&
           other.merchantDomain == this.merchantDomain &&
+          other.minorUnits == this.minorUnits &&
+          other.currencyCode == this.currencyCode &&
+          other.previousPriceMinorUnits == this.previousPriceMinorUnits &&
+          other.previousPriceCurrencyCode == this.previousPriceCurrencyCode &&
+          other.isAvailable == this.isAvailable &&
+          other.lastCheckedAt == this.lastCheckedAt &&
+          other.priceChangedAt == this.priceChangedAt &&
+          other.lastRefreshStatus == this.lastRefreshStatus &&
+          other.lastRefreshAt == this.lastRefreshAt &&
+          other.liveStatus == this.liveStatus &&
           other.createdAt == this.createdAt);
 }
 
@@ -608,6 +1313,16 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
   final Value<String> productId;
   final Value<String> url;
   final Value<String> merchantDomain;
+  final Value<int?> minorUnits;
+  final Value<String?> currencyCode;
+  final Value<int?> previousPriceMinorUnits;
+  final Value<String?> previousPriceCurrencyCode;
+  final Value<bool?> isAvailable;
+  final Value<DateTime?> lastCheckedAt;
+  final Value<DateTime?> priceChangedAt;
+  final Value<String?> lastRefreshStatus;
+  final Value<DateTime?> lastRefreshAt;
+  final Value<String?> liveStatus;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
   const ProductSourceTableCompanion({
@@ -615,6 +1330,16 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
     this.productId = const Value.absent(),
     this.url = const Value.absent(),
     this.merchantDomain = const Value.absent(),
+    this.minorUnits = const Value.absent(),
+    this.currencyCode = const Value.absent(),
+    this.previousPriceMinorUnits = const Value.absent(),
+    this.previousPriceCurrencyCode = const Value.absent(),
+    this.isAvailable = const Value.absent(),
+    this.lastCheckedAt = const Value.absent(),
+    this.priceChangedAt = const Value.absent(),
+    this.lastRefreshStatus = const Value.absent(),
+    this.lastRefreshAt = const Value.absent(),
+    this.liveStatus = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -623,6 +1348,16 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
     required String productId,
     required String url,
     required String merchantDomain,
+    this.minorUnits = const Value.absent(),
+    this.currencyCode = const Value.absent(),
+    this.previousPriceMinorUnits = const Value.absent(),
+    this.previousPriceCurrencyCode = const Value.absent(),
+    this.isAvailable = const Value.absent(),
+    this.lastCheckedAt = const Value.absent(),
+    this.priceChangedAt = const Value.absent(),
+    this.lastRefreshStatus = const Value.absent(),
+    this.lastRefreshAt = const Value.absent(),
+    this.liveStatus = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -635,6 +1370,16 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
     Expression<String>? productId,
     Expression<String>? url,
     Expression<String>? merchantDomain,
+    Expression<int>? minorUnits,
+    Expression<String>? currencyCode,
+    Expression<int>? previousPriceMinorUnits,
+    Expression<String>? previousPriceCurrencyCode,
+    Expression<bool>? isAvailable,
+    Expression<DateTime>? lastCheckedAt,
+    Expression<DateTime>? priceChangedAt,
+    Expression<String>? lastRefreshStatus,
+    Expression<DateTime>? lastRefreshAt,
+    Expression<String>? liveStatus,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -643,6 +1388,18 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
       if (productId != null) 'product_id': productId,
       if (url != null) 'url': url,
       if (merchantDomain != null) 'merchant_domain': merchantDomain,
+      if (minorUnits != null) 'minor_units': minorUnits,
+      if (currencyCode != null) 'currency_code': currencyCode,
+      if (previousPriceMinorUnits != null)
+        'previous_price_minor_units': previousPriceMinorUnits,
+      if (previousPriceCurrencyCode != null)
+        'previous_price_currency_code': previousPriceCurrencyCode,
+      if (isAvailable != null) 'is_available': isAvailable,
+      if (lastCheckedAt != null) 'last_checked_at': lastCheckedAt,
+      if (priceChangedAt != null) 'price_changed_at': priceChangedAt,
+      if (lastRefreshStatus != null) 'last_refresh_status': lastRefreshStatus,
+      if (lastRefreshAt != null) 'last_refresh_at': lastRefreshAt,
+      if (liveStatus != null) 'live_status': liveStatus,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -653,6 +1410,16 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
     Value<String>? productId,
     Value<String>? url,
     Value<String>? merchantDomain,
+    Value<int?>? minorUnits,
+    Value<String?>? currencyCode,
+    Value<int?>? previousPriceMinorUnits,
+    Value<String?>? previousPriceCurrencyCode,
+    Value<bool?>? isAvailable,
+    Value<DateTime?>? lastCheckedAt,
+    Value<DateTime?>? priceChangedAt,
+    Value<String?>? lastRefreshStatus,
+    Value<DateTime?>? lastRefreshAt,
+    Value<String?>? liveStatus,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
   }) {
@@ -661,6 +1428,18 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
       productId: productId ?? this.productId,
       url: url ?? this.url,
       merchantDomain: merchantDomain ?? this.merchantDomain,
+      minorUnits: minorUnits ?? this.minorUnits,
+      currencyCode: currencyCode ?? this.currencyCode,
+      previousPriceMinorUnits:
+          previousPriceMinorUnits ?? this.previousPriceMinorUnits,
+      previousPriceCurrencyCode:
+          previousPriceCurrencyCode ?? this.previousPriceCurrencyCode,
+      isAvailable: isAvailable ?? this.isAvailable,
+      lastCheckedAt: lastCheckedAt ?? this.lastCheckedAt,
+      priceChangedAt: priceChangedAt ?? this.priceChangedAt,
+      lastRefreshStatus: lastRefreshStatus ?? this.lastRefreshStatus,
+      lastRefreshAt: lastRefreshAt ?? this.lastRefreshAt,
+      liveStatus: liveStatus ?? this.liveStatus,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -681,6 +1460,40 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
     if (merchantDomain.present) {
       map['merchant_domain'] = Variable<String>(merchantDomain.value);
     }
+    if (minorUnits.present) {
+      map['minor_units'] = Variable<int>(minorUnits.value);
+    }
+    if (currencyCode.present) {
+      map['currency_code'] = Variable<String>(currencyCode.value);
+    }
+    if (previousPriceMinorUnits.present) {
+      map['previous_price_minor_units'] = Variable<int>(
+        previousPriceMinorUnits.value,
+      );
+    }
+    if (previousPriceCurrencyCode.present) {
+      map['previous_price_currency_code'] = Variable<String>(
+        previousPriceCurrencyCode.value,
+      );
+    }
+    if (isAvailable.present) {
+      map['is_available'] = Variable<bool>(isAvailable.value);
+    }
+    if (lastCheckedAt.present) {
+      map['last_checked_at'] = Variable<DateTime>(lastCheckedAt.value);
+    }
+    if (priceChangedAt.present) {
+      map['price_changed_at'] = Variable<DateTime>(priceChangedAt.value);
+    }
+    if (lastRefreshStatus.present) {
+      map['last_refresh_status'] = Variable<String>(lastRefreshStatus.value);
+    }
+    if (lastRefreshAt.present) {
+      map['last_refresh_at'] = Variable<DateTime>(lastRefreshAt.value);
+    }
+    if (liveStatus.present) {
+      map['live_status'] = Variable<String>(liveStatus.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -697,515 +1510,17 @@ class ProductSourceTableCompanion extends UpdateCompanion<ProductSourceRow> {
           ..write('productId: $productId, ')
           ..write('url: $url, ')
           ..write('merchantDomain: $merchantDomain, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $StorePriceTableTable extends StorePriceTable
-    with TableInfo<$StorePriceTableTable, StorePriceRow> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $StorePriceTableTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _productIdMeta = const VerificationMeta(
-    'productId',
-  );
-  @override
-  late final GeneratedColumn<String> productId = GeneratedColumn<String>(
-    'product_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES product_table (id) ON DELETE CASCADE',
-    ),
-  );
-  static const VerificationMeta _storeNameMeta = const VerificationMeta(
-    'storeName',
-  );
-  @override
-  late final GeneratedColumn<String> storeName = GeneratedColumn<String>(
-    'store_name',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _productUrlMeta = const VerificationMeta(
-    'productUrl',
-  );
-  @override
-  late final GeneratedColumn<String> productUrl = GeneratedColumn<String>(
-    'product_url',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _minorUnitsMeta = const VerificationMeta(
-    'minorUnits',
-  );
-  @override
-  late final GeneratedColumn<int> minorUnits = GeneratedColumn<int>(
-    'minor_units',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _currencyCodeMeta = const VerificationMeta(
-    'currencyCode',
-  );
-  @override
-  late final GeneratedColumn<String> currencyCode = GeneratedColumn<String>(
-    'currency_code',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _isAvailableMeta = const VerificationMeta(
-    'isAvailable',
-  );
-  @override
-  late final GeneratedColumn<bool> isAvailable = GeneratedColumn<bool>(
-    'is_available',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("is_available" IN (0, 1))',
-    ),
-  );
-  static const VerificationMeta _lastCheckedAtMeta = const VerificationMeta(
-    'lastCheckedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> lastCheckedAt =
-      GeneratedColumn<DateTime>(
-        'last_checked_at',
-        aliasedName,
-        false,
-        type: DriftSqlType.dateTime,
-        requiredDuringInsert: true,
-      );
-  @override
-  List<GeneratedColumn> get $columns => [
-    productId,
-    storeName,
-    productUrl,
-    minorUnits,
-    currencyCode,
-    isAvailable,
-    lastCheckedAt,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'store_price_table';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<StorePriceRow> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('product_id')) {
-      context.handle(
-        _productIdMeta,
-        productId.isAcceptableOrUnknown(data['product_id']!, _productIdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_productIdMeta);
-    }
-    if (data.containsKey('store_name')) {
-      context.handle(
-        _storeNameMeta,
-        storeName.isAcceptableOrUnknown(data['store_name']!, _storeNameMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_storeNameMeta);
-    }
-    if (data.containsKey('product_url')) {
-      context.handle(
-        _productUrlMeta,
-        productUrl.isAcceptableOrUnknown(data['product_url']!, _productUrlMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_productUrlMeta);
-    }
-    if (data.containsKey('minor_units')) {
-      context.handle(
-        _minorUnitsMeta,
-        minorUnits.isAcceptableOrUnknown(data['minor_units']!, _minorUnitsMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_minorUnitsMeta);
-    }
-    if (data.containsKey('currency_code')) {
-      context.handle(
-        _currencyCodeMeta,
-        currencyCode.isAcceptableOrUnknown(
-          data['currency_code']!,
-          _currencyCodeMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_currencyCodeMeta);
-    }
-    if (data.containsKey('is_available')) {
-      context.handle(
-        _isAvailableMeta,
-        isAvailable.isAcceptableOrUnknown(
-          data['is_available']!,
-          _isAvailableMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_isAvailableMeta);
-    }
-    if (data.containsKey('last_checked_at')) {
-      context.handle(
-        _lastCheckedAtMeta,
-        lastCheckedAt.isAcceptableOrUnknown(
-          data['last_checked_at']!,
-          _lastCheckedAtMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_lastCheckedAtMeta);
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {productId, storeName};
-  @override
-  StorePriceRow map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return StorePriceRow(
-      productId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}product_id'],
-      )!,
-      storeName: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}store_name'],
-      )!,
-      productUrl: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}product_url'],
-      )!,
-      minorUnits: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}minor_units'],
-      )!,
-      currencyCode: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}currency_code'],
-      )!,
-      isAvailable: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}is_available'],
-      )!,
-      lastCheckedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}last_checked_at'],
-      )!,
-    );
-  }
-
-  @override
-  $StorePriceTableTable createAlias(String alias) {
-    return $StorePriceTableTable(attachedDatabase, alias);
-  }
-}
-
-class StorePriceRow extends DataClass implements Insertable<StorePriceRow> {
-  /// Product this offer belongs to.
-  final String productId;
-
-  /// Merchant display name.
-  final String storeName;
-
-  /// Merchant product-page URL.
-  final String productUrl;
-
-  /// Exact price in the currency's minor unit.
-  final int minorUnits;
-
-  /// ISO 4217 currency code.
-  final String currencyCode;
-
-  /// Whether the product is currently available.
-  final bool isAvailable;
-
-  /// When this offer was last checked.
-  final DateTime lastCheckedAt;
-  const StorePriceRow({
-    required this.productId,
-    required this.storeName,
-    required this.productUrl,
-    required this.minorUnits,
-    required this.currencyCode,
-    required this.isAvailable,
-    required this.lastCheckedAt,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['product_id'] = Variable<String>(productId);
-    map['store_name'] = Variable<String>(storeName);
-    map['product_url'] = Variable<String>(productUrl);
-    map['minor_units'] = Variable<int>(minorUnits);
-    map['currency_code'] = Variable<String>(currencyCode);
-    map['is_available'] = Variable<bool>(isAvailable);
-    map['last_checked_at'] = Variable<DateTime>(lastCheckedAt);
-    return map;
-  }
-
-  StorePriceTableCompanion toCompanion(bool nullToAbsent) {
-    return StorePriceTableCompanion(
-      productId: Value(productId),
-      storeName: Value(storeName),
-      productUrl: Value(productUrl),
-      minorUnits: Value(minorUnits),
-      currencyCode: Value(currencyCode),
-      isAvailable: Value(isAvailable),
-      lastCheckedAt: Value(lastCheckedAt),
-    );
-  }
-
-  factory StorePriceRow.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return StorePriceRow(
-      productId: serializer.fromJson<String>(json['productId']),
-      storeName: serializer.fromJson<String>(json['storeName']),
-      productUrl: serializer.fromJson<String>(json['productUrl']),
-      minorUnits: serializer.fromJson<int>(json['minorUnits']),
-      currencyCode: serializer.fromJson<String>(json['currencyCode']),
-      isAvailable: serializer.fromJson<bool>(json['isAvailable']),
-      lastCheckedAt: serializer.fromJson<DateTime>(json['lastCheckedAt']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'productId': serializer.toJson<String>(productId),
-      'storeName': serializer.toJson<String>(storeName),
-      'productUrl': serializer.toJson<String>(productUrl),
-      'minorUnits': serializer.toJson<int>(minorUnits),
-      'currencyCode': serializer.toJson<String>(currencyCode),
-      'isAvailable': serializer.toJson<bool>(isAvailable),
-      'lastCheckedAt': serializer.toJson<DateTime>(lastCheckedAt),
-    };
-  }
-
-  StorePriceRow copyWith({
-    String? productId,
-    String? storeName,
-    String? productUrl,
-    int? minorUnits,
-    String? currencyCode,
-    bool? isAvailable,
-    DateTime? lastCheckedAt,
-  }) => StorePriceRow(
-    productId: productId ?? this.productId,
-    storeName: storeName ?? this.storeName,
-    productUrl: productUrl ?? this.productUrl,
-    minorUnits: minorUnits ?? this.minorUnits,
-    currencyCode: currencyCode ?? this.currencyCode,
-    isAvailable: isAvailable ?? this.isAvailable,
-    lastCheckedAt: lastCheckedAt ?? this.lastCheckedAt,
-  );
-  StorePriceRow copyWithCompanion(StorePriceTableCompanion data) {
-    return StorePriceRow(
-      productId: data.productId.present ? data.productId.value : this.productId,
-      storeName: data.storeName.present ? data.storeName.value : this.storeName,
-      productUrl: data.productUrl.present
-          ? data.productUrl.value
-          : this.productUrl,
-      minorUnits: data.minorUnits.present
-          ? data.minorUnits.value
-          : this.minorUnits,
-      currencyCode: data.currencyCode.present
-          ? data.currencyCode.value
-          : this.currencyCode,
-      isAvailable: data.isAvailable.present
-          ? data.isAvailable.value
-          : this.isAvailable,
-      lastCheckedAt: data.lastCheckedAt.present
-          ? data.lastCheckedAt.value
-          : this.lastCheckedAt,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('StorePriceRow(')
-          ..write('productId: $productId, ')
-          ..write('storeName: $storeName, ')
-          ..write('productUrl: $productUrl, ')
           ..write('minorUnits: $minorUnits, ')
           ..write('currencyCode: $currencyCode, ')
-          ..write('isAvailable: $isAvailable, ')
-          ..write('lastCheckedAt: $lastCheckedAt')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    productId,
-    storeName,
-    productUrl,
-    minorUnits,
-    currencyCode,
-    isAvailable,
-    lastCheckedAt,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is StorePriceRow &&
-          other.productId == this.productId &&
-          other.storeName == this.storeName &&
-          other.productUrl == this.productUrl &&
-          other.minorUnits == this.minorUnits &&
-          other.currencyCode == this.currencyCode &&
-          other.isAvailable == this.isAvailable &&
-          other.lastCheckedAt == this.lastCheckedAt);
-}
-
-class StorePriceTableCompanion extends UpdateCompanion<StorePriceRow> {
-  final Value<String> productId;
-  final Value<String> storeName;
-  final Value<String> productUrl;
-  final Value<int> minorUnits;
-  final Value<String> currencyCode;
-  final Value<bool> isAvailable;
-  final Value<DateTime> lastCheckedAt;
-  final Value<int> rowid;
-  const StorePriceTableCompanion({
-    this.productId = const Value.absent(),
-    this.storeName = const Value.absent(),
-    this.productUrl = const Value.absent(),
-    this.minorUnits = const Value.absent(),
-    this.currencyCode = const Value.absent(),
-    this.isAvailable = const Value.absent(),
-    this.lastCheckedAt = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  StorePriceTableCompanion.insert({
-    required String productId,
-    required String storeName,
-    required String productUrl,
-    required int minorUnits,
-    required String currencyCode,
-    required bool isAvailable,
-    required DateTime lastCheckedAt,
-    this.rowid = const Value.absent(),
-  }) : productId = Value(productId),
-       storeName = Value(storeName),
-       productUrl = Value(productUrl),
-       minorUnits = Value(minorUnits),
-       currencyCode = Value(currencyCode),
-       isAvailable = Value(isAvailable),
-       lastCheckedAt = Value(lastCheckedAt);
-  static Insertable<StorePriceRow> custom({
-    Expression<String>? productId,
-    Expression<String>? storeName,
-    Expression<String>? productUrl,
-    Expression<int>? minorUnits,
-    Expression<String>? currencyCode,
-    Expression<bool>? isAvailable,
-    Expression<DateTime>? lastCheckedAt,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (productId != null) 'product_id': productId,
-      if (storeName != null) 'store_name': storeName,
-      if (productUrl != null) 'product_url': productUrl,
-      if (minorUnits != null) 'minor_units': minorUnits,
-      if (currencyCode != null) 'currency_code': currencyCode,
-      if (isAvailable != null) 'is_available': isAvailable,
-      if (lastCheckedAt != null) 'last_checked_at': lastCheckedAt,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  StorePriceTableCompanion copyWith({
-    Value<String>? productId,
-    Value<String>? storeName,
-    Value<String>? productUrl,
-    Value<int>? minorUnits,
-    Value<String>? currencyCode,
-    Value<bool>? isAvailable,
-    Value<DateTime>? lastCheckedAt,
-    Value<int>? rowid,
-  }) {
-    return StorePriceTableCompanion(
-      productId: productId ?? this.productId,
-      storeName: storeName ?? this.storeName,
-      productUrl: productUrl ?? this.productUrl,
-      minorUnits: minorUnits ?? this.minorUnits,
-      currencyCode: currencyCode ?? this.currencyCode,
-      isAvailable: isAvailable ?? this.isAvailable,
-      lastCheckedAt: lastCheckedAt ?? this.lastCheckedAt,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (productId.present) {
-      map['product_id'] = Variable<String>(productId.value);
-    }
-    if (storeName.present) {
-      map['store_name'] = Variable<String>(storeName.value);
-    }
-    if (productUrl.present) {
-      map['product_url'] = Variable<String>(productUrl.value);
-    }
-    if (minorUnits.present) {
-      map['minor_units'] = Variable<int>(minorUnits.value);
-    }
-    if (currencyCode.present) {
-      map['currency_code'] = Variable<String>(currencyCode.value);
-    }
-    if (isAvailable.present) {
-      map['is_available'] = Variable<bool>(isAvailable.value);
-    }
-    if (lastCheckedAt.present) {
-      map['last_checked_at'] = Variable<DateTime>(lastCheckedAt.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('StorePriceTableCompanion(')
-          ..write('productId: $productId, ')
-          ..write('storeName: $storeName, ')
-          ..write('productUrl: $productUrl, ')
-          ..write('minorUnits: $minorUnits, ')
-          ..write('currencyCode: $currencyCode, ')
+          ..write('previousPriceMinorUnits: $previousPriceMinorUnits, ')
+          ..write('previousPriceCurrencyCode: $previousPriceCurrencyCode, ')
           ..write('isAvailable: $isAvailable, ')
           ..write('lastCheckedAt: $lastCheckedAt, ')
+          ..write('priceChangedAt: $priceChangedAt, ')
+          ..write('lastRefreshStatus: $lastRefreshStatus, ')
+          ..write('lastRefreshAt: $lastRefreshAt, ')
+          ..write('liveStatus: $liveStatus, ')
+          ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1240,8 +1555,90 @@ class $RefreshSettingsTableTable extends RefreshSettingsTable
     requiredDuringInsert: false,
     defaultValue: const Constant(60),
   );
+  static const VerificationMeta _browserRefreshEnabledMeta =
+      const VerificationMeta('browserRefreshEnabled');
   @override
-  List<GeneratedColumn> get $columns => [id, intervalMinutes];
+  late final GeneratedColumn<bool> browserRefreshEnabled =
+      GeneratedColumn<bool>(
+        'browser_refresh_enabled',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("browser_refresh_enabled" IN (0, 1))',
+        ),
+        defaultValue: const Constant(false),
+      );
+  static const VerificationMeta _priceDropAlertsEnabledMeta =
+      const VerificationMeta('priceDropAlertsEnabled');
+  @override
+  late final GeneratedColumn<bool> priceDropAlertsEnabled =
+      GeneratedColumn<bool>(
+        'price_drop_alerts_enabled',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("price_drop_alerts_enabled" IN (0, 1))',
+        ),
+        defaultValue: const Constant(false),
+      );
+  static const VerificationMeta _priceIncreaseAlertsEnabledMeta =
+      const VerificationMeta('priceIncreaseAlertsEnabled');
+  @override
+  late final GeneratedColumn<bool> priceIncreaseAlertsEnabled =
+      GeneratedColumn<bool>(
+        'price_increase_alerts_enabled',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("price_increase_alerts_enabled" IN (0, 1))',
+        ),
+        defaultValue: const Constant(false),
+      );
+  static const VerificationMeta _refreshCompletedAlertsEnabledMeta =
+      const VerificationMeta('refreshCompletedAlertsEnabled');
+  @override
+  late final GeneratedColumn<bool> refreshCompletedAlertsEnabled =
+      GeneratedColumn<bool>(
+        'refresh_completed_alerts_enabled',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("refresh_completed_alerts_enabled" IN (0, 1))',
+        ),
+        defaultValue: const Constant(false),
+      );
+  static const VerificationMeta _showRefreshProgressMeta =
+      const VerificationMeta('showRefreshProgress');
+  @override
+  late final GeneratedColumn<bool> showRefreshProgress = GeneratedColumn<bool>(
+    'show_refresh_progress',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_refresh_progress" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    intervalMinutes,
+    browserRefreshEnabled,
+    priceDropAlertsEnabled,
+    priceIncreaseAlertsEnabled,
+    refreshCompletedAlertsEnabled,
+    showRefreshProgress,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1266,6 +1663,51 @@ class $RefreshSettingsTableTable extends RefreshSettingsTable
         ),
       );
     }
+    if (data.containsKey('browser_refresh_enabled')) {
+      context.handle(
+        _browserRefreshEnabledMeta,
+        browserRefreshEnabled.isAcceptableOrUnknown(
+          data['browser_refresh_enabled']!,
+          _browserRefreshEnabledMeta,
+        ),
+      );
+    }
+    if (data.containsKey('price_drop_alerts_enabled')) {
+      context.handle(
+        _priceDropAlertsEnabledMeta,
+        priceDropAlertsEnabled.isAcceptableOrUnknown(
+          data['price_drop_alerts_enabled']!,
+          _priceDropAlertsEnabledMeta,
+        ),
+      );
+    }
+    if (data.containsKey('price_increase_alerts_enabled')) {
+      context.handle(
+        _priceIncreaseAlertsEnabledMeta,
+        priceIncreaseAlertsEnabled.isAcceptableOrUnknown(
+          data['price_increase_alerts_enabled']!,
+          _priceIncreaseAlertsEnabledMeta,
+        ),
+      );
+    }
+    if (data.containsKey('refresh_completed_alerts_enabled')) {
+      context.handle(
+        _refreshCompletedAlertsEnabledMeta,
+        refreshCompletedAlertsEnabled.isAcceptableOrUnknown(
+          data['refresh_completed_alerts_enabled']!,
+          _refreshCompletedAlertsEnabledMeta,
+        ),
+      );
+    }
+    if (data.containsKey('show_refresh_progress')) {
+      context.handle(
+        _showRefreshProgressMeta,
+        showRefreshProgress.isAcceptableOrUnknown(
+          data['show_refresh_progress']!,
+          _showRefreshProgressMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1283,6 +1725,26 @@ class $RefreshSettingsTableTable extends RefreshSettingsTable
         DriftSqlType.int,
         data['${effectivePrefix}interval_minutes'],
       )!,
+      browserRefreshEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}browser_refresh_enabled'],
+      )!,
+      priceDropAlertsEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}price_drop_alerts_enabled'],
+      )!,
+      priceIncreaseAlertsEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}price_increase_alerts_enabled'],
+      )!,
+      refreshCompletedAlertsEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}refresh_completed_alerts_enabled'],
+      )!,
+      showRefreshProgress: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_refresh_progress'],
+      )!,
     );
   }
 
@@ -1299,12 +1761,45 @@ class RefreshSettingsRow extends DataClass
 
   /// Preferred refresh interval in minutes.
   final int intervalMinutes;
-  const RefreshSettingsRow({required this.id, required this.intervalMinutes});
+
+  /// Whether browser-backed background refresh is enabled.
+  final bool browserRefreshEnabled;
+
+  /// Whether product price-drop notifications are enabled.
+  final bool priceDropAlertsEnabled;
+
+  /// Whether product price-increase notifications are enabled.
+  final bool priceIncreaseAlertsEnabled;
+
+  /// Whether a notification is shown for every completed background refresh.
+  final bool refreshCompletedAlertsEnabled;
+
+  /// Whether the background refresh shows a progress bar on its
+  /// notification while sources are being fetched.
+  final bool showRefreshProgress;
+  const RefreshSettingsRow({
+    required this.id,
+    required this.intervalMinutes,
+    required this.browserRefreshEnabled,
+    required this.priceDropAlertsEnabled,
+    required this.priceIncreaseAlertsEnabled,
+    required this.refreshCompletedAlertsEnabled,
+    required this.showRefreshProgress,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['interval_minutes'] = Variable<int>(intervalMinutes);
+    map['browser_refresh_enabled'] = Variable<bool>(browserRefreshEnabled);
+    map['price_drop_alerts_enabled'] = Variable<bool>(priceDropAlertsEnabled);
+    map['price_increase_alerts_enabled'] = Variable<bool>(
+      priceIncreaseAlertsEnabled,
+    );
+    map['refresh_completed_alerts_enabled'] = Variable<bool>(
+      refreshCompletedAlertsEnabled,
+    );
+    map['show_refresh_progress'] = Variable<bool>(showRefreshProgress);
     return map;
   }
 
@@ -1312,6 +1807,11 @@ class RefreshSettingsRow extends DataClass
     return RefreshSettingsTableCompanion(
       id: Value(id),
       intervalMinutes: Value(intervalMinutes),
+      browserRefreshEnabled: Value(browserRefreshEnabled),
+      priceDropAlertsEnabled: Value(priceDropAlertsEnabled),
+      priceIncreaseAlertsEnabled: Value(priceIncreaseAlertsEnabled),
+      refreshCompletedAlertsEnabled: Value(refreshCompletedAlertsEnabled),
+      showRefreshProgress: Value(showRefreshProgress),
     );
   }
 
@@ -1323,6 +1823,21 @@ class RefreshSettingsRow extends DataClass
     return RefreshSettingsRow(
       id: serializer.fromJson<int>(json['id']),
       intervalMinutes: serializer.fromJson<int>(json['intervalMinutes']),
+      browserRefreshEnabled: serializer.fromJson<bool>(
+        json['browserRefreshEnabled'],
+      ),
+      priceDropAlertsEnabled: serializer.fromJson<bool>(
+        json['priceDropAlertsEnabled'],
+      ),
+      priceIncreaseAlertsEnabled: serializer.fromJson<bool>(
+        json['priceIncreaseAlertsEnabled'],
+      ),
+      refreshCompletedAlertsEnabled: serializer.fromJson<bool>(
+        json['refreshCompletedAlertsEnabled'],
+      ),
+      showRefreshProgress: serializer.fromJson<bool>(
+        json['showRefreshProgress'],
+      ),
     );
   }
   @override
@@ -1331,20 +1846,59 @@ class RefreshSettingsRow extends DataClass
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'intervalMinutes': serializer.toJson<int>(intervalMinutes),
+      'browserRefreshEnabled': serializer.toJson<bool>(browserRefreshEnabled),
+      'priceDropAlertsEnabled': serializer.toJson<bool>(priceDropAlertsEnabled),
+      'priceIncreaseAlertsEnabled': serializer.toJson<bool>(
+        priceIncreaseAlertsEnabled,
+      ),
+      'refreshCompletedAlertsEnabled': serializer.toJson<bool>(
+        refreshCompletedAlertsEnabled,
+      ),
+      'showRefreshProgress': serializer.toJson<bool>(showRefreshProgress),
     };
   }
 
-  RefreshSettingsRow copyWith({int? id, int? intervalMinutes}) =>
-      RefreshSettingsRow(
-        id: id ?? this.id,
-        intervalMinutes: intervalMinutes ?? this.intervalMinutes,
-      );
+  RefreshSettingsRow copyWith({
+    int? id,
+    int? intervalMinutes,
+    bool? browserRefreshEnabled,
+    bool? priceDropAlertsEnabled,
+    bool? priceIncreaseAlertsEnabled,
+    bool? refreshCompletedAlertsEnabled,
+    bool? showRefreshProgress,
+  }) => RefreshSettingsRow(
+    id: id ?? this.id,
+    intervalMinutes: intervalMinutes ?? this.intervalMinutes,
+    browserRefreshEnabled: browserRefreshEnabled ?? this.browserRefreshEnabled,
+    priceDropAlertsEnabled:
+        priceDropAlertsEnabled ?? this.priceDropAlertsEnabled,
+    priceIncreaseAlertsEnabled:
+        priceIncreaseAlertsEnabled ?? this.priceIncreaseAlertsEnabled,
+    refreshCompletedAlertsEnabled:
+        refreshCompletedAlertsEnabled ?? this.refreshCompletedAlertsEnabled,
+    showRefreshProgress: showRefreshProgress ?? this.showRefreshProgress,
+  );
   RefreshSettingsRow copyWithCompanion(RefreshSettingsTableCompanion data) {
     return RefreshSettingsRow(
       id: data.id.present ? data.id.value : this.id,
       intervalMinutes: data.intervalMinutes.present
           ? data.intervalMinutes.value
           : this.intervalMinutes,
+      browserRefreshEnabled: data.browserRefreshEnabled.present
+          ? data.browserRefreshEnabled.value
+          : this.browserRefreshEnabled,
+      priceDropAlertsEnabled: data.priceDropAlertsEnabled.present
+          ? data.priceDropAlertsEnabled.value
+          : this.priceDropAlertsEnabled,
+      priceIncreaseAlertsEnabled: data.priceIncreaseAlertsEnabled.present
+          ? data.priceIncreaseAlertsEnabled.value
+          : this.priceIncreaseAlertsEnabled,
+      refreshCompletedAlertsEnabled: data.refreshCompletedAlertsEnabled.present
+          ? data.refreshCompletedAlertsEnabled.value
+          : this.refreshCompletedAlertsEnabled,
+      showRefreshProgress: data.showRefreshProgress.present
+          ? data.showRefreshProgress.value
+          : this.showRefreshProgress,
     );
   }
 
@@ -1352,50 +1906,115 @@ class RefreshSettingsRow extends DataClass
   String toString() {
     return (StringBuffer('RefreshSettingsRow(')
           ..write('id: $id, ')
-          ..write('intervalMinutes: $intervalMinutes')
+          ..write('intervalMinutes: $intervalMinutes, ')
+          ..write('browserRefreshEnabled: $browserRefreshEnabled, ')
+          ..write('priceDropAlertsEnabled: $priceDropAlertsEnabled, ')
+          ..write('priceIncreaseAlertsEnabled: $priceIncreaseAlertsEnabled, ')
+          ..write(
+            'refreshCompletedAlertsEnabled: $refreshCompletedAlertsEnabled, ',
+          )
+          ..write('showRefreshProgress: $showRefreshProgress')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, intervalMinutes);
+  int get hashCode => Object.hash(
+    id,
+    intervalMinutes,
+    browserRefreshEnabled,
+    priceDropAlertsEnabled,
+    priceIncreaseAlertsEnabled,
+    refreshCompletedAlertsEnabled,
+    showRefreshProgress,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is RefreshSettingsRow &&
           other.id == this.id &&
-          other.intervalMinutes == this.intervalMinutes);
+          other.intervalMinutes == this.intervalMinutes &&
+          other.browserRefreshEnabled == this.browserRefreshEnabled &&
+          other.priceDropAlertsEnabled == this.priceDropAlertsEnabled &&
+          other.priceIncreaseAlertsEnabled == this.priceIncreaseAlertsEnabled &&
+          other.refreshCompletedAlertsEnabled ==
+              this.refreshCompletedAlertsEnabled &&
+          other.showRefreshProgress == this.showRefreshProgress);
 }
 
 class RefreshSettingsTableCompanion
     extends UpdateCompanion<RefreshSettingsRow> {
   final Value<int> id;
   final Value<int> intervalMinutes;
+  final Value<bool> browserRefreshEnabled;
+  final Value<bool> priceDropAlertsEnabled;
+  final Value<bool> priceIncreaseAlertsEnabled;
+  final Value<bool> refreshCompletedAlertsEnabled;
+  final Value<bool> showRefreshProgress;
   const RefreshSettingsTableCompanion({
     this.id = const Value.absent(),
     this.intervalMinutes = const Value.absent(),
+    this.browserRefreshEnabled = const Value.absent(),
+    this.priceDropAlertsEnabled = const Value.absent(),
+    this.priceIncreaseAlertsEnabled = const Value.absent(),
+    this.refreshCompletedAlertsEnabled = const Value.absent(),
+    this.showRefreshProgress = const Value.absent(),
   });
   RefreshSettingsTableCompanion.insert({
     this.id = const Value.absent(),
     this.intervalMinutes = const Value.absent(),
+    this.browserRefreshEnabled = const Value.absent(),
+    this.priceDropAlertsEnabled = const Value.absent(),
+    this.priceIncreaseAlertsEnabled = const Value.absent(),
+    this.refreshCompletedAlertsEnabled = const Value.absent(),
+    this.showRefreshProgress = const Value.absent(),
   });
   static Insertable<RefreshSettingsRow> custom({
     Expression<int>? id,
     Expression<int>? intervalMinutes,
+    Expression<bool>? browserRefreshEnabled,
+    Expression<bool>? priceDropAlertsEnabled,
+    Expression<bool>? priceIncreaseAlertsEnabled,
+    Expression<bool>? refreshCompletedAlertsEnabled,
+    Expression<bool>? showRefreshProgress,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (intervalMinutes != null) 'interval_minutes': intervalMinutes,
+      if (browserRefreshEnabled != null)
+        'browser_refresh_enabled': browserRefreshEnabled,
+      if (priceDropAlertsEnabled != null)
+        'price_drop_alerts_enabled': priceDropAlertsEnabled,
+      if (priceIncreaseAlertsEnabled != null)
+        'price_increase_alerts_enabled': priceIncreaseAlertsEnabled,
+      if (refreshCompletedAlertsEnabled != null)
+        'refresh_completed_alerts_enabled': refreshCompletedAlertsEnabled,
+      if (showRefreshProgress != null)
+        'show_refresh_progress': showRefreshProgress,
     });
   }
 
   RefreshSettingsTableCompanion copyWith({
     Value<int>? id,
     Value<int>? intervalMinutes,
+    Value<bool>? browserRefreshEnabled,
+    Value<bool>? priceDropAlertsEnabled,
+    Value<bool>? priceIncreaseAlertsEnabled,
+    Value<bool>? refreshCompletedAlertsEnabled,
+    Value<bool>? showRefreshProgress,
   }) {
     return RefreshSettingsTableCompanion(
       id: id ?? this.id,
       intervalMinutes: intervalMinutes ?? this.intervalMinutes,
+      browserRefreshEnabled:
+          browserRefreshEnabled ?? this.browserRefreshEnabled,
+      priceDropAlertsEnabled:
+          priceDropAlertsEnabled ?? this.priceDropAlertsEnabled,
+      priceIncreaseAlertsEnabled:
+          priceIncreaseAlertsEnabled ?? this.priceIncreaseAlertsEnabled,
+      refreshCompletedAlertsEnabled:
+          refreshCompletedAlertsEnabled ?? this.refreshCompletedAlertsEnabled,
+      showRefreshProgress: showRefreshProgress ?? this.showRefreshProgress,
     );
   }
 
@@ -1408,6 +2027,29 @@ class RefreshSettingsTableCompanion
     if (intervalMinutes.present) {
       map['interval_minutes'] = Variable<int>(intervalMinutes.value);
     }
+    if (browserRefreshEnabled.present) {
+      map['browser_refresh_enabled'] = Variable<bool>(
+        browserRefreshEnabled.value,
+      );
+    }
+    if (priceDropAlertsEnabled.present) {
+      map['price_drop_alerts_enabled'] = Variable<bool>(
+        priceDropAlertsEnabled.value,
+      );
+    }
+    if (priceIncreaseAlertsEnabled.present) {
+      map['price_increase_alerts_enabled'] = Variable<bool>(
+        priceIncreaseAlertsEnabled.value,
+      );
+    }
+    if (refreshCompletedAlertsEnabled.present) {
+      map['refresh_completed_alerts_enabled'] = Variable<bool>(
+        refreshCompletedAlertsEnabled.value,
+      );
+    }
+    if (showRefreshProgress.present) {
+      map['show_refresh_progress'] = Variable<bool>(showRefreshProgress.value);
+    }
     return map;
   }
 
@@ -1415,7 +2057,14 @@ class RefreshSettingsTableCompanion
   String toString() {
     return (StringBuffer('RefreshSettingsTableCompanion(')
           ..write('id: $id, ')
-          ..write('intervalMinutes: $intervalMinutes')
+          ..write('intervalMinutes: $intervalMinutes, ')
+          ..write('browserRefreshEnabled: $browserRefreshEnabled, ')
+          ..write('priceDropAlertsEnabled: $priceDropAlertsEnabled, ')
+          ..write('priceIncreaseAlertsEnabled: $priceIncreaseAlertsEnabled, ')
+          ..write(
+            'refreshCompletedAlertsEnabled: $refreshCompletedAlertsEnabled, ',
+          )
+          ..write('showRefreshProgress: $showRefreshProgress')
           ..write(')'))
         .toString();
   }
@@ -1427,9 +2076,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ProductTableTable productTable = $ProductTableTable(this);
   late final $ProductSourceTableTable productSourceTable =
       $ProductSourceTableTable(this);
-  late final $StorePriceTableTable storePriceTable = $StorePriceTableTable(
-    this,
-  );
   late final $RefreshSettingsTableTable refreshSettingsTable =
       $RefreshSettingsTableTable(this);
   @override
@@ -1439,7 +2085,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     productTable,
     productSourceTable,
-    storePriceTable,
     refreshSettingsTable,
   ];
   @override
@@ -1451,13 +2096,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       ),
       result: [TableUpdate('product_source_table', kind: UpdateKind.delete)],
     ),
-    WritePropagation(
-      on: TableUpdateQuery.onTableName(
-        'product_table',
-        limitUpdateKind: UpdateKind.delete,
-      ),
-      result: [TableUpdate('store_price_table', kind: UpdateKind.delete)],
-    ),
   ]);
 }
 
@@ -1467,6 +2105,9 @@ typedef $$ProductTableTableCreateCompanionBuilder =
       required String name,
       Value<String?> imageUrl,
       required DateTime lastUpdatedAt,
+      Value<int?> previousBestPriceMinorUnits,
+      Value<String?> previousBestPriceCurrencyCode,
+      Value<DateTime?> bestPriceChangedAt,
       Value<int> rowid,
     });
 typedef $$ProductTableTableUpdateCompanionBuilder =
@@ -1475,6 +2116,9 @@ typedef $$ProductTableTableUpdateCompanionBuilder =
       Value<String> name,
       Value<String?> imageUrl,
       Value<DateTime> lastUpdatedAt,
+      Value<int?> previousBestPriceMinorUnits,
+      Value<String?> previousBestPriceCurrencyCode,
+      Value<DateTime?> bestPriceChangedAt,
       Value<int> rowid,
     });
 
@@ -1486,10 +2130,7 @@ final class $$ProductTableTableReferences
   _productSourceTableRefsTable(_$AppDatabase db) =>
       MultiTypedResultKey.fromTable(
         db.productSourceTable,
-        aliasName: $_aliasNameGenerator(
-          db.productTable.id,
-          db.productSourceTable.productId,
-        ),
+        aliasName: 'product_table__id__product_source_table__product_id',
       );
 
   $$ProductSourceTableTableProcessedTableManager get productSourceTableRefs {
@@ -1500,29 +2141,6 @@ final class $$ProductTableTableReferences
 
     final cache = $_typedResult.readTableOrNull(
       _productSourceTableRefsTable($_db),
-    );
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-
-  static MultiTypedResultKey<$StorePriceTableTable, List<StorePriceRow>>
-  _storePriceTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
-    db.storePriceTable,
-    aliasName: $_aliasNameGenerator(
-      db.productTable.id,
-      db.storePriceTable.productId,
-    ),
-  );
-
-  $$StorePriceTableTableProcessedTableManager get storePriceTableRefs {
-    final manager = $$StorePriceTableTableTableManager(
-      $_db,
-      $_db.storePriceTable,
-    ).filter((f) => f.productId.id.sqlEquals($_itemColumn<String>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(
-      _storePriceTableRefsTable($_db),
     );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
@@ -1559,6 +2177,21 @@ class $$ProductTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get previousBestPriceMinorUnits => $composableBuilder(
+    column: $table.previousBestPriceMinorUnits,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get previousBestPriceCurrencyCode => $composableBuilder(
+    column: $table.previousBestPriceCurrencyCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get bestPriceChangedAt => $composableBuilder(
+    column: $table.bestPriceChangedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
   Expression<bool> productSourceTableRefs(
     Expression<bool> Function($$ProductSourceTableTableFilterComposer f) f,
   ) {
@@ -1575,31 +2208,6 @@ class $$ProductTableTableFilterComposer
           }) => $$ProductSourceTableTableFilterComposer(
             $db: $db,
             $table: $db.productSourceTable,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<bool> storePriceTableRefs(
-    Expression<bool> Function($$StorePriceTableTableFilterComposer f) f,
-  ) {
-    final $$StorePriceTableTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.storePriceTable,
-      getReferencedColumn: (t) => t.productId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$StorePriceTableTableFilterComposer(
-            $db: $db,
-            $table: $db.storePriceTable,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -1638,6 +2246,22 @@ class $$ProductTableTableOrderingComposer
     column: $table.lastUpdatedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get previousBestPriceMinorUnits => $composableBuilder(
+    column: $table.previousBestPriceMinorUnits,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get previousBestPriceCurrencyCode =>
+      $composableBuilder(
+        column: $table.previousBestPriceCurrencyCode,
+        builder: (column) => ColumnOrderings(column),
+      );
+
+  ColumnOrderings<DateTime> get bestPriceChangedAt => $composableBuilder(
+    column: $table.bestPriceChangedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ProductTableTableAnnotationComposer
@@ -1660,6 +2284,22 @@ class $$ProductTableTableAnnotationComposer
 
   GeneratedColumn<DateTime> get lastUpdatedAt => $composableBuilder(
     column: $table.lastUpdatedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get previousBestPriceMinorUnits => $composableBuilder(
+    column: $table.previousBestPriceMinorUnits,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get previousBestPriceCurrencyCode =>
+      $composableBuilder(
+        column: $table.previousBestPriceCurrencyCode,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<DateTime> get bestPriceChangedAt => $composableBuilder(
+    column: $table.bestPriceChangedAt,
     builder: (column) => column,
   );
 
@@ -1688,31 +2328,6 @@ class $$ProductTableTableAnnotationComposer
         );
     return f(composer);
   }
-
-  Expression<T> storePriceTableRefs<T extends Object>(
-    Expression<T> Function($$StorePriceTableTableAnnotationComposer a) f,
-  ) {
-    final $$StorePriceTableTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.storePriceTable,
-      getReferencedColumn: (t) => t.productId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$StorePriceTableTableAnnotationComposer(
-            $db: $db,
-            $table: $db.storePriceTable,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
 }
 
 class $$ProductTableTableTableManager
@@ -1728,10 +2343,7 @@ class $$ProductTableTableTableManager
           $$ProductTableTableUpdateCompanionBuilder,
           (ProductRow, $$ProductTableTableReferences),
           ProductRow,
-          PrefetchHooks Function({
-            bool productSourceTableRefs,
-            bool storePriceTableRefs,
-          })
+          PrefetchHooks Function({bool productSourceTableRefs})
         > {
   $$ProductTableTableTableManager(_$AppDatabase db, $ProductTableTable table)
     : super(
@@ -1750,12 +2362,19 @@ class $$ProductTableTableTableManager
                 Value<String> name = const Value.absent(),
                 Value<String?> imageUrl = const Value.absent(),
                 Value<DateTime> lastUpdatedAt = const Value.absent(),
+                Value<int?> previousBestPriceMinorUnits = const Value.absent(),
+                Value<String?> previousBestPriceCurrencyCode =
+                    const Value.absent(),
+                Value<DateTime?> bestPriceChangedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProductTableCompanion(
                 id: id,
                 name: name,
                 imageUrl: imageUrl,
                 lastUpdatedAt: lastUpdatedAt,
+                previousBestPriceMinorUnits: previousBestPriceMinorUnits,
+                previousBestPriceCurrencyCode: previousBestPriceCurrencyCode,
+                bestPriceChangedAt: bestPriceChangedAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -1764,12 +2383,19 @@ class $$ProductTableTableTableManager
                 required String name,
                 Value<String?> imageUrl = const Value.absent(),
                 required DateTime lastUpdatedAt,
+                Value<int?> previousBestPriceMinorUnits = const Value.absent(),
+                Value<String?> previousBestPriceCurrencyCode =
+                    const Value.absent(),
+                Value<DateTime?> bestPriceChangedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProductTableCompanion.insert(
                 id: id,
                 name: name,
                 imageUrl: imageUrl,
                 lastUpdatedAt: lastUpdatedAt,
+                previousBestPriceMinorUnits: previousBestPriceMinorUnits,
+                previousBestPriceCurrencyCode: previousBestPriceCurrencyCode,
+                bestPriceChangedAt: bestPriceChangedAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -1780,63 +2406,38 @@ class $$ProductTableTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback:
-              ({productSourceTableRefs = false, storePriceTableRefs = false}) {
-                return PrefetchHooks(
-                  db: db,
-                  explicitlyWatchedTables: [
-                    if (productSourceTableRefs) db.productSourceTable,
-                    if (storePriceTableRefs) db.storePriceTable,
-                  ],
-                  addJoins: null,
-                  getPrefetchedDataCallback: (items) async {
-                    return [
-                      if (productSourceTableRefs)
-                        await $_getPrefetchedData<
-                          ProductRow,
-                          $ProductTableTable,
-                          ProductSourceRow
-                        >(
-                          currentTable: table,
-                          referencedTable: $$ProductTableTableReferences
-                              ._productSourceTableRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$ProductTableTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).productSourceTableRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.productId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
-                      if (storePriceTableRefs)
-                        await $_getPrefetchedData<
-                          ProductRow,
-                          $ProductTableTable,
-                          StorePriceRow
-                        >(
-                          currentTable: table,
-                          referencedTable: $$ProductTableTableReferences
-                              ._storePriceTableRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$ProductTableTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).storePriceTableRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.productId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
-                    ];
-                  },
-                );
+          prefetchHooksCallback: ({productSourceTableRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (productSourceTableRefs) db.productSourceTable,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (productSourceTableRefs)
+                    await $_getPrefetchedData<
+                      ProductRow,
+                      $ProductTableTable,
+                      ProductSourceRow
+                    >(
+                      currentTable: table,
+                      referencedTable: $$ProductTableTableReferences
+                          ._productSourceTableRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$ProductTableTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).productSourceTableRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.productId == item.id),
+                      typedResults: items,
+                    ),
+                ];
               },
+            );
+          },
         ),
       );
 }
@@ -1853,10 +2454,7 @@ typedef $$ProductTableTableProcessedTableManager =
       $$ProductTableTableUpdateCompanionBuilder,
       (ProductRow, $$ProductTableTableReferences),
       ProductRow,
-      PrefetchHooks Function({
-        bool productSourceTableRefs,
-        bool storePriceTableRefs,
-      })
+      PrefetchHooks Function({bool productSourceTableRefs})
     >;
 typedef $$ProductSourceTableTableCreateCompanionBuilder =
     ProductSourceTableCompanion Function({
@@ -1864,6 +2462,16 @@ typedef $$ProductSourceTableTableCreateCompanionBuilder =
       required String productId,
       required String url,
       required String merchantDomain,
+      Value<int?> minorUnits,
+      Value<String?> currencyCode,
+      Value<int?> previousPriceMinorUnits,
+      Value<String?> previousPriceCurrencyCode,
+      Value<bool?> isAvailable,
+      Value<DateTime?> lastCheckedAt,
+      Value<DateTime?> priceChangedAt,
+      Value<String?> lastRefreshStatus,
+      Value<DateTime?> lastRefreshAt,
+      Value<String?> liveStatus,
       required DateTime createdAt,
       Value<int> rowid,
     });
@@ -1873,6 +2481,16 @@ typedef $$ProductSourceTableTableUpdateCompanionBuilder =
       Value<String> productId,
       Value<String> url,
       Value<String> merchantDomain,
+      Value<int?> minorUnits,
+      Value<String?> currencyCode,
+      Value<int?> previousPriceMinorUnits,
+      Value<String?> previousPriceCurrencyCode,
+      Value<bool?> isAvailable,
+      Value<DateTime?> lastCheckedAt,
+      Value<DateTime?> priceChangedAt,
+      Value<String?> lastRefreshStatus,
+      Value<DateTime?> lastRefreshAt,
+      Value<String?> liveStatus,
       Value<DateTime> createdAt,
       Value<int> rowid,
     });
@@ -1890,13 +2508,8 @@ final class $$ProductSourceTableTableReferences
     super.$_typedResult,
   );
 
-  static $ProductTableTable _productIdTable(_$AppDatabase db) =>
-      db.productTable.createAlias(
-        $_aliasNameGenerator(
-          db.productSourceTable.productId,
-          db.productTable.id,
-        ),
-      );
+  static $ProductTableTable _productIdTable(_$AppDatabase db) => db.productTable
+      .createAlias('product_source_table__product_id__product_table__id');
 
   $$ProductTableTableProcessedTableManager get productId {
     final $_column = $_itemColumn<String>('product_id')!;
@@ -1934,6 +2547,56 @@ class $$ProductSourceTableTableFilterComposer
 
   ColumnFilters<String> get merchantDomain => $composableBuilder(
     column: $table.merchantDomain,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get minorUnits => $composableBuilder(
+    column: $table.minorUnits,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get currencyCode => $composableBuilder(
+    column: $table.currencyCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get previousPriceMinorUnits => $composableBuilder(
+    column: $table.previousPriceMinorUnits,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get previousPriceCurrencyCode => $composableBuilder(
+    column: $table.previousPriceCurrencyCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isAvailable => $composableBuilder(
+    column: $table.isAvailable,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastCheckedAt => $composableBuilder(
+    column: $table.lastCheckedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get priceChangedAt => $composableBuilder(
+    column: $table.priceChangedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lastRefreshStatus => $composableBuilder(
+    column: $table.lastRefreshStatus,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastRefreshAt => $composableBuilder(
+    column: $table.lastRefreshAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get liveStatus => $composableBuilder(
+    column: $table.liveStatus,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1990,6 +2653,56 @@ class $$ProductSourceTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get minorUnits => $composableBuilder(
+    column: $table.minorUnits,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get currencyCode => $composableBuilder(
+    column: $table.currencyCode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get previousPriceMinorUnits => $composableBuilder(
+    column: $table.previousPriceMinorUnits,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get previousPriceCurrencyCode => $composableBuilder(
+    column: $table.previousPriceCurrencyCode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isAvailable => $composableBuilder(
+    column: $table.isAvailable,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastCheckedAt => $composableBuilder(
+    column: $table.lastCheckedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get priceChangedAt => $composableBuilder(
+    column: $table.priceChangedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get lastRefreshStatus => $composableBuilder(
+    column: $table.lastRefreshStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastRefreshAt => $composableBuilder(
+    column: $table.lastRefreshAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get liveStatus => $composableBuilder(
+    column: $table.liveStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -2036,6 +2749,56 @@ class $$ProductSourceTableTableAnnotationComposer
 
   GeneratedColumn<String> get merchantDomain => $composableBuilder(
     column: $table.merchantDomain,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get minorUnits => $composableBuilder(
+    column: $table.minorUnits,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get currencyCode => $composableBuilder(
+    column: $table.currencyCode,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get previousPriceMinorUnits => $composableBuilder(
+    column: $table.previousPriceMinorUnits,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get previousPriceCurrencyCode => $composableBuilder(
+    column: $table.previousPriceCurrencyCode,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isAvailable => $composableBuilder(
+    column: $table.isAvailable,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get lastCheckedAt => $composableBuilder(
+    column: $table.lastCheckedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get priceChangedAt => $composableBuilder(
+    column: $table.priceChangedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get lastRefreshStatus => $composableBuilder(
+    column: $table.lastRefreshStatus,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get lastRefreshAt => $composableBuilder(
+    column: $table.lastRefreshAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get liveStatus => $composableBuilder(
+    column: $table.liveStatus,
     builder: (column) => column,
   );
 
@@ -2103,6 +2866,16 @@ class $$ProductSourceTableTableTableManager
                 Value<String> productId = const Value.absent(),
                 Value<String> url = const Value.absent(),
                 Value<String> merchantDomain = const Value.absent(),
+                Value<int?> minorUnits = const Value.absent(),
+                Value<String?> currencyCode = const Value.absent(),
+                Value<int?> previousPriceMinorUnits = const Value.absent(),
+                Value<String?> previousPriceCurrencyCode = const Value.absent(),
+                Value<bool?> isAvailable = const Value.absent(),
+                Value<DateTime?> lastCheckedAt = const Value.absent(),
+                Value<DateTime?> priceChangedAt = const Value.absent(),
+                Value<String?> lastRefreshStatus = const Value.absent(),
+                Value<DateTime?> lastRefreshAt = const Value.absent(),
+                Value<String?> liveStatus = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProductSourceTableCompanion(
@@ -2110,6 +2883,16 @@ class $$ProductSourceTableTableTableManager
                 productId: productId,
                 url: url,
                 merchantDomain: merchantDomain,
+                minorUnits: minorUnits,
+                currencyCode: currencyCode,
+                previousPriceMinorUnits: previousPriceMinorUnits,
+                previousPriceCurrencyCode: previousPriceCurrencyCode,
+                isAvailable: isAvailable,
+                lastCheckedAt: lastCheckedAt,
+                priceChangedAt: priceChangedAt,
+                lastRefreshStatus: lastRefreshStatus,
+                lastRefreshAt: lastRefreshAt,
+                liveStatus: liveStatus,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -2119,6 +2902,16 @@ class $$ProductSourceTableTableTableManager
                 required String productId,
                 required String url,
                 required String merchantDomain,
+                Value<int?> minorUnits = const Value.absent(),
+                Value<String?> currencyCode = const Value.absent(),
+                Value<int?> previousPriceMinorUnits = const Value.absent(),
+                Value<String?> previousPriceCurrencyCode = const Value.absent(),
+                Value<bool?> isAvailable = const Value.absent(),
+                Value<DateTime?> lastCheckedAt = const Value.absent(),
+                Value<DateTime?> priceChangedAt = const Value.absent(),
+                Value<String?> lastRefreshStatus = const Value.absent(),
+                Value<DateTime?> lastRefreshAt = const Value.absent(),
+                Value<String?> liveStatus = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
               }) => ProductSourceTableCompanion.insert(
@@ -2126,6 +2919,16 @@ class $$ProductSourceTableTableTableManager
                 productId: productId,
                 url: url,
                 merchantDomain: merchantDomain,
+                minorUnits: minorUnits,
+                currencyCode: currencyCode,
+                previousPriceMinorUnits: previousPriceMinorUnits,
+                previousPriceCurrencyCode: previousPriceCurrencyCode,
+                isAvailable: isAvailable,
+                lastCheckedAt: lastCheckedAt,
+                priceChangedAt: priceChangedAt,
+                lastRefreshStatus: lastRefreshStatus,
+                lastRefreshAt: lastRefreshAt,
+                liveStatus: liveStatus,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -2198,391 +3001,25 @@ typedef $$ProductSourceTableTableProcessedTableManager =
       ProductSourceRow,
       PrefetchHooks Function({bool productId})
     >;
-typedef $$StorePriceTableTableCreateCompanionBuilder =
-    StorePriceTableCompanion Function({
-      required String productId,
-      required String storeName,
-      required String productUrl,
-      required int minorUnits,
-      required String currencyCode,
-      required bool isAvailable,
-      required DateTime lastCheckedAt,
-      Value<int> rowid,
-    });
-typedef $$StorePriceTableTableUpdateCompanionBuilder =
-    StorePriceTableCompanion Function({
-      Value<String> productId,
-      Value<String> storeName,
-      Value<String> productUrl,
-      Value<int> minorUnits,
-      Value<String> currencyCode,
-      Value<bool> isAvailable,
-      Value<DateTime> lastCheckedAt,
-      Value<int> rowid,
-    });
-
-final class $$StorePriceTableTableReferences
-    extends
-        BaseReferences<_$AppDatabase, $StorePriceTableTable, StorePriceRow> {
-  $$StorePriceTableTableReferences(
-    super.$_db,
-    super.$_table,
-    super.$_typedResult,
-  );
-
-  static $ProductTableTable _productIdTable(_$AppDatabase db) =>
-      db.productTable.createAlias(
-        $_aliasNameGenerator(db.storePriceTable.productId, db.productTable.id),
-      );
-
-  $$ProductTableTableProcessedTableManager get productId {
-    final $_column = $_itemColumn<String>('product_id')!;
-
-    final manager = $$ProductTableTableTableManager(
-      $_db,
-      $_db.productTable,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_productIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-}
-
-class $$StorePriceTableTableFilterComposer
-    extends Composer<_$AppDatabase, $StorePriceTableTable> {
-  $$StorePriceTableTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get storeName => $composableBuilder(
-    column: $table.storeName,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get productUrl => $composableBuilder(
-    column: $table.productUrl,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get minorUnits => $composableBuilder(
-    column: $table.minorUnits,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get currencyCode => $composableBuilder(
-    column: $table.currencyCode,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get isAvailable => $composableBuilder(
-    column: $table.isAvailable,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get lastCheckedAt => $composableBuilder(
-    column: $table.lastCheckedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  $$ProductTableTableFilterComposer get productId {
-    final $$ProductTableTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.productId,
-      referencedTable: $db.productTable,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ProductTableTableFilterComposer(
-            $db: $db,
-            $table: $db.productTable,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$StorePriceTableTableOrderingComposer
-    extends Composer<_$AppDatabase, $StorePriceTableTable> {
-  $$StorePriceTableTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get storeName => $composableBuilder(
-    column: $table.storeName,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get productUrl => $composableBuilder(
-    column: $table.productUrl,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get minorUnits => $composableBuilder(
-    column: $table.minorUnits,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get currencyCode => $composableBuilder(
-    column: $table.currencyCode,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get isAvailable => $composableBuilder(
-    column: $table.isAvailable,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get lastCheckedAt => $composableBuilder(
-    column: $table.lastCheckedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  $$ProductTableTableOrderingComposer get productId {
-    final $$ProductTableTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.productId,
-      referencedTable: $db.productTable,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ProductTableTableOrderingComposer(
-            $db: $db,
-            $table: $db.productTable,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$StorePriceTableTableAnnotationComposer
-    extends Composer<_$AppDatabase, $StorePriceTableTable> {
-  $$StorePriceTableTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get storeName =>
-      $composableBuilder(column: $table.storeName, builder: (column) => column);
-
-  GeneratedColumn<String> get productUrl => $composableBuilder(
-    column: $table.productUrl,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<int> get minorUnits => $composableBuilder(
-    column: $table.minorUnits,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get currencyCode => $composableBuilder(
-    column: $table.currencyCode,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<bool> get isAvailable => $composableBuilder(
-    column: $table.isAvailable,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<DateTime> get lastCheckedAt => $composableBuilder(
-    column: $table.lastCheckedAt,
-    builder: (column) => column,
-  );
-
-  $$ProductTableTableAnnotationComposer get productId {
-    final $$ProductTableTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.productId,
-      referencedTable: $db.productTable,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ProductTableTableAnnotationComposer(
-            $db: $db,
-            $table: $db.productTable,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$StorePriceTableTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $StorePriceTableTable,
-          StorePriceRow,
-          $$StorePriceTableTableFilterComposer,
-          $$StorePriceTableTableOrderingComposer,
-          $$StorePriceTableTableAnnotationComposer,
-          $$StorePriceTableTableCreateCompanionBuilder,
-          $$StorePriceTableTableUpdateCompanionBuilder,
-          (StorePriceRow, $$StorePriceTableTableReferences),
-          StorePriceRow,
-          PrefetchHooks Function({bool productId})
-        > {
-  $$StorePriceTableTableTableManager(
-    _$AppDatabase db,
-    $StorePriceTableTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$StorePriceTableTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$StorePriceTableTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$StorePriceTableTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> productId = const Value.absent(),
-                Value<String> storeName = const Value.absent(),
-                Value<String> productUrl = const Value.absent(),
-                Value<int> minorUnits = const Value.absent(),
-                Value<String> currencyCode = const Value.absent(),
-                Value<bool> isAvailable = const Value.absent(),
-                Value<DateTime> lastCheckedAt = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => StorePriceTableCompanion(
-                productId: productId,
-                storeName: storeName,
-                productUrl: productUrl,
-                minorUnits: minorUnits,
-                currencyCode: currencyCode,
-                isAvailable: isAvailable,
-                lastCheckedAt: lastCheckedAt,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String productId,
-                required String storeName,
-                required String productUrl,
-                required int minorUnits,
-                required String currencyCode,
-                required bool isAvailable,
-                required DateTime lastCheckedAt,
-                Value<int> rowid = const Value.absent(),
-              }) => StorePriceTableCompanion.insert(
-                productId: productId,
-                storeName: storeName,
-                productUrl: productUrl,
-                minorUnits: minorUnits,
-                currencyCode: currencyCode,
-                isAvailable: isAvailable,
-                lastCheckedAt: lastCheckedAt,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable(table),
-                  $$StorePriceTableTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
-          prefetchHooksCallback: ({productId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (productId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.productId,
-                                referencedTable:
-                                    $$StorePriceTableTableReferences
-                                        ._productIdTable(db),
-                                referencedColumn:
-                                    $$StorePriceTableTableReferences
-                                        ._productIdTable(db)
-                                        .id,
-                              )
-                              as T;
-                    }
-
-                    return state;
-                  },
-              getPrefetchedDataCallback: (items) async {
-                return [];
-              },
-            );
-          },
-        ),
-      );
-}
-
-typedef $$StorePriceTableTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $StorePriceTableTable,
-      StorePriceRow,
-      $$StorePriceTableTableFilterComposer,
-      $$StorePriceTableTableOrderingComposer,
-      $$StorePriceTableTableAnnotationComposer,
-      $$StorePriceTableTableCreateCompanionBuilder,
-      $$StorePriceTableTableUpdateCompanionBuilder,
-      (StorePriceRow, $$StorePriceTableTableReferences),
-      StorePriceRow,
-      PrefetchHooks Function({bool productId})
-    >;
 typedef $$RefreshSettingsTableTableCreateCompanionBuilder =
     RefreshSettingsTableCompanion Function({
       Value<int> id,
       Value<int> intervalMinutes,
+      Value<bool> browserRefreshEnabled,
+      Value<bool> priceDropAlertsEnabled,
+      Value<bool> priceIncreaseAlertsEnabled,
+      Value<bool> refreshCompletedAlertsEnabled,
+      Value<bool> showRefreshProgress,
     });
 typedef $$RefreshSettingsTableTableUpdateCompanionBuilder =
     RefreshSettingsTableCompanion Function({
       Value<int> id,
       Value<int> intervalMinutes,
+      Value<bool> browserRefreshEnabled,
+      Value<bool> priceDropAlertsEnabled,
+      Value<bool> priceIncreaseAlertsEnabled,
+      Value<bool> refreshCompletedAlertsEnabled,
+      Value<bool> showRefreshProgress,
     });
 
 class $$RefreshSettingsTableTableFilterComposer
@@ -2601,6 +3038,31 @@ class $$RefreshSettingsTableTableFilterComposer
 
   ColumnFilters<int> get intervalMinutes => $composableBuilder(
     column: $table.intervalMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get browserRefreshEnabled => $composableBuilder(
+    column: $table.browserRefreshEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get priceDropAlertsEnabled => $composableBuilder(
+    column: $table.priceDropAlertsEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get priceIncreaseAlertsEnabled => $composableBuilder(
+    column: $table.priceIncreaseAlertsEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get refreshCompletedAlertsEnabled => $composableBuilder(
+    column: $table.refreshCompletedAlertsEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showRefreshProgress => $composableBuilder(
+    column: $table.showRefreshProgress,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2623,6 +3085,31 @@ class $$RefreshSettingsTableTableOrderingComposer
     column: $table.intervalMinutes,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get browserRefreshEnabled => $composableBuilder(
+    column: $table.browserRefreshEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get priceDropAlertsEnabled => $composableBuilder(
+    column: $table.priceDropAlertsEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get priceIncreaseAlertsEnabled => $composableBuilder(
+    column: $table.priceIncreaseAlertsEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get refreshCompletedAlertsEnabled => $composableBuilder(
+    column: $table.refreshCompletedAlertsEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showRefreshProgress => $composableBuilder(
+    column: $table.showRefreshProgress,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$RefreshSettingsTableTableAnnotationComposer
@@ -2639,6 +3126,31 @@ class $$RefreshSettingsTableTableAnnotationComposer
 
   GeneratedColumn<int> get intervalMinutes => $composableBuilder(
     column: $table.intervalMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get browserRefreshEnabled => $composableBuilder(
+    column: $table.browserRefreshEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get priceDropAlertsEnabled => $composableBuilder(
+    column: $table.priceDropAlertsEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get priceIncreaseAlertsEnabled => $composableBuilder(
+    column: $table.priceIncreaseAlertsEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get refreshCompletedAlertsEnabled => $composableBuilder(
+    column: $table.refreshCompletedAlertsEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showRefreshProgress => $composableBuilder(
+    column: $table.showRefreshProgress,
     builder: (column) => column,
   );
 }
@@ -2688,17 +3200,39 @@ class $$RefreshSettingsTableTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<int> intervalMinutes = const Value.absent(),
+                Value<bool> browserRefreshEnabled = const Value.absent(),
+                Value<bool> priceDropAlertsEnabled = const Value.absent(),
+                Value<bool> priceIncreaseAlertsEnabled = const Value.absent(),
+                Value<bool> refreshCompletedAlertsEnabled =
+                    const Value.absent(),
+                Value<bool> showRefreshProgress = const Value.absent(),
               }) => RefreshSettingsTableCompanion(
                 id: id,
                 intervalMinutes: intervalMinutes,
+                browserRefreshEnabled: browserRefreshEnabled,
+                priceDropAlertsEnabled: priceDropAlertsEnabled,
+                priceIncreaseAlertsEnabled: priceIncreaseAlertsEnabled,
+                refreshCompletedAlertsEnabled: refreshCompletedAlertsEnabled,
+                showRefreshProgress: showRefreshProgress,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 Value<int> intervalMinutes = const Value.absent(),
+                Value<bool> browserRefreshEnabled = const Value.absent(),
+                Value<bool> priceDropAlertsEnabled = const Value.absent(),
+                Value<bool> priceIncreaseAlertsEnabled = const Value.absent(),
+                Value<bool> refreshCompletedAlertsEnabled =
+                    const Value.absent(),
+                Value<bool> showRefreshProgress = const Value.absent(),
               }) => RefreshSettingsTableCompanion.insert(
                 id: id,
                 intervalMinutes: intervalMinutes,
+                browserRefreshEnabled: browserRefreshEnabled,
+                priceDropAlertsEnabled: priceDropAlertsEnabled,
+                priceIncreaseAlertsEnabled: priceIncreaseAlertsEnabled,
+                refreshCompletedAlertsEnabled: refreshCompletedAlertsEnabled,
+                showRefreshProgress: showRefreshProgress,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -2737,8 +3271,6 @@ class $AppDatabaseManager {
       $$ProductTableTableTableManager(_db, _db.productTable);
   $$ProductSourceTableTableTableManager get productSourceTable =>
       $$ProductSourceTableTableTableManager(_db, _db.productSourceTable);
-  $$StorePriceTableTableTableManager get storePriceTable =>
-      $$StorePriceTableTableTableManager(_db, _db.storePriceTable);
   $$RefreshSettingsTableTableTableManager get refreshSettingsTable =>
       $$RefreshSettingsTableTableTableManager(_db, _db.refreshSettingsTable);
 }

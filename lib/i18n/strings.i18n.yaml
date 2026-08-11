@@ -1,34 +1,59 @@
 appTitle: WorthLoop
 
+common:
+  cancel: Cancel
+  refreshSuccessful: Refresh successful
+  refreshCompletedWithErrors: Refresh completed with errors
+  refreshFailed: Refresh failed
+
 home:
   subtitle: Your watchlist, with the best current offer first.
-  sampleDataNotice: Demo prices — local sample data, not live offers.
   trackedProducts: $count tracked
+  refreshProgress: "Updating prices · $completed of $total sources checked"
   refreshAll: Refresh all
   refreshing: Refreshing
+  refreshAllComplete: "All sources checked."
+  refreshAllPartial: "Refresh finished; $failed sources couldn't be checked."
+  refreshBlockedProduct: A product is already being checked
+  refreshBlockedAllProducts: All products are being checked
+  sourceRefreshChecking: "Checking $count sources"
+  sourceRefreshFailed: "Couldn't check $merchant"
+  sourceRefreshFailedCount: "$count sources couldn't be checked"
   bestPrice: Best price
   noAvailablePrice: No available price
   noStore: No store in stock
   storeOffers: "Offers: $count"
   updatedAt: Updated $time
+  priceDrop: "↓ $amount since $date"
+  priceIncrease: "↑ $amount since $date"
   emptyTitle: No tracked products
   emptyDescription: Products you track will appear here with their best available offer.
   addProductTitle: Add a product
   addProductDescription: Paste a product link to start tracking it.
   productNameLabel: Product name
-  productUrlLabel: Product website link
-  productUrlHint: https://example.com/product
   productNameRequired: Enter a product name.
-  productUrlInvalid: Enter a valid HTTPS website link.
   addProductButton: Add product
   addProductSaving: Saving
-  productSourceSupportDescription: Links can be saved now. Automatic price updates are available only for supported websites.
+  searchHint: Search your tracked items
+  searchClearTooltip: Clear search
+  noSearchResultsTitle: No matches
+  noSearchResultsDescription: No tracked items match "$query".
 
 productDetails:
   title: Product details
   backTooltip: Back
   refresh: Refresh
   refreshing: Refreshing
+  refreshProgress: "$completed of $total sources checked"
+  otherProductsRefreshing: "Other products refreshing"
+  refreshBlockedThisProduct: This product is already being checked
+  refreshBlockedOtherProduct: Another product is being checked
+  refreshBlockedAllProducts: All products are being checked
+  queued: Queued
+  checking: Checking
+  cannotAccessNow: Cannot access now
+  refreshComplete: "All $total sources checked."
+  refreshPartial: "$completed of $total sources checked; $failed could not be accessed."
   bestPrice: Best price
   offers: "Store offers: $count"
   availableOffers: Available offers
@@ -37,13 +62,48 @@ productDetails:
   noOffers: No offers yet.
   available: In stock
   unavailable: Out of stock
+  filterAll: All
+  filterAvailable: Available
+  filterUnavailable: Unavailable
   checkedAt: Checked at $time
+  priceDrop: "↓ $amount since $date"
+  priceIncrease: "↑ $amount since $date"
   productNotFound: Product not found
   productNotFoundDescription: Return to your tracked products and choose an item again.
+  filterIssues: Issues
   refreshBlocked: This website blocked the refresh attempt. Try again later.
   refreshUnsupported: This website does not provide a readable price yet.
   refreshNetworkError: The website could not be reached. Your last price is still shown.
   refreshInvalidData: The website returned an unreadable price. Your last price is still shown.
+  sourcesTitle: Sources
+  openOfferFailed: Could not open the merchant page.
+  openOfferHint: Opens in your browser
+  addSourceTooltip: Add source
+  addSourceTitle: Add a source
+  editSourceTitle: Edit source
+  sourceUrlLabel: Website link
+  sourceUrlHint: https://example.com/product
+  sourceUrlRequired: Enter a website link.
+  savingSource: Saving
+  addSourceButton: Add source
+  saveSourceButton: Save
+  noSourcesTitle: No sources yet
+  noSourcesDescription: Add a merchant link to start comparing prices for this product.
+  editSourceTooltip: Edit source
+  deleteSourceTooltip: Delete source
+  deleteSourceTitle: Delete this source?
+  deleteSourceMessage: This will remove $merchant and its offer from this product.
+  deleteSourceConfirmLabel: Delete
+  renameProductTooltip: Rename product
+  renameProductTitle: Rename product
+  productNameLabel: Product name
+  renameProductRequired: Enter a product name.
+  renameProductButton: Save
+  renameProductSaving: Saving
+  deleteProductTooltip: Delete product
+  deleteProductTitle: Delete this product?
+  deleteProductMessage: This removes $name and all its saved sources and offers.
+  deleteProductConfirmLabel: Delete
 
 settings:
   title: Settings
@@ -70,6 +130,12 @@ settings:
       everyThreeHours: Every 3 hours
       everySixHours: Every 6 hours
       everyTwelveHours: Every 12 hours
+    browserRefresh:
+      title: Browser refresh
+      description: Many stores block simple requests. Enable a browser in the background to improve automatic price coverage.
+      enabledDescription: Browser refresh may use additional battery and data while checking stores in the background.
+      status: Browser refresh is enabled. Android may still delay background work.
+      fixRestrictions: Fix background restrictions
     updates:
       title: Updates
       version: Version $version
@@ -81,6 +147,32 @@ settings:
       copyright: © 2026 Soneka96
       privacyPolicy: Privacy & data use
       notImplemented: Privacy & data use is not implemented yet.
+  notifications:
+    title: Notifications
+    priceAlertsSectionLabel: Price alerts
+    refreshActivitySectionLabel: Refresh activity
+    priceAlerts:
+      title: Price drop notifications
+      description: Get a phone notification when a tracked product reaches a new best price.
+      enabledDescription: Notifications are enabled for new best prices. Android permission is required.
+      notificationTitle: "$name is cheaper"
+      notificationBody: "Now $current, down from $previous."
+      permissionDenied: Android notification permission was not granted, so price alerts remain off.
+    priceIncreaseAlerts:
+      title: Price increase notifications
+      description: Get a phone notification when a tracked product's best price goes up.
+      enabledDescription: Notifications are enabled for price increases. Android permission is required.
+      notificationTitle: "$name got more expensive"
+      notificationBody: "Now $current, up from $previous."
+      permissionDenied: Android notification permission was not granted, so price alerts remain off.
+    refreshCompletedAlerts:
+      title: Refresh completed notifications
+      description: Get a phone notification every time a background refresh finishes, even when nothing changed.
+      enabledDescription: Notifications are enabled for every completed background refresh. Android permission is required.
+      permissionDenied: Android notification permission was not granted, so refresh notifications remain off.
+    showRefreshProgress:
+      title: Show refresh progress
+      description: Show a progress bar in the background refresh notification while prices are being checked.
 
 enums:
   cornerStyle:
@@ -92,3 +184,4 @@ enums:
   settingsCategory:
     general: General
     appearance: Appearance
+    notifications: Notifications

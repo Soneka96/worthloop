@@ -12,6 +12,22 @@ class RefreshSettingsState extends Equatable {
   /// Preferred refresh interval in minutes.
   final int intervalMinutes;
 
+  /// Whether browser-backed background refresh is enabled.
+  final bool browserRefreshEnabled;
+
+  /// Whether product price-drop notifications are enabled.
+  final bool priceAlertsEnabled;
+
+  /// Whether product price-increase notifications are enabled.
+  final bool priceIncreaseAlertsEnabled;
+
+  /// Whether a notification is shown for every completed background refresh.
+  final bool refreshCompletedAlertsEnabled;
+
+  /// Whether the background refresh shows a progress bar on its
+  /// notification while sources are being fetched.
+  final bool showRefreshProgress;
+
   /// Whether persisted settings are loading.
   final bool isLoading;
 
@@ -23,6 +39,11 @@ class RefreshSettingsState extends Equatable {
 
   const RefreshSettingsState({
     required this.intervalMinutes,
+    required this.browserRefreshEnabled,
+    required this.priceAlertsEnabled,
+    required this.priceIncreaseAlertsEnabled,
+    required this.refreshCompletedAlertsEnabled,
+    required this.showRefreshProgress,
     required this.isLoading,
     required this.isSaving,
     required this.error,
@@ -31,6 +52,11 @@ class RefreshSettingsState extends Equatable {
   /// Returns the state used before settings are loaded.
   factory RefreshSettingsState.initial() => const RefreshSettingsState(
     intervalMinutes: RefreshIntervalConstants.hourly,
+    browserRefreshEnabled: false,
+    priceAlertsEnabled: false,
+    priceIncreaseAlertsEnabled: false,
+    refreshCompletedAlertsEnabled: false,
+    showRefreshProgress: false,
     isLoading: false,
     isSaving: false,
     error: null,
@@ -39,16 +65,38 @@ class RefreshSettingsState extends Equatable {
   /// Returns a copy with the supplied fields replaced.
   RefreshSettingsState copyWith({
     int? intervalMinutes,
+    bool? browserRefreshEnabled,
+    bool? priceAlertsEnabled,
+    bool? priceIncreaseAlertsEnabled,
+    bool? refreshCompletedAlertsEnabled,
+    bool? showRefreshProgress,
     bool? isLoading,
     bool? isSaving,
     Option<String>? error,
   }) => RefreshSettingsState(
     intervalMinutes: intervalMinutes ?? this.intervalMinutes,
+    browserRefreshEnabled: browserRefreshEnabled ?? this.browserRefreshEnabled,
+    priceAlertsEnabled: priceAlertsEnabled ?? this.priceAlertsEnabled,
+    priceIncreaseAlertsEnabled:
+        priceIncreaseAlertsEnabled ?? this.priceIncreaseAlertsEnabled,
+    refreshCompletedAlertsEnabled:
+        refreshCompletedAlertsEnabled ?? this.refreshCompletedAlertsEnabled,
+    showRefreshProgress: showRefreshProgress ?? this.showRefreshProgress,
     isLoading: isLoading ?? this.isLoading,
     isSaving: isSaving ?? this.isSaving,
     error: error == null ? this.error : error.toNullable(),
   );
 
   @override
-  List<Object?> get props => [intervalMinutes, isLoading, isSaving, error];
+  List<Object?> get props => [
+    intervalMinutes,
+    browserRefreshEnabled,
+    priceAlertsEnabled,
+    priceIncreaseAlertsEnabled,
+    refreshCompletedAlertsEnabled,
+    showRefreshProgress,
+    isLoading,
+    isSaving,
+    error,
+  ];
 }

@@ -18,7 +18,7 @@ dependencies:
   redux: ^5.0.0
 
   # Local database
-  drift: ^2.22.0
+  drift: ^2.32.1
   sqlite3_flutter_libs: ^0.5.24
 
   # HTTP
@@ -32,11 +32,14 @@ dependencies:
   path: ^1.9.1
 
   # i18n
-  slang: ^3.31.0
-  slang_flutter: ^3.31.0
+  slang: ^4.8.0
+  slang_flutter: ^4.8.0
 
   # App version (About section)
-  package_info_plus: ^8.3.0
+  package_info_plus: ^10.2.1
+  device_info_plus: ^13.2.0
+  cookie_jar: ^4.0.9
+  dio_cookie_manager: ^3.5.0
 
   # Scroll fade edges
   fading_edge_scrollview: ^4.1.1
@@ -50,7 +53,10 @@ dependencies:
   get_it: ^9.2.1
   meta: ^1.18.0
   fpdart: ^1.2.0
-  sqlite3: ^2.9.4
+  sqlite3: ^3.0.0
+  flutter_inappwebview: ^6.1.5
+  url_launcher: ^6.3.2
+  flutter_slidable: ^4.0.3
 
 dev_dependencies:
   flutter_test:
@@ -61,12 +67,15 @@ dev_dependencies:
   # Mocking
   mocktail: ^1.0.4
 
+  # Deterministic Timer control in tests
+  fake_async: ^1.3.1
+
   # Code generation (drift schema + slang)
-  drift_dev: ^2.22.0
-  build_runner: ^2.4.13
-  slang_build_runner: ^3.31.0
+  drift_dev: ^2.32.1
+  build_runner: ^2.8.0
+  slang_build_runner: ^4.8.0
   path_provider_platform_interface: ^2.1.2
-  package_info_plus_platform_interface: ^3.2.1
+  package_info_plus_platform_interface: 4.1.0
 
   # i18n key-parity test
   yaml: ^3.1.0
@@ -78,13 +87,18 @@ dev_dependencies:
 
   # Test/command runner with completion notifications — run `dart run taskflare`
   taskflare: ^0.2.1
+  url_launcher_platform_interface: ^2.3.2
 
 flutter_launcher_icons:
-  image_path: "assets/icon,png.png"
+  image_path: "assets/worthloop_mark.png"
   android: true
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icon,png.png
+    - assets/launch_icon_alpha.png
+    - assets/worthloop_mark.png
   fonts:
     - family: Inter
       fonts:

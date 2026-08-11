@@ -1,0 +1,134 @@
+// Flutter imports:
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
+
+// Package imports:
+import 'package:fpdart/fpdart.dart';
+
+// Project imports:
+import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
+import 'package:worth_loop/features/products/domain/usecases/refresh_all_products.usecase.dart';
+import 'package:worth_loop/features/settings/domain/usecases/load_refresh_settings.usecase.dart';
+import 'package:worth_loop/injection_container.dart';
+import 'package:worth_loop/shared/constants/refresh_interval_constants.dart';
+import 'package:worth_loop/shared/failures/failures.dart';
+import 'package:worth_loop/shared/usecase/no_params.dart';
+import 'package:worth_loop/shared/utils/background_refresh_channel_payload.dart';
+import 'package:worth_loop/shared/utils/background_refresh_loop.dart';
+import 'package:worth_loop/shared/utils/background_refresh_notifications.dart';
+import 'package:worth_loop/shared/utils/background_refresh_runner.dart';
+import 'package:worth_loop/shared/utils/product_source_refresh_engine.dart';
+
+const MethodChannel _engineChannel = MethodChannel(
+  'io.github.soneka96.worthloop/background_refresh_engine',
+);
+
+/// Runs the local refresh loop inside the foreground service's Flutter
+/// engine. Arms a backup alarm immediately, before the first refresh
+/// cycle's own network work even starts — otherwise that first cycle (the
+/// one most likely to be interrupted right after a cold start) would be the
+/// one window with no OS-level backstop at all. Superseded by the real
+/// interval as soon as that cycle actually completes.
+@pragma('vm:entry-point')
+Future<void> backgroundRefreshEntrypoint() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initDependencies();
+  await sl<IProductsRepository>().resetStaleSourceStatuses();
+
+  await _notifyEngine(
+    'scheduleBackupAlarm',
+    arguments: RefreshIntervalConstants.hourly,
+  );
+
+  final BackgroundRefreshNotifications notifications =
+      BackgroundRefreshNotifications(
+        loadSettings: () => sl<LoadRefreshSettingsUseCase>()(NoParams()),
+        notifyEngine: _notifyEngine,
+      );
+
+  sl<ProductSourceRefreshEngine>().onProgress = notifications.notifyProgress;
+  sl<ProductSourceRefreshEngine>().onRunComplete = notifications.notifyOutcome;
+
+  final BackgroundRefreshRunner runner = BackgroundRefreshRunner(
+    loadSettings: () => sl<LoadRefreshSettingsUseCase>()(NoParams()),
+    refreshAllProducts: () async {
+      final Either<Failure, Unit> result =
+          await sl<RefreshAllProductsUseCase>()(NoParams());
+      await sl<ProductSourceRefreshEngine>().waitUntilIdle();
+      return result;
+    },
+  );
+
+  Future<Duration?> runRefresh({required bool force}) async {
+    final Duration? nextDelay = await runner.runOnce(
+      force: force,
+      onRefreshStarted: () => _notifyEngine('refreshStarted'),
+      onRefreshOutcome: (bool succeeded) async {
+        if (!succeeded) {
+          await notifications.notifyOutcome(false);
+        }
+      },
+    );
+    if (nextDelay != null) {
+      await _notifyEngine(
+        'scheduleBackupAlarm',
+        arguments: nextDelay.inMinutes,
+      );
+    }
+    return nextDelay;
+  }
+
+  final BackgroundRefreshLoop loop = BackgroundRefreshLoop(
+    runOnce: () => runRefresh(force: false),
+    runManualOnce: () => runRefresh(force: true),
+  );
+
+  _engineChannel.setMethodCallHandler((MethodCall call) async {
+    if (call.method == 'enqueueSources') {
+      final (List<String> sourceIds, bool bypassCooldown) =
+          parseEnqueueSourcesPayload(call.arguments);
+      await sl<IProductsRepository>().enqueueSourceRefresh(
+        sourceIds,
+        bypassCooldown: bypassCooldown,
+      );
+    } else if (call.method == 'rescheduleRefresh') {
+      loop.requestRefresh();
+    }
+  });
+
+  try {
+    final Object? pending = await _engineChannel.invokeMethod<Object?>(
+      'consumePendingSourceIds',
+    );
+    final List<String> sourceIds = sourceIdsFromChannelPayload(pending);
+    if (sourceIds.isNotEmpty) {
+      await sl<IProductsRepository>().enqueueSourceRefresh(sourceIds);
+    }
+  } on MissingPluginException {
+    // The entrypoint can still perform scheduled refreshes on unsupported hosts.
+  } on PlatformException {
+    // The entrypoint can still perform scheduled refreshes if the bridge fails.
+  }
+
+  try {
+    await loop.run();
+  } finally {
+    try {
+      await _engineChannel.invokeMethod<void>('stopService');
+    } on MissingPluginException {
+      // Nothing to stop when the entrypoint is running without the native host.
+    } on PlatformException {
+      // Native cleanup is best effort after the refresh loop finishes.
+    }
+  }
+}
+
+Future<void> _notifyEngine(String method, {Object? arguments}) async {
+  try {
+    await _engineChannel.invokeMethod<void>(method, arguments);
+  } on MissingPluginException {
+    // Notifications are best effort when running without the native host.
+  } on PlatformException {
+    // Notification failures must not stop product refreshes.
+  }
+}

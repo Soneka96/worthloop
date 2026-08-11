@@ -70,7 +70,7 @@ Gruvbox). Use `.claude/skills/add-theme-preset/SKILL.md` to add another one.
 | Testing | `flutter_test` + `mocktail` |
 | Test/command runner | `taskflare` |
 
-**Not used:** background workers, native home-screen widgets, ARB files, FCM, or mobile flavors.
+**Not used:** native home-screen widgets, ARB files, FCM, or mobile flavors.
 
 ## File naming conventions
 

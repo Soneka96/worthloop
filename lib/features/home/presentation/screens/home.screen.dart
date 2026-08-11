@@ -6,16 +6,17 @@ import 'package:flutter_redux/flutter_redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/home/presentation/state/viewmodels/home_screen.viewmodel.dart';
-import 'package:worth_loop/features/home/presentation/widgets/add_product.section.dart';
+import 'package:worth_loop/features/home/presentation/widgets/add_product_dialog.widget.dart';
+import 'package:worth_loop/features/home/presentation/widgets/foreground_refresh_observer.widget.dart';
 import 'package:worth_loop/features/home/presentation/widgets/home_header.widget.dart';
 import 'package:worth_loop/features/home/presentation/widgets/home_products_header.widget.dart';
-import 'package:worth_loop/features/home/presentation/widgets/tracked_product.widget.dart';
-import 'package:worth_loop/features/home/presentation/widgets/tracked_products_empty.widget.dart';
+import 'package:worth_loop/features/home/presentation/widgets/tracked_products_list.section.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
-import 'package:worth_loop/features/products/presentation/widgets/illustrative_price_notice.widget.dart';
-import 'package:worth_loop/features/products/presentation/widgets/product_refresh_status_notice.widget.dart';
+import 'package:worth_loop/features/settings/presentation/state/general_settings.actions.dart';
+import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
+import 'package:worth_loop/shared/features/pull_to_refresh.widget.dart';
 import 'package:worth_loop/shared/theme/app_spacing_theme_extension.dart';
 
 /// Displays tracked products and their best current offers.
@@ -26,65 +27,66 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return StoreConnector<AppState, HomeScreenViewModel>(
       distinct: true,
-      onInit: (store) => store.dispatch(const LoadProductsAction()),
+      onInit: (store) {
+        store.dispatch(const LoadProductsAction());
+        store.dispatch(const LoadRefreshSettingsAction());
+      },
       converter: (store) => sl<HomeScreenViewModel>(param1: store),
       builder: (context, viewmodel) {
-        return SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              SliverPadding(
-                padding: EdgeInsets.all(context.spacing.md),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    HomeHeader(onOpenSettings: viewmodel.onOpenSettings),
-                    const IllustrativePriceNotice(),
-                    ProductRefreshStatusNotice(status: viewmodel.refreshStatus),
-                    SizedBox(height: context.spacing.md),
-                    AddProductSection(
-                      isSubmitting: viewmodel.isCreatingProduct,
-                      errorMessage: viewmodel.productCreationError,
-                      createdProductId: viewmodel.createdProductId,
-                      onSubmit: viewmodel.onCreateProduct,
+        return ForegroundRefreshObserver(
+          interval: Duration(minutes: viewmodel.refreshIntervalMinutes),
+          onRefresh: viewmodel.onRefreshAll,
+          onResume: viewmodel.onResume,
+          lastUpdatedAt: viewmodel.oldestUpdatedAt,
+          child: Scaffold(
+            floatingActionButton: FloatingActionButton.small(
+              key: const Key('home-add-product-button'),
+              tooltip: t.home.addProductButton,
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (context) => const AddProductDialog(),
+              ),
+              child: const Icon(Icons.add),
+            ),
+            body: SafeArea(
+              child: PullToRefreshWidget(
+                blockedMessage: viewmodel.isRefreshing
+                    ? viewmodel.isRefreshingAll
+                          ? t.home.refreshBlockedAllProducts
+                          : t.home.refreshBlockedProduct
+                    : null,
+                onRefresh: () async {
+                  viewmodel.onRefreshAll();
+                },
+                child: CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    SliverPadding(
+                      padding: EdgeInsets.all(context.spacing.md),
+                      sliver: SliverList(
+                        delegate: SliverChildListDelegate([
+                          HomeHeader(onOpenSettings: viewmodel.onOpenSettings),
+                          HomeProductsHeader(
+                            productCount: viewmodel.products.length,
+                            isRefreshing: viewmodel.isRefreshing,
+                            refreshCompletedCount:
+                                viewmodel.refreshCompletedCount,
+                            refreshTotalCount: viewmodel.refreshTotalCount,
+                            showRefreshProgress: viewmodel.showRefreshProgress,
+                            latestUpdatedAt: viewmodel.latestUpdatedAt,
+                          ),
+                        ]),
+                      ),
                     ),
-                    SizedBox(height: context.spacing.lg),
-                    HomeProductsHeader(
-                      productCount: viewmodel.products.length,
-                      isRefreshingAll: viewmodel.isRefreshingAll,
+                    TrackedProductsListSection(
+                      products: viewmodel.products,
                       isLoading: viewmodel.isLoading,
-                      onRefreshAll: viewmodel.onRefreshAll,
+                      onProductTap: viewmodel.onOpenProduct,
                     ),
-                  ]),
+                  ],
                 ),
               ),
-              if (viewmodel.isLoading)
-                const SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else if (viewmodel.products.isEmpty)
-                const SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: TrackedProductsEmptyWidget(),
-                )
-              else
-                SliverPadding(
-                  padding: EdgeInsets.symmetric(horizontal: context.spacing.md),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) => Padding(
-                        padding: EdgeInsets.only(bottom: context.spacing.sm),
-                        child: TrackedProductWidget(
-                          product: viewmodel.products[index],
-                          onTap: () => viewmodel.onOpenProduct(
-                            viewmodel.products[index].id,
-                          ),
-                        ),
-                      ),
-                      childCount: viewmodel.products.length,
-                    ),
-                  ),
-                ),
-            ],
+            ),
           ),
         );
       },

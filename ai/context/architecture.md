@@ -213,6 +213,14 @@ one as soon as presentation needs a typed shape, even with no repository/usecase
 - No generic "service layer" inside a feature.
 - App-wide plumbing with no business rule behind it → `lib/shared/utils/`, DI-registered — never
   wrapped in a usecase.
+- **Feature-specific orchestration/engine classes** (a worker pool, a queue runner, a scheduling
+  loop) still go in `lib/shared/utils/`, never inside `features/<name>/`, even when their whole
+  purpose is one feature's business logic and they import that feature's own domain types
+  directly. The feature folder is reserved for the five named layers only (datasources,
+  models/entities, repositories, usecases, screens/sections/widgets/state) — anything else is
+  shared, owned/instantiated by whichever layer needs it (usually the repository). Precedent:
+  `background_refresh_runner.dart`/`background_refresh_loop.dart` — pure products-refresh
+  orchestration, still in `shared/utils/`, not `features/products/`.
 - **Who can call a service**: middleware, usecases, repositories, datasources, and other services
   may call a service directly. Presentation (a widget, Section, Screen, or ViewModel) may never
   call a service directly — no exceptions beyond the one documented below (`ChangeNotifier`-based
@@ -258,6 +266,42 @@ one as soon as presentation needs a typed shape, even with no repository/usecase
 - Entity and Model are always separate files. Model `extends` Entity directly (e.g. `ProjectModel
   extends Project`) — no `toEntity()` mapping method; a `fromRow()` factory builds the Model
   straight from a drift row, and the Model satisfies any signature expecting the Entity.
+
+## Background refresh
+
+Product-source fetching runs in a second Flutter engine hosted by an Android foreground service
+(`BackgroundRefreshService.kt`), independent of whether the app is foregrounded — this is
+deliberate: exiting the app must not interrupt an in-progress refresh.
+
+- **Two isolates, two DI containers.** The main app engine and the background engine each call
+  `initDependencies()` separately, so a singleton (e.g. `ProductsRepository`) in one isolate is a
+  *different object* from the one in the other. They never share Dart state directly — only
+  through the drift database (one SQLite file both isolates open) and a `MethodChannel` between
+  the native service and whichever engine it's driving.
+- **Entrypoint resolution**: the background isolate's entrypoint
+  (`lib/shared/background_refresh_entrypoint.dart`, `@pragma('vm:entry-point')`) is resolved via a
+  `CallbackHandle` registered from `main.dart` and stored natively — never a hardcoded
+  library-path string, which breaks silently across Dart AOT builds.
+- **The database is the single source of truth for live refresh state** — not Redux, not a
+  SharedPreferences/JSON-blob side channel. `ProductSourceTable.liveStatus` holds a source's
+  in-progress state (`queued`/`fetching`) and clears to `null` once terminal.
+  `productsUpdatedFromDatabaseReducer` derives `sourceRefreshStatuses`/`isRefreshingAll`/
+  `refreshingProductIds` fresh from each `watchProducts()` stream emission — it never merges with
+  the reducer's previous state. Redux is a read-only projection of DB state for anything
+  refresh-related; nothing dispatches a "refresh started/progressed/finished" action to drive it.
+- **Entry point**: `IProductsRepository.enqueueSourceRefresh(sourceIds, {bypassCooldown})` is the
+  only way to trigger a fetch. It queues each source onto a queue keyed by merchant domain and
+  starts (or wakes) a bounded pool of worker loops — never two concurrent fetches to the same
+  merchant, several different merchants at once. A source can be enqueued mid-run (e.g. retrying
+  one failed source) and lands in its own merchant's queue without waiting for anything else in
+  flight.
+- Middleware calls `AndroidBackgroundRefreshService.enqueueSources()` and returns immediately — it
+  never awaits a fetch result. The UI updates when the DB stream reflects the change, not when the
+  dispatch call returns.
+- CRUD (create/edit/delete a product or source) always stays synchronous and foreground — never
+  routed through the background engine. Only fetching does.
+- `resetStaleSourceStatuses()` runs once at background-isolate startup to clear any `queued`/
+  `fetching` row left behind by a process that was killed mid-refresh.
 
 ## Route conventions
 

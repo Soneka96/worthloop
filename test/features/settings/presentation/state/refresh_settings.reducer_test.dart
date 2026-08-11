@@ -46,8 +46,65 @@ void main() {
 
           expect(state.intervalMinutes, 60, reason: 'previous value');
           expect(reducedState.intervalMinutes, 180, reason: 'new value');
+          expect(
+            state.browserRefreshEnabled,
+            isFalse,
+            reason: 'previous value',
+          );
+          expect(
+            reducedState.browserRefreshEnabled,
+            isFalse,
+            reason: 'new value',
+          );
           expect(state.isLoading, isTrue, reason: 'previous value');
           expect(reducedState.isLoading, isFalse, reason: 'new value');
+        },
+      );
+
+      test(
+        'RefreshSettingsLoadedAction modifies priceAlertsEnabled, priceIncreaseAlertsEnabled, refreshCompletedAlertsEnabled, and showRefreshProgress',
+        () {
+          final RefreshSettingsState state = RefreshSettingsState.initial()
+              .copyWith(error: const Some('failed'));
+
+          final RefreshSettingsState reducedState = refreshSettingsReducer(
+            state,
+            RefreshSettingsLoadedAction(
+              buildRefreshSettings(
+                priceDropAlertsEnabled: true,
+                priceIncreaseAlertsEnabled: true,
+                refreshCompletedAlertsEnabled: true,
+                showRefreshProgress: true,
+              ),
+            ),
+          );
+
+          expect(state.priceAlertsEnabled, isFalse, reason: 'previous value');
+          expect(reducedState.priceAlertsEnabled, isTrue, reason: 'new value');
+          expect(
+            state.priceIncreaseAlertsEnabled,
+            isFalse,
+            reason: 'previous value',
+          );
+          expect(
+            reducedState.priceIncreaseAlertsEnabled,
+            isTrue,
+            reason: 'new value',
+          );
+          expect(
+            state.refreshCompletedAlertsEnabled,
+            isFalse,
+            reason: 'previous value',
+          );
+          expect(
+            reducedState.refreshCompletedAlertsEnabled,
+            isTrue,
+            reason: 'new value',
+          );
+          expect(state.showRefreshProgress, isFalse, reason: 'previous value');
+          expect(reducedState.showRefreshProgress, isTrue, reason: 'new value');
+          expect(state.error, 'failed', reason: 'previous value');
+          expect(reducedState.error, isNull, reason: 'new value');
         },
       );
     },
@@ -140,4 +197,348 @@ void main() {
       expect(refreshSettingsReducer(state, Object()), state);
     });
   });
+
+  group(
+    'RefreshSettingsReducer processes SavePriceAlertsEnabledAction correctly',
+    () {
+      test('SavePriceAlertsEnabledAction modifies isSaving and error', () {
+        final RefreshSettingsState state = RefreshSettingsState.initial()
+            .copyWith(error: const Some('failed'));
+
+        final RefreshSettingsState reducedState = refreshSettingsReducer(
+          state,
+          const SavePriceAlertsEnabledAction(true),
+        );
+
+        expect(state.isSaving, isFalse, reason: 'previous value');
+        expect(reducedState.isSaving, isTrue, reason: 'new value');
+        expect(reducedState.error, isNull);
+      });
+    },
+  );
+
+  group(
+    'RefreshSettingsReducer processes PriceAlertsEnabledSavedAction correctly',
+    () {
+      test(
+        'PriceAlertsEnabledSavedAction modifies the preference and isSaving',
+        () {
+          final RefreshSettingsState state = RefreshSettingsState.initial()
+              .copyWith(isSaving: true);
+
+          final RefreshSettingsState reducedState = refreshSettingsReducer(
+            state,
+            const PriceAlertsEnabledSavedAction(true),
+          );
+
+          expect(state.priceAlertsEnabled, isFalse, reason: 'previous value');
+          expect(reducedState.priceAlertsEnabled, isTrue, reason: 'new value');
+          expect(state.isSaving, isTrue, reason: 'previous value');
+          expect(reducedState.isSaving, isFalse, reason: 'new value');
+        },
+      );
+    },
+  );
+
+  group(
+    'RefreshSettingsReducer processes PriceAlertsSaveFailedAction correctly',
+    () {
+      test('PriceAlertsSaveFailedAction modifies isSaving and error', () {
+        final RefreshSettingsState state = RefreshSettingsState.initial()
+            .copyWith(isSaving: true);
+
+        final RefreshSettingsState reducedState = refreshSettingsReducer(
+          state,
+          const PriceAlertsSaveFailedAction('failed'),
+        );
+
+        expect(state.isSaving, isTrue, reason: 'previous value');
+        expect(reducedState.isSaving, isFalse, reason: 'new value');
+        expect(reducedState.error, 'failed');
+      });
+    },
+  );
+
+  group(
+    'RefreshSettingsReducer processes SaveBrowserRefreshEnabledAction correctly',
+    () {
+      test('SaveBrowserRefreshEnabledAction modifies isSaving and error', () {
+        final RefreshSettingsState state = RefreshSettingsState.initial()
+            .copyWith(error: const Some('failed'));
+
+        final RefreshSettingsState reducedState = refreshSettingsReducer(
+          state,
+          const SaveBrowserRefreshEnabledAction(true),
+        );
+
+        expect(state.isSaving, isFalse, reason: 'previous value');
+        expect(reducedState.isSaving, isTrue, reason: 'new value');
+        expect(reducedState.error, isNull);
+      });
+    },
+  );
+
+  group(
+    'RefreshSettingsReducer processes BrowserRefreshEnabledSavedAction correctly',
+    () {
+      test(
+        'BrowserRefreshEnabledSavedAction modifies the preference and isSaving',
+        () {
+          final RefreshSettingsState state = RefreshSettingsState.initial()
+              .copyWith(isSaving: true);
+
+          final RefreshSettingsState reducedState = refreshSettingsReducer(
+            state,
+            const BrowserRefreshEnabledSavedAction(true),
+          );
+
+          expect(
+            state.browserRefreshEnabled,
+            isFalse,
+            reason: 'previous value',
+          );
+          expect(
+            reducedState.browserRefreshEnabled,
+            isTrue,
+            reason: 'new value',
+          );
+          expect(state.isSaving, isTrue, reason: 'previous value');
+          expect(reducedState.isSaving, isFalse, reason: 'new value');
+        },
+      );
+    },
+  );
+
+  group(
+    'RefreshSettingsReducer processes BrowserRefreshSaveFailedAction correctly',
+    () {
+      test('BrowserRefreshSaveFailedAction modifies isSaving and error', () {
+        final RefreshSettingsState state = RefreshSettingsState.initial()
+            .copyWith(isSaving: true);
+
+        final RefreshSettingsState reducedState = refreshSettingsReducer(
+          state,
+          const BrowserRefreshSaveFailedAction('failed'),
+        );
+
+        expect(state.isSaving, isTrue, reason: 'previous value');
+        expect(reducedState.isSaving, isFalse, reason: 'new value');
+        expect(reducedState.error, 'failed');
+      });
+    },
+  );
+
+  group(
+    'RefreshSettingsReducer processes SavePriceIncreaseAlertsEnabledAction correctly',
+    () {
+      test(
+        'SavePriceIncreaseAlertsEnabledAction modifies isSaving and error',
+        () {
+          final RefreshSettingsState state = RefreshSettingsState.initial()
+              .copyWith(error: const Some('failed'));
+
+          final RefreshSettingsState reducedState = refreshSettingsReducer(
+            state,
+            const SavePriceIncreaseAlertsEnabledAction(true),
+          );
+
+          expect(state.isSaving, isFalse, reason: 'previous value');
+          expect(reducedState.isSaving, isTrue, reason: 'new value');
+          expect(reducedState.error, isNull);
+        },
+      );
+    },
+  );
+
+  group(
+    'RefreshSettingsReducer processes PriceIncreaseAlertsEnabledSavedAction correctly',
+    () {
+      test(
+        'PriceIncreaseAlertsEnabledSavedAction modifies the preference and isSaving',
+        () {
+          final RefreshSettingsState state = RefreshSettingsState.initial()
+              .copyWith(isSaving: true);
+
+          final RefreshSettingsState reducedState = refreshSettingsReducer(
+            state,
+            const PriceIncreaseAlertsEnabledSavedAction(true),
+          );
+
+          expect(
+            state.priceIncreaseAlertsEnabled,
+            isFalse,
+            reason: 'previous value',
+          );
+          expect(
+            reducedState.priceIncreaseAlertsEnabled,
+            isTrue,
+            reason: 'new value',
+          );
+          expect(state.isSaving, isTrue, reason: 'previous value');
+          expect(reducedState.isSaving, isFalse, reason: 'new value');
+        },
+      );
+    },
+  );
+
+  group(
+    'RefreshSettingsReducer processes PriceIncreaseAlertsSaveFailedAction correctly',
+    () {
+      test(
+        'PriceIncreaseAlertsSaveFailedAction modifies isSaving and error',
+        () {
+          final RefreshSettingsState state = RefreshSettingsState.initial()
+              .copyWith(isSaving: true);
+
+          final RefreshSettingsState reducedState = refreshSettingsReducer(
+            state,
+            const PriceIncreaseAlertsSaveFailedAction('failed'),
+          );
+
+          expect(state.isSaving, isTrue, reason: 'previous value');
+          expect(reducedState.isSaving, isFalse, reason: 'new value');
+          expect(reducedState.error, 'failed');
+        },
+      );
+    },
+  );
+
+  group(
+    'RefreshSettingsReducer processes SaveRefreshCompletedAlertsEnabledAction correctly',
+    () {
+      test(
+        'SaveRefreshCompletedAlertsEnabledAction modifies isSaving and error',
+        () {
+          final RefreshSettingsState state = RefreshSettingsState.initial()
+              .copyWith(error: const Some('failed'));
+
+          final RefreshSettingsState reducedState = refreshSettingsReducer(
+            state,
+            const SaveRefreshCompletedAlertsEnabledAction(true),
+          );
+
+          expect(state.isSaving, isFalse, reason: 'previous value');
+          expect(reducedState.isSaving, isTrue, reason: 'new value');
+          expect(reducedState.error, isNull);
+        },
+      );
+    },
+  );
+
+  group(
+    'RefreshSettingsReducer processes RefreshCompletedAlertsEnabledSavedAction correctly',
+    () {
+      test(
+        'RefreshCompletedAlertsEnabledSavedAction modifies the preference and isSaving',
+        () {
+          final RefreshSettingsState state = RefreshSettingsState.initial()
+              .copyWith(isSaving: true);
+
+          final RefreshSettingsState reducedState = refreshSettingsReducer(
+            state,
+            const RefreshCompletedAlertsEnabledSavedAction(true),
+          );
+
+          expect(
+            state.refreshCompletedAlertsEnabled,
+            isFalse,
+            reason: 'previous value',
+          );
+          expect(
+            reducedState.refreshCompletedAlertsEnabled,
+            isTrue,
+            reason: 'new value',
+          );
+          expect(state.isSaving, isTrue, reason: 'previous value');
+          expect(reducedState.isSaving, isFalse, reason: 'new value');
+        },
+      );
+    },
+  );
+
+  group(
+    'RefreshSettingsReducer processes RefreshCompletedAlertsSaveFailedAction correctly',
+    () {
+      test(
+        'RefreshCompletedAlertsSaveFailedAction modifies isSaving and error',
+        () {
+          final RefreshSettingsState state = RefreshSettingsState.initial()
+              .copyWith(isSaving: true);
+
+          final RefreshSettingsState reducedState = refreshSettingsReducer(
+            state,
+            const RefreshCompletedAlertsSaveFailedAction('failed'),
+          );
+
+          expect(state.isSaving, isTrue, reason: 'previous value');
+          expect(reducedState.isSaving, isFalse, reason: 'new value');
+          expect(reducedState.error, 'failed');
+        },
+      );
+    },
+  );
+
+  group(
+    'RefreshSettingsReducer processes SaveShowRefreshProgressAction correctly',
+    () {
+      test('SaveShowRefreshProgressAction modifies isSaving and error', () {
+        final RefreshSettingsState state = RefreshSettingsState.initial()
+            .copyWith(error: const Some('failed'));
+
+        final RefreshSettingsState reducedState = refreshSettingsReducer(
+          state,
+          const SaveShowRefreshProgressAction(true),
+        );
+
+        expect(state.isSaving, isFalse, reason: 'previous value');
+        expect(reducedState.isSaving, isTrue, reason: 'new value');
+        expect(reducedState.error, isNull);
+      });
+    },
+  );
+
+  group(
+    'RefreshSettingsReducer processes ShowRefreshProgressSavedAction correctly',
+    () {
+      test(
+        'ShowRefreshProgressSavedAction modifies the preference and isSaving',
+        () {
+          final RefreshSettingsState state = RefreshSettingsState.initial()
+              .copyWith(isSaving: true);
+
+          final RefreshSettingsState reducedState = refreshSettingsReducer(
+            state,
+            const ShowRefreshProgressSavedAction(true),
+          );
+
+          expect(state.showRefreshProgress, isFalse, reason: 'previous value');
+          expect(reducedState.showRefreshProgress, isTrue, reason: 'new value');
+          expect(state.isSaving, isTrue, reason: 'previous value');
+          expect(reducedState.isSaving, isFalse, reason: 'new value');
+        },
+      );
+    },
+  );
+
+  group(
+    'RefreshSettingsReducer processes ShowRefreshProgressSaveFailedAction correctly',
+    () {
+      test(
+        'ShowRefreshProgressSaveFailedAction modifies isSaving and error',
+        () {
+          final RefreshSettingsState state = RefreshSettingsState.initial()
+              .copyWith(isSaving: true);
+
+          final RefreshSettingsState reducedState = refreshSettingsReducer(
+            state,
+            const ShowRefreshProgressSaveFailedAction('failed'),
+          );
+
+          expect(state.isSaving, isTrue, reason: 'previous value');
+          expect(reducedState.isSaving, isFalse, reason: 'new value');
+          expect(reducedState.error, 'failed');
+        },
+      );
+    },
+  );
 }

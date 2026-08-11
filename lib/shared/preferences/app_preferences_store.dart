@@ -28,6 +28,61 @@ class AppPreferencesStore {
   static const String _spacingDensityKey = 'spacingDensity';
   static const String _fontIdKey = 'fontId';
   static const String _localeKey = 'locale';
+  static const String _priceAlertEventsKey = 'priceAlertEvents';
+  static const String _backgroundRefreshCompletionKey =
+      'backgroundRefreshCompletion';
+
+  /// Records that a background refresh finished, including its outcome.
+  Future<void> markBackgroundRefreshCompleted({required bool succeeded}) async {
+    await _updateLocked((Map<String, dynamic> data) {
+      data[_backgroundRefreshCompletionKey] = <String, dynamic>{
+        'succeeded': succeeded,
+        'completedAt': DateTime.now().toIso8601String(),
+      };
+      return true;
+    });
+  }
+
+  /// Consumes the completion marker left by the background engine.
+  Future<bool?> consumeBackgroundRefreshCompletion() async {
+    return _updateLocked((Map<String, dynamic> data) {
+      final Object? value = data[_backgroundRefreshCompletionKey];
+      data.remove(_backgroundRefreshCompletionKey);
+      if (value is! Map<String, dynamic>) {
+        return null;
+      }
+      return value['succeeded'] is bool ? value['succeeded'] as bool : null;
+    });
+  }
+
+  /// Atomically claims [eventKey], returning `false` when it was already seen.
+  Future<bool> claimPriceAlertEvent(String productId, String eventKey) async {
+    return _updateLocked((Map<String, dynamic> data) {
+      final Map<String, dynamic> events = _priceAlertEvents(data);
+      final List<String> productEvents = _eventList(events[productId]);
+      if (productEvents.contains(eventKey)) return false;
+      productEvents.add(eventKey);
+      events[productId] = productEvents;
+      data[_priceAlertEventsKey] = events;
+      return true;
+    });
+  }
+
+  /// Removes a claimed event when notification delivery did not succeed.
+  Future<void> releasePriceAlertEvent(String productId, String eventKey) async {
+    await _updateLocked((Map<String, dynamic> data) {
+      final Map<String, dynamic> events = _priceAlertEvents(data);
+      final List<String> productEvents = _eventList(events[productId])
+        ..remove(eventKey);
+      if (productEvents.isEmpty) {
+        events.remove(productId);
+      } else {
+        events[productId] = productEvents;
+      }
+      data[_priceAlertEventsKey] = events;
+      return true;
+    });
+  }
 
   /// Reads the persisted zoom level, or `null` if none has been saved yet.
   Future<double?> readZoomLevel() async {
@@ -192,5 +247,50 @@ class AppPreferencesStore {
   Future<void> _writeAll(Map<String, dynamic> data) async {
     final File file = await _resolveFile();
     await file.writeAsString(jsonEncode(data));
+  }
+
+  Map<String, dynamic> _priceAlertEvents(Map<String, dynamic> data) {
+    final Object? value = data[_priceAlertEventsKey];
+    return value is Map
+        ? Map<String, dynamic>.from(value)
+        : <String, dynamic>{};
+  }
+
+  List<String> _eventList(Object? value) => value is List
+      ? value.whereType<String>().toList()
+      : value is String
+      ? [value]
+      : <String>[];
+
+  Future<T> _updateLocked<T>(
+    T Function(Map<String, dynamic> data) update,
+  ) async => _updateFileLocked(await _resolveFile(), update);
+
+  Future<T> _updateFileLocked<T>(
+    File file,
+    T Function(Map<String, dynamic> data) update,
+  ) async {
+    await file.parent.create(recursive: true);
+    if (!await file.exists()) await file.writeAsString('{}');
+    final File lockFile = File('${file.path}.lock');
+    final RandomAccessFile handle = await lockFile.open(mode: FileMode.write);
+    await handle.lock();
+    try {
+      Map<String, dynamic> data = <String, dynamic>{};
+      try {
+        final Object? decoded = jsonDecode(await file.readAsString());
+        if (decoded is Map<String, dynamic>) {
+          data = decoded;
+        }
+      } on FormatException {
+        data = <String, dynamic>{};
+      }
+      final T result = update(data);
+      await file.writeAsString(jsonEncode(data));
+      return result;
+    } finally {
+      await handle.unlock();
+      await handle.close();
+    }
   }
 }

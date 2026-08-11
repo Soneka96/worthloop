@@ -6,6 +6,7 @@ import 'package:redux/redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/domain/usecases/load_products.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/watch_products.usecase.dart';
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
@@ -14,14 +15,22 @@ import 'package:worth_loop/shared/usecase/no_params.dart';
 
 class MockLoadProductsUseCase extends Mock implements LoadProductsUseCase {}
 
+class MockWatchProductsUseCase extends Mock implements WatchProductsUseCase {}
+
 void main() {
   setUpAll(() => registerFallbackValue(NoParams()));
 
   group('CreateStore behaves correctly', () {
     late Store<AppState> store;
     late MockLoadProductsUseCase mockLoadProductsUseCase;
+    late MockWatchProductsUseCase mockWatchProductsUseCase;
 
     setUp(() {
+      mockWatchProductsUseCase = MockWatchProductsUseCase();
+      when(() => mockWatchProductsUseCase(any()))
+          .thenAnswer((_) => const Stream.empty());
+      sl.registerSingleton<WatchProductsUseCase>(mockWatchProductsUseCase);
+
       store = CreateStore()();
       mockLoadProductsUseCase = MockLoadProductsUseCase();
     });

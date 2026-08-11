@@ -31,6 +31,8 @@ void main() {
 
           expect(viewmodel.refreshIntervalMinutes, isA<int>());
           expect(viewmodel.refreshIntervalMinutes, 60);
+          expect(viewmodel.browserRefreshEnabled, isA<bool>());
+          expect(viewmodel.browserRefreshEnabled, isFalse);
           expect(viewmodel.isRefreshIntervalBusy, isA<bool>());
           expect(viewmodel.isRefreshIntervalBusy, isFalse);
           expect(viewmodel.onCheckForUpdates, isA<Function()>());
@@ -39,6 +41,11 @@ void main() {
             viewmodel.onRefreshIntervalSelected,
             isA<void Function(int)>(),
           );
+          expect(
+            viewmodel.onBrowserRefreshEnabledChanged,
+            isA<void Function(bool)>(),
+          );
+          expect(viewmodel.onOpenBackgroundRestrictions, isA<Function()>());
         },
       );
 
@@ -63,6 +70,32 @@ void main() {
           viewmodel.onCheckForUpdates();
 
           expect(dispatchedActions, [const CheckForUpdatesAction()]);
+        },
+      );
+
+      test(
+        'Method onBrowserRefreshEnabledChanged dispatches SaveBrowserRefreshEnabledAction when called',
+        () {
+          final GeneralSettingsScreenViewModel viewmodel =
+              GeneralSettingsScreenViewModel.fromStore(store);
+
+          viewmodel.onBrowserRefreshEnabledChanged(true);
+
+          expect(dispatchedActions, [
+            const SaveBrowserRefreshEnabledAction(true),
+          ]);
+        },
+      );
+
+      test(
+        'Method onOpenBackgroundRestrictions dispatches OpenBackgroundRestrictionsAction when called',
+        () {
+          final GeneralSettingsScreenViewModel viewmodel =
+              GeneralSettingsScreenViewModel.fromStore(store);
+
+          viewmodel.onOpenBackgroundRestrictions();
+
+          expect(dispatchedActions, [const OpenBackgroundRestrictionsAction()]);
         },
       );
 

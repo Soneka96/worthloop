@@ -9,6 +9,7 @@ import 'package:worth_loop/features/products/presentation/state/products.state.d
 import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
 import '../../fixtures/product.fixture.dart';
+import '../../fixtures/product_source.fixture.dart';
 
 void main() {
   group('Method productsSelector() returns a List<Product> instance', () {
@@ -19,6 +20,81 @@ void main() {
       );
 
       expect(ProductsSelectors.productsSelector(state), [product]);
+    });
+  });
+
+  group('latestUpdatedAtSelector() returns the newest product update', () {
+    test('returns the latest timestamp across products', () {
+      final Product older = buildProduct(
+        id: 'older',
+        lastUpdatedAt: DateTime(2026, 1, 1),
+      );
+      final Product newer = buildProduct(
+        id: 'newer',
+        lastUpdatedAt: DateTime(2026, 1, 2),
+      );
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(products: [older, newer]),
+      );
+
+      expect(
+        ProductsSelectors.latestUpdatedAtSelector(state),
+        DateTime(2026, 1, 2),
+      );
+    });
+
+    test('returns null when no products are tracked', () {
+      expect(
+        ProductsSelectors.latestUpdatedAtSelector(AppState.initial()),
+        isNull,
+      );
+    });
+  });
+
+  group('oldestUpdatedAtSelector() returns the oldest product update', () {
+    test('returns the oldest timestamp across products', () {
+      final Product older = buildProduct(
+        id: 'older',
+        lastUpdatedAt: DateTime(2026, 1, 1),
+      );
+      final Product newer = buildProduct(
+        id: 'newer',
+        lastUpdatedAt: DateTime(2026, 1, 2),
+      );
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(products: [newer, older]),
+      );
+
+      expect(
+        ProductsSelectors.oldestUpdatedAtSelector(state),
+        DateTime(2026, 1, 1),
+      );
+    });
+
+    test('keeps the first timestamp when it is already the oldest', () {
+      final Product older = buildProduct(
+        id: 'older',
+        lastUpdatedAt: DateTime(2026, 1, 1),
+      );
+      final Product newer = buildProduct(
+        id: 'newer',
+        lastUpdatedAt: DateTime(2026, 1, 2),
+      );
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(products: [older, newer]),
+      );
+
+      expect(
+        ProductsSelectors.oldestUpdatedAtSelector(state),
+        DateTime(2026, 1, 1),
+      );
+    });
+
+    test('returns null when no products are tracked', () {
+      expect(
+        ProductsSelectors.oldestUpdatedAtSelector(AppState.initial()),
+        isNull,
+      );
     });
   });
 
@@ -91,6 +167,290 @@ void main() {
         ),
         isFalse,
       );
+    });
+  });
+
+  group('Method isRefreshingSelector() returns a bool instance', () {
+    test('returns true when a global refresh is active', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(isRefreshingAll: true),
+      );
+
+      expect(ProductsSelectors.isRefreshingSelector(state), isA<bool>());
+      expect(ProductsSelectors.isRefreshingSelector(state), isTrue);
+    });
+
+    test('returns true when a product refresh is active', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          refreshingProductIds: {'product-1'},
+        ),
+      );
+
+      expect(ProductsSelectors.isRefreshingSelector(state), isA<bool>());
+      expect(ProductsSelectors.isRefreshingSelector(state), isTrue);
+    });
+
+    test('returns true when a source refresh is active', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(refreshTotalCount: 1),
+      );
+
+      expect(ProductsSelectors.isRefreshingSelector(state), isA<bool>());
+      expect(ProductsSelectors.isRefreshingSelector(state), isTrue);
+    });
+
+    test('returns false when no refresh is active', () {
+      expect(
+        ProductsSelectors.isRefreshingSelector(AppState.initial()),
+        isA<bool>(),
+      );
+      expect(
+        ProductsSelectors.isRefreshingSelector(AppState.initial()),
+        isFalse,
+      );
+    });
+  });
+
+  group('Product refresh scope selectors', () {
+    final Product product = buildProduct(
+      sources: [
+        buildProductSource(id: 'source-1'),
+        buildProductSource(id: 'source-2'),
+      ],
+    );
+
+    test('returns only statuses for the requested product sources', () {
+      final Product otherProduct = buildProduct(
+        id: 'product-2',
+        sources: [buildProductSource(id: 'source-3', productId: 'product-2')],
+      );
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          products: [product, otherProduct],
+          sourceRefreshStatuses: {
+            'source-1': SourceRefreshStatus.fetching,
+            'source-3': SourceRefreshStatus.error,
+          },
+        ),
+      );
+
+      expect(
+        ProductsSelectors.sourceRefreshStatusesForProductSelector(
+          state,
+          product.id,
+        ),
+        {
+          'source-1': SourceRefreshStatus.fetching,
+          'source-2': SourceRefreshStatus.idle,
+        },
+      );
+    });
+
+    test('returns no statuses when the product is missing', () {
+      expect(
+        ProductsSelectors.sourceRefreshStatusesForProductSelector(
+          AppState.initial(),
+          'missing',
+        ),
+        isEmpty,
+      );
+    });
+
+    test('returns an empty map for a product without sources', () {
+      final Product product = buildProduct(sources: const []);
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(products: [product]),
+      );
+
+      expect(
+        ProductsSelectors.sourceRefreshStatusesForProductSelector(
+          state,
+          product.id,
+        ),
+        isEmpty,
+      );
+    });
+
+    test('detects a refresh on this product', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          products: [product],
+          sourceRefreshStatuses: {'source-1': SourceRefreshStatus.fetching},
+        ),
+      );
+
+      expect(
+        ProductsSelectors.isProductSourceRefreshingSelector(state, product.id),
+        isTrue,
+      );
+    });
+
+    test('counts terminal states for this product only', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          products: [product],
+          sourceRefreshStatuses: {
+            'source-1': SourceRefreshStatus.success,
+            'source-2': SourceRefreshStatus.fetching,
+          },
+        ),
+      );
+
+      expect(
+        ProductsSelectors.productRefreshCompletedCountSelector(
+          state,
+          product.id,
+        ),
+        1,
+      );
+    });
+
+    test('detects active sources belonging to other products', () {
+      final Product otherProduct = buildProduct(
+        id: 'product-2',
+        sources: [buildProductSource(id: 'source-3', productId: 'product-2')],
+      );
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          products: [product, otherProduct],
+          sourceRefreshStatuses: {'source-3': SourceRefreshStatus.queued},
+        ),
+      );
+
+      expect(
+        ProductsSelectors.areOtherSourcesRefreshingSelector(state, product.id),
+        isTrue,
+      );
+    });
+
+    test('returns no other refresh when the state is idle', () {
+      expect(
+        ProductsSelectors.areOtherSourcesRefreshingSelector(
+          AppState.initial(),
+          product.id,
+        ),
+        isFalse,
+      );
+    });
+
+    test('prioritizes all-products refreshes', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          products: [product],
+          isRefreshingAll: true,
+          sourceRefreshStatuses: {'source-1': SourceRefreshStatus.fetching},
+        ),
+      );
+
+      expect(
+        ProductsSelectors.productRefreshBlockReasonSelector(state, product.id),
+        ProductRefreshBlockReason.allProducts,
+      );
+    });
+
+    test('detects when this product is already refreshing', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          products: [product],
+          refreshingProductIds: {product.id},
+        ),
+      );
+
+      expect(
+        ProductsSelectors.productRefreshBlockReasonSelector(state, product.id),
+        ProductRefreshBlockReason.thisProduct,
+      );
+    });
+
+    test('detects when another product is refreshing', () {
+      final Product otherProduct = buildProduct(
+        id: 'product-2',
+        sources: [buildProductSource(id: 'source-3', productId: 'product-2')],
+      );
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          products: [product, otherProduct],
+          refreshingProductIds: {otherProduct.id},
+        ),
+      );
+
+      expect(
+        ProductsSelectors.productRefreshBlockReasonSelector(state, product.id),
+        ProductRefreshBlockReason.anotherProduct,
+      );
+    });
+
+    test('returns none when no refresh is active', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(products: [product]),
+      );
+
+      expect(
+        ProductsSelectors.productRefreshBlockReasonSelector(state, product.id),
+        ProductRefreshBlockReason.none,
+      );
+    });
+  });
+
+  group(
+    'Method sourceRefreshStatusSelector() returns a SourceRefreshStatus instance',
+    () {
+      test(
+        'sourceRefreshStatusSelector() returns the matching source status',
+        () {
+          final AppState state = AppState.initial().copyWith(
+            products: ProductsState.initial().copyWith(
+              sourceRefreshStatuses: {'source-1': SourceRefreshStatus.fetching},
+            ),
+          );
+
+          expect(
+            ProductsSelectors.sourceRefreshStatusSelector(state, 'source-1'),
+            isA<SourceRefreshStatus>(),
+          );
+          expect(
+            ProductsSelectors.sourceRefreshStatusSelector(state, 'source-1'),
+            SourceRefreshStatus.fetching,
+          );
+        },
+      );
+
+      test(
+        'sourceRefreshStatusSelector() returns idle when sourceId has no status',
+        () {
+          expect(
+            ProductsSelectors.sourceRefreshStatusSelector(
+              AppState.initial(),
+              'source-1',
+            ),
+            SourceRefreshStatus.idle,
+          );
+        },
+      );
+    },
+  );
+
+  group('Refresh progress selectors return the correct values', () {
+    test('refreshCompletedCountSelector() returns the completed count', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(refreshCompletedCount: 3),
+      );
+
+      expect(
+        ProductsSelectors.refreshCompletedCountSelector(state),
+        isA<int>(),
+      );
+      expect(ProductsSelectors.refreshCompletedCountSelector(state), 3);
+    });
+
+    test('refreshTotalCountSelector() returns the total count', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(refreshTotalCount: 6),
+      );
+
+      expect(ProductsSelectors.refreshTotalCountSelector(state), isA<int>());
+      expect(ProductsSelectors.refreshTotalCountSelector(state), 6);
     });
   });
 
@@ -182,6 +542,252 @@ void main() {
         );
 
         expect(ProductsSelectors.createdProductIdSelector(state), 'product-1');
+      },
+    );
+  });
+
+  group('Method isAddingSourceSelector() returns a bool instance', () {
+    test('isAddingSourceSelector() returns isAddingSource', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(isAddingSource: true),
+      );
+
+      expect(ProductsSelectors.isAddingSourceSelector(state), isA<bool>());
+      expect(ProductsSelectors.isAddingSourceSelector(state), isTrue);
+    });
+
+    test(
+      'isAddingSourceSelector() returns false when isAddingSource == false',
+      () {
+        expect(
+          ProductsSelectors.isAddingSourceSelector(AppState.initial()),
+          isFalse,
+        );
+      },
+    );
+  });
+
+  group('Method addSourceErrorSelector() returns a String instance', () {
+    test('addSourceErrorSelector() returns addSourceError', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          addSourceError: const Some('add failed'),
+        ),
+      );
+
+      expect(ProductsSelectors.addSourceErrorSelector(state), isA<String>());
+      expect(ProductsSelectors.addSourceErrorSelector(state), 'add failed');
+    });
+
+    test(
+      'addSourceErrorSelector() returns null when addSourceError == null',
+      () {
+        expect(
+          ProductsSelectors.addSourceErrorSelector(AppState.initial()),
+          isNull,
+        );
+      },
+    );
+  });
+
+  group('Method editingSourceIdSelector() returns a String instance', () {
+    test('editingSourceIdSelector() returns editingSourceId', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          editingSourceId: const Some('source-1'),
+        ),
+      );
+
+      expect(ProductsSelectors.editingSourceIdSelector(state), isA<String>());
+      expect(ProductsSelectors.editingSourceIdSelector(state), 'source-1');
+    });
+
+    test(
+      'editingSourceIdSelector() returns null when editingSourceId == null',
+      () {
+        expect(
+          ProductsSelectors.editingSourceIdSelector(AppState.initial()),
+          isNull,
+        );
+      },
+    );
+  });
+
+  group('Method editSourceErrorSelector() returns a String instance', () {
+    test('editSourceErrorSelector() returns editSourceError', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          editSourceError: const Some('edit failed'),
+        ),
+      );
+
+      expect(ProductsSelectors.editSourceErrorSelector(state), isA<String>());
+      expect(ProductsSelectors.editSourceErrorSelector(state), 'edit failed');
+    });
+
+    test(
+      'editSourceErrorSelector() returns null when editSourceError == null',
+      () {
+        expect(
+          ProductsSelectors.editSourceErrorSelector(AppState.initial()),
+          isNull,
+        );
+      },
+    );
+  });
+
+  group('Method deletingSourceIdsSelector() returns a Set<String> instance', () {
+    test('deletingSourceIdsSelector() returns deletingSourceIds', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          deletingSourceIds: {'source-1'},
+        ),
+      );
+
+      expect(ProductsSelectors.deletingSourceIdsSelector(state), {'source-1'});
+    });
+
+    test(
+      'deletingSourceIdsSelector() returns an empty set when nothing is deleting',
+      () {
+        expect(
+          ProductsSelectors.deletingSourceIdsSelector(AppState.initial()),
+          isEmpty,
+        );
+      },
+    );
+  });
+
+  group('Method deleteSourceErrorSelector() returns a String instance', () {
+    test('deleteSourceErrorSelector() returns deleteSourceError', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          deleteSourceError: const Some('delete failed'),
+        ),
+      );
+
+      expect(ProductsSelectors.deleteSourceErrorSelector(state), isA<String>());
+      expect(
+        ProductsSelectors.deleteSourceErrorSelector(state),
+        'delete failed',
+      );
+    });
+
+    test(
+      'deleteSourceErrorSelector() returns null when deleteSourceError == null',
+      () {
+        expect(
+          ProductsSelectors.deleteSourceErrorSelector(AppState.initial()),
+          isNull,
+        );
+      },
+    );
+  });
+
+  group('Method isRenamingProductSelector() returns a bool instance', () {
+    test('isRenamingProductSelector() returns isRenamingProduct', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(isRenamingProduct: true),
+      );
+
+      expect(ProductsSelectors.isRenamingProductSelector(state), isA<bool>());
+      expect(ProductsSelectors.isRenamingProductSelector(state), isTrue);
+    });
+
+    test(
+      'isRenamingProductSelector() returns false when isRenamingProduct == false',
+      () {
+        expect(
+          ProductsSelectors.isRenamingProductSelector(AppState.initial()),
+          isFalse,
+        );
+      },
+    );
+  });
+
+  group('Method renameProductErrorSelector() returns a String instance', () {
+    test('renameProductErrorSelector() returns renameProductError', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          renameProductError: const Some('rename failed'),
+        ),
+      );
+
+      expect(
+        ProductsSelectors.renameProductErrorSelector(state),
+        isA<String>(),
+      );
+      expect(
+        ProductsSelectors.renameProductErrorSelector(state),
+        'rename failed',
+      );
+    });
+
+    test(
+      'renameProductErrorSelector() returns null when renameProductError == null',
+      () {
+        expect(
+          ProductsSelectors.renameProductErrorSelector(AppState.initial()),
+          isNull,
+        );
+      },
+    );
+  });
+
+  group('Method isDeletingProductSelector() returns a bool instance', () {
+    test('isDeletingProductSelector() returns true when id is deleting', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          deletingProductIds: {'product-1', 'product-2'},
+        ),
+      );
+
+      expect(
+        ProductsSelectors.isDeletingProductSelector(state, 'product-1'),
+        isA<bool>(),
+      );
+      expect(
+        ProductsSelectors.isDeletingProductSelector(state, 'product-1'),
+        isTrue,
+      );
+    });
+
+    test('isDeletingProductSelector() returns false when id is idle', () {
+      expect(
+        ProductsSelectors.isDeletingProductSelector(
+          AppState.initial(),
+          'product-1',
+        ),
+        isFalse,
+      );
+    });
+  });
+
+  group('Method deleteProductErrorSelector() returns a String instance', () {
+    test('deleteProductErrorSelector() returns deleteProductError', () {
+      final AppState state = AppState.initial().copyWith(
+        products: ProductsState.initial().copyWith(
+          deleteProductError: const Some('product delete failed'),
+        ),
+      );
+
+      expect(
+        ProductsSelectors.deleteProductErrorSelector(state),
+        isA<String>(),
+      );
+      expect(
+        ProductsSelectors.deleteProductErrorSelector(state),
+        'product delete failed',
+      );
+    });
+
+    test(
+      'deleteProductErrorSelector() returns null when deleteProductError == null',
+      () {
+        expect(
+          ProductsSelectors.deleteProductErrorSelector(AppState.initial()),
+          isNull,
+        );
       },
     );
   });

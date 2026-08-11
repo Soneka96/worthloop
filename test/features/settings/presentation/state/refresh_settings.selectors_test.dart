@@ -57,4 +57,112 @@ void main() {
       );
     });
   });
+
+  group('Method browserRefreshEnabledSelector() returns a bool instance', () {
+    test('browserRefreshEnabledSelector() returns the preference', () {
+      final AppState state = AppState.initial().copyWith(
+        refreshSettings: RefreshSettingsState.initial().copyWith(
+          browserRefreshEnabled: true,
+        ),
+      );
+
+      expect(
+        RefreshSettingsSelectors.browserRefreshEnabledSelector(state),
+        isA<bool>(),
+      );
+      expect(
+        RefreshSettingsSelectors.browserRefreshEnabledSelector(state),
+        isTrue,
+      );
+    });
+  });
+
+  group('Method priceAlertsEnabledSelector() returns a bool instance', () {
+    test('priceAlertsEnabledSelector() returns the preference', () {
+      final AppState state = AppState.initial().copyWith(
+        refreshSettings: RefreshSettingsState.initial().copyWith(
+          priceAlertsEnabled: true,
+        ),
+      );
+
+      expect(
+        RefreshSettingsSelectors.priceAlertsEnabledSelector(state),
+        isA<bool>(),
+      );
+      expect(
+        RefreshSettingsSelectors.priceAlertsEnabledSelector(state),
+        isTrue,
+      );
+    });
+  });
+
+  group(
+    'Method priceIncreaseAlertsEnabledSelector() returns a bool instance',
+    () {
+      test('priceIncreaseAlertsEnabledSelector() returns the preference', () {
+        final AppState state = AppState.initial().copyWith(
+          refreshSettings: RefreshSettingsState.initial().copyWith(
+            priceIncreaseAlertsEnabled: true,
+          ),
+        );
+
+        expect(
+          RefreshSettingsSelectors.priceIncreaseAlertsEnabledSelector(state),
+          isA<bool>(),
+        );
+        expect(
+          RefreshSettingsSelectors.priceIncreaseAlertsEnabledSelector(state),
+          isTrue,
+        );
+      });
+    },
+  );
+
+  group(
+    'Method refreshCompletedAlertsEnabledSelector() returns a bool instance',
+    () {
+      test(
+        'refreshCompletedAlertsEnabledSelector() returns the preference',
+        () {
+          final AppState state = AppState.initial().copyWith(
+            refreshSettings: RefreshSettingsState.initial().copyWith(
+              refreshCompletedAlertsEnabled: true,
+            ),
+          );
+
+          expect(
+            RefreshSettingsSelectors.refreshCompletedAlertsEnabledSelector(
+              state,
+            ),
+            isA<bool>(),
+          );
+          expect(
+            RefreshSettingsSelectors.refreshCompletedAlertsEnabledSelector(
+              state,
+            ),
+            isTrue,
+          );
+        },
+      );
+    },
+  );
+
+  group('Method showRefreshProgressSelector() returns a bool instance', () {
+    test('showRefreshProgressSelector() returns the preference', () {
+      final AppState state = AppState.initial().copyWith(
+        refreshSettings: RefreshSettingsState.initial().copyWith(
+          showRefreshProgress: true,
+        ),
+      );
+
+      expect(
+        RefreshSettingsSelectors.showRefreshProgressSelector(state),
+        isA<bool>(),
+      );
+      expect(
+        RefreshSettingsSelectors.showRefreshProgressSelector(state),
+        isTrue,
+      );
+    });
+  });
 }

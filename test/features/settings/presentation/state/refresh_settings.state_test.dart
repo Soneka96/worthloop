@@ -12,6 +12,16 @@ void main() {
 
       expect(state.intervalMinutes, isA<int>());
       expect(state.intervalMinutes, 60);
+      expect(state.browserRefreshEnabled, isA<bool>());
+      expect(state.browserRefreshEnabled, isFalse);
+      expect(state.priceAlertsEnabled, isA<bool>());
+      expect(state.priceAlertsEnabled, isFalse);
+      expect(state.priceIncreaseAlertsEnabled, isA<bool>());
+      expect(state.priceIncreaseAlertsEnabled, isFalse);
+      expect(state.refreshCompletedAlertsEnabled, isA<bool>());
+      expect(state.refreshCompletedAlertsEnabled, isFalse);
+      expect(state.showRefreshProgress, isA<bool>());
+      expect(state.showRefreshProgress, isFalse);
       expect(state.isLoading, isA<bool>());
       expect(state.isLoading, isFalse);
       expect(state.isSaving, isA<bool>());
@@ -25,6 +35,11 @@ void main() {
       final RefreshSettingsState state = RefreshSettingsState.initial()
           .copyWith(
             intervalMinutes: 180,
+            browserRefreshEnabled: true,
+            priceAlertsEnabled: true,
+            priceIncreaseAlertsEnabled: true,
+            refreshCompletedAlertsEnabled: true,
+            showRefreshProgress: true,
             isLoading: true,
             isSaving: true,
             error: const Some('failed'),
@@ -32,6 +47,12 @@ void main() {
 
       expect(state.intervalMinutes, isA<int>());
       expect(state.intervalMinutes, 180);
+      expect(state.browserRefreshEnabled, isA<bool>());
+      expect(state.browserRefreshEnabled, isTrue);
+      expect(state.priceAlertsEnabled, isTrue);
+      expect(state.priceIncreaseAlertsEnabled, isTrue);
+      expect(state.refreshCompletedAlertsEnabled, isTrue);
+      expect(state.showRefreshProgress, isTrue);
       expect(state.isLoading, isA<bool>());
       expect(state.isLoading, isTrue);
       expect(state.isSaving, isA<bool>());

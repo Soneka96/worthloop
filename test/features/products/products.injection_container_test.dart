@@ -6,19 +6,32 @@ import 'package:redux/redux.dart';
 
 // Project imports:
 import 'package:worth_loop/features/products/data/datasources/products_local.datasource.dart';
+import 'package:worth_loop/features/products/data/datasources/products_remote.datasource.dart';
 import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
+import 'package:worth_loop/features/products/domain/usecases/add_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/compare_prices.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/create_product.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/delete_product.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/delete_source.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/edit_source.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/load_products.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/watch_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_all_products.usecase.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_product.usecase.dart';
+import 'package:worth_loop/features/products/domain/usecases/rename_product.usecase.dart';
 import 'package:worth_loop/features/products/presentation/state/viewmodels/product_details.viewmodel.dart';
 import 'package:worth_loop/features/products/products.injection_container.dart';
+import 'package:worth_loop/features/settings/domain/usecases/load_refresh_settings.usecase.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/db/app_database.dart';
+import 'package:worth_loop/shared/preferences/app_preferences_store.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
-import 'package:worth_loop/shared/utils/currency_helper_service.dart';
+import 'package:worth_loop/shared/utils/android_price_alert_notification_service.dart';
 import 'package:worth_loop/shared/utils/logger_service.dart';
+import 'package:worth_loop/shared/utils/product_price_alert_notification_coordinator.dart';
+import 'package:worth_loop/shared/utils/product_price_fetch_orchestrator_service.dart';
+import 'package:worth_loop/shared/utils/product_source_refresh_engine.dart';
+import 'package:worth_loop/shared/utils/product_url_cleaner_service.dart';
 
 class MockAppDatabase extends Mock implements AppDatabase {}
 
@@ -26,22 +39,49 @@ class MockDio extends Mock implements Dio {}
 
 class MockLoggerService extends Mock implements LoggerService {}
 
+class MockAppPreferencesStore extends Mock implements AppPreferencesStore {}
+
+class MockProductPriceFetchOrchestratorService extends Mock
+    implements ProductPriceFetchOrchestratorService {}
+
+class MockLoadRefreshSettingsUseCase extends Mock
+    implements LoadRefreshSettingsUseCase {}
+
+class MockAndroidPriceAlertNotificationService extends Mock
+    implements AndroidPriceAlertNotificationService {}
+
 void main() {
   setUp(() {
     sl.registerSingleton<AppDatabase>(MockAppDatabase());
     sl.registerSingleton<Dio>(MockDio());
-    sl.registerSingleton<CurrencyHelperService>(const CurrencyHelperService());
     sl.registerSingleton<LoggerService>(MockLoggerService());
+    sl.registerSingleton<AppPreferencesStore>(MockAppPreferencesStore());
+    sl.registerSingleton<ProductPriceFetchOrchestratorService>(
+      MockProductPriceFetchOrchestratorService(),
+    );
+    sl.registerSingleton<ProductUrlCleanerService>(ProductUrlCleanerService());
+    sl.registerSingleton<LoadRefreshSettingsUseCase>(
+      MockLoadRefreshSettingsUseCase(),
+    );
+    sl.registerSingleton<AndroidPriceAlertNotificationService>(
+      MockAndroidPriceAlertNotificationService(),
+    );
     initProductsDependencies();
   });
 
   tearDown(() async => sl.reset());
 
   group('products.injection_container — product feature registrations', () {
-    test('datasource is registered', () {
+    test('local datasource is registered', () {
       expect(sl.isRegistered<ProductsLocalDatasource>(), isA<bool>());
       expect(sl.isRegistered<ProductsLocalDatasource>(), isTrue);
       expect(sl<ProductsLocalDatasource>(), isA<ProductsLocalDatasource>());
+    });
+
+    test('remote datasource is registered', () {
+      expect(sl.isRegistered<IProductsRemoteDatasource>(), isA<bool>());
+      expect(sl.isRegistered<IProductsRemoteDatasource>(), isTrue);
+      expect(sl<IProductsRemoteDatasource>(), isA<IProductsRemoteDatasource>());
     });
 
     test('repository is registered', () {
@@ -50,21 +90,60 @@ void main() {
       expect(sl<IProductsRepository>(), isA<IProductsRepository>());
     });
 
+    test('refresh engine and price-alert coordinator are registered', () {
+      expect(sl.isRegistered<ProductSourceRefreshEngine>(), isA<bool>());
+      expect(sl.isRegistered<ProductSourceRefreshEngine>(), isTrue);
+      expect(
+        sl<ProductSourceRefreshEngine>(),
+        isA<ProductSourceRefreshEngine>(),
+      );
+      expect(
+        sl.isRegistered<ProductPriceAlertNotificationCoordinator>(),
+        isA<bool>(),
+      );
+      expect(
+        sl.isRegistered<ProductPriceAlertNotificationCoordinator>(),
+        isTrue,
+      );
+      expect(
+        sl<ProductPriceAlertNotificationCoordinator>(),
+        isA<ProductPriceAlertNotificationCoordinator>(),
+      );
+    });
+
     test('usecases are registered', () {
       expect(sl.isRegistered<LoadProductsUseCase>(), isA<bool>());
       expect(sl.isRegistered<LoadProductsUseCase>(), isTrue);
+      expect(sl.isRegistered<WatchProductsUseCase>(), isA<bool>());
+      expect(sl.isRegistered<WatchProductsUseCase>(), isTrue);
       expect(sl.isRegistered<CreateProductUseCase>(), isA<bool>());
       expect(sl.isRegistered<CreateProductUseCase>(), isTrue);
+      expect(sl.isRegistered<AddSourceUseCase>(), isA<bool>());
+      expect(sl.isRegistered<AddSourceUseCase>(), isTrue);
+      expect(sl.isRegistered<EditSourceUseCase>(), isA<bool>());
+      expect(sl.isRegistered<EditSourceUseCase>(), isTrue);
+      expect(sl.isRegistered<DeleteSourceUseCase>(), isA<bool>());
+      expect(sl.isRegistered<DeleteSourceUseCase>(), isTrue);
       expect(sl.isRegistered<RefreshProductUseCase>(), isA<bool>());
       expect(sl.isRegistered<RefreshProductUseCase>(), isTrue);
       expect(sl.isRegistered<RefreshAllProductsUseCase>(), isA<bool>());
       expect(sl.isRegistered<RefreshAllProductsUseCase>(), isTrue);
+      expect(sl.isRegistered<RenameProductUseCase>(), isA<bool>());
+      expect(sl.isRegistered<RenameProductUseCase>(), isTrue);
+      expect(sl.isRegistered<DeleteProductUseCase>(), isA<bool>());
+      expect(sl.isRegistered<DeleteProductUseCase>(), isTrue);
       expect(sl.isRegistered<ComparePricesUseCase>(), isA<bool>());
       expect(sl.isRegistered<ComparePricesUseCase>(), isTrue);
       expect(sl<LoadProductsUseCase>(), isA<LoadProductsUseCase>());
+      expect(sl<WatchProductsUseCase>(), isA<WatchProductsUseCase>());
       expect(sl<CreateProductUseCase>(), isA<CreateProductUseCase>());
+      expect(sl<AddSourceUseCase>(), isA<AddSourceUseCase>());
+      expect(sl<EditSourceUseCase>(), isA<EditSourceUseCase>());
+      expect(sl<DeleteSourceUseCase>(), isA<DeleteSourceUseCase>());
       expect(sl<RefreshProductUseCase>(), isA<RefreshProductUseCase>());
       expect(sl<RefreshAllProductsUseCase>(), isA<RefreshAllProductsUseCase>());
+      expect(sl<RenameProductUseCase>(), isA<RenameProductUseCase>());
+      expect(sl<DeleteProductUseCase>(), isA<DeleteProductUseCase>());
       expect(sl<ComparePricesUseCase>(), isA<ComparePricesUseCase>());
     });
 

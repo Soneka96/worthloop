@@ -264,6 +264,9 @@ enum SettingsCategory {
 
   /// Theme and zoom controls.
   appearance,
+
+  /// Price-alert and background-refresh notification controls.
+  notifications,
 }
 
 /// Display/behaviour helpers for [SettingsCategory] — kept off the enum
@@ -274,6 +277,7 @@ extension SettingsCategoryX on SettingsCategory {
     SettingsCategory.none => '',
     SettingsCategory.general => t.enums.settingsCategory.general,
     SettingsCategory.appearance => t.enums.settingsCategory.appearance,
+    SettingsCategory.notifications => t.enums.settingsCategory.notifications,
   };
 
   /// The category's icon in the settings category list.
@@ -281,6 +285,7 @@ extension SettingsCategoryX on SettingsCategory {
     SettingsCategory.none => Icons.circle_outlined,
     SettingsCategory.general => Icons.settings_outlined,
     SettingsCategory.appearance => Icons.palette_outlined,
+    SettingsCategory.notifications => Icons.notifications_outlined,
   };
 
   /// Whether this category currently has content built for it.
@@ -291,6 +296,7 @@ extension SettingsCategoryX on SettingsCategory {
   static const Set<SettingsCategory> _enabledCategories = {
     SettingsCategory.general,
     SettingsCategory.appearance,
+    SettingsCategory.notifications,
   };
 }
 
@@ -348,6 +354,63 @@ enum PriceFetchStatus {
   invalidData,
 }
 
+/// Describes the current state of refreshing one product source.
+enum SourceRefreshStatus {
+  /// No refresh state is available.
+  none,
+
+  /// The source is idle and has not been queued for refresh.
+  idle,
+
+  /// The source is waiting for its refresh request to start.
+  queued,
+
+  /// The source refresh request is in progress.
+  fetching,
+
+  /// The source returned a usable result.
+  success,
+
+  /// The source refresh request failed.
+  error,
+
+  /// The source responded without a currently available offer.
+  unavailable,
+}
+
+/// Describes why a product pull-to-refresh cannot start another refresh.
+enum ProductRefreshBlockReason {
+  /// No refresh is currently blocking a product refresh.
+  none,
+
+  /// The product currently shown is already being refreshed.
+  thisProduct,
+
+  /// A different product is currently being refreshed.
+  anotherProduct,
+
+  /// Every product is currently being refreshed.
+  allProducts,
+}
+
+/// Selects which merchant offers a product section displays.
+enum ProductOfferFilter {
+  /// Sentinel value with no selected filter.
+  none,
+
+  /// Displays every merchant offer.
+  all,
+
+  /// Displays offers currently marked available.
+  available,
+
+  /// Displays offers not currently marked available.
+  unavailable,
+
+  /// Displays offers whose latest refresh failed.
+  issues,
+}
+
 /// Display helpers for [WidgetLocation] — kept off the enum itself so the
 /// enum stays a plain set of values.
 extension WidgetLocationX on WidgetLocation {
@@ -367,4 +430,16 @@ extension WidgetLocationX on WidgetLocation {
     WidgetLocation.bottomCenter => Alignment.bottomCenter,
     WidgetLocation.bottomRight => Alignment.bottomRight,
   };
+}
+
+/// Describes which way a product's best available price moved after refresh.
+enum PriceChangeDirection {
+  /// No price change occurred.
+  none,
+
+  /// The best available price became lower.
+  drop,
+
+  /// The best available price became higher.
+  increase,
 }

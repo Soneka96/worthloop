@@ -10,7 +10,6 @@ import 'package:path_provider/path_provider.dart';
 // Project imports:
 import 'package:worth_loop/features/products/data/models/drift_schemas/product.table.dart';
 import 'package:worth_loop/features/products/data/models/drift_schemas/product_source.table.dart';
-import 'package:worth_loop/features/products/data/models/drift_schemas/store_price.table.dart';
 import 'package:worth_loop/features/settings/data/models/drift_schemas/refresh_settings.table.dart';
 
 part 'app_database.g.dart';
@@ -18,14 +17,7 @@ part 'app_database.g.dart';
 /// Root drift database. Schema lives in per-feature tables listed in [tables] —
 /// each feature owns its own table class; this file only aggregates them into
 /// one database instance.
-@DriftDatabase(
-  tables: [
-    ProductTable,
-    ProductSourceTable,
-    StorePriceTable,
-    RefreshSettingsTable,
-  ],
-)
+@DriftDatabase(tables: [ProductTable, ProductSourceTable, RefreshSettingsTable])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -37,18 +29,91 @@ class AppDatabase extends _$AppDatabase {
   static const String fileName = 'app.sqlite';
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onUpgrade: (Migrator migrator, int from, int to) async {
       if (from < 2) {
         await migrator.createTable(productTable);
-        await migrator.createTable(storePriceTable);
         await migrator.createTable(refreshSettingsTable);
       }
-      if (from < 3) {
+      if (from < 4) {
         await migrator.createTable(productSourceTable);
+      }
+      if (from < 5) {
+        await migrator.addColumn(
+          productTable,
+          productTable.previousBestPriceMinorUnits,
+        );
+        await migrator.addColumn(
+          productTable,
+          productTable.previousBestPriceCurrencyCode,
+        );
+        await migrator.addColumn(productTable, productTable.bestPriceChangedAt);
+        if (from >= 4) {
+          await migrator.addColumn(
+            productSourceTable,
+            productSourceTable.previousPriceMinorUnits,
+          );
+          await migrator.addColumn(
+            productSourceTable,
+            productSourceTable.previousPriceCurrencyCode,
+          );
+          await migrator.addColumn(
+            productSourceTable,
+            productSourceTable.priceChangedAt,
+          );
+        }
+      }
+      if (from < 6 && from >= 4) {
+        await migrator.addColumn(
+          productSourceTable,
+          productSourceTable.lastRefreshStatus,
+        );
+        await migrator.addColumn(
+          productSourceTable,
+          productSourceTable.lastRefreshAt,
+        );
+      }
+      if (from < 7 && from >= 2) {
+        await migrator.addColumn(
+          refreshSettingsTable,
+          refreshSettingsTable.browserRefreshEnabled,
+        );
+      }
+      if (from < 8 && from >= 2) {
+        await migrator.addColumn(
+          refreshSettingsTable,
+          refreshSettingsTable.priceDropAlertsEnabled,
+        );
+      }
+      if (from < 9 && from >= 4) {
+        await migrator.addColumn(
+          productSourceTable,
+          productSourceTable.liveStatus,
+        );
+      }
+      if (from < 10 && from >= 8) {
+        await migrator.renameColumn(
+          refreshSettingsTable,
+          'price_alerts_enabled',
+          refreshSettingsTable.priceDropAlertsEnabled,
+        );
+      }
+      if (from < 10 && from >= 2) {
+        await migrator.addColumn(
+          refreshSettingsTable,
+          refreshSettingsTable.priceIncreaseAlertsEnabled,
+        );
+        await migrator.addColumn(
+          refreshSettingsTable,
+          refreshSettingsTable.refreshCompletedAlertsEnabled,
+        );
+        await migrator.addColumn(
+          refreshSettingsTable,
+          refreshSettingsTable.showRefreshProgress,
+        );
       }
     },
     beforeOpen: (OpeningDetails details) async {
