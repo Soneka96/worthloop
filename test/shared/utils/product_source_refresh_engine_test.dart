@@ -1595,5 +1595,308 @@ void main() {
         expect(reportedOutcomes, [false]);
       },
     );
+
+    test(
+      're-queues a source to the back of its merchant\'s queue without persisting a failure when its fetch times out with retries left',
+      () async {
+        final ProductSourceModel source = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final ProductSourceRefreshEngine timeoutEngine =
+            ProductSourceRefreshEngine(
+              mockDatasource,
+              mockRemoteDatasource,
+              mockPriceAlertCoordinator,
+              sourceFetchTimeout: const Duration(milliseconds: 15),
+              maxTimeoutRetries: 3,
+            );
+        final List<(int, int)> progressCalls = [];
+        timeoutEngine.onProgress = (int completed, int total) async =>
+            progressCalls.add((completed, total));
+        int callCount = 0;
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([source]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(() => mockRemoteDatasource.fetchPrices(source)).thenAnswer((_) {
+          callCount++;
+          return callCount == 1
+              ? Completer<Either<Failure, ProductSourceModel>>().future
+              : Future.value(Right(source));
+        });
+        when(
+          () => mockDatasource.updateSourcePrices(source.productId, any()),
+        ).thenAnswer((_) async => Right(buildProductModel()));
+
+        await timeoutEngine.enqueueSourceRefresh(['source-1']);
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+
+        expect(callCount, 2);
+        verify(() => mockRemoteDatasource.fetchPrices(source)).called(2);
+        verify(
+          () => mockDatasource.writeSourceLiveStatus(
+            'source-1',
+            SourceRefreshStatus.queued,
+          ),
+        ).called(2);
+        verify(
+          () => mockDatasource.updateSourcePrices(source.productId, [source]),
+        ).called(1);
+        expect(progressCalls, [(0, 1), (1, 1)]);
+      },
+    );
+
+    test(
+      'persists a networkError failure when a source times out on every retry attempt',
+      () async {
+        final ProductSourceModel source = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final ProductSourceRefreshEngine timeoutEngine =
+            ProductSourceRefreshEngine(
+              mockDatasource,
+              mockRemoteDatasource,
+              mockPriceAlertCoordinator,
+              sourceFetchTimeout: const Duration(milliseconds: 15),
+              maxTimeoutRetries: 2,
+            );
+        bool? reportedSucceeded;
+        timeoutEngine.onRunComplete = (bool succeeded) async {
+          reportedSucceeded = succeeded;
+        };
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([source]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(() => mockRemoteDatasource.fetchPrices(source)).thenAnswer(
+          (_) => Completer<Either<Failure, ProductSourceModel>>().future,
+        );
+        when(
+          () => mockDatasource.updateSourcePrices(source.productId, any()),
+        ).thenAnswer((_) async => Right(buildProductModel()));
+
+        await timeoutEngine.enqueueSourceRefresh(['source-1']);
+        await Future<void>.delayed(const Duration(milliseconds: 300));
+
+        verify(() => mockRemoteDatasource.fetchPrices(source)).called(2);
+        verify(
+          () => mockDatasource.writeSourceLiveStatus(
+            'source-1',
+            SourceRefreshStatus.error,
+          ),
+        ).called(1);
+        final List<ProductSourceModel> persisted =
+            verify(
+                  () => mockDatasource.updateSourcePrices(
+                    source.productId,
+                    captureAny(),
+                  ),
+                ).captured.single
+                as List<ProductSourceModel>;
+        expect(
+          persisted.single.lastRefreshStatus,
+          PriceFetchStatus.networkError,
+        );
+        expect(reportedSucceeded, isFalse);
+      },
+    );
+
+    test(
+      'processes a sibling source before retrying one that just timed out',
+      () async {
+        final ProductSourceModel sourceA = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final ProductSourceModel sourceB = buildProductSourceModel(
+          id: 'source-2',
+          url: 'https://example.com/products/2',
+        );
+        final ProductSourceRefreshEngine timeoutEngine =
+            ProductSourceRefreshEngine(
+              mockDatasource,
+              mockRemoteDatasource,
+              mockPriceAlertCoordinator,
+              sourceFetchTimeout: const Duration(milliseconds: 15),
+              maxTimeoutRetries: 3,
+            );
+        int callCountA = 0;
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([sourceA, sourceB]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(() => mockRemoteDatasource.fetchPrices(sourceA)).thenAnswer((_) {
+          callCountA++;
+          return callCountA == 1
+              ? Completer<Either<Failure, ProductSourceModel>>().future
+              : Future.value(Right(sourceA));
+        });
+        when(
+          () => mockRemoteDatasource.fetchPrices(sourceB),
+        ).thenAnswer((_) async => Right(sourceB));
+        when(
+          () => mockDatasource.updateSourcePrices(any(), any()),
+        ).thenAnswer((_) async => Right(buildProductModel()));
+
+        await timeoutEngine.enqueueSourceRefresh(['source-1', 'source-2']);
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+
+        verifyInOrder([
+          () => mockRemoteDatasource.fetchPrices(sourceA),
+          () => mockRemoteDatasource.fetchPrices(sourceB),
+          () => mockRemoteDatasource.fetchPrices(sourceA),
+        ]);
+      },
+    );
+
+    test(
+      "keeps fetching a different merchant's source while another merchant's source is retrying after a timeout",
+      () async {
+        final ProductSourceModel sourceA = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final ProductSourceModel sourceB = buildProductSourceModel(
+          id: 'source-2',
+          url: 'https://merchant-2.example.com/1',
+          merchantDomain: 'merchant-2.example.com',
+        );
+        final ProductSourceRefreshEngine timeoutEngine =
+            ProductSourceRefreshEngine(
+              mockDatasource,
+              mockRemoteDatasource,
+              mockPriceAlertCoordinator,
+              sourceFetchTimeout: const Duration(milliseconds: 15),
+              maxTimeoutRetries: 5,
+            );
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([sourceA, sourceB]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(() => mockRemoteDatasource.fetchPrices(sourceA)).thenAnswer(
+          (_) => Completer<Either<Failure, ProductSourceModel>>().future,
+        );
+        when(
+          () => mockRemoteDatasource.fetchPrices(sourceB),
+        ).thenAnswer((_) async => Right(sourceB));
+        when(
+          () => mockDatasource.updateSourcePrices(sourceB.productId, any()),
+        ).thenAnswer((_) async => Right(buildProductModel()));
+
+        await timeoutEngine.enqueueSourceRefresh(['source-1', 'source-2']);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        verify(() => mockRemoteDatasource.fetchPrices(sourceB)).called(1);
+        verify(
+          () => mockDatasource.updateSourcePrices(sourceB.productId, [sourceB]),
+        ).called(1);
+        verifyNever(
+          () => mockDatasource.writeSourceLiveStatus(
+            'source-1',
+            SourceRefreshStatus.error,
+          ),
+        );
+      },
+    );
+
+    test(
+      'gives up after a single timeout without re-queuing when maxTimeoutRetries = 1',
+      () async {
+        final ProductSourceModel source = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final ProductSourceRefreshEngine timeoutEngine =
+            ProductSourceRefreshEngine(
+              mockDatasource,
+              mockRemoteDatasource,
+              mockPriceAlertCoordinator,
+              sourceFetchTimeout: const Duration(milliseconds: 15),
+              maxTimeoutRetries: 1,
+            );
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([source]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(() => mockRemoteDatasource.fetchPrices(source)).thenAnswer(
+          (_) => Completer<Either<Failure, ProductSourceModel>>().future,
+        );
+        when(
+          () => mockDatasource.updateSourcePrices(source.productId, any()),
+        ).thenAnswer((_) async => Right(buildProductModel()));
+
+        await timeoutEngine.enqueueSourceRefresh(['source-1']);
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+
+        verify(() => mockRemoteDatasource.fetchPrices(source)).called(1);
+        verify(
+          () => mockDatasource.writeSourceLiveStatus(
+            'source-1',
+            SourceRefreshStatus.queued,
+          ),
+        ).called(1);
+        verify(
+          () => mockDatasource.writeSourceLiveStatus(
+            'source-1',
+            SourceRefreshStatus.error,
+          ),
+        ).called(1);
+      },
+    );
+
+    test(
+      'gives a source a fresh timeout-retry budget in a later run after it timed out and then succeeded in an earlier one',
+      () async {
+        final ProductSourceModel source = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final ProductSourceRefreshEngine timeoutEngine =
+            ProductSourceRefreshEngine(
+              mockDatasource,
+              mockRemoteDatasource,
+              mockPriceAlertCoordinator,
+              sourceFetchTimeout: const Duration(milliseconds: 15),
+              maxTimeoutRetries: 2,
+            );
+        int callCount = 0;
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([source]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(() => mockRemoteDatasource.fetchPrices(source)).thenAnswer((_) {
+          callCount++;
+          return callCount.isOdd
+              ? Completer<Either<Failure, ProductSourceModel>>().future
+              : Future.value(Right(source));
+        });
+        when(
+          () => mockDatasource.updateSourcePrices(source.productId, any()),
+        ).thenAnswer((_) async => Right(buildProductModel()));
+
+        await timeoutEngine.enqueueSourceRefresh(['source-1']);
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+
+        await timeoutEngine.enqueueSourceRefresh(['source-1']);
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+
+        expect(callCount, 4);
+        verifyNever(
+          () => mockDatasource.writeSourceLiveStatus(
+            'source-1',
+            SourceRefreshStatus.error,
+          ),
+        );
+      },
+    );
   });
 }
