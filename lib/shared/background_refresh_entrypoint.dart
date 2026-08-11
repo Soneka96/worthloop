@@ -73,6 +73,8 @@ Future<void> backgroundRefreshEntrypoint() async {
         sourceIds,
         bypassCooldown: bypassCooldown,
       );
+    } else if (call.method == 'rescheduleRefresh') {
+      loop.requestRefresh();
     }
   });
 

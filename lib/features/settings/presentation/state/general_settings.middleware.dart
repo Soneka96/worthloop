@@ -100,6 +100,12 @@ class GeneralSettingsMiddleware extends MiddlewareClass<AppState> {
   }
 
   /// Handles [SaveRefreshIntervalAction].
+  ///
+  /// Also nudges the background refresh service, when it's actually
+  /// running, so a still-sleeping schedule adopts the new interval
+  /// immediately instead of finishing out its stale wait first. The
+  /// interval can be changed independently of the browser-refresh toggle,
+  /// so this must not be the thing that starts the service.
   Future<void> _saveRefreshInterval(
     Store<AppState> store,
     SaveRefreshIntervalAction action,
@@ -113,6 +119,9 @@ class GeneralSettingsMiddleware extends MiddlewareClass<AppState> {
       },
       (RefreshSettings settings) {
         store.dispatch(RefreshIntervalSavedAction(settings.intervalMinutes));
+        if (settings.browserRefreshEnabled) {
+          unawaited(sl<AndroidBackgroundRefreshService>().requestRefresh());
+        }
       },
     );
   }

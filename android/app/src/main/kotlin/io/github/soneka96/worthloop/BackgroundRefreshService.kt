@@ -76,6 +76,8 @@ class BackgroundRefreshService : Service() {
         }
         if (!engineStarted) {
             engineStarted = startFlutterEngine()
+        } else if (sourceIds != null && sourceIds.isEmpty()) {
+            engineChannel?.invokeMethod("rescheduleRefresh", null)
         } else if (sourceIds != null) {
             // ponytail: a bypass-cooldown request made while the engine is
             // cold-starting (the branch above) loses that hint and queues

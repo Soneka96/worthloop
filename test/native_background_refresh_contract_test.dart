@@ -53,6 +53,11 @@ void main() {
           .length,
       2,
     );
+    expect(
+      backgroundService,
+      contains('engineChannel?.invokeMethod("rescheduleRefresh", null)'),
+    );
+    expect(backgroundService, contains('sourceIds.isEmpty()'));
   });
 
   test('background entrypoint reports refresh lifecycle status', () {
@@ -66,6 +71,8 @@ void main() {
     expect(entrypoint, contains("'refreshStarted'"));
     expect(entrypoint, contains('runRefresh(force: false)'));
     expect(entrypoint, contains('runRefresh(force: true)'));
+    expect(entrypoint, contains("'rescheduleRefresh'"));
+    expect(entrypoint, contains('loop.requestRefresh()'));
     expect(notifications, contains("'refreshCompleted'"));
     expect(notifications, contains("'refreshFailed'"));
   });

@@ -334,6 +334,51 @@ void main() {
       verifyZeroInteractions(mockLoggerService);
     });
 
+    test(
+      'calls requestRefresh() on the background refresh service when saved successfully with browserRefreshEnabled = true',
+      () async {
+        when(() => mockSaveUseCase(any())).thenAnswer(
+          (_) async => Right(
+            buildRefreshSettings(
+              intervalMinutes: 180,
+              browserRefreshEnabled: true,
+            ),
+          ),
+        );
+        when(
+          () => mockBackgroundRefreshService.requestRefresh(),
+        ).thenAnswer((_) async => true);
+
+        middleware.call(mockStore, const SaveRefreshIntervalAction(180), next);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        verify(() => mockBackgroundRefreshService.requestRefresh()).called(1);
+        verifyNoMoreInteractions(mockBackgroundRefreshService);
+      },
+    );
+
+    test(
+      'does not call requestRefresh() when saved successfully with browserRefreshEnabled = false',
+      () async {
+        when(() => mockSaveUseCase(any())).thenAnswer(
+          (_) async => Right(
+            buildRefreshSettings(
+              intervalMinutes: 180,
+              browserRefreshEnabled: false,
+            ),
+          ),
+        );
+
+        middleware.call(mockStore, const SaveRefreshIntervalAction(180), next);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        verifyNever(() => mockBackgroundRefreshService.requestRefresh());
+        verifyZeroInteractions(mockBackgroundRefreshService);
+      },
+    );
+
     test('dispatches RefreshIntervalSaveFailedAction when failed', () async {
       const DatabaseFailure failure = DatabaseFailure('failed');
       when(
@@ -352,6 +397,8 @@ void main() {
       verifyNoMoreInteractions(mockSaveUseCase);
       verify(() => mockLoggerService.e('failed', showPopup: true)).called(1);
       verifyNoMoreInteractions(mockLoggerService);
+      verifyNever(() => mockBackgroundRefreshService.requestRefresh());
+      verifyZeroInteractions(mockBackgroundRefreshService);
     });
   });
 
