@@ -58,6 +58,11 @@ void main() {
       contains('engineChannel?.invokeMethod("rescheduleRefresh", null)'),
     );
     expect(backgroundService, contains('sourceIds.isEmpty()'));
+    expect(backgroundService, contains('import android.app.AlarmManager'));
+    expect(backgroundService, contains('setAndAllowWhileIdle'));
+    expect(backgroundService, contains('"scheduleBackupAlarm"'));
+    expect(backgroundService, contains('alarmManager.cancel'));
+    expect(backgroundService, contains('BACKUP_ALARM_GRACE_MINUTES'));
   });
 
   test('background entrypoint reports refresh lifecycle status', () {
@@ -73,6 +78,7 @@ void main() {
     expect(entrypoint, contains('runRefresh(force: true)'));
     expect(entrypoint, contains("'rescheduleRefresh'"));
     expect(entrypoint, contains('loop.requestRefresh()'));
+    expect("'scheduleBackupAlarm'".allMatches(entrypoint).length, 2);
     expect(notifications, contains("'refreshCompleted'"));
     expect(notifications, contains("'refreshFailed'"));
   });

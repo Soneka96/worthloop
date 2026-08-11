@@ -10,6 +10,7 @@ import 'package:worth_loop/features/products/domain/repositories/Iproducts.repos
 import 'package:worth_loop/features/products/domain/usecases/refresh_all_products.usecase.dart';
 import 'package:worth_loop/features/settings/domain/usecases/load_refresh_settings.usecase.dart';
 import 'package:worth_loop/injection_container.dart';
+import 'package:worth_loop/shared/constants/refresh_interval_constants.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/usecase/no_params.dart';
 import 'package:worth_loop/shared/utils/background_refresh_channel_payload.dart';
@@ -22,12 +23,22 @@ const MethodChannel _engineChannel = MethodChannel(
   'io.github.soneka96.worthloop/background_refresh_engine',
 );
 
-/// Runs the local refresh loop inside the foreground service's Flutter engine.
+/// Runs the local refresh loop inside the foreground service's Flutter
+/// engine. Arms a backup alarm immediately, before the first refresh
+/// cycle's own network work even starts — otherwise that first cycle (the
+/// one most likely to be interrupted right after a cold start) would be the
+/// one window with no OS-level backstop at all. Superseded by the real
+/// interval as soon as that cycle actually completes.
 @pragma('vm:entry-point')
 Future<void> backgroundRefreshEntrypoint() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initDependencies();
   await sl<IProductsRepository>().resetStaleSourceStatuses();
+
+  await _notifyEngine(
+    'scheduleBackupAlarm',
+    arguments: RefreshIntervalConstants.hourly,
+  );
 
   final BackgroundRefreshNotifications notifications =
       BackgroundRefreshNotifications(
@@ -48,8 +59,8 @@ Future<void> backgroundRefreshEntrypoint() async {
     },
   );
 
-  Future<Duration?> runRefresh({required bool force}) {
-    return runner.runOnce(
+  Future<Duration?> runRefresh({required bool force}) async {
+    final Duration? nextDelay = await runner.runOnce(
       force: force,
       onRefreshStarted: () => _notifyEngine('refreshStarted'),
       onRefreshOutcome: (bool succeeded) async {
@@ -58,6 +69,13 @@ Future<void> backgroundRefreshEntrypoint() async {
         }
       },
     );
+    if (nextDelay != null) {
+      await _notifyEngine(
+        'scheduleBackupAlarm',
+        arguments: nextDelay.inMinutes,
+      );
+    }
+    return nextDelay;
   }
 
   final BackgroundRefreshLoop loop = BackgroundRefreshLoop(

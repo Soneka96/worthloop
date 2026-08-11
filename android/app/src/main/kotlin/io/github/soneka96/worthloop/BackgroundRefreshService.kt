@@ -1,5 +1,6 @@
 package io.github.soneka96.worthloop
 
+import android.app.AlarmManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -25,6 +26,8 @@ class BackgroundRefreshService : Service() {
         const val CHANNEL_ID = "background_refresh"
         const val NOTIFICATION_ID = 1001
         const val RESULT_NOTIFICATION_ID = 1002
+        const val ALARM_REQUEST_CODE = 1003
+        const val BACKUP_ALARM_GRACE_MINUTES = 5L
         const val RESULT_CHANNEL_ID = "background_refresh_results"
         const val ACTION_REQUEST_REFRESH =
             "io.github.soneka96.worthloop.action.REQUEST_REFRESH"
@@ -99,6 +102,7 @@ class BackgroundRefreshService : Service() {
         engineStarted = false
         flutterEngine?.destroy()
         flutterEngine = null
+        cancelBackupAlarm()
         super.onDestroy()
     }
 
@@ -145,6 +149,54 @@ class BackgroundRefreshService : Service() {
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
+    }
+
+    /**
+     * Backs up the in-process Dart schedule with a real OS alarm — if this
+     * process dies before its own timer would have fired (killed by Doze or
+     * an OEM battery manager), the alarm still restarts everything through
+     * the same [ACTION_REQUEST_REFRESH] cold-start path. Fires
+     * [BACKUP_ALARM_GRACE_MINUTES] after [delayMinutes], not exactly at it —
+     * every successful Dart-timer cycle reschedules (pushes back) this same
+     * alarm before that grace window elapses, so it only ever actually
+     * fires when the primary schedule failed to run, not as a second timer
+     * racing the first one to fire at the same moment.
+     */
+    private fun scheduleBackupAlarm(delayMinutes: Long) {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val triggerAtMillis = System.currentTimeMillis() +
+            (delayMinutes + BACKUP_ALARM_GRACE_MINUTES) * 60_000L
+        alarmManager.setAndAllowWhileIdle(
+            AlarmManager.RTC_WAKEUP,
+            triggerAtMillis,
+            backupAlarmPendingIntent(),
+        )
+    }
+
+    private fun cancelBackupAlarm() {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        alarmManager.cancel(backupAlarmPendingIntent())
+    }
+
+    private fun backupAlarmPendingIntent(): PendingIntent {
+        val intent = Intent(this, BackgroundRefreshService::class.java).apply {
+            action = ACTION_REQUEST_REFRESH
+        }
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            PendingIntent.getForegroundService(
+                this,
+                ALARM_REQUEST_CODE,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+        } else {
+            PendingIntent.getService(
+                this,
+                ALARM_REQUEST_CODE,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+        }
     }
 
     private fun updateForegroundNotification(
@@ -251,6 +303,11 @@ class BackgroundRefreshService : Service() {
                         "Refreshing prices… ($completed/$total)",
                         completed to total,
                     )
+                    result.success(true)
+                }
+                "scheduleBackupAlarm" -> {
+                    val delayMinutes = (call.arguments as? Number)?.toLong() ?: 60L
+                    scheduleBackupAlarm(delayMinutes)
                     result.success(true)
                 }
                 else -> result.notImplemented()
