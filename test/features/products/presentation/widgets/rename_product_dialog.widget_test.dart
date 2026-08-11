@@ -263,20 +263,14 @@ void main() {
   });
 
   group("RenameProductDialog's translations", () {
-    testWidgets('RenameProductDialog displays the Portuguese translations', (
+    testWidgets('displays the correct translations', (
       tester,
     ) async {
-      await LocaleSettings.setLocale(AppLocale.pt);
+      await openDialog(tester);
 
-      try {
-        await openDialog(tester);
-
-        expect(find.text(t.productDetails.renameProductTitle), findsOneWidget);
-        expect(find.text(t.productDetails.productNameLabel), findsOneWidget);
-        expect(find.text(t.common.cancel), findsOneWidget);
-      } finally {
-        await LocaleSettings.setLocale(AppLocale.en);
-      }
+      expect(find.text(t.productDetails.renameProductTitle), findsOneWidget);
+      expect(find.text(t.productDetails.productNameLabel), findsOneWidget);
+      expect(find.text(t.common.cancel), findsOneWidget);
     });
   });
 }

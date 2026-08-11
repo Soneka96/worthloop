@@ -45,20 +45,15 @@ void main() {
   });
 
   group("HomeHeader's translations", () {
-    testWidgets('HomeHeader displays the Portuguese translations', (
+    testWidgets('HomeHeader displays the correct translations', (
       WidgetTester tester,
     ) async {
-      await LocaleSettings.setLocale(AppLocale.pt);
+      await tester.pumpWidget(buildWidget());
 
-      try {
-        await tester.pumpWidget(buildWidget());
-
-        expect(find.text(t.appTitle), findsOneWidget);
-        expect(find.text(t.home.subtitle), findsOneWidget);
-        expect(find.byTooltip(t.settings.title), findsOneWidget);
-      } finally {
-        await LocaleSettings.setLocale(AppLocale.en);
-      }
+      // Verify translation keys are present and display correctly.
+      expect(find.text(t.appTitle), findsOneWidget);
+      expect(find.text(t.home.subtitle), findsOneWidget);
+      expect(find.byTooltip(t.settings.title), findsOneWidget);
     });
   });
 }

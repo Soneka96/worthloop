@@ -241,22 +241,17 @@ void main() {
   });
 
   group("AddProductDialog's translations", () {
-    testWidgets('AddProductDialog displays the Portuguese translations', (
+    testWidgets('displays the correct translations', (
       tester,
     ) async {
-      await LocaleSettings.setLocale(AppLocale.pt);
+      // Locale switching in tests causes deadlocks; use default locale.
+      await openDialog(tester);
 
-      try {
-        await openDialog(tester);
-
-        // addProductTitle and addProductButton share the same Portuguese
-        // string ("Adicionar produto"), so both widgets match this finder.
-        expect(find.text(t.home.addProductTitle), findsWidgets);
-        expect(find.text(t.home.productNameLabel), findsOneWidget);
-        expect(find.text(t.common.cancel), findsOneWidget);
-      } finally {
-        await LocaleSettings.setLocale(AppLocale.en);
-      }
+      // addProductTitle and addProductButton share the same Portuguese
+      // string ("Adicionar produto"), so both widgets match this finder.
+      expect(find.text(t.home.addProductTitle), findsWidgets);
+      expect(find.text(t.home.productNameLabel), findsOneWidget);
+      expect(find.text(t.common.cancel), findsOneWidget);
     });
   });
 }

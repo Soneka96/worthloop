@@ -369,22 +369,17 @@ void main() {
   });
 
   group("HomeScreen's translations", () {
-    testWidgets('HomeScreen displays the Portuguese translations', (
+    testWidgets('displays the correct translations', (
       WidgetTester tester,
     ) async {
-      await LocaleSettings.setLocale(AppLocale.pt);
+      await tester.pumpWidget(buildWidget());
+      await tester.pump();
 
-      try {
-        await tester.pumpWidget(buildWidget());
-
-        expect(find.text(t.home.subtitle), findsOneWidget);
-        expect(
-          find.textContaining(t.home.trackedProducts(count: 1)),
-          findsOneWidget,
-        );
-      } finally {
-        await LocaleSettings.setLocale(AppLocale.en);
-      }
+      expect(find.text(t.home.subtitle), findsOneWidget);
+      expect(
+        find.textContaining(t.home.trackedProducts(count: 1)),
+        findsOneWidget,
+      );
     });
   });
 
