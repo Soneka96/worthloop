@@ -55,7 +55,14 @@ class ProductSourceRefreshEngine {
 
   /// Queues [sourceIds] onto their merchant-specific fetch queues, starting
   /// worker processing if it isn't already running. [bypassCooldown] applies
-  /// to every source in this call. Returns once every source is queued and
+  /// to every source in this call. A source currently queued or in flight is
+  /// always skipped, to avoid two concurrent fetches of the same source. A
+  /// source already handled within the still-open run (finished, but the run
+  /// hasn't fully drained yet) is skipped too — unless [bypassCooldown] is
+  /// true, which re-queues it as a deliberate, user-initiated retry. This
+  /// keeps an overlapping bulk refresh trigger (e.g. a scheduled run and a
+  /// manual pull-to-refresh) from re-fetching and double-counting sources
+  /// the open run already finished. Returns once every source is queued and
   /// its live status is persisted — the actual fetch results are not
   /// awaited here, they flow through the database as each source completes.
   Future<Either<Failure, Unit>> enqueueSourceRefresh(
@@ -74,8 +81,15 @@ class ProductSourceRefreshEngine {
     int newlyQueuedCount = 0;
     for (final ProductSourceModel source
         in sourcesResult.getRight().toNullable() ?? const []) {
+      final bool queuedOrInFlight = _sourceIdsQueuedOrInFlight.contains(
+        source.id,
+      );
+      final bool alreadyHandledThisRun = _sourceIdsAwaitingSweep.contains(
+        source.id,
+      );
       if (!requestedIds.contains(source.id) ||
-          _sourceIdsQueuedOrInFlight.contains(source.id)) {
+          queuedOrInFlight ||
+          (!bypassCooldown && alreadyHandledThisRun)) {
         continue;
       }
       _sourceIdsQueuedOrInFlight.add(source.id);
@@ -205,7 +219,9 @@ class ProductSourceRefreshEngine {
     final Either<Failure, ProductModel> persistResult = await _localDatasource
         .updateSourcePrices(source.productId, [updatedSource]);
 
-    final ProductModel? refreshedProduct = persistResult.getRight().toNullable();
+    final ProductModel? refreshedProduct = persistResult
+        .getRight()
+        .toNullable();
     if (previousProduct != null && refreshedProduct != null) {
       await _notifyPriceChange(previousProduct, refreshedProduct);
     }
@@ -225,14 +241,14 @@ class ProductSourceRefreshEngine {
     if (previousBestPrice.currencyCode != currentBestPrice.currencyCode) {
       return;
     }
-    final PriceChangeDirection direction = switch (currentBestPrice
-        .minorUnits) {
-      final int minorUnits when minorUnits < previousBestPrice.minorUnits =>
-        PriceChangeDirection.drop,
-      final int minorUnits when minorUnits > previousBestPrice.minorUnits =>
-        PriceChangeDirection.increase,
-      _ => PriceChangeDirection.none,
-    };
+    final PriceChangeDirection direction =
+        switch (currentBestPrice.minorUnits) {
+          final int minorUnits when minorUnits < previousBestPrice.minorUnits =>
+            PriceChangeDirection.drop,
+          final int minorUnits when minorUnits > previousBestPrice.minorUnits =>
+            PriceChangeDirection.increase,
+          _ => PriceChangeDirection.none,
+        };
     if (direction == PriceChangeDirection.none) {
       return;
     }

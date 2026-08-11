@@ -84,8 +84,9 @@ void main() {
           () => mockDatasource.loadProductSources(),
         ).thenAnswer((_) async => const Left(failure));
 
-        final Either<Failure, Unit> result = await engine
-            .enqueueSourceRefresh(['source-1']);
+        final Either<Failure, Unit> result = await engine.enqueueSourceRefresh([
+          'source-1',
+        ]);
 
         expect(result, const Left(failure));
         verify(() => mockDatasource.loadProductSources()).called(1);
@@ -133,8 +134,9 @@ void main() {
           ]),
         ).thenAnswer((_) async => Right(buildProductModel()));
 
-        final Either<Failure, Unit> result = await engine
-            .enqueueSourceRefresh(['source-1']);
+        final Either<Failure, Unit> result = await engine.enqueueSourceRefresh([
+          'source-1',
+        ]);
         await Future<void>.delayed(Duration.zero);
         await Future<void>.delayed(Duration.zero);
 
@@ -434,6 +436,120 @@ void main() {
       },
     );
 
+    test(
+      'does not re-queue a source already handled in the current run when bypassCooldown = false',
+      () async {
+        final ProductSourceModel sourceA = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final ProductSourceModel sourceB = buildProductSourceModel(
+          id: 'source-2',
+          url: 'https://merchant-2.example.com/1',
+          merchantDomain: 'merchant-2.example.com',
+        );
+        final Completer<Either<Failure, ProductSourceModel>> completerB =
+            Completer();
+        final List<(int, int)> progressCalls = [];
+        engine.onProgress = (int completed, int total) =>
+            progressCalls.add((completed, total));
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([sourceA, sourceB]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(
+          () => mockRemoteDatasource.fetchPrices(sourceA),
+        ).thenAnswer((_) async => Right(sourceA));
+        when(
+          () => mockRemoteDatasource.fetchPrices(sourceB),
+        ).thenAnswer((_) => completerB.future);
+        when(
+          () => mockDatasource.updateSourcePrices(sourceA.productId, any()),
+        ).thenAnswer((_) async => Right(buildProductModel()));
+
+        await engine.enqueueSourceRefresh(['source-1', 'source-2']);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        await engine.enqueueSourceRefresh(['source-1']);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        verify(() => mockRemoteDatasource.fetchPrices(sourceA)).called(1);
+        verify(() => mockRemoteDatasource.fetchPrices(sourceB)).called(1);
+        verifyNoMoreInteractions(mockRemoteDatasource);
+        verify(
+          () => mockDatasource.writeSourceLiveStatus(
+            'source-1',
+            SourceRefreshStatus.queued,
+          ),
+        ).called(1);
+        expect(progressCalls.map((call) => call.$2), everyElement(2));
+      },
+    );
+
+    test(
+      're-queues a source already handled in the current run when bypassCooldown = true',
+      () async {
+        final ProductSourceModel sourceA = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final ProductSourceModel sourceB = buildProductSourceModel(
+          id: 'source-2',
+          url: 'https://merchant-2.example.com/1',
+          merchantDomain: 'merchant-2.example.com',
+        );
+        final Completer<Either<Failure, ProductSourceModel>> completerB =
+            Completer();
+        final List<(int, int)> progressCalls = [];
+        engine.onProgress = (int completed, int total) =>
+            progressCalls.add((completed, total));
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([sourceA, sourceB]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(
+          () => mockRemoteDatasource.fetchPrices(sourceA),
+        ).thenAnswer((_) async => Right(sourceA));
+        when(
+          () => mockRemoteDatasource.fetchPrices(sourceA, bypassCooldown: true),
+        ).thenAnswer((_) async => Right(sourceA));
+        when(
+          () => mockRemoteDatasource.fetchPrices(sourceB),
+        ).thenAnswer((_) => completerB.future);
+        when(
+          () => mockDatasource.updateSourcePrices(sourceA.productId, any()),
+        ).thenAnswer((_) async => Right(buildProductModel()));
+
+        await engine.enqueueSourceRefresh(['source-1', 'source-2']);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        await engine.enqueueSourceRefresh(['source-1'], bypassCooldown: true);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        verify(() => mockRemoteDatasource.fetchPrices(sourceA)).called(1);
+        verify(
+          () => mockRemoteDatasource.fetchPrices(sourceA, bypassCooldown: true),
+        ).called(1);
+        verify(() => mockRemoteDatasource.fetchPrices(sourceB)).called(1);
+        verifyNoMoreInteractions(mockRemoteDatasource);
+        verify(
+          () => mockDatasource.writeSourceLiveStatus(
+            'source-1',
+            SourceRefreshStatus.queued,
+          ),
+        ).called(2);
+        expect(progressCalls.last.$2, 3);
+      },
+    );
+
     test('serializes two sources from the same merchant', () async {
       final ProductSourceModel sourceA = buildProductSourceModel(
         id: 'source-1',
@@ -548,67 +664,62 @@ void main() {
       },
     );
 
-    test(
-      'notifies a price drop when the best price becomes lower',
-      () async {
-        final ProductSourceModel source = buildProductSourceModel(
-          id: 'source-1',
-        );
-        final ProductSourceModel updatedSource = buildProductSourceModel(
-          id: 'source-1',
-          currentPrice: const Money(minorUnits: 1999, currencyCode: 'EUR'),
-          isAvailable: true,
-        );
-        final ProductModel previousProduct = buildProductModel(
-          sources: [
-            buildProductSource(
-              currentPrice: const Money(minorUnits: 2999, currencyCode: 'EUR'),
-              isAvailable: true,
-            ),
-          ],
-        );
-        final ProductModel refreshedProduct = buildProductModel(
-          sources: [
-            buildProductSource(
-              currentPrice: const Money(minorUnits: 1999, currencyCode: 'EUR'),
-              isAvailable: true,
-            ),
-          ],
-        );
-        when(
-          () => mockDatasource.loadProductSources(),
-        ).thenAnswer((_) async => Right([source]));
-        when(
-          () => mockDatasource.writeSourceLiveStatus(any(), any()),
-        ).thenAnswer((_) async => const Right(unit));
-        when(
-          () => mockDatasource.loadProduct(source.productId),
-        ).thenAnswer((_) async => Right(previousProduct));
-        when(
-          () => mockRemoteDatasource.fetchPrices(source),
-        ).thenAnswer((_) async => Right(updatedSource));
-        when(
-          () => mockDatasource.updateSourcePrices(source.productId, [
-            updatedSource,
-          ]),
-        ).thenAnswer((_) async => Right(refreshedProduct));
+    test('notifies a price drop when the best price becomes lower', () async {
+      final ProductSourceModel source = buildProductSourceModel(id: 'source-1');
+      final ProductSourceModel updatedSource = buildProductSourceModel(
+        id: 'source-1',
+        currentPrice: const Money(minorUnits: 1999, currencyCode: 'EUR'),
+        isAvailable: true,
+      );
+      final ProductModel previousProduct = buildProductModel(
+        sources: [
+          buildProductSource(
+            currentPrice: const Money(minorUnits: 2999, currencyCode: 'EUR'),
+            isAvailable: true,
+          ),
+        ],
+      );
+      final ProductModel refreshedProduct = buildProductModel(
+        sources: [
+          buildProductSource(
+            currentPrice: const Money(minorUnits: 1999, currencyCode: 'EUR'),
+            isAvailable: true,
+          ),
+        ],
+      );
+      when(
+        () => mockDatasource.loadProductSources(),
+      ).thenAnswer((_) async => Right([source]));
+      when(
+        () => mockDatasource.writeSourceLiveStatus(any(), any()),
+      ).thenAnswer((_) async => const Right(unit));
+      when(
+        () => mockDatasource.loadProduct(source.productId),
+      ).thenAnswer((_) async => Right(previousProduct));
+      when(
+        () => mockRemoteDatasource.fetchPrices(source),
+      ).thenAnswer((_) async => Right(updatedSource));
+      when(
+        () => mockDatasource.updateSourcePrices(source.productId, [
+          updatedSource,
+        ]),
+      ).thenAnswer((_) async => Right(refreshedProduct));
 
-        await engine.enqueueSourceRefresh(['source-1']);
-        await Future<void>.delayed(Duration.zero);
-        await Future<void>.delayed(Duration.zero);
+      await engine.enqueueSourceRefresh(['source-1']);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
 
-        final ProductPriceChange change =
-            verify(
-                  () => mockPriceAlertCoordinator.notify(captureAny()),
-                ).captured.single
-                as ProductPriceChange;
-        expect(change.direction, isA<PriceChangeDirection>());
-        expect(change.direction, PriceChangeDirection.drop);
-        expect(change.previousBestPrice.minorUnits, 2999);
-        expect(change.currentBestPrice.minorUnits, 1999);
-        expect(change.product, refreshedProduct);
-      },
-    );
+      final ProductPriceChange change =
+          verify(
+                () => mockPriceAlertCoordinator.notify(captureAny()),
+              ).captured.single
+              as ProductPriceChange;
+      expect(change.direction, isA<PriceChangeDirection>());
+      expect(change.direction, PriceChangeDirection.drop);
+      expect(change.previousBestPrice.minorUnits, 2999);
+      expect(change.currentBestPrice.minorUnits, 1999);
+      expect(change.product, refreshedProduct);
+    });
 
     test(
       'notifies a price increase when the best price becomes higher',
@@ -670,97 +781,87 @@ void main() {
       },
     );
 
-    test(
-      'does not notify when the best price is unchanged',
-      () async {
-        final ProductSourceModel source = buildProductSourceModel(
-          id: 'source-1',
-        );
-        final ProductModel previousProduct = buildProductModel(
-          sources: [
-            buildProductSource(
-              currentPrice: const Money(minorUnits: 2999, currencyCode: 'EUR'),
-              isAvailable: true,
-            ),
-          ],
-        );
-        final ProductModel refreshedProduct = buildProductModel(
-          sources: [
-            buildProductSource(
-              currentPrice: const Money(minorUnits: 2999, currencyCode: 'EUR'),
-              isAvailable: true,
-            ),
-          ],
-        );
-        when(
-          () => mockDatasource.loadProductSources(),
-        ).thenAnswer((_) async => Right([source]));
-        when(
-          () => mockDatasource.writeSourceLiveStatus(any(), any()),
-        ).thenAnswer((_) async => const Right(unit));
-        when(
-          () => mockDatasource.loadProduct(source.productId),
-        ).thenAnswer((_) async => Right(previousProduct));
-        when(
-          () => mockRemoteDatasource.fetchPrices(source),
-        ).thenAnswer((_) async => Right(source));
-        when(
-          () => mockDatasource.updateSourcePrices(source.productId, any()),
-        ).thenAnswer((_) async => Right(refreshedProduct));
+    test('does not notify when the best price is unchanged', () async {
+      final ProductSourceModel source = buildProductSourceModel(id: 'source-1');
+      final ProductModel previousProduct = buildProductModel(
+        sources: [
+          buildProductSource(
+            currentPrice: const Money(minorUnits: 2999, currencyCode: 'EUR'),
+            isAvailable: true,
+          ),
+        ],
+      );
+      final ProductModel refreshedProduct = buildProductModel(
+        sources: [
+          buildProductSource(
+            currentPrice: const Money(minorUnits: 2999, currencyCode: 'EUR'),
+            isAvailable: true,
+          ),
+        ],
+      );
+      when(
+        () => mockDatasource.loadProductSources(),
+      ).thenAnswer((_) async => Right([source]));
+      when(
+        () => mockDatasource.writeSourceLiveStatus(any(), any()),
+      ).thenAnswer((_) async => const Right(unit));
+      when(
+        () => mockDatasource.loadProduct(source.productId),
+      ).thenAnswer((_) async => Right(previousProduct));
+      when(
+        () => mockRemoteDatasource.fetchPrices(source),
+      ).thenAnswer((_) async => Right(source));
+      when(
+        () => mockDatasource.updateSourcePrices(source.productId, any()),
+      ).thenAnswer((_) async => Right(refreshedProduct));
 
-        await engine.enqueueSourceRefresh(['source-1']);
-        await Future<void>.delayed(Duration.zero);
-        await Future<void>.delayed(Duration.zero);
+      await engine.enqueueSourceRefresh(['source-1']);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
 
-        verifyZeroInteractions(mockPriceAlertCoordinator);
-      },
-    );
+      verifyZeroInteractions(mockPriceAlertCoordinator);
+    });
 
-    test(
-      'does not notify when the currency changed',
-      () async {
-        final ProductSourceModel source = buildProductSourceModel(
-          id: 'source-1',
-        );
-        final ProductModel previousProduct = buildProductModel(
-          sources: [
-            buildProductSource(
-              currentPrice: const Money(minorUnits: 2999, currencyCode: 'EUR'),
-              isAvailable: true,
-            ),
-          ],
-        );
-        final ProductModel refreshedProduct = buildProductModel(
-          sources: [
-            buildProductSource(
-              currentPrice: const Money(minorUnits: 1999, currencyCode: 'USD'),
-              isAvailable: true,
-            ),
-          ],
-        );
-        when(
-          () => mockDatasource.loadProductSources(),
-        ).thenAnswer((_) async => Right([source]));
-        when(
-          () => mockDatasource.writeSourceLiveStatus(any(), any()),
-        ).thenAnswer((_) async => const Right(unit));
-        when(
-          () => mockDatasource.loadProduct(source.productId),
-        ).thenAnswer((_) async => Right(previousProduct));
-        when(
-          () => mockRemoteDatasource.fetchPrices(source),
-        ).thenAnswer((_) async => Right(source));
-        when(
-          () => mockDatasource.updateSourcePrices(source.productId, any()),
-        ).thenAnswer((_) async => Right(refreshedProduct));
+    test('does not notify when the currency changed', () async {
+      final ProductSourceModel source = buildProductSourceModel(id: 'source-1');
+      final ProductModel previousProduct = buildProductModel(
+        sources: [
+          buildProductSource(
+            currentPrice: const Money(minorUnits: 2999, currencyCode: 'EUR'),
+            isAvailable: true,
+          ),
+        ],
+      );
+      final ProductModel refreshedProduct = buildProductModel(
+        sources: [
+          buildProductSource(
+            currentPrice: const Money(minorUnits: 1999, currencyCode: 'USD'),
+            isAvailable: true,
+          ),
+        ],
+      );
+      when(
+        () => mockDatasource.loadProductSources(),
+      ).thenAnswer((_) async => Right([source]));
+      when(
+        () => mockDatasource.writeSourceLiveStatus(any(), any()),
+      ).thenAnswer((_) async => const Right(unit));
+      when(
+        () => mockDatasource.loadProduct(source.productId),
+      ).thenAnswer((_) async => Right(previousProduct));
+      when(
+        () => mockRemoteDatasource.fetchPrices(source),
+      ).thenAnswer((_) async => Right(source));
+      when(
+        () => mockDatasource.updateSourcePrices(source.productId, any()),
+      ).thenAnswer((_) async => Right(refreshedProduct));
 
-        await engine.enqueueSourceRefresh(['source-1']);
-        await Future<void>.delayed(Duration.zero);
-        await Future<void>.delayed(Duration.zero);
+      await engine.enqueueSourceRefresh(['source-1']);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
 
-        verifyZeroInteractions(mockPriceAlertCoordinator);
-      },
-    );
+      verifyZeroInteractions(mockPriceAlertCoordinator);
+    });
 
     test(
       'does not notify when the previous product had no available price',
@@ -823,9 +924,7 @@ void main() {
         ).thenAnswer((_) async => const Right(unit));
         when(
           () => mockDatasource.loadProduct(source.productId),
-        ).thenAnswer(
-          (_) async => const Left(DatabaseFailure('not found')),
-        );
+        ).thenAnswer((_) async => const Left(DatabaseFailure('not found')));
         when(
           () => mockRemoteDatasource.fetchPrices(source),
         ).thenAnswer((_) async => Right(source));
@@ -900,9 +999,9 @@ void main() {
         when(
           () => mockDatasource.writeSourceLiveStatus(any(), any()),
         ).thenAnswer((_) async => const Right(unit));
-        when(
-          () => mockRemoteDatasource.fetchPrices(any()),
-        ).thenAnswer((_) => Completer<Either<Failure, ProductSourceModel>>().future);
+        when(() => mockRemoteDatasource.fetchPrices(any())).thenAnswer(
+          (_) => Completer<Either<Failure, ProductSourceModel>>().future,
+        );
 
         await engine.enqueueSourceRefresh(['source-1', 'source-2']);
 
@@ -942,9 +1041,9 @@ void main() {
         when(
           () => mockDatasource.writeSourceLiveStatus(any(), any()),
         ).thenAnswer((_) async => const Right(unit));
-        when(
-          () => mockRemoteDatasource.fetchPrices(any()),
-        ).thenAnswer((_) => Completer<Either<Failure, ProductSourceModel>>().future);
+        when(() => mockRemoteDatasource.fetchPrices(any())).thenAnswer(
+          (_) => Completer<Either<Failure, ProductSourceModel>>().future,
+        );
 
         await engine.enqueueSourceRefresh(['source-1']);
         await engine.enqueueSourceRefresh(['source-2']);
@@ -1044,9 +1143,9 @@ void main() {
         when(
           () => mockRemoteDatasource.fetchPrices(sourceA),
         ).thenAnswer((_) async => Right(sourceA));
-        when(
-          () => mockRemoteDatasource.fetchPrices(sourceB),
-        ).thenAnswer((_) => Completer<Either<Failure, ProductSourceModel>>().future);
+        when(() => mockRemoteDatasource.fetchPrices(sourceB)).thenAnswer(
+          (_) => Completer<Either<Failure, ProductSourceModel>>().future,
+        );
         when(
           () => mockDatasource.updateSourcePrices(any(), any()),
         ).thenAnswer((_) async => Right(buildProductModel()));
@@ -1080,9 +1179,9 @@ void main() {
         when(
           () => mockRemoteDatasource.fetchPrices(sourceA),
         ).thenAnswer((_) async => Right(sourceA));
-        when(
-          () => mockRemoteDatasource.fetchPrices(sourceB),
-        ).thenAnswer((_) => Completer<Either<Failure, ProductSourceModel>>().future);
+        when(() => mockRemoteDatasource.fetchPrices(sourceB)).thenAnswer(
+          (_) => Completer<Either<Failure, ProductSourceModel>>().future,
+        );
         when(
           () => mockDatasource.updateSourcePrices(any(), any()),
         ).thenAnswer((_) async => Right(buildProductModel()));
@@ -1092,7 +1191,9 @@ void main() {
         await Future<void>.delayed(Duration.zero);
         await Future<void>.delayed(Duration.zero);
 
-        verifyNever(() => mockDatasource.writeSourceLiveStatus('source-1', null));
+        verifyNever(
+          () => mockDatasource.writeSourceLiveStatus('source-1', null),
+        );
       },
     );
 
@@ -1113,9 +1214,9 @@ void main() {
         when(
           () => mockDatasource.writeSourceLiveStatus(any(), any()),
         ).thenAnswer((_) async => const Right(unit));
-        when(
-          () => mockRemoteDatasource.fetchPrices(any()),
-        ).thenAnswer((invocation) async {
+        when(() => mockRemoteDatasource.fetchPrices(any())).thenAnswer((
+          invocation,
+        ) async {
           final ProductSourceModel source =
               invocation.positionalArguments.first as ProductSourceModel;
           return Right(source);
@@ -1160,9 +1261,9 @@ void main() {
         ).thenAnswer(
           (_) async => const Left(DatabaseFailure('database failed')),
         );
-        when(
-          () => mockRemoteDatasource.fetchPrices(any()),
-        ).thenAnswer((invocation) async {
+        when(() => mockRemoteDatasource.fetchPrices(any())).thenAnswer((
+          invocation,
+        ) async {
           final ProductSourceModel source =
               invocation.positionalArguments.first as ProductSourceModel;
           return Right(source);
