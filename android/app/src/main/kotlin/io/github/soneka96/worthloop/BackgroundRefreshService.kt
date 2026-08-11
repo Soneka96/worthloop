@@ -72,6 +72,7 @@ class BackgroundRefreshService : Service() {
             synchronized(pendingSourceIds) {
                 pendingSourceIds.addAll(sourceIds)
             }
+            updateForegroundNotification("Refreshing prices…")
         }
         if (!engineStarted) {
             engineStarted = startFlutterEngine()

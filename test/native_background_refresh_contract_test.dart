@@ -47,6 +47,12 @@ void main() {
           .length,
       3,
     );
+    expect(
+      'updateForegroundNotification("Refreshing prices…")'
+          .allMatches(backgroundService)
+          .length,
+      2,
+    );
   });
 
   test('background entrypoint reports refresh lifecycle status', () {
