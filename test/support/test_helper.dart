@@ -21,13 +21,13 @@ class TestHelper {
   ) async {
     try {
       for (final AppLocale locale in AppLocale.values) {
-        LocaleSettings.setLocale(locale);
+        await LocaleSettings.setLocale(locale);
         await tester.pumpWidget(const SizedBox.shrink());
         await tester.pumpWidget(buildWidget());
         await verify();
       }
     } finally {
-      LocaleSettings.setLocale(AppLocale.en);
+      await LocaleSettings.setLocale(AppLocale.en);
     }
   }
 }

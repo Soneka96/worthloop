@@ -48,7 +48,7 @@ void main() {
     testWidgets('HomeHeader displays the Portuguese translations', (
       WidgetTester tester,
     ) async {
-      LocaleSettings.setLocale(AppLocale.pt);
+      await LocaleSettings.setLocale(AppLocale.pt);
 
       try {
         await tester.pumpWidget(buildWidget());
@@ -57,7 +57,7 @@ void main() {
         expect(find.text(t.home.subtitle), findsOneWidget);
         expect(find.byTooltip(t.settings.title), findsOneWidget);
       } finally {
-        LocaleSettings.setLocale(AppLocale.en);
+        await LocaleSettings.setLocale(AppLocale.en);
       }
     });
   });

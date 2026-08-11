@@ -33,7 +33,7 @@ void main() {
     testWidgets(
       'TrackedProductsEmptyWidget displays the Portuguese translations',
       (WidgetTester tester) async {
-        LocaleSettings.setLocale(AppLocale.pt);
+        await LocaleSettings.setLocale(AppLocale.pt);
 
         try {
           await tester.pumpWidget(
@@ -47,7 +47,7 @@ void main() {
           expect(find.text(t.home.emptyTitle), findsOneWidget);
           expect(find.text(t.home.emptyDescription), findsOneWidget);
         } finally {
-          LocaleSettings.setLocale(AppLocale.en);
+          await LocaleSettings.setLocale(AppLocale.en);
         }
       },
     );

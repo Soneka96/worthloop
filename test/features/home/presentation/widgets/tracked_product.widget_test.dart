@@ -283,7 +283,7 @@ void main() {
           ),
         ],
       );
-      LocaleSettings.setLocale(AppLocale.pt);
+      await LocaleSettings.setLocale(AppLocale.pt);
 
       try {
         await tester.pumpWidget(buildWidget(product));
@@ -298,7 +298,7 @@ void main() {
           findsOneWidget,
         );
       } finally {
-        LocaleSettings.setLocale(AppLocale.en);
+        await LocaleSettings.setLocale(AppLocale.en);
       }
     });
   });

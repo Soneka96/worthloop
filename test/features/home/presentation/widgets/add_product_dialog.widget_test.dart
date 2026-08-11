@@ -244,7 +244,7 @@ void main() {
     testWidgets('AddProductDialog displays the Portuguese translations', (
       tester,
     ) async {
-      LocaleSettings.setLocale(AppLocale.pt);
+      await LocaleSettings.setLocale(AppLocale.pt);
 
       try {
         await openDialog(tester);
@@ -255,7 +255,7 @@ void main() {
         expect(find.text(t.home.productNameLabel), findsOneWidget);
         expect(find.text(t.common.cancel), findsOneWidget);
       } finally {
-        LocaleSettings.setLocale(AppLocale.en);
+        await LocaleSettings.setLocale(AppLocale.en);
       }
     });
   });

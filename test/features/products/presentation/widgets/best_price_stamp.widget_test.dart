@@ -28,14 +28,14 @@ void main() {
     testWidgets('BestPriceStamp displays the Portuguese translations', (
       WidgetTester tester,
     ) async {
-      LocaleSettings.setLocale(AppLocale.pt);
+      await LocaleSettings.setLocale(AppLocale.pt);
 
       try {
         await tester.pumpWidget(buildWidget());
 
         expect(find.text(t.productDetails.bestPrice), findsOneWidget);
       } finally {
-        LocaleSettings.setLocale(AppLocale.en);
+        await LocaleSettings.setLocale(AppLocale.en);
       }
     });
   });

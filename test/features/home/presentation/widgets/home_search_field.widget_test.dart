@@ -100,7 +100,7 @@ void main() {
     testWidgets('HomeSearchField displays the Portuguese translations', (
       WidgetTester tester,
     ) async {
-      LocaleSettings.setLocale(AppLocale.pt);
+      await LocaleSettings.setLocale(AppLocale.pt);
 
       try {
         await tester.pumpWidget(buildWidget());
@@ -114,7 +114,7 @@ void main() {
 
         expect(find.byTooltip(t.home.searchClearTooltip), findsOneWidget);
       } finally {
-        LocaleSettings.setLocale(AppLocale.en);
+        await LocaleSettings.setLocale(AppLocale.en);
       }
     });
   });

@@ -266,7 +266,7 @@ void main() {
     testWidgets('RenameProductDialog displays the Portuguese translations', (
       tester,
     ) async {
-      LocaleSettings.setLocale(AppLocale.pt);
+      await LocaleSettings.setLocale(AppLocale.pt);
 
       try {
         await openDialog(tester);
@@ -275,7 +275,7 @@ void main() {
         expect(find.text(t.productDetails.productNameLabel), findsOneWidget);
         expect(find.text(t.common.cancel), findsOneWidget);
       } finally {
-        LocaleSettings.setLocale(AppLocale.en);
+        await LocaleSettings.setLocale(AppLocale.en);
       }
     });
   });

@@ -116,7 +116,7 @@ void main() {
     testWidgets('PriceIncreaseAlertsSection displays Portuguese translations', (
       tester,
     ) async {
-      LocaleSettings.setLocale(AppLocale.pt);
+      await LocaleSettings.setLocale(AppLocale.pt);
 
       try {
         await tester.pumpWidget(buildWidget(enabled: true));
@@ -132,7 +132,7 @@ void main() {
           findsOneWidget,
         );
       } finally {
-        LocaleSettings.setLocale(AppLocale.en);
+        await LocaleSettings.setLocale(AppLocale.en);
       }
     });
   });

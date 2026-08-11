@@ -71,9 +71,9 @@ class _Translations$home$pt implements Translations$home$en {
 	@override String get refreshAll => 'Atualizar todos';
 	@override String get refreshing => 'A atualizar';
 	@override String get refreshAllComplete => 'Todas as fontes foram verificadas.';
-	@override String get refreshBlockedProduct => 'JÃ¡ estÃ¡ a ser verificado um produto';
-	@override String get refreshBlockedAllProducts => 'Todos os produtos estÃ£o a ser verificados';
 	@override String refreshAllPartial({required Object failed}) => 'Atualização concluída; não foi possível verificar ${failed} fontes.';
+	@override String get refreshBlockedProduct => 'Já está a ser verificado um produto';
+	@override String get refreshBlockedAllProducts => 'Todos os produtos estão a ser verificados';
 	@override String sourceRefreshChecking({required Object count}) => 'A verificar ${count} fontes';
 	@override String sourceRefreshFailed({required Object merchant}) => 'Não foi possível verificar ${merchant}';
 	@override String sourceRefreshFailedCount({required Object count}) => 'Não foi possível verificar ${count} fontes';
@@ -81,9 +81,9 @@ class _Translations$home$pt implements Translations$home$en {
 	@override String get noAvailablePrice => 'Sem preço disponível';
 	@override String get noStore => 'Nenhuma loja com stock';
 	@override String storeOffers({required Object count}) => 'Ofertas: ${count}';
+	@override String updatedAt({required Object time}) => 'Atualizado às ${time}';
 	@override String priceDrop({required Object amount, required Object date}) => '↓ ${amount} desde ${date}';
 	@override String priceIncrease({required Object amount, required Object date}) => '↑ ${amount} desde ${date}';
-	@override String updatedAt({required Object time}) => 'Atualizado às ${time}';
 	@override String get emptyTitle => 'Nenhum produto acompanhado';
 	@override String get emptyDescription => 'Os produtos acompanhados aparecem aqui com a melhor oferta disponível.';
 	@override String get addProductTitle => 'Adicionar produto';
@@ -420,9 +420,9 @@ extension on TranslationsPt {
 			'home.refreshAll' => 'Atualizar todos',
 			'home.refreshing' => 'A atualizar',
 			'home.refreshAllComplete' => 'Todas as fontes foram verificadas.',
-			'home.refreshBlockedProduct' => 'JÃ¡ estÃ¡ a ser verificado um produto',
-			'home.refreshBlockedAllProducts' => 'Todos os produtos estÃ£o a ser verificados',
 			'home.refreshAllPartial' => ({required Object failed}) => 'Atualização concluída; não foi possível verificar ${failed} fontes.',
+			'home.refreshBlockedProduct' => 'Já está a ser verificado um produto',
+			'home.refreshBlockedAllProducts' => 'Todos os produtos estão a ser verificados',
 			'home.sourceRefreshChecking' => ({required Object count}) => 'A verificar ${count} fontes',
 			'home.sourceRefreshFailed' => ({required Object merchant}) => 'Não foi possível verificar ${merchant}',
 			'home.sourceRefreshFailedCount' => ({required Object count}) => 'Não foi possível verificar ${count} fontes',
@@ -430,9 +430,9 @@ extension on TranslationsPt {
 			'home.noAvailablePrice' => 'Sem preço disponível',
 			'home.noStore' => 'Nenhuma loja com stock',
 			'home.storeOffers' => ({required Object count}) => 'Ofertas: ${count}',
+			'home.updatedAt' => ({required Object time}) => 'Atualizado às ${time}',
 			'home.priceDrop' => ({required Object amount, required Object date}) => '↓ ${amount} desde ${date}',
 			'home.priceIncrease' => ({required Object amount, required Object date}) => '↑ ${amount} desde ${date}',
-			'home.updatedAt' => ({required Object time}) => 'Atualizado às ${time}',
 			'home.emptyTitle' => 'Nenhum produto acompanhado',
 			'home.emptyDescription' => 'Os produtos acompanhados aparecem aqui com a melhor oferta disponível.',
 			'home.addProductTitle' => 'Adicionar produto',

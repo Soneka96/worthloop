@@ -13,9 +13,9 @@ home:
   refreshAll: Atualizar todos
   refreshing: A atualizar
   refreshAllComplete: "Todas as fontes foram verificadas."
-  refreshBlockedProduct: JÃ¡ estÃ¡ a ser verificado um produto
-  refreshBlockedAllProducts: Todos os produtos estÃ£o a ser verificados
   refreshAllPartial: "Atualização concluída; não foi possível verificar $failed fontes."
+  refreshBlockedProduct: Já está a ser verificado um produto
+  refreshBlockedAllProducts: Todos os produtos estão a ser verificados
   sourceRefreshChecking: "A verificar $count fontes"
   sourceRefreshFailed: "Não foi possível verificar $merchant"
   sourceRefreshFailedCount: "Não foi possível verificar $count fontes"
@@ -23,12 +23,11 @@ home:
   noAvailablePrice: Sem preço disponível
   noStore: Nenhuma loja com stock
   storeOffers: "Ofertas: $count"
+  updatedAt: Atualizado às $time
   priceDrop: "↓ $amount desde $date"
   priceIncrease: "↑ $amount desde $date"
-  updatedAt: Atualizado às $time
   emptyTitle: Nenhum produto acompanhado
   emptyDescription: Os produtos acompanhados aparecem aqui com a melhor oferta disponível.
-
   addProductTitle: Adicionar produto
   addProductDescription: Cole um link de produto para começar a acompanhá-lo.
   productNameLabel: Nome do produto

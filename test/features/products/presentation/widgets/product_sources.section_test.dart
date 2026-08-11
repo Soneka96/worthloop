@@ -789,7 +789,7 @@ void main() {
     testWidgets('ProductSourcesSection displays the Portuguese translations', (
       WidgetTester tester,
     ) async {
-      LocaleSettings.setLocale(AppLocale.pt);
+      await LocaleSettings.setLocale(AppLocale.pt);
 
       try {
         await tester.pumpWidget(buildWidget(sources: sources));
@@ -797,7 +797,7 @@ void main() {
         expect(find.text(t.productDetails.filterAvailable), findsOneWidget);
         expect(find.text(t.productDetails.filterUnavailable), findsOneWidget);
       } finally {
-        LocaleSettings.setLocale(AppLocale.en);
+        await LocaleSettings.setLocale(AppLocale.en);
       }
     });
   });

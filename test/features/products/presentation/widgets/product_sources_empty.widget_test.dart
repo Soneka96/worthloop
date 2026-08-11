@@ -33,7 +33,7 @@ void main() {
     testWidgets(
       'ProductSourcesEmptyWidget displays the Portuguese translations',
       (WidgetTester tester) async {
-        LocaleSettings.setLocale(AppLocale.pt);
+        await LocaleSettings.setLocale(AppLocale.pt);
 
         try {
           await tester.pumpWidget(buildWidget());
@@ -44,7 +44,7 @@ void main() {
             findsOneWidget,
           );
         } finally {
-          LocaleSettings.setLocale(AppLocale.en);
+          await LocaleSettings.setLocale(AppLocale.en);
         }
       },
     );
