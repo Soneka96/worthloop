@@ -25,13 +25,13 @@ void main() {
     expect(backgroundService, contains('"refreshCompleted"'));
     expect(backgroundService, contains('"refreshFailed"'));
     expect(backgroundService, contains('RESULT_CHANNEL_ID'));
-    expect(backgroundService, contains('consumePendingRefreshRequest'));
+    expect(backgroundService, contains('consumePendingSourceIds'));
     expect(
       backgroundService,
       contains('intent?.action == ACTION_REQUEST_REFRESH'),
     );
-    expect(backgroundService, contains('pendingRefreshRequest.set(true)'));
-    expect(backgroundService, contains('getAndSet(false)'));
+    expect(backgroundService, contains('pendingSourceIds'));
+    expect(backgroundService, contains('addAll'));
     expect(backgroundService, contains('if (!engineStarted)'));
     expect(backgroundService, contains('startFlutterEngine()'));
   });

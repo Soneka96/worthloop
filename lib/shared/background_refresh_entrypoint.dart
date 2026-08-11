@@ -52,7 +52,7 @@ Future<void> backgroundRefreshEntrypoint() async {
     refreshAllProducts: () => sl<RefreshAllProductsUseCase>()(NoParams()),
   );
 
-  Future<Duration?> runScheduledRefresh({required bool force}) {
+  Future<Duration?> runRefresh({required bool force}) {
     return runner.runOnce(
       force: force,
       onRefreshStarted: () => _notifyEngine('refreshStarted'),
@@ -72,8 +72,8 @@ Future<void> backgroundRefreshEntrypoint() async {
   }
 
   final BackgroundRefreshLoop loop = BackgroundRefreshLoop(
-    runOnce: () => runScheduledRefresh(force: false),
-    runManualOnce: () => runScheduledRefresh(force: true),
+    runOnce: () => runRefresh(force: false),
+    runManualOnce: () => runRefresh(force: true),
   );
 
   _engineChannel.setMethodCallHandler((MethodCall call) async {

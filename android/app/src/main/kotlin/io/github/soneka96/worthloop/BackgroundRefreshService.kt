@@ -191,6 +191,14 @@ class BackgroundRefreshService : Service() {
             when (call.method) {
                 "consumePendingSourceIds" ->
                     result.success(consumePendingSourceIds())
+                "refreshNow" -> {
+                    val sourceIds = consumePendingSourceIds()
+                    if (sourceIds.isNotEmpty()) {
+                        val bypassCooldown = (call.arguments as? Map<*, *>)?.get("bypassCooldown") as? Boolean ?: false
+                        notifyFlutterEngine(sourceIds, bypassCooldown)
+                    }
+                    result.success(true)
+                }
                 "stopService" -> {
                     stopSelf()
                     result.success(true)
