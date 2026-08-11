@@ -50,6 +50,15 @@ void main() {
       expect(result?.isAvailable, isFalse);
     });
 
+    test('decodeAsync returns null when decoding exceeds timeout', () async {
+      final ProductOffer? result = await service.decodeAsync('''
+        <meta property="product:price:amount" content="19.99">
+        <meta property="product:price:currency" content="EUR">
+      ''', timeout: Duration.zero);
+
+      expect(result, isNull);
+    });
+
     test('extracts a JSON-LD offer with its currency', () {
       final ProductOffer? result = service.decode('''
         <script type="application/ld+json">

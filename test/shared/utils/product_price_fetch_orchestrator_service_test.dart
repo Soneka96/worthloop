@@ -29,8 +29,11 @@ class MockWebViewProductFetcherService extends Mock
 class MockProductOfferDecoderService extends Mock
     implements ProductOfferDecoderService {
   @override
-  Future<ProductOffer?> decodeAsync(String html, {String? sourceUrl}) async =>
-      decode(html, sourceUrl: sourceUrl);
+  Future<ProductOffer?> decodeAsync(
+    String html, {
+    String? sourceUrl,
+    Duration timeout = PriceFetchConstants.offerDecodeTimeout,
+  }) async => decode(html, sourceUrl: sourceUrl);
 }
 
 class MockPriceResponseDetector extends Mock implements PriceResponseDetector {}

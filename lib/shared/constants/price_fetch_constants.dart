@@ -20,4 +20,7 @@ abstract final class PriceFetchConstants {
 
   /// Maximum time allowed for a headless WebView fetch.
   static const Duration webViewTotalTimeout = Duration(seconds: 30);
+
+  /// Maximum time allowed to decode a price offer out of fetched HTML.
+  static const Duration offerDecodeTimeout = Duration(seconds: 10);
 }

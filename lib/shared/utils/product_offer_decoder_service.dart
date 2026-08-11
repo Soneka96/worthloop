@@ -1,8 +1,10 @@
 // Dart imports:
+import 'dart:async';
 import 'dart:convert';
 import 'dart:isolate';
 
 // Project imports:
+import 'package:worth_loop/shared/constants/price_fetch_constants.dart';
 import 'package:worth_loop/shared/utils/product_offer.value-object.dart';
 
 /// Extracts a merchant's price offer from an HTML product page. Tries, in
@@ -115,11 +117,23 @@ class ProductOfferDecoderService {
   }
 
   /// Decodes [html] on a worker isolate so large responses do not block the
-  /// Flutter UI isolate.
-  Future<ProductOffer?> decodeAsync(String html, {String? sourceUrl}) async {
-    final List<Object?> result = await Isolate.run(
-      () => _decodeForIsolate(html, sourceUrl),
-    );
+  /// Flutter UI isolate. Bounded by [timeout] — some malformed pages can
+  /// send these regexes into catastrophic backtracking, so an unbounded
+  /// isolate hop here would leave a source stuck indefinitely; a timeout is
+  /// treated the same as "no offer found."
+  Future<ProductOffer?> decodeAsync(
+    String html, {
+    String? sourceUrl,
+    Duration timeout = PriceFetchConstants.offerDecodeTimeout,
+  }) async {
+    final List<Object?> result;
+    try {
+      result = await Isolate.run(
+        () => _decodeForIsolate(html, sourceUrl),
+      ).timeout(timeout);
+    } on TimeoutException {
+      return null;
+    }
     if (result.isEmpty) {
       return null;
     }
