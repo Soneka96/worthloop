@@ -8,12 +8,12 @@ import 'package:fpdart/fpdart.dart';
 // Project imports:
 import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
 import 'package:worth_loop/features/products/domain/usecases/refresh_all_products.usecase.dart';
-import 'package:worth_loop/features/settings/domain/entities/refresh_settings.entity.dart';
 import 'package:worth_loop/features/settings/domain/usecases/load_refresh_settings.usecase.dart';
 import 'package:worth_loop/injection_container.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/usecase/no_params.dart';
 import 'package:worth_loop/shared/utils/background_refresh_loop.dart';
+import 'package:worth_loop/shared/utils/background_refresh_notifications.dart';
 import 'package:worth_loop/shared/utils/background_refresh_runner.dart';
 import 'package:worth_loop/shared/utils/product_source_refresh_engine.dart';
 
@@ -28,22 +28,13 @@ Future<void> backgroundRefreshEntrypoint() async {
   await initDependencies();
   await sl<IProductsRepository>().resetStaleSourceStatuses();
 
-  sl<ProductSourceRefreshEngine>().onProgress =
-      (int completed, int total) async {
-        final Either<Failure, RefreshSettings> settingsResult =
-            await sl<LoadRefreshSettingsUseCase>()(NoParams());
-        final bool showProgress = settingsResult.fold(
-          (_) => false,
-          (RefreshSettings settings) => settings.showRefreshProgress,
-        );
-        if (!showProgress) {
-          return;
-        }
-        await _notifyEngine(
-          'updateProgress',
-          arguments: {'completed': completed, 'total': total},
-        );
-      };
+  final BackgroundRefreshNotifications notifications =
+      BackgroundRefreshNotifications(
+        loadSettings: () => sl<LoadRefreshSettingsUseCase>()(NoParams()),
+        notifyEngine: _notifyEngine,
+      );
+
+  sl<ProductSourceRefreshEngine>().onProgress = notifications.notifyProgress;
 
   final BackgroundRefreshRunner runner = BackgroundRefreshRunner(
     loadSettings: () => sl<LoadRefreshSettingsUseCase>()(NoParams()),
@@ -59,18 +50,7 @@ Future<void> backgroundRefreshEntrypoint() async {
     return runner.runOnce(
       force: force,
       onRefreshStarted: () => _notifyEngine('refreshStarted'),
-      onRefreshOutcome: (bool succeeded) async {
-        final Either<Failure, RefreshSettings> settingsResult =
-            await sl<LoadRefreshSettingsUseCase>()(NoParams());
-        final bool showResult = settingsResult.fold(
-          (_) => false,
-          (RefreshSettings settings) => settings.refreshCompletedAlertsEnabled,
-        );
-        await _notifyEngine(
-          succeeded ? 'refreshCompleted' : 'refreshFailed',
-          arguments: {'showResult': showResult},
-        );
-      },
+      onRefreshOutcome: notifications.notifyOutcome,
     );
   }
 
