@@ -37,7 +37,10 @@ class WebViewProductFetcherService {
   /// rather than being cut off early. That deadline bounds `run()` itself,
   /// not just the poll loop — otherwise a hung WebView load blocks this
   /// fetch, and every other source queued behind it on the same merchant,
-  /// forever.
+  /// forever. Disposal gets the same treatment for the same reason: bounded
+  /// by [PriceFetchConstants.webViewDisposeTimeout] so a wedged native
+  /// teardown can't hang this method even after `run()` already timed out —
+  /// worst case, it leaks that one WebView instance instead.
   static Future<String> _defaultHeadlessFetch(String url) async {
     String? html;
     final HeadlessInAppWebView headless = HeadlessInAppWebView(
@@ -60,7 +63,10 @@ class WebViewProductFetcherService {
       }
       return html ?? '';
     } finally {
-      await headless.dispose();
+      await headless.dispose().timeout(
+        PriceFetchConstants.webViewDisposeTimeout,
+        onTimeout: () {},
+      );
     }
   }
 }

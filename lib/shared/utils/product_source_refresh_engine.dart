@@ -16,6 +16,7 @@ import 'package:worth_loop/features/products/domain/entities/product_source.enti
 import 'package:worth_loop/features/products/domain/repositories/Iproducts.repository.dart';
 import 'package:worth_loop/features/products/domain/value_objects/money.value-object.dart';
 import 'package:worth_loop/shared/constants/enums.dart';
+import 'package:worth_loop/shared/constants/price_fetch_constants.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/utils/product_price_alert_notification_coordinator.dart';
 
@@ -27,14 +28,22 @@ class ProductSourceRefreshEngine {
   final ProductsLocalDatasource _localDatasource;
   final IProductsRemoteDatasource _remoteDatasource;
   final ProductPriceAlertNotificationCoordinator _priceAlertCoordinator;
+  final Duration _sourceFetchTimeout;
+  final int _maxTimeoutRetries;
 
   /// Creates an engine backed by local and remote product datasources, and a
   /// [ProductPriceAlertNotificationCoordinator] for best-price-change alerts.
+  /// [sourceFetchTimeout] and [maxTimeoutRetries] default to production
+  /// values — overridable in tests so a stuck-fetch retry doesn't need to
+  /// wait out a real 120-second timeout.
   ProductSourceRefreshEngine(
     this._localDatasource,
     this._remoteDatasource,
-    this._priceAlertCoordinator,
-  );
+    this._priceAlertCoordinator, {
+    Duration sourceFetchTimeout = PriceFetchConstants.sourceFetchTimeout,
+    int maxTimeoutRetries = 3,
+  }) : _sourceFetchTimeout = sourceFetchTimeout,
+       _maxTimeoutRetries = maxTimeoutRetries;
 
   static const int _maxConcurrentMerchantQueues = 4;
 
@@ -43,6 +52,7 @@ class ProductSourceRefreshEngine {
   final Set<String> _sourceIdsQueuedOrInFlight = {};
   final Set<String> _sourceIdsAwaitingSweep = {};
   final Set<String> _failedSourceIdsInCurrentRun = {};
+  final Map<String, int> _timeoutAttemptsBySourceId = {};
   Completer<void>? _wakeSignal;
   Completer<void>? _idleSignal;
   bool _workersStarted = false;
@@ -159,6 +169,10 @@ class ProductSourceRefreshEngine {
     }
   }
 
+  // A source whose fetch timed out with retries left comes back from
+  // _fetchAndPersistSource() as `false` rather than being persisted —
+  // it's already pushed onto the back of this same merchant's queue, so
+  // the `while` loop below picks up whatever's left in front of it first.
   Future<void> _runMerchantQueueWorker() async {
     while (true) {
       final String? merchant = _claimPendingMerchant();
@@ -172,7 +186,13 @@ class ProductSourceRefreshEngine {
       while (queue.isNotEmpty) {
         final (ProductSourceModel source, bool bypassCooldown) = queue
             .removeFirst();
-        await _fetchAndPersistSource(source, bypassCooldown: bypassCooldown);
+        final bool completed = await _fetchAndPersistSource(
+          source,
+          bypassCooldown: bypassCooldown,
+        );
+        if (!completed) {
+          continue;
+        }
         _sourceIdsQueuedOrInFlight.remove(source.id);
         _completedInCurrentRun++;
         await onProgress?.call(_completedInCurrentRun, _totalInCurrentRun);
@@ -242,7 +262,10 @@ class ProductSourceRefreshEngine {
     }
   }
 
-  Future<void> _fetchAndPersistSource(
+  /// Fetches and persists [source]. Returns `false` instead of persisting
+  /// anything when the fetch timed out and was re-queued for a later retry
+  /// — the caller must not count that as a completion.
+  Future<bool> _fetchAndPersistSource(
     ProductSourceModel source, {
     required bool bypassCooldown,
   }) async {
@@ -252,14 +275,13 @@ class ProductSourceRefreshEngine {
         .getRight()
         .toNullable();
 
-    final Either<Failure, ProductSourceModel> result = await _fetchSource(
+    final Either<Failure, ProductSourceModel>? result = await _fetchWithTimeout(
       source,
-      onSourceStatusChanged:
-          (String sourceId, SourceRefreshStatus status) async {
-            await _localDatasource.writeSourceLiveStatus(sourceId, status);
-          },
       bypassCooldown: bypassCooldown,
     );
+    if (result == null) {
+      return false;
+    }
     final ProductSourceModel updatedSource = result.match(
       (Failure failure) {
         _failedSourceIdsInCurrentRun.add(source.id);
@@ -278,6 +300,66 @@ class ProductSourceRefreshEngine {
         .toNullable();
     if (previousProduct != null && refreshedProduct != null) {
       await _notifyPriceChange(previousProduct, refreshedProduct);
+    }
+    return true;
+  }
+
+  /// Runs [_fetchSource] under [_sourceFetchTimeout]. Returns `null` when it
+  /// times out and [source] still has retries left — re-queued at the back
+  /// of its own merchant's queue so the rest of that queue gets a turn
+  /// first, rather than one wedged fetch blocking every source behind it
+  /// forever. After [_maxTimeoutRetries] timeouts it gives up and returns a
+  /// terminal networkError failure instead, same as any other failure.
+  ///
+  /// Note: [Future.timeout] stops *waiting* on the original fetch, it
+  /// doesn't cancel it — Dart has no way to cancel an arbitrary in-flight
+  /// Future. If the original eventually finishes on its own, its
+  /// [SourceRefreshListener] call can still land a stale live-status write
+  /// after this source has already moved on to its next attempt. Accepted:
+  /// the next attempt's own status writes overwrite it, so it can't get
+  /// stuck — it can only flicker.
+  Future<Either<Failure, ProductSourceModel>?> _fetchWithTimeout(
+    ProductSourceModel source, {
+    required bool bypassCooldown,
+  }) async {
+    try {
+      final Either<Failure, ProductSourceModel> result = await _fetchSource(
+        source,
+        onSourceStatusChanged:
+            (String sourceId, SourceRefreshStatus status) async {
+              await _localDatasource.writeSourceLiveStatus(sourceId, status);
+            },
+        bypassCooldown: bypassCooldown,
+      ).timeout(_sourceFetchTimeout);
+      _timeoutAttemptsBySourceId.remove(source.id);
+      return result;
+    } on TimeoutException {
+      final int attempts = (_timeoutAttemptsBySourceId[source.id] ?? 0) + 1;
+      if (attempts < _maxTimeoutRetries) {
+        _timeoutAttemptsBySourceId[source.id] = attempts;
+        _pendingByMerchant
+            .putIfAbsent(
+              source.merchantDomain.toLowerCase(),
+              () => Queue<(ProductSourceModel, bool)>(),
+            )
+            .add((source, bypassCooldown));
+        await _localDatasource.writeSourceLiveStatus(
+          source.id,
+          SourceRefreshStatus.queued,
+        );
+        return null;
+      }
+      _timeoutAttemptsBySourceId.remove(source.id);
+      await _localDatasource.writeSourceLiveStatus(
+        source.id,
+        SourceRefreshStatus.error,
+      );
+      return const Left(
+        PriceFetchFailure(
+          status: PriceFetchStatus.networkError,
+          message: 'Price fetch timed out repeatedly',
+        ),
+      );
     }
   }
 

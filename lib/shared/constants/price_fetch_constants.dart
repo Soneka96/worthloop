@@ -23,4 +23,14 @@ abstract final class PriceFetchConstants {
 
   /// Maximum time allowed to decode a price offer out of fetched HTML.
   static const Duration offerDecodeTimeout = Duration(seconds: 10);
+
+  /// Maximum time allowed to dispose a headless WebView, so a wedged native
+  /// teardown can't hang the fetch that already timed out on it.
+  static const Duration webViewDisposeTimeout = Duration(seconds: 5);
+
+  /// Bounds one source's whole fetch (Dio, WebView fallback, and decoding
+  /// combined) inside [ProductSourceRefreshEngine] — comfortably above every
+  /// timeout above added together, so it only fires when something hangs
+  /// outside all of them.
+  static const Duration sourceFetchTimeout = Duration(seconds: 120);
 }
