@@ -42,6 +42,7 @@ class ProductSourceRefreshEngine {
   final Set<String> _merchantsInFlight = {};
   final Set<String> _sourceIdsQueuedOrInFlight = {};
   final Set<String> _sourceIdsAwaitingSweep = {};
+  final Set<String> _failedSourceIdsInCurrentRun = {};
   Completer<void>? _wakeSignal;
   Completer<void>? _idleSignal;
   bool _workersStarted = false;
@@ -59,6 +60,17 @@ class ProductSourceRefreshEngine {
   /// order and never lets a stale progress notification land after a later
   /// "run complete" signal and overwrite it.
   Future<void> Function(int completed, int total)? onProgress;
+
+  /// Called once a run fully drains, with whether every source in it has a
+  /// successful current state — a source that fails then succeeds on a
+  /// later bypass-cooldown retry within the same still-open run no longer
+  /// counts against it. Unset by default — assigned by
+  /// whichever isolate wants to report a refresh's outcome (the background
+  /// entrypoint, for its "completed"/"failed" notification). Fires for every
+  /// enqueue path that feeds this engine, not just one caller's own trigger
+  /// — this is what a manual refresh needs, since it never goes through the
+  /// scheduled loop that used to be the only thing reporting completion.
+  Future<void> Function(bool succeeded)? onRunComplete;
 
   /// Queues [sourceIds] onto their merchant-specific fetch queues, starting
   /// worker processing if it isn't already running. [bypassCooldown] applies
@@ -175,8 +187,11 @@ class ProductSourceRefreshEngine {
   /// each source stays tagged with its terminal status for the life of the
   /// whole run, not just its own individual fetch, so presentation state can
   /// derive an "X of Y done" count straight from the DB — then resets the
-  /// progress counters for the next run and completes [waitUntilIdle]'s
-  /// signal, if anything is waiting on it.
+  /// progress counters for the next run, completes [waitUntilIdle]'s signal
+  /// if anything is waiting on it, and reports [onRunComplete] if a run
+  /// actually just finished (this method also runs as a frequent no-op
+  /// whenever a worker finds nothing to claim, so it only reports when
+  /// [sourceIdsToSweep] is non-empty).
   Future<void> _finishRunIfDrained() async {
     if (_pendingByMerchant.isNotEmpty || _merchantsInFlight.isNotEmpty) {
       return;
@@ -189,6 +204,8 @@ class ProductSourceRefreshEngine {
     _sourceIdsAwaitingSweep.clear();
     _totalInCurrentRun = 0;
     _completedInCurrentRun = 0;
+    final bool hadFailure = _failedSourceIdsInCurrentRun.isNotEmpty;
+    _failedSourceIdsInCurrentRun.clear();
     for (final String sourceId in sourceIdsToSweep) {
       await _localDatasource.writeSourceLiveStatus(sourceId, null);
     }
@@ -196,6 +213,9 @@ class ProductSourceRefreshEngine {
     _idleSignal = null;
     if (idleSignal != null && !idleSignal.isCompleted) {
       idleSignal.complete();
+    }
+    if (sourceIdsToSweep.isNotEmpty) {
+      await onRunComplete?.call(!hadFailure);
     }
   }
 
@@ -241,8 +261,14 @@ class ProductSourceRefreshEngine {
       bypassCooldown: bypassCooldown,
     );
     final ProductSourceModel updatedSource = result.match(
-      (Failure failure) => _sourceAfterFailure(source, failure),
-      (ProductSourceModel updated) => updated,
+      (Failure failure) {
+        _failedSourceIdsInCurrentRun.add(source.id);
+        return _sourceAfterFailure(source, failure);
+      },
+      (ProductSourceModel updated) {
+        _failedSourceIdsInCurrentRun.remove(source.id);
+        return updated;
+      },
     );
     final Either<Failure, ProductModel> persistResult = await _localDatasource
         .updateSourcePrices(source.productId, [updatedSource]);

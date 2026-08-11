@@ -1364,5 +1364,236 @@ void main() {
         ).called(1);
       },
     );
+
+    test(
+      'calls onRunComplete(true) when every source in the run fetches successfully',
+      () async {
+        final ProductSourceModel source = buildProductSourceModel(
+          id: 'source-1',
+        );
+        bool? reportedSucceeded;
+        engine.onRunComplete = (bool succeeded) async {
+          reportedSucceeded = succeeded;
+        };
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([source]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(
+          () => mockRemoteDatasource.fetchPrices(source),
+        ).thenAnswer((_) async => Right(source));
+        when(
+          () => mockDatasource.updateSourcePrices(source.productId, any()),
+        ).thenAnswer((_) async => Right(buildProductModel()));
+
+        await engine.enqueueSourceRefresh(['source-1']);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(reportedSucceeded, isA<bool>());
+        expect(reportedSucceeded, isTrue);
+      },
+    );
+
+    test(
+      'calls onRunComplete(false) when at least one source fails to fetch',
+      () async {
+        final ProductSourceModel sourceA = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final ProductSourceModel sourceB = buildProductSourceModel(
+          id: 'source-2',
+          url: 'https://merchant-2.example.com/1',
+          merchantDomain: 'merchant-2.example.com',
+        );
+        bool? reportedSucceeded;
+        engine.onRunComplete = (bool succeeded) async {
+          reportedSucceeded = succeeded;
+        };
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([sourceA, sourceB]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(
+          () => mockRemoteDatasource.fetchPrices(sourceA),
+        ).thenAnswer((_) async => Right(sourceA));
+        when(
+          () => mockRemoteDatasource.fetchPrices(sourceB),
+        ).thenAnswer((_) async => const Left(NetworkFailure('unreachable')));
+        when(
+          () => mockDatasource.updateSourcePrices(any(), any()),
+        ).thenAnswer((_) async => Right(buildProductModel()));
+
+        await engine.enqueueSourceRefresh(['source-1', 'source-2']);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(reportedSucceeded, isFalse);
+      },
+    );
+
+    test('does not call onRunComplete when nothing was queued', () async {
+      bool onRunCompleteCalled = false;
+      engine.onRunComplete = (bool succeeded) async {
+        onRunCompleteCalled = true;
+      };
+      when(
+        () => mockDatasource.loadProductSources(),
+      ).thenAnswer((_) async => const Right([]));
+
+      await engine.enqueueSourceRefresh(['missing-source']);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(onRunCompleteCalled, isFalse);
+    });
+
+    test(
+      'resets the failure flag so a later run reports succeeded = true after an earlier run had a failure',
+      () async {
+        final ProductSourceModel source = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final List<bool> reportedOutcomes = [];
+        engine.onRunComplete = (bool succeeded) async {
+          reportedOutcomes.add(succeeded);
+        };
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([source]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(
+          () => mockDatasource.updateSourcePrices(source.productId, any()),
+        ).thenAnswer((_) async => Right(buildProductModel()));
+        when(
+          () => mockRemoteDatasource.fetchPrices(source),
+        ).thenAnswer((_) async => const Left(NetworkFailure('unreachable')));
+
+        await engine.enqueueSourceRefresh(['source-1']);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        when(
+          () => mockRemoteDatasource.fetchPrices(source),
+        ).thenAnswer((_) async => Right(source));
+
+        await engine.enqueueSourceRefresh(['source-1']);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(reportedOutcomes, [false, true]);
+      },
+    );
+
+    test(
+      'calls onRunComplete(true) when a failed source succeeds on a bypassCooldown retry within the same still-open run',
+      () async {
+        final ProductSourceModel sourceA = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final ProductSourceModel sourceB = buildProductSourceModel(
+          id: 'source-2',
+          url: 'https://merchant-2.example.com/1',
+          merchantDomain: 'merchant-2.example.com',
+        );
+        final Completer<Either<Failure, ProductSourceModel>> completerB =
+            Completer();
+        bool? reportedSucceeded;
+        engine.onRunComplete = (bool succeeded) async {
+          reportedSucceeded = succeeded;
+        };
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([sourceA, sourceB]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(
+          () => mockDatasource.updateSourcePrices(sourceA.productId, any()),
+        ).thenAnswer((_) async => Right(buildProductModel()));
+        when(
+          () => mockRemoteDatasource.fetchPrices(sourceA),
+        ).thenAnswer((_) async => const Left(NetworkFailure('unreachable')));
+        when(
+          () => mockRemoteDatasource.fetchPrices(sourceB),
+        ).thenAnswer((_) => completerB.future);
+
+        await engine.enqueueSourceRefresh(['source-1', 'source-2']);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        when(
+          () => mockRemoteDatasource.fetchPrices(sourceA, bypassCooldown: true),
+        ).thenAnswer((_) async => Right(sourceA));
+
+        await engine.enqueueSourceRefresh(['source-1'], bypassCooldown: true);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        completerB.complete(Right(sourceB));
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(reportedSucceeded, isTrue);
+      },
+    );
+
+    test(
+      'merges an overlapping enqueueSourceRefresh() call into the same onRunComplete report',
+      () async {
+        final ProductSourceModel sourceA = buildProductSourceModel(
+          id: 'source-1',
+        );
+        final ProductSourceModel sourceB = buildProductSourceModel(
+          id: 'source-2',
+          url: 'https://merchant-2.example.com/1',
+          merchantDomain: 'merchant-2.example.com',
+        );
+        final Completer<Either<Failure, ProductSourceModel>> completerA =
+            Completer();
+        final List<bool> reportedOutcomes = [];
+        engine.onRunComplete = (bool succeeded) async {
+          reportedOutcomes.add(succeeded);
+        };
+        when(
+          () => mockDatasource.loadProductSources(),
+        ).thenAnswer((_) async => Right([sourceA, sourceB]));
+        when(
+          () => mockDatasource.writeSourceLiveStatus(any(), any()),
+        ).thenAnswer((_) async => const Right(unit));
+        when(
+          () => mockDatasource.updateSourcePrices(any(), any()),
+        ).thenAnswer((_) async => Right(buildProductModel()));
+        when(
+          () => mockRemoteDatasource.fetchPrices(sourceA),
+        ).thenAnswer((_) => completerA.future);
+        when(
+          () => mockRemoteDatasource.fetchPrices(sourceB),
+        ).thenAnswer((_) async => const Left(NetworkFailure('unreachable')));
+
+        await engine.enqueueSourceRefresh(['source-1']);
+        await Future<void>.delayed(Duration.zero);
+        await engine.enqueueSourceRefresh(['source-2']);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        completerA.complete(Right(sourceA));
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(reportedOutcomes, [false]);
+      },
+    );
   });
 }

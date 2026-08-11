@@ -36,6 +36,7 @@ Future<void> backgroundRefreshEntrypoint() async {
       );
 
   sl<ProductSourceRefreshEngine>().onProgress = notifications.notifyProgress;
+  sl<ProductSourceRefreshEngine>().onRunComplete = notifications.notifyOutcome;
 
   final BackgroundRefreshRunner runner = BackgroundRefreshRunner(
     loadSettings: () => sl<LoadRefreshSettingsUseCase>()(NoParams()),
@@ -51,7 +52,11 @@ Future<void> backgroundRefreshEntrypoint() async {
     return runner.runOnce(
       force: force,
       onRefreshStarted: () => _notifyEngine('refreshStarted'),
-      onRefreshOutcome: notifications.notifyOutcome,
+      onRefreshOutcome: (bool succeeded) async {
+        if (!succeeded) {
+          await notifications.notifyOutcome(false);
+        }
+      },
     );
   }
 
