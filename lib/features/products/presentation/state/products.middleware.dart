@@ -24,6 +24,7 @@ import 'package:worth_loop/features/products/domain/usecases/rename_product.usec
 import 'package:worth_loop/features/products/presentation/state/products.actions.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/navigation/app_routes.dart';
 import 'package:worth_loop/shared/navigation/navigator_service.dart';
 import 'package:worth_loop/shared/state/app.state.dart';
@@ -36,6 +37,15 @@ import 'package:worth_loop/shared/utils/android_background_refresh_service.dart'
 /// Handles tracked-product actions.
 class ProductsMiddleware extends MiddlewareClass<AppState> {
   StreamSubscription<List<Product>>? _productsSubscription;
+  Timer? _refreshPollTimer;
+
+  // The background engine's DB writes don't reach this engine's reactive
+  // watch() stream (separate isolates, separate connections), so this polls
+  // the same query as a fallback while a refresh is active.
+  static const Duration _refreshPollInterval = Duration(seconds: 1);
+
+  // Caps poll ticks so a refresh that never drains can't poll forever.
+  static const int _maxRefreshPollTicks = 300;
 
   @override
   void call(Store<AppState> store, dynamic action, NextDispatcher next) {
@@ -160,7 +170,7 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
     if (sourceIds.isEmpty) {
       return;
     }
-    await _enqueueOrShowFailure(sourceIds);
+    await _enqueueOrShowFailure(sourceIds, store: store);
   }
 
   /// Handles [RefreshSourceAction].
@@ -171,7 +181,11 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
     Store<AppState> store,
     RefreshSourceAction action,
   ) async {
-    await _enqueueOrShowFailure([action.sourceId], bypassCooldown: true);
+    await _enqueueOrShowFailure(
+      [action.sourceId],
+      store: store,
+      bypassCooldown: true,
+    );
   }
 
   /// Handles [RefreshAllProductsAction].
@@ -187,19 +201,62 @@ class ProductsMiddleware extends MiddlewareClass<AppState> {
     if (sourceIds.isEmpty) {
       return;
     }
-    await _enqueueOrShowFailure(sourceIds);
+    await _enqueueOrShowFailure(sourceIds, store: store);
   }
 
   Future<void> _enqueueOrShowFailure(
     List<String> sourceIds, {
+    required Store<AppState> store,
     bool bypassCooldown = false,
   }) async {
     final bool requested = await sl<AndroidBackgroundRefreshService>()
         .enqueueSources(sourceIds, bypassCooldown: bypassCooldown);
     if (!requested) {
       sl<LoggerService>().e(t.common.refreshFailed, showPopup: true);
+      return;
     }
+    _startRefreshPolling(store);
   }
+
+  void _startRefreshPolling(Store<AppState> store) {
+    if (_refreshPollTimer != null) {
+      return;
+    }
+    int ticksRemaining = _maxRefreshPollTicks;
+    _refreshPollTimer = Timer.periodic(_refreshPollInterval, (
+      Timer timer,
+    ) async {
+      ticksRemaining--;
+      final bool stillActive = await _pollRefreshProgress(store);
+      if (!stillActive || ticksRemaining <= 0) {
+        timer.cancel();
+        _refreshPollTimer = null;
+      }
+    });
+  }
+
+  // Returns whether any source is still queued/fetching, so
+  // _startRefreshPolling knows whether to keep ticking.
+  Future<bool> _pollRefreshProgress(Store<AppState> store) async {
+    return (await sl<LoadProductsUseCase>()(NoParams())).fold(
+      (failure) {
+        sl<LoggerService>().w(failure.message);
+        return true;
+      },
+      (List<Product> products) {
+        store.dispatch(ProductsUpdatedFromDatabaseAction(products));
+        return _hasActiveSource(products);
+      },
+    );
+  }
+
+  bool _hasActiveSource(List<Product> products) => products.any(
+    (Product product) => product.sources.any(
+      (ProductSource source) =>
+          source.liveStatus == SourceRefreshStatus.queued ||
+          source.liveStatus == SourceRefreshStatus.fetching,
+    ),
+  );
 
   List<String> _sourceIdsForProduct(Store<AppState> store, String productId) {
     for (final Product product in store.state.products.products) {

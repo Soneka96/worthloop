@@ -2,6 +2,7 @@
 import 'dart:async';
 
 // Package imports:
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
@@ -28,6 +29,7 @@ import 'package:worth_loop/features/products/presentation/state/products.middlew
 import 'package:worth_loop/features/products/presentation/state/products.state.dart';
 import 'package:worth_loop/i18n/strings.g.dart';
 import 'package:worth_loop/injection_container.dart';
+import 'package:worth_loop/shared/constants/enums.dart';
 import 'package:worth_loop/shared/failures/failures.dart';
 import 'package:worth_loop/shared/navigation/app_routes.dart';
 import 'package:worth_loop/shared/navigation/navigator_service.dart';
@@ -370,36 +372,72 @@ void main() {
   group('ProductsMiddleware processes RefreshProductAction', () {
     test(
       "enqueues the matching product's source ids on the background service",
-      () async {
-        final Product product = buildProduct(
-          sources: [
-            buildProductSource(id: 'source-1'),
-            buildProductSource(id: 'source-2', url: 'https://example.com/2'),
-          ],
-        );
-        when(() => store.state).thenReturn(
-          AppState.initial().copyWith(
-            products: ProductsState.initial().copyWith(products: [product]),
-          ),
-        );
-        when(
-          () => mockBackgroundRefreshService.enqueueSources([
-            'source-1',
-            'source-2',
-          ]),
-        ).thenAnswer((_) async => true);
+      () {
+        fakeAsync((FakeAsync async) {
+          final Product product = buildProduct(
+            sources: [
+              buildProductSource(id: 'source-1'),
+              buildProductSource(id: 'source-2', url: 'https://example.com/2'),
+            ],
+          );
+          when(() => store.state).thenReturn(
+            AppState.initial().copyWith(
+              products: ProductsState.initial().copyWith(products: [product]),
+            ),
+          );
+          when(
+            () => mockBackgroundRefreshService.enqueueSources([
+              'source-1',
+              'source-2',
+            ]),
+          ).thenAnswer((_) async => true);
 
-        middleware.call(store, const RefreshProductAction('product-1'), next);
-        await Future<void>.delayed(Duration.zero);
+          middleware.call(store, const RefreshProductAction('product-1'), next);
+          async.flushMicrotasks();
 
-        expect(actionLog, [isA<RefreshProductAction>()]);
-        verify(
-          () => mockBackgroundRefreshService.enqueueSources([
-            'source-1',
-            'source-2',
-          ]),
-        ).called(1);
-        verifyZeroInteractions(mockLoggerService);
+          expect(actionLog, [isA<RefreshProductAction>()]);
+          verify(
+            () => mockBackgroundRefreshService.enqueueSources([
+              'source-1',
+              'source-2',
+            ]),
+          ).called(1);
+          verifyZeroInteractions(mockLoggerService);
+        });
+      },
+    );
+
+    test(
+      'polls for refresh progress and dispatches ProductsUpdatedFromDatabaseAction '
+      'after enqueuing succeeds',
+      () {
+        fakeAsync((FakeAsync async) {
+          final Product product = buildProduct(
+            sources: [buildProductSource(id: 'source-1')],
+          );
+          when(() => store.state).thenReturn(
+            AppState.initial().copyWith(
+              products: ProductsState.initial().copyWith(products: [product]),
+            ),
+          );
+          when(
+            () => mockBackgroundRefreshService.enqueueSources(['source-1']),
+          ).thenAnswer((_) async => true);
+          when(
+            () => mockLoadProductsUseCase(any()),
+          ).thenAnswer((_) async => Right([product]));
+
+          middleware.call(store, const RefreshProductAction('product-1'), next);
+          async.elapse(const Duration(seconds: 1));
+
+          expect(
+            actionLog
+                .whereType<ProductsUpdatedFromDatabaseAction>()
+                .single
+                .products,
+            [product],
+          );
+        });
       },
     );
 
@@ -436,106 +474,147 @@ void main() {
 
     test(
       'shows a failure popup when the background service rejects the request',
-      () async {
-        final Product product = buildProduct(
-          sources: [buildProductSource(id: 'source-1')],
-        );
-        when(() => store.state).thenReturn(
-          AppState.initial().copyWith(
-            products: ProductsState.initial().copyWith(products: [product]),
-          ),
-        );
-        when(
-          () => mockBackgroundRefreshService.enqueueSources(['source-1']),
-        ).thenAnswer((_) async => false);
+      () {
+        fakeAsync((FakeAsync async) {
+          final Product product = buildProduct(
+            sources: [buildProductSource(id: 'source-1')],
+          );
+          when(() => store.state).thenReturn(
+            AppState.initial().copyWith(
+              products: ProductsState.initial().copyWith(products: [product]),
+            ),
+          );
+          when(
+            () => mockBackgroundRefreshService.enqueueSources(['source-1']),
+          ).thenAnswer((_) async => false);
 
-        middleware.call(store, const RefreshProductAction('product-1'), next);
-        await Future<void>.delayed(Duration.zero);
+          middleware.call(store, const RefreshProductAction('product-1'), next);
+          async.elapse(const Duration(seconds: 1));
 
-        expect(actionLog, [const RefreshProductAction('product-1')]);
-        verify(
-          () => mockLoggerService.e(t.common.refreshFailed, showPopup: true),
-        ).called(1);
+          expect(actionLog, [const RefreshProductAction('product-1')]);
+          verify(
+            () => mockLoggerService.e(t.common.refreshFailed, showPopup: true),
+          ).called(1);
+          verifyNever(() => mockLoadProductsUseCase(any()));
+        });
       },
     );
 
-    test("selects the matching product's sources among several", () async {
-      final Product otherProduct = buildProduct(
-        id: 'product-1',
-        sources: [buildProductSource(id: 'other-source')],
-      );
-      final Product targetProduct = buildProduct(
-        id: 'product-2',
-        sources: [
-          buildProductSource(
-            id: 'target-source',
-            productId: 'product-2',
-            url: 'https://example.com/target',
+    test("selects the matching product's sources among several", () {
+      fakeAsync((FakeAsync async) {
+        final Product otherProduct = buildProduct(
+          id: 'product-1',
+          sources: [buildProductSource(id: 'other-source')],
+        );
+        final Product targetProduct = buildProduct(
+          id: 'product-2',
+          sources: [
+            buildProductSource(
+              id: 'target-source',
+              productId: 'product-2',
+              url: 'https://example.com/target',
+            ),
+          ],
+        );
+        when(() => store.state).thenReturn(
+          AppState.initial().copyWith(
+            products: ProductsState.initial().copyWith(
+              products: [otherProduct, targetProduct],
+            ),
           ),
-        ],
-      );
-      when(() => store.state).thenReturn(
-        AppState.initial().copyWith(
-          products: ProductsState.initial().copyWith(
-            products: [otherProduct, targetProduct],
-          ),
-        ),
-      );
-      when(
-        () => mockBackgroundRefreshService.enqueueSources(['target-source']),
-      ).thenAnswer((_) async => true);
+        );
+        when(
+          () => mockBackgroundRefreshService.enqueueSources(['target-source']),
+        ).thenAnswer((_) async => true);
 
-      middleware.call(store, const RefreshProductAction('product-2'), next);
-      await Future<void>.delayed(Duration.zero);
+        middleware.call(store, const RefreshProductAction('product-2'), next);
+        async.flushMicrotasks();
 
-      verify(
-        () => mockBackgroundRefreshService.enqueueSources(['target-source']),
-      ).called(1);
-      verifyNever(
-        () => mockBackgroundRefreshService.enqueueSources(['other-source']),
-      );
+        verify(
+          () => mockBackgroundRefreshService.enqueueSources(['target-source']),
+        ).called(1);
+        verifyNever(
+          () => mockBackgroundRefreshService.enqueueSources(['other-source']),
+        );
+      });
     });
   });
 
   group('ProductsMiddleware processes RefreshSourceAction', () {
     test(
       'enqueues the source on the background service, bypassing its cooldown',
-      () async {
-        when(
-          () => mockBackgroundRefreshService.enqueueSources([
-            'source-1',
-          ], bypassCooldown: true),
-        ).thenAnswer((_) async => true);
+      () {
+        fakeAsync((FakeAsync async) {
+          when(
+            () => mockBackgroundRefreshService.enqueueSources([
+              'source-1',
+            ], bypassCooldown: true),
+          ).thenAnswer((_) async => true);
 
-        middleware.call(store, const RefreshSourceAction('source-1'), next);
-        await Future<void>.delayed(Duration.zero);
+          middleware.call(store, const RefreshSourceAction('source-1'), next);
+          async.flushMicrotasks();
 
-        expect(actionLog, [const RefreshSourceAction('source-1')]);
-        verify(
-          () => mockBackgroundRefreshService.enqueueSources([
-            'source-1',
-          ], bypassCooldown: true),
-        ).called(1);
-        verifyZeroInteractions(mockLoggerService);
+          expect(actionLog, [const RefreshSourceAction('source-1')]);
+          verify(
+            () => mockBackgroundRefreshService.enqueueSources([
+              'source-1',
+            ], bypassCooldown: true),
+          ).called(1);
+          verifyZeroInteractions(mockLoggerService);
+        });
+      },
+    );
+
+    test(
+      'polls for refresh progress and dispatches ProductsUpdatedFromDatabaseAction '
+      'after enqueuing succeeds',
+      () {
+        fakeAsync((FakeAsync async) {
+          final Product product = buildProduct(
+            sources: [buildProductSource(id: 'source-1')],
+          );
+          when(
+            () => mockBackgroundRefreshService.enqueueSources([
+              'source-1',
+            ], bypassCooldown: true),
+          ).thenAnswer((_) async => true);
+          when(
+            () => mockLoadProductsUseCase(any()),
+          ).thenAnswer((_) async => Right([product]));
+
+          middleware.call(store, const RefreshSourceAction('source-1'), next);
+          async.elapse(const Duration(seconds: 1));
+
+          expect(
+            actionLog
+                .whereType<ProductsUpdatedFromDatabaseAction>()
+                .single
+                .products,
+            [product],
+          );
+        });
       },
     );
 
     test(
       'shows a failure popup when the background service rejects the request',
-      () async {
-        when(
-          () => mockBackgroundRefreshService.enqueueSources([
-            'source-1',
-          ], bypassCooldown: true),
-        ).thenAnswer((_) async => false);
+      () {
+        fakeAsync((FakeAsync async) {
+          when(
+            () => mockBackgroundRefreshService.enqueueSources([
+              'source-1',
+            ], bypassCooldown: true),
+          ).thenAnswer((_) async => false);
 
-        middleware.call(store, const RefreshSourceAction('source-1'), next);
-        await Future<void>.delayed(Duration.zero);
+          middleware.call(store, const RefreshSourceAction('source-1'), next);
+          async.elapse(const Duration(seconds: 1));
 
-        expect(actionLog, [const RefreshSourceAction('source-1')]);
-        verify(
-          () => mockLoggerService.e(t.common.refreshFailed, showPopup: true),
-        ).called(1);
+          expect(actionLog, [const RefreshSourceAction('source-1')]);
+          verify(
+            () => mockLoggerService.e(t.common.refreshFailed, showPopup: true),
+          ).called(1);
+          verifyNever(() => mockLoadProductsUseCase(any()));
+        });
       },
     );
   });
@@ -560,9 +639,8 @@ void main() {
   });
 
   group('ProductsMiddleware processes RefreshAllProductsAction', () {
-    test(
-      'enqueues every tracked source id on the background service',
-      () async {
+    test('enqueues every tracked source id on the background service', () {
+      fakeAsync((FakeAsync async) {
         final Product product = buildProduct(
           sources: [
             buildProductSource(id: 'source-1'),
@@ -582,7 +660,7 @@ void main() {
         ).thenAnswer((_) async => true);
 
         middleware.call(store, const RefreshAllProductsAction(), next);
-        await Future<void>.delayed(Duration.zero);
+        async.flushMicrotasks();
 
         expect(actionLog, [isA<RefreshAllProductsAction>()]);
         verify(
@@ -592,31 +670,34 @@ void main() {
           ]),
         ).called(1);
         verifyZeroInteractions(mockLoggerService);
-      },
-    );
+      });
+    });
 
     test(
       'shows a failure popup when the background service rejects the request',
-      () async {
-        final Product product = buildProduct(
-          sources: [buildProductSource(id: 'source-1')],
-        );
-        when(() => store.state).thenReturn(
-          AppState.initial().copyWith(
-            products: ProductsState.initial().copyWith(products: [product]),
-          ),
-        );
-        when(
-          () => mockBackgroundRefreshService.enqueueSources(['source-1']),
-        ).thenAnswer((_) async => false);
+      () {
+        fakeAsync((FakeAsync async) {
+          final Product product = buildProduct(
+            sources: [buildProductSource(id: 'source-1')],
+          );
+          when(() => store.state).thenReturn(
+            AppState.initial().copyWith(
+              products: ProductsState.initial().copyWith(products: [product]),
+            ),
+          );
+          when(
+            () => mockBackgroundRefreshService.enqueueSources(['source-1']),
+          ).thenAnswer((_) async => false);
 
-        middleware.call(store, const RefreshAllProductsAction(), next);
-        await Future<void>.delayed(Duration.zero);
+          middleware.call(store, const RefreshAllProductsAction(), next);
+          async.elapse(const Duration(seconds: 1));
 
-        expect(actionLog, [const RefreshAllProductsAction()]);
-        verify(
-          () => mockLoggerService.e(t.common.refreshFailed, showPopup: true),
-        ).called(1);
+          expect(actionLog, [const RefreshAllProductsAction()]);
+          verify(
+            () => mockLoggerService.e(t.common.refreshFailed, showPopup: true),
+          ).called(1);
+          verifyNever(() => mockLoadProductsUseCase(any()));
+        });
       },
     );
 
@@ -631,42 +712,235 @@ void main() {
       },
     );
 
-    test('flattens source ids across every tracked product', () async {
-      final Product first = buildProduct(
-        id: 'product-1',
-        sources: [buildProductSource(id: 'source-1')],
-      );
-      final Product second = buildProduct(
-        id: 'product-2',
-        sources: [
-          buildProductSource(
-            id: 'source-2',
-            productId: 'product-2',
-            url: 'https://example.com/2',
+    test('flattens source ids across every tracked product', () {
+      fakeAsync((FakeAsync async) {
+        final Product first = buildProduct(
+          id: 'product-1',
+          sources: [buildProductSource(id: 'source-1')],
+        );
+        final Product second = buildProduct(
+          id: 'product-2',
+          sources: [
+            buildProductSource(
+              id: 'source-2',
+              productId: 'product-2',
+              url: 'https://example.com/2',
+            ),
+          ],
+        );
+        when(() => store.state).thenReturn(
+          AppState.initial().copyWith(
+            products: ProductsState.initial().copyWith(
+              products: [first, second],
+            ),
           ),
-        ],
-      );
+        );
+        when(
+          () => mockBackgroundRefreshService.enqueueSources([
+            'source-1',
+            'source-2',
+          ]),
+        ).thenAnswer((_) async => true);
+
+        middleware.call(store, const RefreshAllProductsAction(), next);
+        async.flushMicrotasks();
+
+        verify(
+          () => mockBackgroundRefreshService.enqueueSources([
+            'source-1',
+            'source-2',
+          ]),
+        ).called(1);
+      });
+    });
+
+    Product buildActiveProduct() => buildProduct(
+      sources: [
+        buildProductSource(
+          id: 'source-1',
+          liveStatus: SourceRefreshStatus.fetching,
+        ),
+      ],
+    );
+
+    Product buildIdleProduct() =>
+        buildProduct(sources: [buildProductSource(id: 'source-1')]);
+
+    void stubSuccessfulEnqueue(Product product) {
       when(() => store.state).thenReturn(
         AppState.initial().copyWith(
-          products: ProductsState.initial().copyWith(products: [first, second]),
+          products: ProductsState.initial().copyWith(products: [product]),
         ),
       );
       when(
-        () => mockBackgroundRefreshService.enqueueSources([
-          'source-1',
-          'source-2',
-        ]),
+        () => mockBackgroundRefreshService.enqueueSources(['source-1']),
       ).thenAnswer((_) async => true);
+    }
 
-      middleware.call(store, const RefreshAllProductsAction(), next);
-      await Future<void>.delayed(Duration.zero);
+    test('stops polling once a tick loads no active source', () {
+      fakeAsync((FakeAsync async) {
+        final Product idleProduct = buildIdleProduct();
+        stubSuccessfulEnqueue(buildActiveProduct());
+        when(
+          () => mockLoadProductsUseCase(any()),
+        ).thenAnswer((_) async => Right([idleProduct]));
 
-      verify(
-        () => mockBackgroundRefreshService.enqueueSources([
-          'source-1',
-          'source-2',
-        ]),
-      ).called(1);
+        middleware.call(store, const RefreshAllProductsAction(), next);
+        async.elapse(const Duration(seconds: 1));
+        verify(() => mockLoadProductsUseCase(any())).called(1);
+
+        async.elapse(const Duration(seconds: 1));
+
+        verifyNoMoreInteractions(mockLoadProductsUseCase);
+      });
+    });
+
+    test('keeps polling across multiple ticks while a source stays active', () {
+      fakeAsync((FakeAsync async) {
+        final Product activeProduct = buildActiveProduct();
+        stubSuccessfulEnqueue(activeProduct);
+        when(
+          () => mockLoadProductsUseCase(any()),
+        ).thenAnswer((_) async => Right([activeProduct]));
+
+        middleware.call(store, const RefreshAllProductsAction(), next);
+        async.elapse(const Duration(seconds: 3));
+
+        verify(() => mockLoadProductsUseCase(any())).called(3);
+      });
+    });
+
+    test('keeps polling while a source is queued rather than fetching', () {
+      fakeAsync((FakeAsync async) {
+        final Product queuedProduct = buildProduct(
+          sources: [
+            buildProductSource(
+              id: 'source-1',
+              liveStatus: SourceRefreshStatus.queued,
+            ),
+          ],
+        );
+        stubSuccessfulEnqueue(queuedProduct);
+        when(
+          () => mockLoadProductsUseCase(any()),
+        ).thenAnswer((_) async => Right([queuedProduct]));
+
+        middleware.call(store, const RefreshAllProductsAction(), next);
+        async.elapse(const Duration(seconds: 2));
+
+        verify(() => mockLoadProductsUseCase(any())).called(2);
+      });
+    });
+
+    test(
+      'keeps polling when only one source among several is still active',
+      () {
+        fakeAsync((FakeAsync async) {
+          final Product idleProduct = buildIdleProduct();
+          final Product activeProduct = buildProduct(
+            id: 'product-2',
+            sources: [
+              buildProductSource(
+                id: 'source-2',
+                productId: 'product-2',
+                url: 'https://example.com/2',
+                liveStatus: SourceRefreshStatus.fetching,
+              ),
+            ],
+          );
+          stubSuccessfulEnqueue(idleProduct);
+          when(
+            () => mockLoadProductsUseCase(any()),
+          ).thenAnswer((_) async => Right([idleProduct, activeProduct]));
+
+          middleware.call(store, const RefreshAllProductsAction(), next);
+          async.elapse(const Duration(seconds: 2));
+
+          verify(() => mockLoadProductsUseCase(any())).called(2);
+        });
+      },
+    );
+
+    test('does not start a second timer when a refresh is triggered while '
+        'already polling', () {
+      fakeAsync((FakeAsync async) {
+        final Product activeProduct = buildActiveProduct();
+        stubSuccessfulEnqueue(activeProduct);
+        when(
+          () => mockLoadProductsUseCase(any()),
+        ).thenAnswer((_) async => Right([activeProduct]));
+
+        middleware.call(store, const RefreshAllProductsAction(), next);
+        async.flushMicrotasks();
+        middleware.call(store, const RefreshAllProductsAction(), next);
+        async.elapse(const Duration(seconds: 2));
+
+        verify(() => mockLoadProductsUseCase(any())).called(2);
+      });
+    });
+
+    test(
+      'logs a warning and keeps polling when a tick fails to load products',
+      () {
+        fakeAsync((FakeAsync async) {
+          final Product activeProduct = buildActiveProduct();
+          stubSuccessfulEnqueue(activeProduct);
+          when(
+            () => mockLoadProductsUseCase(any()),
+          ).thenAnswer((_) async => const Left(DatabaseFailure('poll failed')));
+
+          middleware.call(store, const RefreshAllProductsAction(), next);
+          async.elapse(const Duration(seconds: 2));
+
+          verify(() => mockLoggerService.w('poll failed')).called(2);
+          verifyNever(
+            () =>
+                mockLoggerService.e(any(), showPopup: any(named: 'showPopup')),
+          );
+          expect(
+            actionLog.whereType<ProductsUpdatedFromDatabaseAction>(),
+            isEmpty,
+          );
+        });
+      },
+    );
+
+    test('stops polling on its own once the tick cap is reached', () {
+      fakeAsync((FakeAsync async) {
+        final Product activeProduct = buildActiveProduct();
+        stubSuccessfulEnqueue(activeProduct);
+        when(
+          () => mockLoadProductsUseCase(any()),
+        ).thenAnswer((_) async => Right([activeProduct]));
+
+        middleware.call(store, const RefreshAllProductsAction(), next);
+        // Mirrors ProductsMiddleware's private _maxRefreshPollTicks cap.
+        async.elapse(const Duration(seconds: 300));
+        verify(() => mockLoadProductsUseCase(any())).called(300);
+
+        async.elapse(const Duration(seconds: 10));
+
+        verifyNoMoreInteractions(mockLoadProductsUseCase);
+      });
+    });
+
+    test('polls again for a later refresh once a previous one has stopped', () {
+      fakeAsync((FakeAsync async) {
+        final Product idleProduct = buildIdleProduct();
+        stubSuccessfulEnqueue(idleProduct);
+        when(
+          () => mockLoadProductsUseCase(any()),
+        ).thenAnswer((_) async => Right([idleProduct]));
+
+        middleware.call(store, const RefreshAllProductsAction(), next);
+        async.elapse(const Duration(seconds: 1));
+        verify(() => mockLoadProductsUseCase(any())).called(1);
+
+        middleware.call(store, const RefreshAllProductsAction(), next);
+        async.elapse(const Duration(seconds: 1));
+
+        verify(() => mockLoadProductsUseCase(any())).called(1);
+      });
     });
   });
 
