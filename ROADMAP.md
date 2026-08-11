@@ -21,7 +21,7 @@ on an Android device.
 - [x] Automated tests and static analysis
 - [ ] Real Android-device validation
 - [x] Product creation and management
-- [ ] Real merchant price data
+- [x] Real merchant price data
 - [ ] Honest loading, empty, offline, and failure states for real data
 
 ## Phase 1 — Price-tracking foundation ✅
@@ -89,9 +89,9 @@ code or seeded data.
       views, including clear copy when the conversion is unavailable.
 - [ ] Model shipping, taxes, and other merchant costs separately from item price, then
       display and compare a configurable total cost.
-- [ ] Refresh one product and the full watchlist using real data.
-- [ ] Show the last successful refresh separately from a failed attempt.
-- [ ] Keep old trustworthy data when a refresh fails.
+- [x] Refresh one product and the full watchlist using real data.
+- [x] Show the last successful refresh separately from a failed attempt.
+- [x] Keep old trustworthy data when a refresh fails.
 
 **Exit condition:** the core promise works end-to-end with websites supported by the generic
 dynamic path, without silently replacing good data with bad or empty data.
@@ -132,10 +132,16 @@ instead of guessing before the generic flow is working.
 
 ## Explicitly after MVP
 
-- [ ] Background scheduled refresh.
+Background scheduled refresh shipped earlier than this roadmap planned, and changed how
+refreshing works throughout the app: every refresh (manual or automatic) now routes through a
+background Android service running its own Flutter engine, so it survives the app being closed —
+see `ai/context/architecture.md`'s "Background refresh" section. Price-drop and price-increase
+alerts shipped alongside it, as native notifications. The phases above predate this and should be
+read with that in mind.
+
 - [ ] Home-screen widget.
 - [ ] Many merchant/source integrations.
-- [ ] Price history charts and alerts.
+- [ ] Price history charts.
 - [ ] Accounts and cloud synchronization.
 
 ## Working rule
